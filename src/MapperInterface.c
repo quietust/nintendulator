@@ -316,7 +316,14 @@ static	unsigned char *	_MAPINT	GetCHR_Ptr1 (int Where)
 
 static	void	_MAPINT	SetCHR_OB1 (int Where)
 {
-	/* not handling PPU open bus yet */
+#ifndef NSFPLAYER
+	PPU.CHRPointer[Where] = PPU_OpenBus;
+	PPU.Writable[Where] = FALSE;
+#ifdef ENABLE_DEBUGGER
+	Debugger.PatChanged = TRUE;
+	Debugger.NTabChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
+#endif
 }
 
 /******************************************************************************/
