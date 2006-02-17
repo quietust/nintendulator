@@ -96,9 +96,9 @@ static	void	_MAPINT	PPU_NoPPUCycle		(int Addr, int Scanline, int Cycle, int IsRe
 
 int	_MAPINT	PPU_BusRead (int Bank, int Addr)
 {
-//	if (!PPU.Readable[Bank])
-//		return Addr & 0xFF;
-	return PPU.CHRPointer[Bank][Addr];
+/*	if (!PPU.Readable[Bank])
+		return Addr & 0xFF;
+*/	return PPU.CHRPointer[Bank][Addr];
 }
 
 void	_MAPINT	PPU_BusWriteCHR (int Bank, int Addr, int Val)
@@ -132,9 +132,9 @@ void	_MAPINT	PPU_BusWriteNT3F (int Bank, int Addr, int Val)
 		if (Addr & 0x3)
 			PPU.Palette[Addr & 0x1F] = Val;
 		else	PPU.Palette[Addr & 0x0F] = PPU.Palette[0x10 | (Addr & 0xF)] = Val;
-//		else if (!(Addr & 0xF))
-//			PPU.Palette[0x0] = PPU.Palette[0x4] = PPU.Palette[0x8] = PPU.Palette[0xC] = PPU.Palette[0x10] = PPU.Palette[0x14] = PPU.Palette[0x18] = PPU.Palette[0x1C] = Val;
-	}
+/*		else if (!(Addr & 0xF))
+			PPU.Palette[0x0] = PPU.Palette[0x4] = PPU.Palette[0x8] = PPU.Palette[0xC] = PPU.Palette[0x10] = PPU.Palette[0x14] = PPU.Palette[0x18] = PPU.Palette[0x1C] = Val;
+*/	}
 	else
 	{
 		if (!PPU.Writable[Bank])
@@ -175,7 +175,7 @@ __inline static	void	DiscoverSprites (void)
 	PPU.SprCount = 0;
 	PPU.Spr0InLine = FALSE;
 	for (spt = 0; spt < 32; spt += 4)
-		PPU.SprBuff[spt+1] = PPU.Sprite[spt | 1];	// pre-init sprite buffer tile indices
+		PPU.SprBuff[spt+1] = PPU.Sprite[spt | 1];	/* pre-init sprite buffer tile indices */
 	for (spt = 0; spt < 256; spt += 4)
 	{
 		if ((SL >= PPU.Sprite[spt]) && (SL < (PPU.Sprite[spt] + SprHeight)))
@@ -297,7 +297,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 		{
 			switch (PPU.Clockticks)
 			{
-			// BEGIN BACKGROUND
+			/* BEGIN BACKGROUND */
 			case   0:	case   8:	case  16:	case  24:	case  32:	case  40:	case  48:	case  56:
 			case  64:	case  72:	case  80:	case  88:	case  96:	case 104:	case 112:	case 120:
 			case 128:	case 136:	case 144:	case 152:	case 160:	case 168:	case 176:	case 184:
@@ -440,8 +440,8 @@ __inline static	void	RunNoSkip (int NumTicks)
 					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				}
 				break;
-				// END BACKGROUND
-				// BEGIN SPRITES
+				/* END BACKGROUND */
+				/* BEGIN SPRITES */
 			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
 				if (PPU.IOMode)
 					break;
@@ -494,7 +494,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 				((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				break;
-				// END SPRITES
+				/* END SPRITES */
 			case 336:	case 338:
 				if (PPU.IOMode)
 					break;
@@ -527,7 +527,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 					{
 						if ((PPU.Spr0InLine) && (y == 0) && (TC & 0x3))
 						{
-							PPU.Reg2002 |= 0x40;	// Sprite 0 hit
+							PPU.Reg2002 |= 0x40;	/* Sprite 0 hit */
 							PPU.Spr0InLine = FALSE;
 						}
 						if (!((TC & 0x3) && (SprFlags & 0x20)))
@@ -619,7 +619,7 @@ __inline static	void	RunSkip (int NumTicks)
 		{
 			switch (PPU.Clockticks)
 			{
-			// BEGIN BACKGROUND
+			/* BEGIN BACKGROUND */
 			case   0:	case   8:	case  16:	case  24:	case  32:	case  40:	case  48:	case  56:
 			case  64:	case  72:	case  80:	case  88:	case  96:	case 104:	case 112:	case 120:
 			case 128:	case 136:	case 144:	case 152:	case 160:	case 168:	case 176:	case 184:
@@ -733,8 +733,8 @@ __inline static	void	RunSkip (int NumTicks)
 					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				}
 				break;
-				// END BACKGROUND
-				// BEGIN SPRITES
+				/* END BACKGROUND */
+				/* BEGIN SPRITES */
 			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
 				if (PPU.IOMode)
 					break;
@@ -793,7 +793,7 @@ __inline static	void	RunSkip (int NumTicks)
 				break;
 			case 271:	case 279:	case 287:	case 295:	case 303:	case 311:	case 319:
 				break;
-				// END SPRITES
+				/* END SPRITES */
 			case 336:	case 338:
 				if (PPU.IOMode)
 					break;
@@ -811,7 +811,7 @@ __inline static	void	RunSkip (int NumTicks)
 		{
 			register int SprPixel = PPU.Clockticks - PPU.SprBuff[3];
 			if (!(SprPixel & ~7) && (PPU.SprData[0][SprPixel] & 0x3) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x02)) && (PPU.TileData[PPU.Clockticks + PPU.IntX] & 0x3))
-				PPU.Reg2002 |= 0x40;	// Sprite 0 hit
+				PPU.Reg2002 |= 0x40;	/* Sprite 0 hit */
 		}
 	}
 }

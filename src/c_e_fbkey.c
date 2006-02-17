@@ -27,7 +27,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define	Scan	Data[1]
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
-	return 0;	// tape, not yet implemented
+	return 0;	/* tape, not yet implemented */
 }
 static	unsigned char	Read2 (struct tExpPort *Cont)
 {
@@ -42,8 +42,8 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 			if (Controllers.KeyState[DIK_RBRACKET] & 0x80)	result |= 0x10;
 			break;
 		case 1:	if (Controllers.KeyState[DIK_F7] & 0x80)	result |= 0x02;
-			if (Controllers.KeyState[DIK_GRAVE] & 0x80)	result |= 0x04;	// @
-			if (Controllers.KeyState[DIK_APOSTROPHE] & 0x80)result |= 0x08;	// :
+			if (Controllers.KeyState[DIK_GRAVE] & 0x80)	result |= 0x04;	/* @ */
+			if (Controllers.KeyState[DIK_APOSTROPHE] & 0x80)result |= 0x08;	/* : */
 			if (Controllers.KeyState[DIK_SEMICOLON] & 0x80)	result |= 0x10;
 			break;
 		case 2:	if (Controllers.KeyState[DIK_F6] & 0x80)	result |= 0x02;
@@ -74,9 +74,9 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 		case 7:	if (Controllers.KeyState[DIK_F1] & 0x80)	result |= 0x02;
 			if (Controllers.KeyState[DIK_ESCAPE] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_Q] & 0x80)		result |= 0x08;
-			if (Controllers.KeyState[DIK_CAPITAL] & 0x80)	result |= 0x10;	// CTRL
+			if (Controllers.KeyState[DIK_CAPITAL] & 0x80)	result |= 0x10;	/* CTRL */
 			break;
-		case 8:	if (Controllers.KeyState[DIK_END] & 0x80)	result |= 0x02;	// CLR
+		case 8:	if (Controllers.KeyState[DIK_END] & 0x80)	result |= 0x02;	/* CLR */
 			if (Controllers.KeyState[DIK_UP] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_RIGHT] & 0x80)	result |= 0x08;
 			if (Controllers.KeyState[DIK_LEFT] & 0x80)	result |= 0x10;
@@ -92,18 +92,18 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 	{
 		switch (Cont->Scan)
 		{
-		case 0:	if (Controllers.KeyState[DIK_APPS] & 0x80)	result |= 0x02;	// DIK_KANA for Japanese keyboards
+		case 0:	if (Controllers.KeyState[DIK_APPS] & 0x80)	result |= 0x02;	/* DIK_KANA for Japanese keyboards */
 			if (Controllers.KeyState[DIK_RSHIFT] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_BACKSLASH] & 0x80)	result |= 0x08;
-			if (Controllers.KeyState[DIK_BACK] & 0x80)	result |= 0x10;	// STOP
+			if (Controllers.KeyState[DIK_BACK] & 0x80)	result |= 0x10;	/* STOP */
 			break;
-		case 1:	if (Controllers.KeyState[DIK_RWIN] & 0x80)	result |= 0x02;	// _
+		case 1:	if (Controllers.KeyState[DIK_RWIN] & 0x80)	result |= 0x02;	/* _ */
 			if (Controllers.KeyState[DIK_SLASH] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_MINUS] & 0x80)	result |= 0x08;
-			if (Controllers.KeyState[DIK_EQUALS] & 0x80)	result |= 0x10; // ^
+			if (Controllers.KeyState[DIK_EQUALS] & 0x80)	result |= 0x10; /* ^ */
 			break;
 		case 2:	if ((Controllers.KeyState[DIK_PERIOD] & 0x80) || (Controllers.KeyState[DIK_RWIN] & 0x80))
-									result |= 0x02;	// . _
+									result |= 0x02;	/* . _ */
 			if (Controllers.KeyState[DIK_COMMA] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_P] & 0x80)		result |= 0x08;
 			if (Controllers.KeyState[DIK_0] & 0x80)		result |= 0x10;
@@ -130,14 +130,14 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 			break;
 		case 7:	if ((Controllers.KeyState[DIK_X] & 0x80) && (Controllers.KeyState[DIK_LSHIFT] & 0x80))
 									result |= 0x02;
-			if (Controllers.KeyState[DIK_LWIN] & 0x80)	result |= 0x04;	// GRPH
+			if (Controllers.KeyState[DIK_LWIN] & 0x80)	result |= 0x04;	/* GRPH */
 			if (Controllers.KeyState[DIK_1] & 0x80)		result |= 0x08;
 			if (Controllers.KeyState[DIK_2] & 0x80)		result |= 0x10;
 			break;
 		case 8:	if ((Controllers.KeyState[DIK_DOWN] & 0x80) || (Controllers.KeyState[DIK_LSHIFT] & 0x80))
 									result |= 0x02;
 			if ((Controllers.KeyState[DIK_SPACE] & 0x80) || (Controllers.KeyState[DIK_LWIN] & 0x80))
-									result |= 0x04;	// SPACE or GRPH
+									result |= 0x04;	/* SPACE or GRPH */
 			if ((Controllers.KeyState[DIK_1] & 0x80) || (Controllers.KeyState[DIK_DELETE] & 0x80))
 									result |= 0x08;
 			if ((Controllers.KeyState[DIK_2] & 0x80) || (Controllers.KeyState[DIK_INSERT] & 0x80))
@@ -145,7 +145,7 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 			break;
 		case 9:	if (Controllers.KeyState[DIK_DOWN] & 0x80)	result |= 0x02;
 			if ((Controllers.KeyState[DIK_SPACE] & 0x80) && (Controllers.KeyState[DIK_LWIN] & 0x80))
-									result |= 0x04;	// SPACE and GRPH
+									result |= 0x04;	/* SPACE and GRPH */
 			if ((Controllers.KeyState[DIK_1] & 0x80) && (Controllers.KeyState[DIK_DELETE] & 0x80))
 									result |= 0x08;
 			if ((Controllers.KeyState[DIK_2] & 0x80) && (Controllers.KeyState[DIK_INSERT] & 0x80))
@@ -173,7 +173,7 @@ static	void	Write (struct tExpPort *Cont, unsigned char Val)
 	}
 	else
 	{
-		// tape, not yet implemented
+		/* tape, not yet implemented */
 	}
 }
 static	void	Config (struct tExpPort *Cont, HWND hWnd)

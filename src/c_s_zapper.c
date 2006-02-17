@@ -29,7 +29,6 @@ static	unsigned char	Read (struct tStdPort *Cont)
 {
 	int x, y;
 	long CurPix = 0;
-//	int Delta;
 	POINT pos;
 	unsigned char Bits = 0x00;
 
@@ -51,12 +50,6 @@ static	unsigned char	Read (struct tStdPort *Cont)
 		CurPix = ((CurPix & 0x1F) << 3) | ((CurPix & 0x7E0) << 5) | ((CurPix & 0xF800) << 8) | 0x070307;break;
 	case 32:CurPix = ((long *)((char *)GFX.DrawArray + y*GFX.Pitch))[x];					break;
 	}
-/*	Delta = (int)((((signed)(CurPix & 0xFF) - (signed)(Cont->LastPix & 0xFF)) / 3.36) +
-		(((signed)((CurPix >> 8) & 0xFF) - (signed)((Cont->LastPix >> 8) & 0xFF)) / 1.7) +
-		(((signed)((CurPix >> 16) & 0xFF) - (signed)((Cont->LastPix >> 16) & 0xFF)) / 9.1));*/
-/*	Delta = (int)(((signed)(CurPix & 0xFF) / 3.36) +
-		(((signed)(CurPix >> 8) & 0xFF) / 1.7) +
-		(((signed)(CurPix >> 16) & 0xFF) / 9.1));*/
 	if ((CurPix != 0xFFFFFF) && (CurPix != 0xC0C0C0))
 		Bits |= 0x08;
 	Cont->LastPix = CurPix;

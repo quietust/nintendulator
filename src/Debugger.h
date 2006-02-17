@@ -40,42 +40,36 @@ struct tDebugger
 
 	int	PatPalBase;
 
-	//Palette
-	HDC	PaletteWDC, PaletteDC;
-	//Pattern Tables
-	HDC	PatternWDC, PatternDC;
-	//Name Tables
-	HDC	NameWDC, NameDC;
-	//Trace Window
-	HDC	TraceWDC, TraceDC;
-	//Registers
-	HDC	RegWDC, RegDC;
+	HDC	PaletteWDC, PaletteDC;	/* Palette */
+	HWND	PaletteWnd;
+	HBITMAP	PaletteBMP;
+	unsigned char PaletteArray[(256*32)*4];
+
+	HDC	PatternWDC, PatternDC;	/* Pattern tables */
+	HWND	PatternWnd;
+	HBITMAP	PatternBMP;
+	unsigned char PatternArray[(256*128)*4];
+
+	HDC	NameWDC, NameDC;	/* Nametables */
+	HWND	NameWnd;
+	HBITMAP	NameBMP;
+	unsigned char NameArray[(512*480)*4];
+
+	HDC	TraceWDC, TraceDC;	/* Trace window */
+	HWND	TraceWnd;
+	HBITMAP	TraceBMP;
+
+	HDC	RegWDC, RegDC;		/* Registers */
+	HWND	RegWnd;
+	HBITMAP	RegBMP;
 
 	int	AddyLine[64];
 	BOOL	BreakP[0x10000];
-	int	TraceOffset;		//-1 to center on PC, otherwise center on TraceOffset
+	int	TraceOffset;		/* -1 to center on PC, otherwise center on TraceOffset */
 
 	HWND	DumpWnd;
 	FILE	*LogFile;
 	char	Out1[50], Out2[50];
-	//Palette
-	HWND	PaletteWnd;		//Window
-	HBITMAP	PaletteBMP;							//Off-Screen Window
-	unsigned char PaletteArray[(256*32)*4];		//  "
-	//Pattern Tables
-	HWND	PatternWnd;		//Window
-	HBITMAP	PatternBMP;							//Off-Screen Window
-	unsigned char PatternArray[(256*128)*4];		//  "
-	//Name Tables
-	HWND	NameWnd;		//Window
-	HBITMAP	NameBMP;							//Off-Screen Window
-	//Trace Window
-	unsigned char NameArray[(512*480)*4];		//  "
-	HWND	TraceWnd;		//Window
-	HBITMAP	TraceBMP;							//Off-Screen Window
-	//Registers
-	HWND	RegWnd;			//Window
-	HBITMAP	RegBMP;							//Off-Screen Window
 };
 
 extern struct tDebugger Debugger;

@@ -118,7 +118,6 @@ static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
-		// Parse the menu selections:
 		switch (wmId)
 		{
 		case IDOK:

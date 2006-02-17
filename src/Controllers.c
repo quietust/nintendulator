@@ -64,7 +64,6 @@ void	StdPort_SetControllerType (struct tStdPort *Cont, int Type)
 	case STD_ARKANOIDPADDLE:	StdPort_SetArkanoidPaddle(Cont);	break;
 	case STD_POWERPAD:		StdPort_SetPowerPad(Cont);		break;
 	case STD_FOURSCORE:		StdPort_SetFourScore(Cont);		break;
-//	case 0x80:			StdPort_SetMovie(Cont);			break;
 	default:MessageBox(mWnd,"Error: selected invalid controller type for standard port!","Nintendulator",MB_OK | MB_ICONERROR);	break;
 	}
 }
@@ -126,7 +125,6 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
-		// Parse the menu selections:
 		switch (wmId)
 		{
 		case IDOK:
@@ -445,7 +443,6 @@ int	Controllers_GetConfigKey (HWND hWnd)
 		{
 			IDirectInputDevice7_Acquire(Controllers.DIKeyboard);
 			hr = IDirectInputDevice7_GetDeviceState(Controllers.DIKeyboard,256,Controllers.KeyState);
-//			break;
 		}
 		for (i = 0; i < Controllers.NumButtons[0]; i++)
 		{
@@ -488,7 +485,6 @@ int	Controllers_GetConfigMouse (HWND hWnd)
 		{
 			IDirectInputDevice7_Acquire(Controllers.DIMouse);
 			hr = IDirectInputDevice7_GetDeviceState(Controllers.DIMouse,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
-//			break;
 		}
 		for (i = 0; i < Controllers.NumButtons[1]; i++)
 		{
@@ -498,7 +494,7 @@ int	Controllers_GetConfigMouse (HWND hWnd)
 				break;
 			}
 		}
-		if (Key != -1)	// if we got a button, don't check for an axis
+		if (Key != -1)	/* if we got a button, don't check for an axis */
 			break;
 		for (i = 0x08; i < (0x08 | Controllers.NumAxes[1]); i++)
 		{
@@ -550,7 +546,7 @@ int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
 				break;
 			}
 		}
-		if (Key != -1)	// if we got a button, don't check for an axis
+		if (Key != -1)	/* if we got a button, don't check for an axis */
 			break;
 		for (i = 0x80; i < (0x80 | Controllers.NumAxes[Dev+2]); i++)
 		{
@@ -593,7 +589,7 @@ char *	Controllers_GetButtonLabel (int DevNum, int Button)
 			return str;
 		}
 	}
-	else // if (DevNum == 2)
+	else
 	{
 		if (Button & 0x80)
 		{
@@ -614,21 +610,21 @@ char *	Controllers_GetButtonLabel (int DevNum, int Button)
 void	Controllers_ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 {
 	*Button &= 0xFFFF;
-	if (getKey)	// this way, we can just re-label the button
+	if (getKey)	/* this way, we can just re-label the button */
 	{
 		HWND key = CreateDialog(hInst,(LPCTSTR)IDD_KEYCONFIG,hDlg,NULL);
-		ShowWindow(key,TRUE);	// FIXME - center this window properly
-		ProcessMessages();	// let the "Press a key..." dialog display itself
+		ShowWindow(key,TRUE);	/* FIXME - center this window properly */
+		ProcessMessages();	/* let the "Press a key..." dialog display itself */
 		if (Device == 0)
 			*Button = Controllers_GetConfigKey(key);
 		else if (Device == 1)
 			*Button = Controllers_GetConfigMouse(key);
 		else	*Button = Controllers_GetConfigJoy(key,Device-2);
-		ProcessMessages();	// flush all keypresses - don't want them going back to the parent dialog
-		DestroyWindow(key);	// close the little window
+		ProcessMessages();	/* flush all keypresses - don't want them going back to the parent dialog */
+		DestroyWindow(key);	/* close the little window */
 	}
 	SetWindowText(hDlg,(LPCTSTR)Controllers_GetButtonLabel(Device,*Button));
-	*Button |= Device << 16;	// add the device ID
+	*Button |= Device << 16;	/* add the device ID */
 }
 
 static	BOOL	LockCursorPos (int x, int y)
@@ -646,13 +642,13 @@ static	BOOL	LockCursorPos (int x, int y)
 BOOL	Controllers_IsPressed (int Button)
 {
 	int DevNum = (Button & 0xFFFF0000) >> 16;
-	if (DevNum == 0)	// keyboard
+	if (DevNum == 0)
 		return (Controllers.KeyState[Button & 0xFF] & 0x80) ? TRUE : FALSE;
-	else if (DevNum == 1)	// mouse
+	else if (DevNum == 1)
 	{
-		if (Button & 0x8)	// axis selected
+		if (Button & 0x8)	/* axis selected */
 		{
-			LockCursorPos(128,120);	// if we're detecting mouse movement, lock the cursor in place
+			LockCursorPos(128,120);	/* if we're detecting mouse movement, lock the cursor in place */
 			switch (Button & 0x7)
 			{
 			case 0x0:	return (Controllers.MouseState.lX < 0) ? TRUE : FALSE;	break;
@@ -666,7 +662,7 @@ BOOL	Controllers_IsPressed (int Button)
 		}
 		else	return (Controllers.MouseState.rgbButtons[Button & 0x7] & 0x80) ? TRUE : FALSE;
 	}
-	else //if (DevNum >= 2)
+	else
 	{
 		if (Button & 0x80)
 		{
@@ -704,11 +700,11 @@ void	Controllers_ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, 
 		for (i = 0; i < numItems; i++)
 		{
 			int j;
-			SendDlgItemMessage(hDlg,dlgDevices[i],CB_RESETCONTENT,0,0);		// clear the listbox
+			SendDlgItemMessage(hDlg,dlgDevices[i],CB_RESETCONTENT,0,0);		/* clear the listbox */
 			for (j = 0; j < Controllers.NumDevices; j++)
-				SendDlgItemMessage(hDlg,dlgDevices[i],CB_ADDSTRING,0,(LPARAM)Controllers.DeviceName[j]);	// add each device
-			SendDlgItemMessage(hDlg,dlgDevices[i],CB_SETCURSEL,Buttons[i] >> 16,0);	// select the one we want
-			Controllers_ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),FALSE);	// and label the corresponding button
+				SendDlgItemMessage(hDlg,dlgDevices[i],CB_ADDSTRING,0,(LPARAM)Controllers.DeviceName[j]);	/* add each device */
+			SendDlgItemMessage(hDlg,dlgDevices[i],CB_SETCURSEL,Buttons[i] >> 16,0);	/* select the one we want */
+			Controllers_ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),FALSE);	/* and label the corresponding button */
 		}
 	}
 	if (uMsg != WM_COMMAND)

@@ -96,23 +96,18 @@ enum {
 void	Debugger_Init (void)
 {
 	HDC TpHDC = GetDC(mWnd);
-	//Palette
 	Debugger.PaletteDC = CreateCompatibleDC(TpHDC);
 	Debugger.PaletteBMP = CreateCompatibleBitmap(TpHDC,D_PAL_W,D_PAL_H);
 	SelectObject(Debugger.PaletteDC,Debugger.PaletteBMP);
-	//Pattern Tables
 	Debugger.PatternDC = CreateCompatibleDC(TpHDC);
 	Debugger.PatternBMP = CreateCompatibleBitmap(TpHDC,D_PAT_W,D_PAT_H);
 	SelectObject(Debugger.PatternDC,Debugger.PatternBMP);
-	//Name Tables
 	Debugger.NameDC = CreateCompatibleDC(TpHDC);
 	Debugger.NameBMP = CreateCompatibleBitmap(TpHDC,D_NAM_W,D_NAM_H);
 	SelectObject(Debugger.NameDC,Debugger.NameBMP);
-	//Trace Window
 	Debugger.TraceDC = CreateCompatibleDC(TpHDC);
 	Debugger.TraceBMP = CreateCompatibleBitmap(TpHDC,D_TRC_W,D_TRC_H);
 	SelectObject(Debugger.TraceDC,Debugger.TraceBMP);
-	//Register Window
 	Debugger.RegDC = CreateCompatibleDC(TpHDC);
 	Debugger.RegBMP = CreateCompatibleBitmap(TpHDC,D_REG_W,D_REG_H);
 	SelectObject(Debugger.RegDC,Debugger.RegBMP);
@@ -158,48 +153,47 @@ void	Debugger_SetMode (int NewMode)
 	Debugger.PalChanged = TRUE;
 	Debugger.PatChanged = TRUE;
 	
-	if ((Debugger.Enabled) && (SizeMult == 1))	// window positions will overlap if at 1X size
+	if ((Debugger.Enabled) && (SizeMult == 1))	/* window positions will overlap if at 1X size */
 	{
 		SizeMult = 2;
 		CheckMenuRadioItem(GetMenu(mWnd),ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);
 		SetWindowClientArea(mWnd,512,480);
 	}
 
-	//Release Handles - Assume Mode 0
-	if (Debugger.DumpWnd)					// "Dump" buttons
+	if (Debugger.DumpWnd)
 	{
 		DestroyWindow(Debugger.DumpWnd);
 		Debugger.DumpWnd = NULL;
 	}
-	if (Debugger.PaletteWnd)				// Palette
+	if (Debugger.PaletteWnd)
 	{
 		ReleaseDC(Debugger.PaletteWnd, Debugger.PaletteWDC);
 		Debugger.PaletteWDC = NULL;
 		DestroyWindow(Debugger.PaletteWnd);
 		Debugger.PaletteWnd = NULL;
 	}
-	if (Debugger.PatternWnd)				// Pattern Tables
+	if (Debugger.PatternWnd)
 	{
 		ReleaseDC(Debugger.PatternWnd, Debugger.PatternWDC);
 		Debugger.PatternWDC = NULL;
 		DestroyWindow(Debugger.PatternWnd);
 		Debugger.PatternWnd = NULL;
 	}
-	if (Debugger.NameWnd)					// Nametables
+	if (Debugger.NameWnd)
 	{
 		ReleaseDC(Debugger.NameWnd, Debugger.NameWDC);
 		Debugger.NameWDC = NULL;
 		DestroyWindow(Debugger.NameWnd);
 		Debugger.NameWnd = NULL;
 	}
-	if (Debugger.TraceWnd)					// Trace window
+	if (Debugger.TraceWnd)
 	{
 		ReleaseDC(Debugger.TraceWnd, Debugger.TraceWDC);
 		Debugger.TraceWDC = NULL;
 		DestroyWindow(Debugger.TraceWnd);
 		Debugger.TraceWnd = NULL;
 	}
-	if (Debugger.RegWnd)					// Registers
+	if (Debugger.RegWnd)
 	{
 		ReleaseDC(Debugger.RegWnd, Debugger.RegWDC);
 		Debugger.RegWDC = NULL;
@@ -211,28 +205,25 @@ void	Debugger_SetMode (int NewMode)
 
 	if (Debugger.Mode >= 1)
 	{
-		//Pattern Tables
 		Debugger.PatternWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PATTERN, mWnd, PatternProc);
 		GetWindowRect(mWnd,&rect);
 		SetWindowPos(Debugger.PatternWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.PatternWnd,D_PAT_W,D_PAT_H);
 		Debugger.PatternWDC = GetDC(Debugger.PatternWnd);
 		
-		//Palette
 		Debugger.PaletteWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PALETTE, mWnd, PaletteProc);
 		GetWindowRect(Debugger.PatternWnd,&rect);
 		SetWindowPos(Debugger.PaletteWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.PaletteWnd,D_PAL_W,D_PAL_H);
 		
 		Debugger.PaletteWDC = GetDC(Debugger.PaletteWnd);
-		//Dumps
+
 		Debugger.DumpWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_DUMPS, mWnd, DumpProc);
 		GetWindowRect(Debugger.PatternWnd,&rect);
 		SetWindowPos(Debugger.DumpWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW | SWP_NOSIZE);
 	}
 	if (Debugger.Mode >= 2)
 	{
-		//Name Tables
 		Debugger.NameWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_NAME, mWnd, NameProc);
 		GetWindowRect(mWnd,&rect);
 		SetWindowPos(Debugger.NameWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW);
@@ -243,20 +234,18 @@ void	Debugger_SetMode (int NewMode)
 	{
 		HFONT tpf;
 		int nHeight;
-		//Registers
 		Debugger.RegWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_REGISTERS, mWnd, RegProc);
 		GetWindowRect(Debugger.NameWnd,&rect);
 		SetWindowPos(Debugger.RegWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.RegWnd,D_REG_W,D_REG_H);
 		Debugger.RegWDC = GetDC(Debugger.RegWnd);
-		//Trace Window
+
 		Debugger.TraceWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_TRACE, mWnd, TraceProc);
 		GetWindowRect(Debugger.RegWnd,&rect);
 		SetWindowPos(Debugger.TraceWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.TraceWnd,D_TRC_W,D_TRC_H);
 		Debugger.TraceWDC = GetDC(Debugger.TraceWnd);
 
-		//Font info for register/trace windows
 		nHeight = -MulDiv(Debugger.FontHeight, GetDeviceCaps(Debugger.RegWDC, LOGPIXELSY), 72);
 		tpf = CreateFont(nHeight, Debugger.FontWidth, 0, 0, 0, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DRAFT_QUALITY, FF_MODERN, "Courier New");
 		SelectObject(Debugger.RegWDC, tpf);
@@ -365,7 +354,6 @@ void	Debugger_Update (void)
 			NES.Stop = TRUE;
 		if (NES.Stop)
 		{
-//			MSG msg;
 			HBRUSH WBrush = CreateSolidBrush(0xFFFFFF);
 			RECT trect;
 			char tpc[40];
@@ -376,15 +364,6 @@ void	Debugger_Update (void)
 			int FoundPtr = 0xFF;
 			int StartY;
 			short MaxY;
-
-/*			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))	// only need this if we're going to update the debug window
-			{						// while it's actually running
-				if (!TranslateAccelerator(mWnd, hAccelTable, &msg)) 
-				{
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
-				}
-			}*/
 
 			trect.left = 0;
 			trect.top = 0;
@@ -441,7 +420,6 @@ void	Debugger_Update (void)
 			}
 			BitBlt(Debugger.RegWDC,0,0,D_REG_W,D_REG_H,Debugger.RegDC,0,0,SRCCOPY);
 
-			//Add Disasm
 			for (i = 0; i < 64; i++)
 				Debugger.AddyLine[i] = -1;
 
@@ -451,7 +429,7 @@ void	Debugger_Update (void)
 		
 			CurrAddy = StartAddy;
 			MaxY = D_TRC_H;
-			MaxY = (int) (MaxY/Debugger.FontHeight)*Debugger.FontHeight;	//Little hack to make it scroll nicely
+			MaxY = (int) (MaxY/Debugger.FontHeight)*Debugger.FontHeight;
 			if (!((MaxY/Debugger.FontHeight) & 1))
 				MaxY+=Debugger.FontHeight;
 			for (CurrY=StartY; CurrY<MaxY; CurrY+=Debugger.FontHeight)
@@ -509,8 +487,7 @@ void	Debugger_UpdateGraphics (void)
 	int MemAddy;
 	if (Debugger.Mode >= 1)
 	{
-		//Palette
-		if (1)//Debugger.PalChanged)
+		if (Debugger.PalChanged)
 		{
 			int x, y, z;
 			Debugger.PalChanged = FALSE;
@@ -533,11 +510,10 @@ void	Debugger_UpdateGraphics (void)
 		}
 
 		SetBitmapBits(Debugger.PaletteBMP,DInc*D_PAL_W*D_PAL_H,&Debugger.PaletteArray);
-//		SelectObject(Debugger.PaletteDC,Debugger.PaletteBMP);	// Is this necessary?
+/*		SelectObject(Debugger.PaletteDC,Debugger.PaletteBMP);	/* Is this necessary? */
 		BitBlt(Debugger.PaletteWDC,0,0,D_PAL_W,D_PAL_H,Debugger.PaletteDC,0,0,SRCCOPY);
 
-		//Pattern Tables
-		if (1)//Debugger.PatChanged)
+		if (Debugger.PatChanged)
 		{
 			int i, t, x, y, sx, sy;
 			static unsigned char PatPal[4];
@@ -569,13 +545,12 @@ void	Debugger_UpdateGraphics (void)
 					}
 		}
 		SetBitmapBits(Debugger.PatternBMP,Debugger.Depth*D_PAT_W*D_PAT_H,&Debugger.PatternArray);
-//		SelectObject(Debugger.PatternDC,Debugger.PatternBMP);	// is this needed?
+/*		SelectObject(Debugger.PatternDC,Debugger.PatternBMP);	/* is this needed? */
 		BitBlt(Debugger.PatternWDC,0,0,D_PAT_W,D_PAT_H,Debugger.PatternDC,0,0,SRCCOPY);
 	}
 	if (Debugger.Mode >= 2)
 	{
-		//Name Tables
-		if (1)//Debugger.NTabChanged)
+		if (Debugger.NTabChanged)
 		{
 			int AttribTableVal, AttribNum;
 			int NT, TileY, TileX, py, px;
@@ -618,7 +593,7 @@ void	Debugger_UpdateGraphics (void)
 		}
 
 		SetBitmapBits(Debugger.NameBMP,DInc*D_NAM_W*D_NAM_H,&Debugger.NameArray);
-//		SelectObject(Debugger.NameDC,Debugger.NameBMP);	// is this needed?
+/*		SelectObject(Debugger.NameDC,Debugger.NameBMP);	/* is this needed? */
 		BitBlt(Debugger.NameWDC,0,0,D_NAM_W,D_NAM_H,Debugger.NameDC,0,0,SRCCOPY);
 	}
 }
@@ -669,7 +644,6 @@ LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
-		// Parse the menu selections:
 		switch (wmId)
 		{
 		case IDC_DUMP_PPU_MEM:
@@ -706,13 +680,13 @@ LRESULT CALLBACK TraceProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case VK_HOME:		//HAX0R!!!!
+		case VK_HOME:
 			if (Debugger.TraceOffset == -1)
 				Debugger.TraceOffset = CPU.PC - 0x1000;
 			else	Debugger.TraceOffset -= 0x1000;
 			Debugger_Update();
 			break;
-		case VK_END:		//HAX0R!!!!
+		case VK_END:
 			if (Debugger.TraceOffset == -1)
 				Debugger.TraceOffset = CPU.PC + 0x1000;
 			else	Debugger.TraceOffset += 0x1000;

@@ -27,7 +27,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define	Scan	Data[1]
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
-	return 0;	// tape, not yet implemented
+	return 0;	/* tape, not yet implemented */
 }
 static	unsigned char	Read2 (struct tExpPort *Cont)
 {
@@ -192,7 +192,7 @@ static	void	Write (struct tExpPort *Cont, unsigned char Val)
 	}
 	else
 	{
-		// tape, not yet implemented
+		/* tape, not yet implemented */
 	}
 }
 static	void	Config (struct tExpPort *Cont, HWND hWnd)

@@ -58,7 +58,7 @@ struct	tMapperDLL
 } *MapperDLLs = NULL;
 #endif
 
-//******************************************************************************
+/******************************************************************************/
 
 static	void	_MAPINT	SetCPUWriteHandler (int Page, FCPUWrite New)
 {
@@ -106,7 +106,7 @@ static	FPPURead	_MAPINT	GetPPUReadHandler (int Page)
 #endif
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 static	__inline void	_MAPINT	SetPRG_ROM4 (int Where, int What)
 {
@@ -147,7 +147,7 @@ static	int	_MAPINT	GetPRG_ROM4 (int Where)	/* -1 if no ROM mapped */
 	else return tpi;
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 static	__inline void	_MAPINT	SetPRG_RAM4 (int Where, int What)
 {
@@ -188,7 +188,7 @@ static	int	_MAPINT	GetPRG_RAM4 (int Where)	/* -1 if no RAM mapped */
 	else return tpi;
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 static	unsigned char *	_MAPINT	GetPRG_Ptr4 (int Where)
 {
@@ -200,7 +200,7 @@ static	void	_MAPINT	SetPRG_OB4 (int Where)	/* Open bus */
 	CPU.Writable[Where] = FALSE;
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 static	__inline void	_MAPINT	SetCHR_ROM1 (int Where, int What)
 {
@@ -252,7 +252,7 @@ static	int	_MAPINT	GetCHR_ROM1 (int Where)	/* -1 if no ROM mapped */
 #endif
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 static	__inline void	_MAPINT	SetCHR_RAM1 (int Where, int What)
 {
@@ -302,7 +302,7 @@ static	int	_MAPINT	GetCHR_RAM1 (int Where)	/* -1 if no ROM mapped */
 #endif
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 static	unsigned char *	_MAPINT	GetCHR_Ptr1 (int Where)
 {
@@ -318,7 +318,7 @@ static	void	_MAPINT	SetCHR_OB1 (int Where)
 	/* not handling PPU open bus yet */
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 static	void	_MAPINT	Mirror_H (void)
 {
@@ -357,7 +357,7 @@ static	void	_MAPINT	Mirror_Custom (int M1, int M2, int M3, int M4)
 #endif
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 static	void	_MAPINT	Set_SRAMSize (int Size)	/* Sets the size of the SRAM (in bytes) and clears PRG_RAM */
 {
@@ -397,7 +397,7 @@ static	void	_MAPINT	Load_SRAM (void)	/* Loads SRAM from disk */
 #endif
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 static	void	_MAPINT	SetIRQ (int IRQstate)
 {
@@ -409,7 +409,7 @@ static	void	_MAPINT	SetIRQ (int IRQstate)
 static	void	_MAPINT	DbgOut (char *ToSay)
 {
 #ifndef NSFPLAYER
-	//MessageBox(mWnd,ToSay,"Nintendulator",MB_OK);
+/*	MessageBox(mWnd,ToSay,"Nintendulator",MB_OK);*/
 #endif
 }
 
@@ -420,7 +420,7 @@ static	void	_MAPINT	StatusOut (char *ToSay)
 #endif
 }
 
-//******************************************************************************
+/******************************************************************************/
 
 void	MapperInterface_Init (void)
 {

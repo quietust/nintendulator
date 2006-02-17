@@ -48,10 +48,10 @@ extern	struct tNES NES;
 #define	MAX_PRGRAM_MASK	0xF
 #define	MAX_CHRROM_MASK	0xFFF
 #define	MAX_CHRRAM_MASK	0x1F
-extern	unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];	// 8192 KB
-extern	unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];	//   64 KB
-extern	unsigned char CHR_ROM[MAX_CHRROM_MASK+1][0x400];	// 4096 KB
-extern	unsigned char CHR_RAM[MAX_CHRRAM_MASK+1][0x400];	//   32 KB
+extern	unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];	/* 8192 KB */
+extern	unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];	/*   64 KB */
+extern	unsigned char CHR_ROM[MAX_CHRROM_MASK+1][0x400];	/* 4096 KB */
+extern	unsigned char CHR_RAM[MAX_CHRRAM_MASK+1][0x400];	/*   32 KB */
 
 void	NES_Init (void);
 void	NES_Release (void);
@@ -61,7 +61,7 @@ const char *	NES_OpenFileiNES (char *);
 const char *	NES_OpenFileUNIF (char *);
 const char *	NES_OpenFileFDS (char *);
 const char *	NES_OpenFileNSF (char *);
-//BOOL	NES_OpenFileNRFF (char *);
+/*BOOL	NES_OpenFileNRFF (char *); */
 void	NES_SetCPUMode (int);
 void	NES_Reset (int);
 void	NES_Run (void);

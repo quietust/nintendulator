@@ -33,7 +33,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #endif
 
 #define	SOUND_FILTERING
-//#define	SOUND_LOGGING
+/* #define	SOUND_LOGGING /* */
 
 #ifdef	NSFPLAYER
 #undef	SOUND_LOGGING
@@ -332,7 +332,7 @@ __inline void	Noise_Run (void)
 {
 	if (Noise.Active && !--Noise.Cycles)
 	{
-		Noise.Cycles = NoiseFreq[Noise.freq];	// no + 1 here
+		Noise.Cycles = NoiseFreq[Noise.freq];	/* no + 1 here */
 		if (Noise.datatype)
 			Noise.CurD = (Noise.CurD << 1) | (((Noise.CurD >> 14) ^ (Noise.CurD >> 8)) & 0x1);
 		else	Noise.CurD = (Noise.CurD << 1) | (((Noise.CurD >> 14) ^ (Noise.CurD >> 13)) & 0x1);
@@ -363,7 +363,6 @@ static	struct
 	unsigned long CurAddr, SampleLen;
 	unsigned char shiftreg, outmode, outbits, buffer, buffull;
 	int LengthCtr;
-//	BOOL Enabled;
 	unsigned long Cycles;
 	signed long Pos;
 }	DPCM;
@@ -438,10 +437,10 @@ void	DPCM_Fetch (void)
 {
 	if (DPCM.buffull || !DPCM.LengthCtr)
 		return;
-	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);	// apparently, DPCM fetches take FOUR cycles
 	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
 	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
-	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);	// weird, huh?
+	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
+	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
 	DPCM.buffull = TRUE;
 	if (++DPCM.CurAddr == 0x10000)
 		DPCM.CurAddr = 0x8000;
@@ -505,7 +504,7 @@ __inline void	Frame_Run (void)
 			Square1_HalfFrame();
 			Triangle_HalfFrame();
 			Noise_HalfFrame();
-			if (!(Frame.Bits & 0xC0))	// 0x40
+			if (!(Frame.Bits & 0xC0))
 				CPU.WantIRQ |= IRQ_FRAME;
 			Frame.Num = 0;
 			if (Frame.Bits & 0x80)
@@ -884,7 +883,7 @@ void	APU_Run (void)
 	}
 #else
 	int NewBufPos = SAMPLERATE * ++APU.Cycles / APU.MHz;
-	if (NewBufPos == SAMPLERATE)	// we've generated 1 second, so we can reset our counters now
+	if (NewBufPos == SAMPLERATE)	/* we've generated 1 second, so we can reset our counters now */
 		APU.Cycles = NewBufPos = 0;
 #endif
 	Frame_Run();

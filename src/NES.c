@@ -31,10 +31,10 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Controllers.h"
 
 struct tNES NES;
-unsigned char PRG_ROM[0x800][0x1000];	// 8192 KB
-unsigned char CHR_ROM[0x1000][0x400];	// 4096 KB
-unsigned char PRG_RAM[0x10][0x1000];	//   64 KB
-unsigned char CHR_RAM[0x20][0x400];	//   32 KB
+unsigned char PRG_ROM[0x800][0x1000];	/* 8192 KB */
+unsigned char CHR_ROM[0x1000][0x400];	/* 4096 KB */
+unsigned char PRG_RAM[0x10][0x1000];	/*   64 KB */
+unsigned char CHR_RAM[0x20][0x400];	/*   32 KB */
 
 void	NES_Init (void)
 {
@@ -274,7 +274,7 @@ const char *	NES_OpenFileUNIF (char *filename)
 		return "UNIF header signature not found!";
 	}
 
-	fseek(in,28,SEEK_CUR);	// skip "expansion area"
+	fseek(in,28,SEEK_CUR);	/* skip "expansion area" */
 
 	RI.Filename = strdup(filename);
 	RI.ROMType = ROM_UNIF;
@@ -447,7 +447,7 @@ const char *	NES_OpenFileFDS (char *filename)
 const char *	NES_OpenFileNSF (char *filename)
 {
 	FILE *in;
-	unsigned char Header[128];	//Header Bytes
+	unsigned char Header[128];	/* Header Bytes */
 	int ROMlen;
 
 	in = fopen(filename,"rb");
@@ -615,7 +615,7 @@ void	NES_SetCPUMode (int NewMode)
 	{
 		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
 		PPU.SLEndFrame = 262;
-		if (PPU.SLnum >= PPU.SLEndFrame)	// if we switched from PAL, scanline number could be invalid
+		if (PPU.SLnum >= PPU.SLEndFrame)	/* if we switched from PAL, scanline number could be invalid */
 			PPU.SLnum = PPU.SLEndFrame - 1;
 		GFX.WantFPS = 60;
 		GFX_LoadPalette(0);
@@ -978,7 +978,7 @@ void	NES_Reset (int ResetType)
 void	NES_Run (void)
 {
 #ifdef	CPU_BENCHMARK
-	// Run with cyctest.nes
+	/* Run with cyctest.nes */
 	int i;
 	char str[512];
 	LARGE_INTEGER ClockFreq;
@@ -1055,7 +1055,7 @@ rerun:
 
 	if (!NES.ROMLoaded)
 	{
-		NES.ROMLoaded = TRUE;	// so CloseFile() flushes the mapper
+		NES.ROMLoaded = TRUE;	/* so CloseFile() flushes the mapper */
 		NES_CloseFile();
 		return;
 	}
@@ -1076,7 +1076,7 @@ rerun:
 		NES.Stop = FALSE;
 		goto rerun;
 	}
-#endif	// CPU_BENCHMARK
+#endif	/* CPU_BENCHMARK */
 }
 
 void	NES_MapperConfig (void)
@@ -1099,7 +1099,7 @@ void	NES_LoadSettings (void)
 	unsigned long Size = 4;	unsigned long Type = REG_DWORD;
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
 
-	//Load Defaults
+	/* Load Defaults */
 	SizeMult = 1;
 	NES.SoundEnabled = 1;
 	GFX.aFSkip = 1;
@@ -1110,7 +1110,7 @@ void	NES_LoadSettings (void)
 	ZeroMemory(Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
 	Controllers.ExpPort.Type = 0;
 	ZeroMemory(Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
-	//End Defaults
+	/* End Defaults */
 
 	RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Nintendulator\\", 0, KEY_ALL_ACCESS, &SettingsBase);
 	RegQueryValueEx(SettingsBase,"SoundEnabled",0,&Type,(unsigned char *)&NES.SoundEnabled,&Size);

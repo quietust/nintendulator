@@ -137,25 +137,25 @@ typedef	struct	ROMInfo
 		struct
 		{
 			BYTE	INES_MapperNum;
-			BYTE	INES_Flags;	// byte 6 flags in lower 4 bits, byte 7 flags in upper 4 bits
-			BYTE	INES_PRGSize;	// number of 16KB banks
-			BYTE	INES_CHRSize;	// number of 8KB banks
-		};	// INES
+			BYTE	INES_Flags;	/* byte 6 flags in lower 4 bits, byte 7 flags in upper 4 bits */
+			BYTE	INES_PRGSize;	/* number of 16KB banks */
+			BYTE	INES_CHRSize;	/* number of 8KB banks */
+		};	/* INES */
 		struct
 		{
 			char *	UNIF_BoardName;
 			BYTE	UNIF_Mirroring;
-			BYTE	UNIF_NTSCPAL;	// 0 for NTSC, 1 for PAL, 2 for either
+			BYTE	UNIF_NTSCPAL;	/* 0 for NTSC, 1 for PAL, 2 for either */
 			BOOL	UNIF_Battery;
-			BYTE	UNIF_NumPRG;	// number of PRG# blocks
-			BYTE	UNIF_NumCHR;	// number of CHR# blocks
-			DWORD	UNIF_PRGSize[16];	// size of each PRG block, in bytes
-			DWORD	UNIF_CHRSize[16];	// size of each CHR block, in bytes
-		};	// UNIF
+			BYTE	UNIF_NumPRG;	/* number of PRG# blocks */
+			BYTE	UNIF_NumCHR;	/* number of CHR# blocks */
+			DWORD	UNIF_PRGSize[16];	/* size of each PRG block, in bytes */
+			DWORD	UNIF_CHRSize[16];	/* size of each CHR block, in bytes */
+		};	/* UNIF */
 		struct
 		{
 			BYTE	FDS_NumSides;
-		};	// FDS
+		};	/* FDS */
 		struct
 		{
 			BYTE	NSF_NumSongs;
@@ -165,17 +165,17 @@ typedef	struct	ROMInfo
 			char *	NSF_Title;
 			char *	NSF_Artist;
 			char *	NSF_Copyright;
-			WORD	NSF_NTSCSpeed;	// Number of microseconds between PLAY calls for NTSC
-			WORD	NSF_PALSpeed;	// Number of microseconds between PLAY calls for PAL
-			BYTE	NSF_NTSCPAL;	// 0 for NTSC, 1 for PAL, 2 for either
+			WORD	NSF_NTSCSpeed;	/* Number of microseconds between PLAY calls for NTSC */
+			WORD	NSF_PALSpeed;	/* Number of microseconds between PLAY calls for PAL */
+			BYTE	NSF_NTSCPAL;	/* 0 for NTSC, 1 for PAL, 2 for either */
 			BYTE	NSF_SoundChips;
 			BYTE	NSF_InitBanks[8];
-			DWORD	NSF_DataSize;	// total amount of (PRG) data present
-		};	// NSF
+			DWORD	NSF_DataSize;	/* total amount of (PRG) data present */
+		};	/* NSF */
 		struct
 		{
 			BYTE	reserved[256];
-		};	// reserved for additional file types
+		};	/* reserved for additional file types */
 	};
 }	TROMInfo, *PROMInfo;
 typedef	const	TROMInfo	CTROMInfo, *CPROMInfo;

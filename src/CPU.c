@@ -974,13 +974,13 @@ case 0xE3:AM_INX();  IN_UNK();break;case 0xF3:AM_INY();  IN_UNK();break;case 0xE
 	DPCM_Fetch();
 
 #ifndef NSFPLAYER
-	if (LastNMI) // CPU.WantNMI)
+	if (LastNMI)
 	{
 		DoNMI();
 		CPU.WantNMI = FALSE;
 	}
 	else
 #endif
-	if (LastIRQ)// CPU.WantIRQ && !CPU.FI && !LastFI)
+	if (LastIRQ)
 		DoIRQ();
 }

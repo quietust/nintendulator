@@ -39,7 +39,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include <stdlib.h>
 
 #define	ENABLE_DEBUGGER
-//#define	CPU_BENCHMARK
+/*#define	CPU_BENCHMARK */
 
 extern	HINSTANCE	hInst;	/* current instance */
 extern	HWND		mWnd;	/* main window */
