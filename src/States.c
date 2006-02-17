@@ -323,8 +323,17 @@ void	States_LoadState (void)
 				clen -= len;
 			}
 			else	clen = 1;	// ack! we shouldn't have a MAPR block here!
+			if (clen != 0)
+			{
+				clen = 0;	// need to handle this HERE and not below
+				SSOK = FALSE;	// since we didn't read past the end of the chunk
+			}
 		}
-		if (clen != 0)	SSOK = FALSE;
+		if (clen != 0)
+		{
+			SSOK = FALSE;		// too much, or too little
+			fseek(in,clen,SEEK_CUR);// seek back to the block boundary
+		}
 		if (flen > 0)
 		{
 			fread(&csig,1,4,in);	flen -= 4;
