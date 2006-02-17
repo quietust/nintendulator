@@ -477,9 +477,8 @@ void	Controllers_PlayMovie (void)
 
 		NES_Reset(RESET_HARD);
 		NES.Scanline = FALSE;
-		return;
 	}
-	if (!memcmp(buf,"NMV\x1A",4))
+	else if (!memcmp(buf,"NMV\x1A",4))
 	{
 		fread(&x,1,1,movie);
 		if (!(x & 0x01))
@@ -522,10 +521,16 @@ void	Controllers_PlayMovie (void)
 		fseek(movie,4,SEEK_CUR);	// skip re-record count
 		NES_Reset(RESET_HARD);
 		NES.Scanline = TRUE;	// read them 1 frame in advance
+	}
+	else
+	{
+		MessageBox(mWnd,"Invalid movie file selected!","Nintendulator",MB_OK);
+		fclose(movie);
 		return;
 	}
-	MessageBox(mWnd,"Invalid movie file selected!","Nintendulator",MB_OK);
-	fclose(movie);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_ENABLED);
 }
 
 void	Controllers_RecordMovie (void)
@@ -599,6 +604,9 @@ void	Controllers_RecordMovie (void)
 	NES_Reset(RESET_HARD);
 	NES.Scanline = FALSE;
 	ReRecords = 0;
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_ENABLED);
 }
 
 void	Controllers_StopMovie (void)
@@ -629,6 +637,9 @@ void	Controllers_StopMovie (void)
 		StdPort_SetControllerType(&Controllers.FSPort4,MOV_ControllerTypes[3]);
 	}
 	ExpPort_SetControllerType(&Controllers.ExpPort,MOV_ControllerTypes[4]);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_GRAYED);
 }
 
 void	Controllers_UpdateInput (void)
