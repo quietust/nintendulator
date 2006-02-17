@@ -196,7 +196,18 @@ void	States_SaveState (void)
 		clen = ftell(movie);
 		fwrite(&clen,1,4,out);	flen += 4;
 		rewind(movie);
-		for (; clen >= 0; clen--)
+		{
+			unsigned long tpl;
+			fread(&tpl,4,1,movie);
+			fwrite(&tpl,4,1,out);
+			fread(&tpl,4,1,movie);
+			fwrite(&tpl,4,1,out);
+			fread(&tps,2,1,movie);
+			fwrite(&tps,2,1,out);
+			fread(&tpl,4,1,movie);
+			fwrite(&ReRecords,4,1,out);
+		}
+		for (clen -= 14; clen > 0; clen--)
 		{
 			char tpc;
 			fread(&tpc,1,1,movie);
@@ -222,6 +233,11 @@ void	States_LoadState (void)
 	BOOL SSOK = TRUE;
 
 	States.NeedLoad = FALSE;
+	if (Controllers.MovieMode & MOV_PLAY)
+	{
+		GFX_ShowText("Cannot load state while playing movie!");
+		return;
+	}
 
 	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
 	in = fopen(tpchr,"rb");
@@ -351,16 +367,28 @@ void	States_LoadState (void)
 			{	// are we recording?
 				extern char MovieName[256];
 				extern int ReRecords;
-				ReRecords++;
 				fclose(movie);
 				movie = fopen(MovieName,"wb");
-				for (; clen >= 0; clen--)
+				{
+					unsigned long tpl;
+					fread(&tpl,4,1,in);
+					fwrite(&tpl,4,1,movie);
+					fread(&tpl,4,1,in);
+					fwrite(&tpl,4,1,movie);
+					fread(&tps,2,1,in);
+					fwrite(&tps,2,1,movie);
+					fread(&tpl,4,1,in);
+					if (ReRecords < tpl)
+						ReRecords = tpl;
+					fwrite(&tpl,4,1,movie);
+				}
+				ReRecords++;
+				for (clen -= 14; clen > 0; clen--)
 				{
 					char tpc;
 					fread(&tpc,1,1,in);
 					fwrite(&tpc,1,1,movie);
 				}
-				clen++;
 			}
 			else
 			{	// nope, skip it
