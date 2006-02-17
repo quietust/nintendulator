@@ -26,6 +26,8 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "PPU.h"
 #include "AVI.h"
 #include <math.h>
+#include <commdlg.h>
+#include <commctrl.h>
 
 struct tGFX GFX;
 
@@ -71,7 +73,10 @@ void	GFX_Init (void)
 	GFX.Depth = 0;
 	GFX.ClockFreq.QuadPart = 0;
 	GFX.LastClockVal.QuadPart = 0;
-	GFX.PaletteNum = 0;
+	GFX.PaletteNTSC = 0;
+	GFX.PalettePAL = 1;
+	GFX.NTSChue = 330;
+	GFX.NTSCtint = 50;
 	GFX_Create();
 }
 
@@ -188,7 +193,7 @@ void	GFX_Create (void)
 	}
 #endif
 	GFX_Update();
-	GFX_LoadPalette(GFX.PaletteNum);
+	GFX_LoadPalette(PPU.IsPAL ? GFX.PalettePAL : GFX.PaletteNTSC);
 }
 
 void	GFX_Release (void)
@@ -301,7 +306,7 @@ void	GFX_Repaint (void)
 	}
 }
 
-static unsigned char cPalette[3][64][3] = {
+static unsigned char cPalette[5][64][3] = {
 	{	/* NTSC (generated) */
 		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
 		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
@@ -322,7 +327,27 @@ static unsigned char cPalette[3][64][3] = {
 		{0xFF,0xFF,0xFF},{0xBE,0xF2,0xFF},{0xB8,0xB8,0xF8},{0xD8,0xB8,0xF8},{0xFF,0xB6,0xFF},{0xFF,0xC3,0xFF},{0xFF,0xD1,0xC7},{0xFF,0xE6,0xC8},
 		{0xF8,0xED,0x88},{0xDD,0xFF,0x83},{0xB8,0xF8,0xB8},{0xD7,0xF8,0xF5},{0xC5,0xFF,0xFF},{0xF8,0xD8,0xF8},{0x00,0x00,0x00},{0x00,0x00,0x00}
 	},
+	{	/* RGB (hardcoded) */
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00}
+	},
 	{	/* Custom (loaded from file) */
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
+		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00}
+	},
+	{	/* Temporary (used in config) */
 		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
 		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
 		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
@@ -334,7 +359,7 @@ static unsigned char cPalette[3][64][3] = {
 	}
 };
 
-void	GFX_GenerateNTSC (int hue, double tint)
+void	GFX_GenerateNTSC (int hue, int tint, BOOL config)
 {
 	const int chroma[0x10] = {0,240,210,180,150,120,90,60,30,0,330,300,270,0,0,0};
 	const double brightness[3][4] = {{0.50,0.75,1.00,1.00},{0.29,0.45,0.73,0.90},{0.00,0.24,0.47,0.77}};
@@ -347,7 +372,8 @@ void	GFX_GenerateNTSC (int hue, double tint)
 		{
 			double s, y, r, g, b, theta;
 			unsigned char ir, ig, ib;
-			s = tint;
+			int p = config ? 4 : 0;
+			s = tint / 100.0;
 			if ((z < 1) || (z > 12))
 				s = 0;
 			if (z == 0)
@@ -372,11 +398,35 @@ void	GFX_GenerateNTSC (int hue, double tint)
 			ig = (unsigned char)CLIP(g,0,255);
 			ib = (unsigned char)CLIP(b,0,255);
 #undef CLIP
-			cPalette[0][(x << 4) | z][0] = ir;
-			cPalette[0][(x << 4) | z][1] = ig;
-			cPalette[0][(x << 4) | z][2] = ib;
+			cPalette[p][(x << 4) | z][0] = ir;
+			cPalette[p][(x << 4) | z][1] = ig;
+			cPalette[p][(x << 4) | z][2] = ib;
 		}
 	}
+}
+
+BOOL	GFX_ImportPalette (char *filename, BOOL config)
+{
+	int p = config ? 4 : 3;
+	int i;
+	FILE *pal = fopen(filename,"rb");
+	if (!pal)
+		return FALSE;
+	fseek(pal,0xC0,SEEK_SET);
+	if (ftell(pal) != 0xC0)
+	{
+		fclose(pal);
+		return FALSE;
+	}
+	fseek(pal,0,SEEK_SET);
+	for (i = 0; i < 64; i++)
+	{
+		fread(&cPalette[p][i][0],1,1,pal);
+		fread(&cPalette[p][i][1],1,1,pal);
+		fread(&cPalette[p][i][2],1,1,pal);
+	}
+	fclose(pal);
+	return TRUE;
 }
 
 void	GFX_LoadPalette (int PalNum)
@@ -395,7 +445,17 @@ void	GFX_LoadPalette (int PalNum)
 	unsigned int RV, GV, BV;
 	int i;
 	if (PalNum == 0)
-		GFX_GenerateNTSC(340,0.5);
+		GFX_GenerateNTSC(GFX.NTSChue,GFX.NTSCtint,FALSE);
+	if (PalNum == 3)
+	{
+		if (!GFX_ImportPalette(PPU.IsPAL ? GFX.CustPalettePAL : GFX.CustPaletteNTSC,FALSE))
+		{
+			MessageBox(mWnd,"Unable to load the specified palette! Reverting to default!","Nintendulator",MB_OK | MB_ICONERROR);
+			if (PPU.IsPAL)
+				GFX.PalettePAL = PalNum = 1;
+			else	GFX.PaletteNTSC = PalNum = 0;
+		}
+	}
 	for (i = 0; i < 0x200; i++)
 	{
 		RV = (unsigned int)((cPalette[PalNum][i & 0x3F][0] & 0xFF) * EmphChanges[i >> 6][0]);
@@ -446,4 +506,152 @@ void	GFX_UpdateTitlebar (void)
 		strcat(titlebar,GFX.TextDisp);
 	}
 	SetWindowText(mWnd,titlebar);
+}
+
+void	UpdatePalette (HWND hDlg, int pal)
+{
+	const int PalEntries[64] = {
+		IDC_PAL_00,IDC_PAL_01,IDC_PAL_02,IDC_PAL_03,IDC_PAL_04,IDC_PAL_05,IDC_PAL_06,IDC_PAL_07,IDC_PAL_08,IDC_PAL_09,IDC_PAL_0A,IDC_PAL_0B,IDC_PAL_0C,IDC_PAL_0D,IDC_PAL_0E,IDC_PAL_0F,
+		IDC_PAL_10,IDC_PAL_11,IDC_PAL_12,IDC_PAL_13,IDC_PAL_14,IDC_PAL_15,IDC_PAL_16,IDC_PAL_17,IDC_PAL_18,IDC_PAL_19,IDC_PAL_1A,IDC_PAL_1B,IDC_PAL_1C,IDC_PAL_1D,IDC_PAL_1E,IDC_PAL_1F,
+		IDC_PAL_20,IDC_PAL_21,IDC_PAL_22,IDC_PAL_23,IDC_PAL_24,IDC_PAL_25,IDC_PAL_26,IDC_PAL_27,IDC_PAL_28,IDC_PAL_29,IDC_PAL_2A,IDC_PAL_2B,IDC_PAL_2C,IDC_PAL_2D,IDC_PAL_2E,IDC_PAL_2F,
+		IDC_PAL_30,IDC_PAL_31,IDC_PAL_32,IDC_PAL_33,IDC_PAL_34,IDC_PAL_35,IDC_PAL_36,IDC_PAL_37,IDC_PAL_38,IDC_PAL_39,IDC_PAL_3A,IDC_PAL_3B,IDC_PAL_3C,IDC_PAL_3D,IDC_PAL_3E,IDC_PAL_3F
+	};
+	EnableWindow(GetDlgItem(hDlg,IDC_PAL_HUESLIDER),(pal == 0));
+	EnableWindow(GetDlgItem(hDlg,IDC_PAL_HUE),(pal == 0));
+	EnableWindow(GetDlgItem(hDlg,IDC_PAL_TINTSLIDER),(pal == 0));
+	EnableWindow(GetDlgItem(hDlg,IDC_PAL_TINT),(pal == 0));
+	EnableWindow(GetDlgItem(hDlg,IDC_PAL_CUSTFILE),(pal == 3));
+	EnableWindow(GetDlgItem(hDlg,IDC_PAL_BROWSE),(pal == 3));
+
+//	for (i = 0; i < 64; i++)
+//		SetPixel(GetDC(GetDlgItem(hDlg,PalEntries[i])),0,0,cPalette[4][i][0] | (cPalette[4][i][1] << 8) | (cPalette[4][i][2] << 16));
+}
+
+LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	const int paltable[4] = {IDC_PAL_NTSC,IDC_PAL_PAL,IDC_PAL_RGB,IDC_PAL_CUSTOM};
+
+	int wmId, wmEvent;
+	char filename[256];
+	OPENFILENAME ofn;
+
+	static BOOL ispal;
+	static int hue, tint, pal;
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		ispal = PPU.IsPAL;
+		hue = GFX.NTSChue;
+		tint = GFX.NTSCtint;
+		pal = ispal ? GFX.PalettePAL : GFX.PaletteNTSC;
+		if (pal == 0)
+			GFX_GenerateNTSC(hue,tint,TRUE);
+		else	memcpy(cPalette[4],cPalette[pal],64*3);
+		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETRANGE,FALSE,MAKELONG(300,360));
+		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETTICFREQ,5,0);
+		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETPOS,TRUE,hue);
+		SetDlgItemInt(hDlg,IDC_PAL_HUE,hue,FALSE);
+		SendDlgItemMessage(hDlg,IDC_PAL_TINTSLIDER,TBM_SETRANGE,FALSE,MAKELONG(10,90));
+		SendDlgItemMessage(hDlg,IDC_PAL_TINTSLIDER,TBM_SETTICFREQ,5,0);
+		SendDlgItemMessage(hDlg,IDC_PAL_TINTSLIDER,TBM_SETPOS,TRUE,tint);
+		SetDlgItemInt(hDlg,IDC_PAL_TINT,tint,FALSE);
+		SetDlgItemText(hDlg,IDC_PAL_CUSTFILE,ispal ? GFX.CustPalettePAL : GFX.CustPaletteNTSC);
+		CheckRadioButton(hDlg,IDC_PAL_NTSC,IDC_PAL_CUSTOM,paltable[pal]);
+		UpdatePalette(hDlg,pal);
+		break;
+	case WM_COMMAND:
+		wmId    = LOWORD(wParam); 
+		wmEvent = HIWORD(wParam); 
+		switch (wmId)
+		{
+		case IDC_PAL_NTSC:
+			pal = 0;
+			GFX_GenerateNTSC(hue,tint,TRUE);
+			UpdatePalette(hDlg,pal);
+			break;
+		case IDC_PAL_PAL:
+			pal = 1;
+			memcpy(cPalette[4],cPalette[pal],64*3);
+			UpdatePalette(hDlg,pal);
+			break;
+		case IDC_PAL_RGB:
+			pal = 2;
+			memcpy(cPalette[4],cPalette[pal],64*3);
+			UpdatePalette(hDlg,pal);
+			break;
+		case IDC_PAL_CUSTOM:
+			GetDlgItemText(hDlg,IDC_PAL_CUSTFILE,filename,256);
+			if (GFX_ImportPalette(filename,TRUE))
+				pal = 3;
+			UpdatePalette(hDlg,pal);
+			break;
+		case IDC_PAL_BROWSE:
+			filename[0] = 0;
+			ZeroMemory(&ofn,sizeof(ofn));
+			ofn.lStructSize = sizeof(ofn);
+			ofn.hwndOwner = hDlg;
+			ofn.hInstance = hInst;
+			ofn.lpstrFilter = "Palette file (*.PAL)\0" "*.PAL\0" "\0";
+			ofn.lpstrCustomFilter = NULL;
+			ofn.nFilterIndex = 1;
+			ofn.lpstrFile = filename;
+			ofn.nMaxFile = 256;
+			ofn.lpstrFileTitle = NULL;
+			ofn.nMaxFileTitle = 0;
+			ofn.lpstrInitialDir = "";
+			ofn.Flags = OFN_FILEMUSTEXIST;
+			ofn.lpstrDefExt = NULL;
+			ofn.lCustData = 0;
+			ofn.lpfnHook = NULL;
+			ofn.lpTemplateName = NULL;
+			if (GetOpenFileName(&ofn))
+			{
+				if (GFX_ImportPalette(filename,TRUE))
+				{
+					pal = 3;
+					SetDlgItemText(hDlg,IDC_PAL_CUSTFILE,filename);
+					UpdatePalette(hDlg,pal);
+				}
+				else	MessageBox(hDlg,"Selected file is not a valid palette!","Nintendulator",MB_OK | MB_ICONERROR);
+			}
+			break;
+		case IDOK:
+			if (pal == 0)
+			{
+				GFX.NTSChue = hue;
+				GFX.NTSCtint = tint;
+			}
+			if (pal == 3)
+				GetDlgItemText(hDlg,IDC_PAL_CUSTFILE,ispal ? GFX.CustPalettePAL : GFX.CustPaletteNTSC,256);
+			if (ispal)
+				GFX.PalettePAL = pal;
+			else	GFX.PaletteNTSC = pal;
+			GFX_LoadPalette(pal);
+		case IDCANCEL:
+			EndDialog(hDlg,0);
+			break;
+		};
+		break;
+	case WM_HSCROLL:
+		if (lParam == (LPARAM)GetDlgItem(hDlg,IDC_PAL_HUESLIDER))
+		{
+			hue = SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_GETPOS,0,0);
+			SetDlgItemInt(hDlg,IDC_PAL_HUE,hue,FALSE);
+			GFX_GenerateNTSC(hue,tint,TRUE);
+		}
+		if (lParam == (LPARAM)GetDlgItem(hDlg,IDC_PAL_TINTSLIDER))
+		{
+			tint = SendDlgItemMessage(hDlg,IDC_PAL_TINTSLIDER,TBM_GETPOS,0,0);
+			SetDlgItemInt(hDlg,IDC_PAL_TINT,tint,FALSE);
+			GFX_GenerateNTSC(hue,tint,TRUE);
+		}
+		break;
+	}
+
+	return FALSE;
+}
+void	GFX_PaletteConfig (void)
+{
+	DialogBox(hInst,(LPCTSTR)IDD_PALETTE,mWnd,PaletteConfigProc);
 }

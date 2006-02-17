@@ -33,7 +33,7 @@ struct tGFX
 
 	char TextDisp[256];
 	int ShowTextCounter;
-		
+
 	void *DrawArray;
 
 	LARGE_INTEGER ClockFreq;
@@ -45,8 +45,10 @@ struct tGFX
 	int WantFPS;
 	int aFPScnt, aFPSnum;
 
-	int PaletteNum;
-		
+	int PaletteNTSC, PalettePAL;
+	int NTSChue, NTSCtint;
+	char CustPaletteNTSC[256], CustPalettePAL[256];
+
 	LPDIRECTDRAW7		DirectDraw;
 	LPDIRECTDRAWSURFACE7	PrimarySurf, SecondarySurf;
 	LPDIRECTDRAWCLIPPER	Clipper;
@@ -66,5 +68,6 @@ void	GFX_LoadPalette (int PalNum);
 void	GFX_SetFrameskip (void);
 void	__cdecl	GFX_ShowText (char *, ...);
 void	GFX_UpdateTitlebar (void);
+void	GFX_PaletteConfig (void);
 
 #endif /* GFX_H */

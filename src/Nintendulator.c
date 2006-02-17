@@ -488,6 +488,9 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			NES_SetCPUMode(1);
 			CheckMenuRadioItem(MyMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
 			break;
+		case ID_PPU_PALETTE:
+			GFX_PaletteConfig();
+			break;
 		case ID_INPUT_SETUP:
 			Controllers_OpenConfig();
 			break;

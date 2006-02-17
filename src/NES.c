@@ -645,7 +645,7 @@ void	NES_SetCPUMode (int NewMode)
 		if (PPU.SLnum >= PPU.SLEndFrame - 1)	/* if we switched from PAL, scanline number could be invalid */
 			PPU.SLnum = PPU.SLEndFrame - 2;
 		GFX.WantFPS = 60;
-		GFX_LoadPalette(0);
+		GFX_LoadPalette(GFX.PaletteNTSC);
 		APU_SetFPS(60);
 		PPU.IsPAL = FALSE;
 		EI.DbgOut("Emulation switched to NTSC");
@@ -655,7 +655,7 @@ void	NES_SetCPUMode (int NewMode)
 		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
 		PPU.SLEndFrame = 312;
 		GFX.WantFPS = 50;
-		GFX_LoadPalette(1);
+		GFX_LoadPalette(GFX.PalettePAL);
 		APU_SetFPS(50);
 		PPU.IsPAL = TRUE;
 		EI.DbgOut("Emulation switched to PAL");
@@ -878,7 +878,7 @@ void	NES_LoadSettings (void)
 {
 	HMENU hMenu = GetMenu(mWnd);
 	HKEY SettingsBase;
-	unsigned long Size = 4;	unsigned long Type = REG_DWORD;
+	unsigned long Size;	unsigned long Type;
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
 	int PosX, PosY;
 
@@ -887,6 +887,11 @@ void	NES_LoadSettings (void)
 	NES.SoundEnabled = 1;
 	GFX.aFSkip = 1;
 	GFX.FSkip = 0;
+	GFX.PaletteNTSC = 0;
+	GFX.PalettePAL = 1;
+	GFX.NTSChue = 340;
+	GFX.NTSCtint = 30;
+	GFX.CustPaletteNTSC[0] = GFX.CustPalettePAL[0] = 0;
 	Controllers.Port1.Type = 0;
 	ZeroMemory(Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
 	Controllers.Port2.Type = 0;
@@ -896,6 +901,7 @@ void	NES_LoadSettings (void)
 	/* End Defaults */
 
 	RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Nintendulator\\", 0, KEY_ALL_ACCESS, &SettingsBase);
+	Size = 4;
 	RegQueryValueEx(SettingsBase,"SoundEnabled",0,&Type,(unsigned char *)&NES.SoundEnabled,&Size);
 	RegQueryValueEx(SettingsBase,"SizeMult"    ,0,&Type,(unsigned char *)&SizeMult   ,&Size);
 	RegQueryValueEx(SettingsBase,"FSkip"       ,0,&Type,(unsigned char *)&GFX.FSkip  ,&Size);
@@ -905,6 +911,16 @@ void	NES_LoadSettings (void)
 	RegQueryValueEx(SettingsBase,"PosX"        ,0,&Type,(unsigned char *)&PosX       ,&Size);
 	RegQueryValueEx(SettingsBase,"PosY"        ,0,&Type,(unsigned char *)&PosY       ,&Size);
 
+	RegQueryValueEx(SettingsBase,"PaletteNTSC" ,0,&Type,(unsigned char *)&GFX.PaletteNTSC,&Size);
+	RegQueryValueEx(SettingsBase,"PalettePAL"  ,0,&Type,(unsigned char *)&GFX.PalettePAL ,&Size);
+	RegQueryValueEx(SettingsBase,"NTSChue"     ,0,&Type,(unsigned char *)&GFX.NTSChue    ,&Size);
+	RegQueryValueEx(SettingsBase,"NTSCtint"    ,0,&Type,(unsigned char *)&GFX.NTSCtint   ,&Size);
+
+	Size = 256;
+	RegQueryValueEx(SettingsBase,"CustPaletteNTSC",0,&Type,(unsigned char *)&GFX.CustPaletteNTSC,&Size);
+	RegQueryValueEx(SettingsBase,"CustPalettePAL" ,0,&Type,(unsigned char *)&GFX.CustPalettePAL ,&Size);
+
+	Size = 4;
 	RegQueryValueEx(SettingsBase,"Port1T"  ,0,&Type,(unsigned char *)&Port1T  ,&Size);
 	RegQueryValueEx(SettingsBase,"Port2T"  ,0,&Type,(unsigned char *)&Port2T  ,&Size);
 	RegQueryValueEx(SettingsBase,"FSPort1T",0,&Type,(unsigned char *)&FSPort1T,&Size);
@@ -912,7 +928,6 @@ void	NES_LoadSettings (void)
 	RegQueryValueEx(SettingsBase,"FSPort3T",0,&Type,(unsigned char *)&FSPort3T,&Size);
 	RegQueryValueEx(SettingsBase,"FSPort4T",0,&Type,(unsigned char *)&FSPort4T,&Size);
 	RegQueryValueEx(SettingsBase,"ExpPortT",0,&Type,(unsigned char *)&ExpPortT,&Size);
-
 
 	if ((Port1T == STD_POWERPAD) || (Port2T == STD_POWERPAD))
 		StdPort_SetControllerType(&Controllers.Port1,STD_POWERPAD);
@@ -927,7 +942,6 @@ void	NES_LoadSettings (void)
 	StdPort_SetControllerType(&Controllers.FSPort4,FSPort4T);
 	ExpPort_SetControllerType(&Controllers.ExpPort,ExpPortT);
 
-	Type = REG_BINARY;
 	Size = sizeof(Controllers.Port1.Buttons);
 	RegQueryValueEx(SettingsBase,"Port1D"  ,0,&Type,(unsigned char *)Controllers.Port1.Buttons  ,&Size);
 	RegQueryValueEx(SettingsBase,"Port2D"  ,0,&Type,(unsigned char *)Controllers.Port2.Buttons  ,&Size);
@@ -987,6 +1001,15 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,"AutoRun"     ,0,REG_DWORD,(unsigned char *)&NES.AutoRun     ,4);
 	RegSetValueEx(SettingsBase,"PosX"        ,0,REG_DWORD,(unsigned char *)&wRect.left      ,4);
 	RegSetValueEx(SettingsBase,"PosY"        ,0,REG_DWORD,(unsigned char *)&wRect.top       ,4);
+
+	RegSetValueEx(SettingsBase,"PaletteNTSC" ,0,REG_DWORD,(unsigned char *)&GFX.PaletteNTSC ,4);
+	RegSetValueEx(SettingsBase,"PalettePAL"  ,0,REG_DWORD,(unsigned char *)&GFX.PalettePAL  ,4);
+	RegSetValueEx(SettingsBase,"NTSChue"     ,0,REG_DWORD,(unsigned char *)&GFX.NTSChue     ,4);
+	RegSetValueEx(SettingsBase,"NTSCtint"    ,0,REG_DWORD,(unsigned char *)&GFX.NTSCtint    ,4);
+
+	RegSetValueEx(SettingsBase,"CustPaletteNTSC",0,REG_SZ,(unsigned char *)GFX.CustPaletteNTSC,sizeof(GFX.CustPaletteNTSC));
+	RegSetValueEx(SettingsBase,"CustPalettePAL" ,0,REG_SZ,(unsigned char *)GFX.CustPalettePAL ,sizeof(GFX.CustPalettePAL));
+
 
 	RegSetValueEx(SettingsBase,"Port1T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port1.Type  ,sizeof(Controllers.Port1.Type));
 	RegSetValueEx(SettingsBase,"Port2T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port2.Type  ,sizeof(Controllers.Port2.Type));
