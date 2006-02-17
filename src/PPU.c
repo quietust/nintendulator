@@ -954,9 +954,18 @@ static	int	__fastcall	Read2 (void)
 
 static	int	__fastcall	Read4 (void)
 {
-	if (PPU.IsRendering && PPU.Clockticks < 256)
-		return PPU.ppuLatch = 0xFF;
-	return PPU.ppuLatch = PPU.Sprite[PPU.SprAddr];
+	if (PPU.IsRendering)
+	{
+		if (PPU.Clockticks < 64)
+			PPU.ppuLatch = 0xFF;
+		else if (PPU.Clockticks < 192)
+			PPU.ppuLatch = PPU.Sprite[((PPU.Clockticks - 64) << 1) & 0xFC];
+		else if (PPU.Clockticks < 256)
+			PPU.ppuLatch = (PPU.Clockticks & 1) ? PPU.Sprite[0xFC] : PPU.Sprite[((PPU.Clockticks - 192) << 1) & 0xFC];
+		else	PPU.ppuLatch = 0xFF;
+	}
+	else	PPU.ppuLatch = PPU.Sprite[PPU.SprAddr];
+	return PPU.ppuLatch;
 }
 
 static	int	__fastcall	Read7 (void)
