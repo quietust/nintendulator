@@ -212,9 +212,10 @@ void	_MAPINT	GenieWrite (int Bank, int Addy, int Val)
 	switch (Addy)
 	{
 	case 0:	if (Val & 1)
-			Genie.CodeStat = Val ^ 0x7F;
+			Genie.CodeStat = 0x80 | (Val ^ 0x7E);
 		else
 		{
+			Genie.CodeStat &= 0x7F;
 			EI.SetCHR_RAM8(0,0);
 			EI.Mirror_4();
 			for (i = 0x8; i < 0x10; i++)
@@ -269,7 +270,7 @@ void	Genie_Reset (void)
 	Genie.Code1A = Genie.Code2A = Genie.Code3A = 0;
 	Genie.Code1O = Genie.Code2O = Genie.Code3O = 0;
 	Genie.Code1V = Genie.Code2V = Genie.Code3V = 0;
-	Genie.CodeStat = 0;
+	Genie.CodeStat = 0x80;
 	for (i = 0x8; i < 0x10; i++)
 	{
 		CPU.Readable[i] = TRUE;
@@ -339,8 +340,10 @@ int	Genie_Load (FILE *in)
 	fread(&val,1,1,in);	clen++;		Genie.Code3O = val;
 	fread(&val,1,1,in);	clen++;		Genie.Code3V = val;
 
-	Genie_Init();
-	if ((MI) && (MI->Reset))// need to reinit the mapper here
-		MI->Reset(1);	// so it can re-get the read handler for 8000-FFFF
+	if ((MI) && (MI->Shutdown))
+		MI->Shutdown();	// shut down the mapper
+	Genie_Init();		// reset the I/O handlers
+	if ((MI) && (MI->Reset))
+		MI->Reset(1);	// and then start the mapper up again; we'll load its state momentarily
 	return clen;
 }

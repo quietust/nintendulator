@@ -232,6 +232,13 @@ void	States_SaveState (void)
 	FILE *out;
 
 	States.NeedSave = FALSE;
+
+	if (Genie.CodeStat & 0x80)
+	{
+		GFX_ShowText("Cannot save state at the Game Genie code entry screen!");
+		return;
+	}
+
 	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
 	out = fopen(tpchr,"w+b");
 	flen = 0;

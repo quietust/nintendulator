@@ -677,6 +677,8 @@ void	NES_Reset (int ResetType)
 	CPU.ReadHandler[2] = PPU_IntRead;	CPU.WriteHandler[2] = PPU_IntWrite;
 	CPU.ReadHandler[3] = PPU_IntRead;	CPU.WriteHandler[3] = PPU_IntWrite;
 	CPU.ReadHandler[4] = CPU_Read4k;	CPU.WriteHandler[4] = CPU_Write4k;
+	if (!NES.GameGenie)
+		Genie.CodeStat = 0;
 	for (i = 0x0; i < 0x8; i++)
 	{
 		PPU.ReadHandler[i] = PPU_BusRead;
@@ -729,7 +731,7 @@ void	NES_Reset (int ResetType)
 		EI.SetCHR_RAM8(0,0);
 		EI.Mirror_4();
 		if ((NES.GameGenie) && (Genie.CodeStat & 1))
-			Genie_Init();
+			Genie_Init();	// Set up the PRG read handlers BEFORE resetting the mapper
 		if ((MI) && (MI->Reset))
 			MI->Reset(0);
 		break;
