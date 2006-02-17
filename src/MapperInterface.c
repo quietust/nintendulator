@@ -602,14 +602,14 @@ void	MapperInterface_UnloadMapper (void)
 			MI->Unload();
 		MI = NULL;
 	}
-#ifndef	NSFPLAYER
 	if (DI)
 	{
 		if (DI->UnloadMapper)
 			DI->UnloadMapper();
+#ifndef	NSFPLAYER
 		DI = NULL;
-	}
 #endif
+	}
 }
 
 void	MapperInterface_Release (void)
@@ -625,14 +625,7 @@ void	MapperInterface_Release (void)
 		ThisDLL = MapperDLLs;
 	}
 #else
-	if (!MI)
-		return;
-	if (DI)
-	{
-		if (DI->UnloadMapper)
-			DI->UnloadMapper();
-		DI = NULL;
-	}
+	DI = NULL;
 	UnloadDLL();
 	FreeLibrary(dInst);
 #endif

@@ -184,6 +184,8 @@ int play(char *fn)
 		RI.ROMType = 0;
 		return 1;	// couldn't load mapper!
 	}
+	if (MI->Load)
+		MI->Load();
 
 	NES_Reset();	// NSF loaded successfully, reset the NES
 			// and start it running
