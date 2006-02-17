@@ -369,7 +369,7 @@ void	States_LoadState (void)
 				extern char MovieName[256];
 				extern int ReRecords;
 				fclose(movie);
-				movie = fopen(MovieName,"wb");
+				movie = fopen(MovieName,"w+b");
 				{
 					unsigned long tpl;
 					fread(&tpl,4,1,in);
