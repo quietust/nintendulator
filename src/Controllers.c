@@ -205,6 +205,11 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 }
 void	Controllers_OpenConfig (void)
 {
+	if (Controllers.MovieMode)
+	{
+		MessageBox(mWnd,"Controller configuration is not available during movie recording/playback!","Nintendulator",MB_OK | MB_ICONERROR);
+		return;
+	}
 	DialogBox(hInst,(LPCTSTR)IDD_CONTROLLERS,mWnd,ControllerProc);
 	Controllers_SetDeviceUsed();
 }
@@ -479,7 +484,6 @@ void	Controllers_PlayMovie (void)
 		fseek(movie,0x90,SEEK_SET);
 
 		NES_Reset(RESET_HARD);
-		NES.Scanline = FALSE;
 	}
 	else if (!memcmp(buf,"NMV\x1A",4))
 	{
@@ -523,7 +527,6 @@ void	Controllers_PlayMovie (void)
 		}
 		fseek(movie,4,SEEK_CUR);	// skip re-record count
 		NES_Reset(RESET_HARD);
-		NES.Scanline = TRUE;	// read them 1 frame in advance
 	}
 	else
 	{
@@ -534,6 +537,12 @@ void	Controllers_PlayMovie (void)
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_ENABLED);
+	if (Controllers.Port1.MovLen)
+		memset(Controllers.Port1.MovData,0,Controllers.Port1.MovLen);
+	if (Controllers.Port2.MovLen)
+		memset(Controllers.Port2.MovData,0,Controllers.Port2.MovLen);
+	if (Controllers.ExpPort.MovLen)
+		memset(Controllers.ExpPort.MovData,0,Controllers.ExpPort.MovLen);
 }
 
 void	Controllers_RecordMovie (void)
@@ -568,13 +577,13 @@ void	Controllers_RecordMovie (void)
 	if (!GetSaveFileName(&ofn))
 		return;
 
-	Controllers.MovieMode = MOV_RECORD;
-
 	movie = fopen(MovieName,"w+b");
 	fwrite("NMV\x1A",1,4,movie);
 	x = 0;
 	if (1)	// record from reset
 		x |= 0x01;
+	Controllers_OpenConfig();		// Allow user to choose the desired controllers
+	Controllers.MovieMode = MOV_RECORD;	// ...and lock it out until the movie ends
 	if (Controllers.Port1.Type == STD_FOURSCORE)
 		x |= 0x02;
 	fwrite(&x,1,1,movie);
