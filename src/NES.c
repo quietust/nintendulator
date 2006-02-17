@@ -922,7 +922,7 @@ rerun:
 
 void	NES_MapperConfig (void)
 {
-	MI->Config(CFG_WINDOW,0);
+	MI->Config(CFG_WINDOW,TRUE);
 }
 
 void	NES_UpdateInterface (void)
