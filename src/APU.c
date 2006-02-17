@@ -763,7 +763,6 @@ void	APU_Release (void)
 		IDirectSoundBuffer_Release(APU.PrimaryBuffer);
 	}								APU.PrimaryBuffer = NULL;
 	if (APU.DirectSound)	IDirectSound_Release(APU.DirectSound);	APU.DirectSound = NULL;
-	if (APU.buffer)		free(APU.buffer);			APU.buffer = NULL;
 #endif
 }
 

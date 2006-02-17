@@ -72,6 +72,8 @@ void	NES_Release (void)
 	if (NES.ROMLoaded)
 		NES_CloseFile();
 	APU_Release();
+	if (APU.buffer)
+		free(APU.buffer);
 	GFX_Release();
 	Controllers_Release();
 	MapperInterface_Release();
