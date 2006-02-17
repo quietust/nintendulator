@@ -673,20 +673,28 @@ BEGIN
     PUSHBUTTON      "",IDC_CONT_K11,172,240,64,12
 END
 
-IDD_PALETTE DIALOG  0, 0, 216, 177
+IDD_PALETTE DIALOGEX 0, 0, 216, 177
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Palette Configuration"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     GROUPBOX        "Palette",IDC_STATIC,4,4,208,76
     CONTROL         "&NTSC",IDC_PAL_NTSC,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP,12,16,44,12
     CONTROL         "&PAL",IDC_PAL_PAL,"Button",BS_AUTORADIOBUTTON,12,32,44,
                     12
-    CONTROL         "&RGB",IDC_PAL_RGB,"Button",BS_AUTORADIOBUTTON,12,48,44,
+    CONTROL         "&RGB",IDC_PAL_PC10,"Button",BS_AUTORADIOBUTTON,12,48,44,
                     12
-    CONTROL         "&Custom...",IDC_PAL_CUSTOM,"Button",BS_AUTORADIOBUTTON,
-                    12,64,44,12
+    CONTROL         "VS (&1)",IDC_PAL_VS1,"Button",BS_AUTORADIOBUTTON,60,48,
+                    36,12
+    CONTROL         "VS (&2)",IDC_PAL_VS2,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,96,48,36,12
+    CONTROL         "VS (&3)",IDC_PAL_VS3,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,132,48,36,12
+    CONTROL         "VS (&4)",IDC_PAL_VS4,"Button",BS_AUTORADIOBUTTON | 
+                    WS_DISABLED,168,48,36,12
+    CONTROL         "&Custom...",IDC_PAL_EXT,"Button",BS_AUTORADIOBUTTON,12,
+                    64,44,12
     RTEXT           "&Hue:",IDC_STATIC,60,16,20,12,SS_CENTERIMAGE
     CONTROL         "Hue",IDC_PAL_HUESLIDER,"msctls_trackbar32",
                     TBS_AUTOTICKS | WS_TABSTOP,84,16,96,12
@@ -695,7 +703,7 @@ BEGIN
     CONTROL         "Saturation",IDC_PAL_SATSLIDER,"msctls_trackbar32",
                     TBS_AUTOTICKS | WS_TABSTOP,84,32,96,12
     EDITTEXT        IDC_PAL_SAT,184,32,20,12,ES_READONLY | ES_NUMBER
-    EDITTEXT        IDC_PAL_CUSTFILE,60,64,104,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_PAL_EXTFILE,60,64,104,12,ES_AUTOHSCROLL
     PUSHBUTTON      "&Browse",IDC_PAL_BROWSE,168,64,36,12
     GROUPBOX        "Preview",IDC_STATIC,4,84,208,68
     CONTROL         "",IDC_PAL_00,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,12,
