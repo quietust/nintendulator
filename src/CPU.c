@@ -199,6 +199,7 @@ void	CPU_Reset (void)
 	CPU.PCH = CPU_MemGet(0xFFFD);
 }
 
+#ifndef NSFPLAYER
 int	CPU_Save (FILE *out)
 {
 	int clen = 0;
@@ -235,6 +236,7 @@ int	CPU_Load (FILE *in)
 	fread(CPU_RAM,1,0x800,in);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
 	return clen;
 }
+#endif
 
 int	_MAPINT	CPU_ReadRAM (int Bank, int Addy)
 {
