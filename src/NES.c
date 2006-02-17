@@ -252,9 +252,10 @@ void	NES_LoadSRAM (void)
 	}
 	else
 	{
+		ZeroMemory(PRG_RAM,NES.SRAM_Size);
 		fread(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
 		if (len == NES.SRAM_Size)
-			EI.DbgOut("Loaded SRAM.");
+			EI.DbgOut("Loaded SRAM (%i bytes).",NES.SRAM_Size);
 		else	EI.DbgOut("File length mismatch while loading SRAM!");
 	}
 	fclose(SRAMFile);
@@ -842,7 +843,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 	switch (ResetType)
 	{
 	case RESET_FULL:
-		ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
+		ZeroMemory(PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		EI.DbgOut("Performing initial hard reset...");
 		PPU_PowerOn();
@@ -854,7 +855,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 		break;
 	case RESET_HARD:
 		EI.DbgOut("Performing hard reset...");
-		ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
+		ZeroMemory(PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		CPU_PowerOn();
 		if (MI2)
