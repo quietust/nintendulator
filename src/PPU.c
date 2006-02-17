@@ -394,6 +394,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
 					CPU.WantNMI = TRUE;
+				PPU.SprAddr = 0;
 			}
 			else if (PPU.SLnum == PPU.SLEndFrame - 1)
 			{
@@ -691,6 +692,7 @@ __inline static	void	RunSkip (int NumTicks)
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
 					CPU.WantNMI = TRUE;
+				PPU.SprAddr = 0;
 			}
 			else if (PPU.SLnum == PPU.SLEndFrame - 1)
 			{
