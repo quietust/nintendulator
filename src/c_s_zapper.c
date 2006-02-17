@@ -33,6 +33,7 @@ static	void	Frame (struct tStdPort *Cont)
 
 static	unsigned char	Read (struct tStdPort *Cont)
 {
+	static POINT pos;
 	int x, y, z;
 	long CurPix = 0;
 	unsigned char Bits = 0x00;
@@ -42,10 +43,13 @@ static	unsigned char	Read (struct tStdPort *Cont)
 		x = Cont->MovData[0];
 		y = Cont->MovData[1];
 		z = Cont->MovData[2];
+		pos.x = x * SizeMult;
+		pos.y = y * SizeMult;
+		ClientToScreen(mWnd,&pos);
+		SetCursorPos(pos.x,pos.y);
 	}
 	else
 	{
-		static POINT pos;
 		if (!Cont->Framed)
 			GetCursorPos(&pos);
 		ScreenToClient(mWnd,&pos);
