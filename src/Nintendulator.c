@@ -321,7 +321,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CPU_GAMEGENIE:
 			if (Controllers.MovieMode)
-				return;
+				break;
 			NES.GameGenie = !NES.GameGenie;
 			if (NES.GameGenie)
 				CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
@@ -477,13 +477,13 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_PPU_MODE_NTSC:
 			if (Controllers.MovieMode)
-				return;
+				break;
 			NES_SetCPUMode(0);
 			CheckMenuRadioItem(MyMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
 			break;
 		case ID_PPU_MODE_PAL:
 			if (Controllers.MovieMode)
-				return;
+				break;
 			NES_SetCPUMode(1);
 			CheckMenuRadioItem(MyMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
 			break;
@@ -492,7 +492,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_GAME:
 			if (Controllers.MovieMode)
-				return;
+				break;
 			NES_MapperConfig();
 			break;
 		case ID_MISC_STARTAVICAPTURE:
