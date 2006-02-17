@@ -9,9 +9,9 @@
 
 /* Standard header files, used by all mappers */
 
-/* Mapper Interface version (3.0) */
+/* Mapper Interface version (3.1) */
 
-#define	CurrentMapperInterface 0x00030000
+#define	CurrentMapperInterface 0x00030001
 
 /* Function types */
 
@@ -101,8 +101,7 @@ typedef	const	TEmulatorInterface	CTEmulatorInterface, *CPEmulatorInterface;
 typedef	struct	MapperInfo
 {
 	/* Mapper Information */
-		int		MapperNum;
-		char *		BoardName;
+		void *		MapperId;
 		char *		Description;
 		int		Compatibility;
 
