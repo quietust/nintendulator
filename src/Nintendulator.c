@@ -248,9 +248,6 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else	NES_CloseFile();
 			break;
 		case ID_FILE_HEADER:
-			if ((!NES.Stopped) && (NES.SoundEnabled))
-				APU_SoundOFF();
-
 			FileName[0] = 0;
 			ZeroMemory(&ofn,sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
