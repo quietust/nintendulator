@@ -37,6 +37,8 @@ unsigned char CHR_ROM[0x1000][0x400];	/* 4096 KB */
 unsigned char PRG_RAM[0x10][0x1000];	/*   64 KB */
 unsigned char CHR_RAM[0x20][0x400];	/*   32 KB */
 
+static	char *CompatLevel[COMPAT_NONE] = {"Fully supported!","Mostly supported","Partially supported"};
+
 void	NES_Init (void)
 {
 	PPU_Init();
@@ -84,6 +86,7 @@ void	NES_OpenFile (char *filename)
 	if (NES.ROMLoaded)
 		NES_CloseFile();
 
+	EI.DbgOut("Loading file '%s'...",filename);
 	if (!stricmp(filename + len - 4, ".NES"))
 		LoadRet = NES_OpenFileiNES(filename);
 	else if (!stricmp(filename + len - 4, ".NSF"))
@@ -109,6 +112,7 @@ void	NES_OpenFile (char *filename)
 		return;
 	}
 	NES.ROMLoaded = TRUE;
+	EI.DbgOut("Loaded successfully!");
 	if (MI->Config)
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_ENABLED);
 	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_GRAYED);
@@ -146,6 +150,7 @@ void	NES_CloseFile (void)
 	{
 		MapperInterface_UnloadMapper();
 		NES.ROMLoaded = FALSE;
+		EI.DbgOut("ROM unloaded.");
 	}
 
 	if (RI.ROMType)
@@ -255,7 +260,9 @@ const char *	NES_OpenFileiNES (char *filename)
 		sprintf(err,"Mapper %i not supported!",RI.INES_MapperNum);
 		return err;
 	}
-	GFX_ShowText("ROM Loaded (mapper %i, %i/%i)",RI.INES_MapperNum,RI.INES_PRGSize << 4,RI.INES_CHRSize << 3);
+	EI.DbgOut("iNES ROM image loaded: mapper %i (%s) - %s",RI.INES_MapperNum,MI->Description,CompatLevel[MI->Compatibility]);
+	EI.DbgOut("PRG: %iKB; CHR: %iKB",RI.INES_PRGSize << 4,RI.INES_CHRSize << 3);
+	EI.DbgOut("Flags: %s%s",RI.INES_Flags & 0x02 ? "Battery-backed SRAM, " : "", RI.INES_Flags & 0x08 ? "Four-screen VRAM" : (RI.INES_Flags & 0x01 ? "Vertical mirroring" : "Horizontal mirroring"));
 	return NULL;
 }
 
@@ -308,7 +315,6 @@ const char *	NES_OpenFileUNIF (char *filename)
 			RI.UNIF_NTSCPAL = tp;
 			if (tp == 0) NES_SetCPUMode(0);
 			if (tp == 1) NES_SetCPUMode(1);
-			if (tp == 2) NES_SetCPUMode(0);
 			break;
 		case MKID('BATR'):
 			fread(&tp,1,1,in);
@@ -409,10 +415,20 @@ const char *	NES_OpenFileUNIF (char *filename)
 	if (!MapperInterface_LoadMapper(&RI))
 	{
 		static char err[256];
-		sprintf(err,"Boardset \"%s\" not supported!",RI.UNIF_BoardName);
+		sprintf(err,"UNIF boardset \"%s\" not supported!",RI.UNIF_BoardName);
 		return err;
 	}
-	GFX_ShowText("ROM loaded (%s, %i/%i)",RI.UNIF_BoardName,PRGsize >> 10,CHRsize >> 10);
+	EI.DbgOut("UNIF file loaded: %s (%s) - %s",RI.UNIF_BoardName,MI->Description,CompatLevel[MI->Compatibility]);
+	EI.DbgOut("PRG: %iKB; CHR: %iKB",PRGsize >> 10,CHRsize >> 10);
+	EI.DbgOut("Battery status: %s",RI.UNIF_Battery ? "present" : "not present");
+	{
+		const char *mir[6] = {"Horizontal","Vertical","Single-screen L","Single-screen H","Four-screen","Dynamic"};
+		EI.DbgOut("Mirroring mode: %i (%s)",RI.UNIF_Mirroring,mir[RI.UNIF_Mirroring]);
+	}
+	{
+		const char *ntscpal[3] = {"NTSC","PAL","Dual"};
+		EI.DbgOut("Television standard: %s",ntscpal[RI.UNIF_NTSCPAL]);
+	}
 	return NULL;
 }
 
@@ -446,7 +462,8 @@ const char *	NES_OpenFileFDS (char *filename)
 	if (!MapperInterface_LoadMapper(&RI))
 		return "Famicom Disk System support not found!";
 
-	GFX_ShowText("Disk image loaded (%i sides)",RI.FDS_NumSides);
+	EI.DbgOut("FDS file loaded: %s - %s",MI->Description,CompatLevel[MI->Compatibility]);
+	EI.DbgOut("Data length: %i disk side(s)",RI.FDS_NumSides);
 	return NULL;
 }
 
@@ -498,7 +515,8 @@ const char *	NES_OpenFileNSF (char *filename)
 	
 	if (!MapperInterface_LoadMapper(&RI))
 		return "NSF support not found!";
-	GFX_ShowText("NSF loaded (%iKB)",RI.NSF_DataSize >> 10);
+	EI.DbgOut("NSF loaded: %s - %s",MI->Description,CompatLevel[MI->Compatibility]);
+	EI.DbgOut("Data length: %iKB",RI.NSF_DataSize >> 10);
 	return NULL;
 }
 /*
@@ -627,6 +645,7 @@ void	NES_SetCPUMode (int NewMode)
 		GFX_LoadPalette(0);
 		APU_SetFPS(60);
 		PPU.IsPAL = FALSE;
+		EI.DbgOut("Emulation switched to NTSC");
 	}
 	else
 	{
@@ -636,6 +655,7 @@ void	NES_SetCPUMode (int NewMode)
 		GFX_LoadPalette(1);
 		APU_SetFPS(50);
 		PPU.IsPAL = TRUE;
+		EI.DbgOut("Emulation switched to PAL");
 	}
 }
 
@@ -907,6 +927,7 @@ void	NES_Reset (int ResetType)
 	{
 	case 0:	ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
+		EI.DbgOut("Performing initial hard reset...");
 		PPU_PowerOn();
 		CPU_PowerOn();
 		EI.SetCHR_RAM8(0,0);
@@ -915,6 +936,7 @@ void	NES_Reset (int ResetType)
 			MI->Reset(1);
 		break;
 	case RESET_HARD:
+		EI.DbgOut("Performing hard reset...");
 		if ((MI) && (MI->Shutdown))
 			MI->Shutdown();
 		ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
@@ -957,6 +979,7 @@ void	NES_Reset (int ResetType)
 			MI->Reset(1);
 		break;
 	case RESET_SOFT:
+		EI.DbgOut("Performing soft reset...");
 		if ((MI) && (MI->Shutdown))
 			MI->Shutdown();
 		EI.SetCHR_RAM8(0,0);
@@ -981,6 +1004,7 @@ void	NES_Reset (int ResetType)
 	if (Debugger.Enabled)
 		Debugger_Update();
 #endif	/* ENABLE_DEBUGGER */
+	EI.DbgOut("Reset complete.");
 }
 
 void	NES_Run (void)
@@ -988,7 +1012,6 @@ void	NES_Run (void)
 #ifdef	CPU_BENCHMARK
 	/* Run with cyctest.nes */
 	int i;
-	char str[512];
 	LARGE_INTEGER ClockFreq;
 	LARGE_INTEGER ClockVal1, ClockVal2;
 	QueryPerformanceFrequency(&ClockFreq);
@@ -1008,8 +1031,7 @@ void	NES_Run (void)
 	}
 	QueryPerformanceCounter(&ClockVal2);
 
-	sprintf(str,"10 seconds emulated in %lu milliseconds",(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
-	MessageBox(NULL,str,"Timing Results",MB_OK);
+	EI.DbgOut("10 seconds emulated in %lu milliseconds",(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
 #else
 rerun:
 	NES.Stopped = FALSE;
