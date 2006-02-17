@@ -40,6 +40,8 @@ HACCEL		hAccelTable;	// accelerators
 int		SizeMult;	// size multiplier
 char		ProgPath[MAX_PATH];	// program path
 BOOL		MaskKeyboard;		// mask keyboard accelerators (for when Family Basic Keyboard is active)
+HWND		hDebug;		// Debug Info window
+BOOL		dbgVisible;	// whether or not the Debug window is open
 
 TCHAR	szTitle[MAX_LOADSTRING];	// The title bar text
 TCHAR	szWindowClass[MAX_LOADSTRING];	// The title bar text
@@ -49,6 +51,8 @@ ATOM			MyRegisterClass(HINSTANCE hInstance);
 BOOL			InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK	DebugWnd(HWND, UINT, WPARAM, LPARAM);
+void	ShowDebug (void);
 
 int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -147,6 +151,10 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 	if (!(mWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,LoadMenu(hInst,(LPCTSTR)IDR_NINTENDULATOR),hInstance,NULL)))
 		return FALSE;
 	ShowWindow(mWnd,nCmdShow);
+
+	hDebug = CreateDialog(hInst,(LPCTSTR)IDD_DEBUG,mWnd,DebugWnd);
+	SetWindowPos(hDebug,mWnd,0,0,0,0,SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOSIZE);
+
 	NES_Init();
 	return TRUE;
 }
@@ -376,6 +384,9 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Debugger_SetMode(3);
 			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL4,MF_BYCOMMAND);
 			break;
+		case ID_DEBUG_STATWND:
+			ShowDebug();
+			break;
 #endif	/* ENABLE_DEBUGGER */
 		case ID_CPU_SAVESTATE:
 			if (!NES.ROMLoaded)
@@ -517,12 +528,55 @@ LRESULT CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
+char DebugText[32768];
+int DebugLen;
+
+LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		dbgVisible = FALSE;
+		DebugText[0] = 0;
+		DebugLen = 0;
+		return FALSE;
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDCANCEL)
+		{
+			dbgVisible = FALSE;
+			ShowWindow(hDlg,SW_HIDE);
+			return FALSE;
+		}
+		break;
+	case WM_SIZE:
+		MoveWindow(GetDlgItem(hDlg,IDC_DEBUGTEXT),0,0,LOWORD(lParam),HIWORD(lParam),TRUE);
+		break;
+	}
+	return FALSE;
+}
+void	AddDebug (char *txt)
+{
+	int i = strlen(txt);
+	if ((i + DebugLen + 2) > 32767)
+		return;
+	strcat(DebugText,txt);
+	strcat(DebugText,"\r\n");
+	DebugLen += i + 2;
+}
+void	ShowDebug (void)
+{
+	if (dbgVisible)
+		return;
+	dbgVisible = TRUE;
+	ShowWindow(hDebug,SW_SHOW);
+}
+
 void	ProcessMessages (void)
 {
 	MSG msg;
 	while (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
-//		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg))
-		if (MaskKeyboard || !TranslateAccelerator(mWnd,hAccelTable,&msg))
+		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg))
+//		if (MaskKeyboard || !TranslateAccelerator(mWnd,hAccelTable,&msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);

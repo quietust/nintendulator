@@ -420,17 +420,28 @@ static	void	_MAPINT	SetIRQ (int IRQstate)
 	else	CPU.WantIRQ |= IRQ_EXTERNAL;
 }
 
-static	void	_MAPINT	DbgOut (char *ToSay)
+static	void	_MAPINT	DbgOut (char *text, ...)
 {
 #ifndef NSFPLAYER
-/*	MessageBox(mWnd,ToSay,"Nintendulator",MB_OK);*/
+	extern void AddDebug (char *txt);
+	static char txt[1024];
+	va_list marker;
+	va_start(marker,text);
+	vsprintf(txt,text,marker);
+	va_end(marker);
+	AddDebug(txt);
 #endif
 }
 
-static	void	_MAPINT	StatusOut (char *ToSay)
+static	void	_MAPINT	StatusOut (char *text, ...)
 {
 #ifndef NSFPLAYER
-	GFX_ShowText(ToSay);
+	static char txt[1024];
+	va_list marker;
+	va_start(marker,text);
+	vsprintf(txt,text,marker);
+	va_end(marker);
+	GFX_ShowText(txt);
 #endif
 }
 
