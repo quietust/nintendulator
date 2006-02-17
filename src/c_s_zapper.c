@@ -62,19 +62,46 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 	}
 }
 
+static	BOOL	IsWhite[0x40] =
+{
+	TRUE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,	FALSE,
+	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	FALSE,	FALSE,	FALSE,
+	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	FALSE,	FALSE,
+	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	TRUE,	FALSE,	FALSE
+};
+
 static	unsigned char	Read (struct tStdPort *Cont)
 {
 	int x = Cont->PosX, y = Cont->PosY, z = Cont->Button;
-	int CurPix = 0xF;
+	int WhiteCount = 0;
 	unsigned char Bits = 0x00;
+	int X, Y;
 
 	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
 		return Bits | 0x08;
 	if (z)
 		Bits |= 0x10;
-	if (y < 240)
-		CurPix = DrawArray[y*256 + x] & 0x3F;
-	if ((CurPix != 0x20) && (CurPix != 0x30) && (CurPix != 0x3D))
+
+	if (PPU.IsRendering && PPU.OnScreen)
+		for (Y = y - 8; Y < y + 8; Y++)
+		{
+			if (Y < 0)
+				Y = 0;
+			if (Y < PPU.SLnum - 32)
+				continue;
+			if (Y >= PPU.SLnum)
+				break;
+			for (X = x - 8; X < x + 8; X++)
+			{
+				if (X < 0)
+					X = 0;
+				if (X > 255)
+					break;
+				if (IsWhite[DrawArray[Y * 256 + X] & 0x3F])
+					WhiteCount++;
+			}
+		}
+	if (WhiteCount < 64)
 		Bits |= 0x08;
 	return Bits;
 }
