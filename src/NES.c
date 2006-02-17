@@ -100,12 +100,6 @@ void	NES_OpenFile (char *filename)
 		LoadRet = NES_OpenFileUNIF(filename);
 	else if (!stricmp(filename + len - 4, ".FDS"))
 		LoadRet = NES_OpenFileFDS(filename);
-/*	else if (!stricmp(filename + len - 4, ".NRF"))
-		LoadRet = NES_OpenFileNRFF(filename);
-	else if (!stricmp(filename + len - 5, ".NRFF"))
-		LoadRet = NES_OpenFileNRFF(filename);*/
-	else if (!stricmp(filename + len - 4, ".ZIP"))
-		LoadRet = "ZIP support has not yet been implemented!";
 	else	LoadRet = "File type not recognized!";
 
 	if (LoadRet)
@@ -690,7 +684,7 @@ const char *	NES_OpenFileNSF (char *filename)
 	return NULL;
 }
 /*
-const char *	NES_OpenFileNRFF (char *filename)
+const char *	NES_OpenFileNFRF (char *filename)
 {
 	unsigned long BlockSig, tp, i;
 	int BlockHeader;
@@ -703,10 +697,10 @@ const char *	NES_OpenFileNRFF (char *filename)
 	if (!in)
 		return FALSE;
 	fread(&BlockSig,1,4,in);
-	if (BlockSig != MKID('NRFF'))
+	if (BlockSig != MKID('NFRF'))
 	{
 		fclose(in);
-		return "NRFF header signature not found!";
+		return "Header signature not found!";
 	}
 	fseek(in,4,SEEK_CUR);
 	EI.Flags = 0;
@@ -791,13 +785,13 @@ const char *	NES_OpenFileNRFF (char *filename)
 	for (p2 = 1; p2 < 0x10000000; p2 <<= 1)
 		if (p2 == EI.PRG_ROM_Size) p2Found = FALSE;
 	if (!p2Found) NES.PRGMask = 0xFFFFFFFF;
-	GFX_ShowText("ROM loaded (%s, %i/%i)",BoardName,EI.PRG_ROM_Size >> 10,EI.CHR_ROM_Size >> 10);
 	if (!MapperInterface_LoadByBoard(BoardName))
 	{
 		static char err[256];
 		sprintf(err,"Boardset \"%s\" not supported!",RI.NRFF_BoardName);
 		return err;
 	}
+	GFX_ShowText("NFRF image loaded (%s, %i PRG/%i CHR)",BoardName,EI.PRG_ROM_Size >> 10,EI.CHR_ROM_Size >> 10);
 	free(BoardName);
 	return NULL;
 }

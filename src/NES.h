@@ -64,7 +64,6 @@ const char *	NES_OpenFileiNES (char *);
 const char *	NES_OpenFileUNIF (char *);
 const char *	NES_OpenFileFDS (char *);
 const char *	NES_OpenFileNSF (char *);
-/*BOOL	NES_OpenFileNRFF (char *); */
 void	NES_SetCPUMode (int);
 void	NES_Reset (int);
 void	NES_Run (void);
