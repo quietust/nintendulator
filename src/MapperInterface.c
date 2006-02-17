@@ -566,6 +566,7 @@ void	MapperInterface_Init (void)
 	EI.Set_SRAMSize = Set_SRAMSize;
 	EI.DbgOut = DbgOut;
 	EI.StatusOut = StatusOut;
+	EI.OpenBus = &CPU.LastRead;
 	MI = NULL;
 #ifndef NSFPLAYER
 	MI2 = NULL;

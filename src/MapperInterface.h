@@ -27,70 +27,73 @@ typedef	int	(_MAPINT *FPPURead)	(int Bank,int Addr);
 
 typedef	struct	EmulatorInterface
 {
-	/* Functions for managing read/write handlers */
-		void		(_MAPINT *SetCPUReadHandler)	(int,FCPURead);
-		void		(_MAPINT *SetCPUWriteHandler)	(int,FCPUWrite);
-		FCPURead	(_MAPINT *GetCPUReadHandler)	(int);
-		FCPUWrite	(_MAPINT *GetCPUWriteHandler)	(int);
+/* Functions for managing read/write handlers */
+	void		(_MAPINT *SetCPUReadHandler)	(int,FCPURead);
+	void		(_MAPINT *SetCPUWriteHandler)	(int,FCPUWrite);
+	FCPURead	(_MAPINT *GetCPUReadHandler)	(int);
+	FCPUWrite	(_MAPINT *GetCPUWriteHandler)	(int);
 
-		void		(_MAPINT *SetPPUReadHandler)	(int,FPPURead);
-		void		(_MAPINT *SetPPUWriteHandler)	(int,FPPUWrite);
-		FPPURead	(_MAPINT *GetPPUReadHandler)	(int);
-		FPPUWrite	(_MAPINT *GetPPUWriteHandler)	(int);
+	void		(_MAPINT *SetPPUReadHandler)	(int,FPPURead);
+	void		(_MAPINT *SetPPUWriteHandler)	(int,FPPUWrite);
+	FPPURead	(_MAPINT *GetPPUReadHandler)	(int);
+	FPPUWrite	(_MAPINT *GetPPUWriteHandler)	(int);
 
-	/* Functions for mapping PRG */
-		void		(_MAPINT *SetPRG_ROM4)		(int,int);
-		void		(_MAPINT *SetPRG_ROM8)		(int,int);
-		void		(_MAPINT *SetPRG_ROM16)		(int,int);
-		void		(_MAPINT *SetPRG_ROM32)		(int,int);
-		int		(_MAPINT *GetPRG_ROM4)		(int);		/* -1 if no ROM mapped */
-		void		(_MAPINT *SetPRG_RAM4)		(int,int);
-		void		(_MAPINT *SetPRG_RAM8)		(int,int);
-		void		(_MAPINT *SetPRG_RAM16)		(int,int);
-		void		(_MAPINT *SetPRG_RAM32)		(int,int);
-		int		(_MAPINT *GetPRG_RAM4)		(int);		/* -1 if no RAM mapped */
+/* Functions for mapping PRG */
+	void		(_MAPINT *SetPRG_ROM4)		(int,int);
+	void		(_MAPINT *SetPRG_ROM8)		(int,int);
+	void		(_MAPINT *SetPRG_ROM16)		(int,int);
+	void		(_MAPINT *SetPRG_ROM32)		(int,int);
+	int		(_MAPINT *GetPRG_ROM4)		(int);		/* -1 if no ROM mapped */
+	void		(_MAPINT *SetPRG_RAM4)		(int,int);
+	void		(_MAPINT *SetPRG_RAM8)		(int,int);
+	void		(_MAPINT *SetPRG_RAM16)		(int,int);
+	void		(_MAPINT *SetPRG_RAM32)		(int,int);
+	int		(_MAPINT *GetPRG_RAM4)		(int);		/* -1 if no RAM mapped */
 
-		unsigned char *	(_MAPINT *GetPRG_Ptr4)		(int);
-		void		(_MAPINT *SetPRG_Ptr4)		(int,unsigned char *,BOOL);
-		void		(_MAPINT *SetPRG_OB4)		(int);		/* Open bus */
+	unsigned char *	(_MAPINT *GetPRG_Ptr4)		(int);
+	void		(_MAPINT *SetPRG_Ptr4)		(int,unsigned char *,BOOL);
+	void		(_MAPINT *SetPRG_OB4)		(int);		/* Open bus */
 
-	/* Functions for mapping CHR */
-		void		(_MAPINT *SetCHR_ROM1)		(int,int);
-		void		(_MAPINT *SetCHR_ROM2)		(int,int);
-		void		(_MAPINT *SetCHR_ROM4)		(int,int);
-		void		(_MAPINT *SetCHR_ROM8)		(int,int);
-		int		(_MAPINT *GetCHR_ROM1)		(int);		/* -1 if no ROM mapped */
+/* Functions for mapping CHR */
+	void		(_MAPINT *SetCHR_ROM1)		(int,int);
+	void		(_MAPINT *SetCHR_ROM2)		(int,int);
+	void		(_MAPINT *SetCHR_ROM4)		(int,int);
+	void		(_MAPINT *SetCHR_ROM8)		(int,int);
+	int		(_MAPINT *GetCHR_ROM1)		(int);		/* -1 if no ROM mapped */
 
-		void		(_MAPINT *SetCHR_RAM1)		(int,int);
-		void		(_MAPINT *SetCHR_RAM2)		(int,int);
-		void		(_MAPINT *SetCHR_RAM4)		(int,int);
-		void		(_MAPINT *SetCHR_RAM8)		(int,int);
-		int		(_MAPINT *GetCHR_RAM1)		(int);		/* -1 if no RAM mapped */
+	void		(_MAPINT *SetCHR_RAM1)		(int,int);
+	void		(_MAPINT *SetCHR_RAM2)		(int,int);
+	void		(_MAPINT *SetCHR_RAM4)		(int,int);
+	void		(_MAPINT *SetCHR_RAM8)		(int,int);
+	int		(_MAPINT *GetCHR_RAM1)		(int);		/* -1 if no RAM mapped */
 
-		void		(_MAPINT *SetCHR_NT1)		(int,int);
-		int		(_MAPINT *GetCHR_NT1)		(int);		/* -1 if no nametable mapped */
+	void		(_MAPINT *SetCHR_NT1)		(int,int);
+	int		(_MAPINT *GetCHR_NT1)		(int);		/* -1 if no nametable mapped */
 
-		unsigned char *	(_MAPINT *GetCHR_Ptr1)		(int);
-		void		(_MAPINT *SetCHR_Ptr1)		(int,unsigned char *,BOOL);
-		void		(_MAPINT *SetCHR_OB1)		(int);		/* Open bus */
+	unsigned char *	(_MAPINT *GetCHR_Ptr1)		(int);
+	void		(_MAPINT *SetCHR_Ptr1)		(int,unsigned char *,BOOL);
+	void		(_MAPINT *SetCHR_OB1)		(int);		/* Open bus */
 
-	/* Functions for controlling mirroring */
-		void		(_MAPINT *Mirror_H)		(void);
-		void		(_MAPINT *Mirror_V)		(void);
-		void		(_MAPINT *Mirror_4)		(void);
-		void		(_MAPINT *Mirror_S0)		(void);
-		void		(_MAPINT *Mirror_S1)		(void);
-		void		(_MAPINT *Mirror_Custom)	(int,int,int,int);
+/* Functions for controlling mirroring */
+	void		(_MAPINT *Mirror_H)		(void);
+	void		(_MAPINT *Mirror_V)		(void);
+	void		(_MAPINT *Mirror_4)		(void);
+	void		(_MAPINT *Mirror_S0)		(void);
+	void		(_MAPINT *Mirror_S1)		(void);
+	void		(_MAPINT *Mirror_Custom)	(int,int,int,int);
 
-	/* IRQ */
-		void		(_MAPINT *SetIRQ)		(int);		/* Sets the state of the /IRQ line */
+/* IRQ */
+	void		(_MAPINT *SetIRQ)		(int);		/* Sets the state of the /IRQ line */
 
-	/* Save RAM Handling */
-		void		(_MAPINT *Set_SRAMSize)		(int);		/* Sets the size of the SRAM (in bytes) */
+/* Save RAM Handling */
+	void		(_MAPINT *Set_SRAMSize)		(int);		/* Sets the size of the SRAM (in bytes) */
 
-	/* Misc Callbacks */
-		void		(_MAPINT *DbgOut)		(char *,...);	/* Echo text to debug window */
-		void		(_MAPINT *StatusOut)		(char *,...);	/* Echo text on status bar */
+/* Misc Callbacks */
+	void		(_MAPINT *DbgOut)		(char *,...);	/* Echo text to debug window */
+	void		(_MAPINT *StatusOut)		(char *,...);	/* Echo text on status bar */
+/* Data fields */
+	unsigned char *	OpenBus;			/* pointer to last value on the CPU data bus */
+	
 }	TEmulatorInterface, *PEmulatorInterface;
 typedef	const	TEmulatorInterface	CTEmulatorInterface, *CPEmulatorInterface;
 
@@ -106,19 +109,19 @@ typedef	enum	{ CFG_WINDOW, CFG_QUERY, CFG_CMD } CFG_TYPE;
 
 typedef	struct	MapperInfo
 {
-	/* Mapper Information */
-		void *		MapperId;
-		char *		Description;
-		COMPAT_TYPE	Compatibility;
+/* Mapper Information */
+	void *		MapperId;
+	char *		Description;
+	COMPAT_TYPE	Compatibility;
 
-	/* Mapper Functions */
-		void		(_MAPINT *Reset)	(RESET_TYPE);
-		void		(_MAPINT *Shutdown)	(void);
-		void		(_MAPINT *CPUCycle)	(void);
-		void		(_MAPINT *PPUCycle)	(int,int,int,int);
-		int		(_MAPINT *SaveLoad)	(STATE_TYPE,int,unsigned char *);
-		int		(_MAPINT *GenSound)	(int);
-		unsigned char	(_MAPINT *Config)	(CFG_TYPE,unsigned char);
+/* Mapper Functions */
+	void		(_MAPINT *Reset)	(RESET_TYPE);
+	void		(_MAPINT *Shutdown)	(void);
+	void		(_MAPINT *CPUCycle)	(void);
+	void		(_MAPINT *PPUCycle)	(int,int,int,int);
+	int		(_MAPINT *SaveLoad)	(STATE_TYPE,int,unsigned char *);
+	int		(_MAPINT *GenSound)	(int);
+	unsigned char	(_MAPINT *Config)	(CFG_TYPE,unsigned char);
 }	TMapperInfo, *PMapperInfo;
 typedef	const	TMapperInfo	CTMapperInfo, *CPMapperInfo;
 
@@ -182,11 +185,11 @@ typedef	const	TROMInfo	CTROMInfo, *CPROMInfo;
 
 typedef	struct	DLLInfo
 {
-		char *		Author;
-		int		Date;
-		int		Version;
-		CPMapperInfo	(_MAPINT *LoadMapper)	(CPROMInfo);
-		void		(_MAPINT *UnloadMapper)	(void);
+	char *		Author;
+	int		Date;
+	int		Version;
+	CPMapperInfo	(_MAPINT *LoadMapper)	(CPROMInfo);
+	void		(_MAPINT *UnloadMapper)	(void);
 }	TDLLInfo, *PDLLInfo;
 
 typedef	PDLLInfo(_MAPINT *PLoadMapperDLL)	(HWND, CPEmulatorInterface, int);
