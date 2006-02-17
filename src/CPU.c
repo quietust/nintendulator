@@ -95,9 +95,8 @@ unsigned char __fastcall	CPU_MemGet (unsigned int Addy)
 }
 void __fastcall	CPU_MemSet (unsigned int Addy, unsigned char Val)
 {
-	if (CPU.PCMCycles)
-		CPU.PCMCycles--;
 	RunCycle();
+	CPU.PCMCycles--;
 	CPU.WriteHandler[(Addy >> 12) & 0xF]((Addy >> 12) & 0xF,Addy & 0xFFF,Val);
 }
 static	__forceinline void	Push (unsigned char Val)
@@ -509,13 +508,13 @@ static	__forceinline void	IN_BRANCH (BOOL Condition)
 			mov	al,BranchOffset
 			test	al,0x80
 			je	pos
-			neg	al
-			sub	CPU.PCL,al
-			jnc	end
+			add	CPU.PCL,al
+			jc	end
 			mov	ecx,CPU.PC
 			call	CPU_MemGet
 			dec	CPU.PCH
 			jmp	end
+
 pos:			add	CPU.PCL,al
 			jnc	end
 			mov	ecx,CPU.PC
