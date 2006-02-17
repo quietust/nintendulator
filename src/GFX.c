@@ -214,37 +214,33 @@ void	GFX_Release (void)
 
 void	GFX_DrawScreen (void)
 {
+	LARGE_INTEGER TmpClockVal;
 	static int TitleDelay = 0;
 	if (aviout)
 		AVI_AddVideo();
-	GFX.FPSCnt++;
 	if (GFX.SlowDown)
 		Sleep(GFX.SlowRate * 1000 / GFX.WantFPS);
-	if (GFX.FPSCnt > GFX.FSkip)
+	if (++GFX.FPSCnt > GFX.FSkip)
 	{
-		LARGE_INTEGER TmpClockVal;
-
-		QueryPerformanceCounter(&TmpClockVal);
-		GFX.aFPSnum += (int) ((GFX.FPSCnt*GFX.ClockFreq.QuadPart) / (TmpClockVal.QuadPart - GFX.LastClockVal.QuadPart));
-		GFX.LastClockVal = TmpClockVal;
-
 		GFX_Update();
-
-		GFX.aFPScnt++;
-		if (GFX.aFPScnt == 10)
-		{
-			GFX.FPSnum = GFX.aFPSnum / GFX.aFPScnt;
-			if (GFX.aFSkip)
-			{
-				if ((GFX.FSkip < 9) && (GFX.FPSnum <= (GFX.WantFPS * 9 / 10)))
-					GFX.FSkip++;
-				if ((GFX.FSkip > 0) && (GFX.FPSnum >= (GFX.WantFPS - 1)))
-					GFX.FSkip--;
-				GFX_SetFrameskip();
-			}
-			GFX.aFPScnt = GFX.aFPSnum = 0;
-		}
 		GFX.FPSCnt = 0;
+	}
+	QueryPerformanceCounter(&TmpClockVal);
+	GFX.aFPSnum += (int)((GFX.ClockFreq.QuadPart) / (TmpClockVal.QuadPart - GFX.LastClockVal.QuadPart));
+	GFX.LastClockVal = TmpClockVal;
+	if (++GFX.aFPScnt > 9)
+	{
+		GFX.FPSnum = GFX.aFPSnum / GFX.aFPScnt;
+		if (GFX.aFSkip)
+		{
+			if ((GFX.FSkip < 9) && (GFX.FPSnum <= (GFX.WantFPS * 9 / 10)))
+				GFX.FSkip++;
+			if ((GFX.FSkip > 0) && (GFX.FPSnum >= (GFX.WantFPS - 1)))
+				GFX.FSkip--;
+			GFX_SetFrameskip();
+		}
+		GFX.aFPScnt = 0;
+		GFX.aFPSnum = 0;
 	}
 	if (!TitleDelay--)
 	{
