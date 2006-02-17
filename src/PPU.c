@@ -199,6 +199,7 @@ void	PPU_Reset (void)
 	PPU.IOMode = 0;
 	PPU.Clockticks = 0;
 	PPU.SLnum = 241;
+	PPU_GetHandlers();
 }
 void	PPU_GetHandlers (void)
 {
