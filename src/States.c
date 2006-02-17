@@ -158,6 +158,15 @@ int	States_SaveData (FILE *out)
 			fwrite(CHR_RAM,1,clen,out);	flen += clen;	//	CRAM	uint8[...]	CHR_RAM data
 		}
 	}
+	if (RI.ROMType == ROM_FDS)
+	{
+		fwrite("DISK",1,4,out);		flen += 4;
+		fwrite(&clen,1,4,out);		flen += 4;
+		clen = NES_FDSSave(out);
+		fseek(out,-clen - 4,SEEK_CUR);
+		fwrite(&clen,1,4,out);
+		fseek(out,clen,SEEK_CUR);	flen += clen;
+	}
 	{
 		if ((MI) && (MI->SaveLoad))
 			clen = MI->SaveLoad(STATE_SIZE,0,NULL);
@@ -318,6 +327,12 @@ BOOL	States_LoadData (FILE *in, int flen)
 		{
 			memset(CHR_RAM,0,sizeof(CHR_RAM));
 			fread(CHR_RAM,1,clen,in);	clen = 0;
+		}
+		else if (!memcmp(csig,"DISK",4))
+		{
+			if (RI.ROMType == ROM_FDS)
+				clen -= NES_FDSLoad(in);
+			else	EI.DbgOut("Error - DISK save block found for non-FDS game!");
 		}
 		else if (!memcmp(csig,"MAPR",4))
 		{

@@ -55,6 +55,8 @@ void	NES_Init (void);
 void	NES_Release (void);
 void	NES_OpenFile (char *);
 void	NES_CloseFile (void);
+int	NES_FDSSave (FILE *);
+int	NES_FDSLoad (FILE *);
 void	NES_SaveSRAM (void);
 void	NES_LoadSRAM (void);
 const char *	NES_OpenFileiNES (char *);

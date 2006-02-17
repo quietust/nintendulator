@@ -175,37 +175,70 @@ void	NES_OpenFile (char *filename)
 	}
 }
 
+int	NES_FDSSave (FILE *out)
+{
+	int clen = 0;
+	return clen;
+}
+
+int	NES_FDSLoad (FILE *in)
+{
+	int clen = 0;
+	return clen;
+}
+
 void	NES_SaveSRAM (void)
 {
 	char Filename[MAX_PATH];
 	FILE *SRAMFile;
 	if (!NES.SRAM_Size)
 		return;
-	sprintf(Filename,"%s.sav",States.BaseFilename);
+	if (RI.ROMType == ROM_FDS)
+		sprintf(Filename,"%s.fsv",States.BaseFilename);
+	else	sprintf(Filename,"%s.sav",States.BaseFilename);
 	SRAMFile = fopen(Filename,"wb");
-	fwrite(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
+	if (RI.ROMType == ROM_FDS)
+	{
+		NES_FDSSave(SRAMFile);
+		EI.DbgOut("Saved disk changes");
+	}
+	else
+	{
+		fwrite(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
+		EI.DbgOut("Saved SRAM.");
+	}
 	fclose(SRAMFile);
-	EI.DbgOut("Saved SRAM.");
 }
 void	NES_LoadSRAM (void)
 {
 	char Filename[MAX_PATH];
 	FILE *SRAMFile;
+	int len;
 	if (!NES.SRAM_Size)
 		return;
-	sprintf(Filename,"%s.sav",States.BaseFilename);
+	if (RI.ROMType == ROM_FDS)
+		sprintf(Filename,"%s.fsv",States.BaseFilename);
+	else	sprintf(Filename,"%s.sav",States.BaseFilename);
 	SRAMFile = fopen(Filename,"rb");
 	if (!SRAMFile)
 		return;
 	fseek(SRAMFile,0,SEEK_END);
-	if (ftell(SRAMFile) == NES.SRAM_Size)
+	len = ftell(SRAMFile);
+	fseek(SRAMFile,0,SEEK_SET);
+	if (RI.ROMType == ROM_FDS)
 	{
-		fseek(SRAMFile,0,SEEK_SET);
-		fread(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
+		if (len == NES_FDSLoad(SRAMFile))
+			EI.DbgOut("Loaded disk changes");
+		else	EI.DbgOut("File length mismatch while loading disk data!");
 	}
-	else	EI.DbgOut("File length mismatch while loading SRAM!");
+	else
+	{
+		fread(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
+		if (len == NES.SRAM_Size)
+			EI.DbgOut("Loaded SRAM.");
+		else	EI.DbgOut("File length mismatch while loading SRAM!");
+	}
 	fclose(SRAMFile);
-	EI.DbgOut("Loaded SRAM.");
 }
 
 void	NES_CloseFile (void)
@@ -540,7 +573,10 @@ const char *	NES_OpenFileFDS (char *filename)
 		fread(PRG_ROM[i << 4],1,65500,in);
 	fclose(in);
 
+	memcpy(&PRG_ROM[0x400],&PRG_ROM[0x000],numSides << 16);
+
 	RI.FDS_NumSides = numSides;
+	NES.SRAM_Size = 1;	// special, so FDS always saves its changes
 
 	NES.PRGMask = ((RI.FDS_NumSides << 4) - 1) & MAX_PRGROM_MASK;
 
