@@ -341,8 +341,8 @@ int	Genie_Load (FILE *in)
 	fread(&val,1,1,in);	clen++;		Genie.Code3V = val;
 
 	if (NES.GameGenie)
-		CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
-	else	CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
+		CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_CHECKED);
+	else	CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
 	if ((MI) && (MI->Shutdown))
 		MI->Shutdown();	// shut down the mapper

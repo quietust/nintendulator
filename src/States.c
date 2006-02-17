@@ -499,7 +499,7 @@ void	States_LoadState (void)
 		Controllers.MovieMode = MOV_RECORD;	/* then resume recording once they LOAD state */
 
 	NES.GameGenie = FALSE;	/* If the savestate uses it, it'll turn back on shortly */
-	CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
+	CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
 	if (States_LoadData(in, flen))
 		GFX_ShowText("State loaded: %i", States.SelSlot);
