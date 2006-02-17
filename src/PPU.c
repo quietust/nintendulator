@@ -457,7 +457,6 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case  67:	case  75:	case  83:	case  91:	case  99:	case 107:	case 115:	case 123:
 			case 131:	case 139:	case 147:	case 155:	case 163:	case 171:	case 179:	case 187:
 			case 195:	case 203:	case 211:	case 219:	case 227:	case 235:	case 243:
-			case 323:	case 331:
 				CurTileData = &PPU.TileData[PPU.Clockticks + 13];
 				TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
 				((unsigned long *)CurTileData)[0] = TL;
