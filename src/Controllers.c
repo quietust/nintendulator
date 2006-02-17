@@ -691,7 +691,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 		return;
 	}
 
-	if ((MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
+	if ((MI) && (MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
 	{
 		MessageBox(mWnd,"This game does not support using the 'Game' menu while recording!","Nintendulator",MB_OK);
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
@@ -835,7 +835,7 @@ void	Controllers_StopMovie (void)
 		StdPort_SetControllerType(&Controllers.Port2,MOV_ControllerTypes[1]);
 	}
 	ExpPort_SetControllerType(&Controllers.ExpPort,MOV_ControllerTypes[2]);
-	if (MI->Config)
+	if ((MI) && (MI->Config))
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_ENABLED);
@@ -899,7 +899,7 @@ void	Controllers_UpdateInput (void)
 			else	GFX_ShowText("Unexpected EOF in movie!");
 			Controllers_StopMovie();
 		}
-		if (MI->Config)
+		if ((MI) && (MI->Config))
 		{
 			fread(&Cmd,1,1,movie);
 			MovieLen--;
@@ -907,13 +907,13 @@ void	Controllers_UpdateInput (void)
 	}
 	else
 	{
-		if (MI->Config)
+		if ((MI) && (MI->Config))
 			Cmd = MI->Config(CFG_QUERY,0);
 	}
 	Controllers.Port1.Frame(&Controllers.Port1,Controllers.MovieMode);
 	Controllers.Port2.Frame(&Controllers.Port2,Controllers.MovieMode);
 	Controllers.ExpPort.Frame(&Controllers.ExpPort,Controllers.MovieMode);
-	if (Cmd && MI->Config)
+	if ((Cmd) && (MI) && (MI->Config))
 		MI->Config(CFG_CMD,Cmd);
 	if (Controllers.MovieMode & MOV_RECORD)
 	{
@@ -923,7 +923,7 @@ void	Controllers_UpdateInput (void)
 			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
 		if (Controllers.ExpPort.MovLen)
 			fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
-		if (MI->Config)
+		if ((MI) && (MI->Config))
 			fwrite(&Cmd,1,1,movie);
 	}
 }
