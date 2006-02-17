@@ -214,6 +214,8 @@ __inline static	void	DiscoverSprites (void)
 	int spt;
 	PPU.SprCount = 0;
 	PPU.Spr0InLine = FALSE;
+	if (!PPU.IsRendering)
+		return;
 	for (spt = 0; spt < 32; spt += 4)
 		PPU.SprBuff[spt+1] = 0xFF;	/* pre-init sprite buffer tile indices */
 	for (spt = 0; spt < 256; spt += 4)
@@ -357,8 +359,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 		{
 			if (PPU.SLnum < 240)
 			{
-				if (PPU.IsRendering)
-					DiscoverSprites();
+				DiscoverSprites();
 				ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
 			if (PPU.SLnum == -1)
@@ -681,8 +682,7 @@ __inline static	void	RunSkip (int NumTicks)
 		{
 			if (PPU.SLnum < 240)
 			{
-				if (PPU.IsRendering)
-					DiscoverSprites();
+				DiscoverSprites();
 				if (PPU.Spr0InLine)
 					ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
