@@ -233,8 +233,6 @@ __inline void	Triangle_CheckActive (void)
 	if (Triangle.freq >= 4)
 		Triangle.Active = Triangle.Enabled && Triangle.Timer && Triangle.LinCtr;
 	else	Triangle.Active = FALSE;
-	if (!Triangle.Active)
-		Triangle.Pos = 0;
 }
 __inline void	Triangle_Write (int Reg, unsigned char Val)
 {
