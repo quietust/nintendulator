@@ -178,12 +178,33 @@ void	NES_OpenFile (char *filename)
 int	NES_FDSSave (FILE *out)
 {
 	int clen = 0;
+	int x, y;
+	unsigned long data;
+	for (x = 0; x < RI.FDS_NumSides << 4; x++)
+	{
+		for (y = 0; y < 4096; y++)
+		{
+			if (PRG_ROM[x][y] != PRG_ROM[0x400 | x][y])
+			{
+				data = y | (x << 12) || (PRG_ROM[x][y] << 24);
+				fwrite(&data,4,1,out);	clen += 4;
+			}
+		}
+	}
 	return clen;
 }
 
 int	NES_FDSLoad (FILE *in)
 {
 	int clen = 0;
+	unsigned long data;
+	while (1)
+	{
+		fread(&data,4,1,in);
+		if (feof(in))
+			break;
+		PRG_ROM[(data >> 12) & 0x3FF][data & 0xFFF] = (unsigned char)(data >> 24);
+	}
 	return clen;
 }
 
