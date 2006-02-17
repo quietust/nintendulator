@@ -95,6 +95,8 @@ unsigned char __fastcall	CPU_MemGet (unsigned int Addy)
 }
 void __fastcall	CPU_MemSet (unsigned int Addy, unsigned char Val)
 {
+	if (CPU.PCMCycles)
+		CPU.PCMCycles--;
 	RunCycle();
 	CPU.WriteHandler[(Addy >> 12) & 0xF]((Addy >> 12) & 0xF,Addy & 0xFFF,Val);
 }

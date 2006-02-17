@@ -42,6 +42,7 @@ struct tCPU
 	unsigned char WantNMI;
 #endif /* NSFPLAYER */
 	unsigned char WantIRQ;
+	unsigned char PCMCycles;
 
 	unsigned char A, X, Y, SP, P;
 	unsigned char FC, FZ, FI, FD, FV, FN;
