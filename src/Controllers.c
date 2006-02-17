@@ -771,15 +771,16 @@ void	Controllers_StopMovie (void)
 		fwrite(&len,4,1,movie);			// 2: set the NMOV block length
 		fseek(movie,4,SEEK_CUR);		len -= 4;	// skip controller data
 		fwrite(&ReRecords,4,1,movie);		len -= 4;	// write the final re-record count
-		fseek(movie,0,SEEK_CUR);
+		fseek(movie,ftell(movie),SEEK_SET);
 		fread(&mlen,4,1,movie);			len -= 4;	// read description len
 		if (mlen)
 		{
 			fseek(movie,mlen,SEEK_CUR);	len -= mlen;	// skip the description
 		}
-		len -= 4;				// subtract size of movie len field
+		fread(tps,4,1,movie);			len -= 4;	// read movie data len
+		fseek(movie,-4,SEEK_CUR);		// rewind
 		fwrite(&len,4,1,movie);			// 3: terminate the movie data
-		fseek(movie,len,SEEK_CUR);
+		// fseek(movie,len,SEEK_CUR);
 		// TODO - truncate the file to this point
 	}
 	fclose(movie);
