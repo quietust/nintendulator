@@ -467,7 +467,7 @@ void	GFX_LoadPalette (int PalNum)
 	int i;
 	if (PalNum == PALETTE_NTSC)
 		GFX_GenerateNTSC(GFX.NTSChue,GFX.NTSCsat,FALSE);
-	if (PalNum == PALETTE_CUST)
+	if (PalNum == PALETTE_EXT)
 	{
 		if (!GFX_ImportPalette(PPU.IsPAL ? GFX.CustPalettePAL : GFX.CustPaletteNTSC,FALSE))
 		{
