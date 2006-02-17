@@ -50,7 +50,7 @@ typedef	struct	EmulatorInterface
 		void		(_MAPINT *SetPRG_RAM32)		(int,int);
 		int		(_MAPINT *GetPRG_RAM4)		(int);		/* -1 if no RAM mapped */
 
-		char *		(_MAPINT *GetPRG_Ptr4)		(int);
+		unsigned char *	(_MAPINT *GetPRG_Ptr4)		(int);
 		void		(_MAPINT *SetPRG_OB4)		(int);		/* Open bus */
 
 	/* Functions for mapping CHR */
@@ -66,7 +66,7 @@ typedef	struct	EmulatorInterface
 		void		(_MAPINT *SetCHR_RAM8)		(int,int);
 		int		(_MAPINT *GetCHR_RAM1)		(int);		/* -1 if no RAM mapped */
 
-		char *		(_MAPINT *GetCHR_Ptr1)		(int);
+		unsigned char *	(_MAPINT *GetCHR_Ptr1)		(int);
 		void		(_MAPINT *SetCHR_OB1)		(int);		/* Open bus */
 
 	/* Functions for controlling mirroring */
