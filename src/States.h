@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __STATES_H__
-#define __STATES_H__
+#ifndef STATES_H
+#define STATES_H
 
 #define	STATES_VERSION	"0930"
 
@@ -42,4 +42,4 @@ BOOL	States_LoadData (FILE *, int);
 void	States_SaveState (void);
 void	States_LoadState (void);
 
-#endif
+#endif /* STATES_H */

@@ -4,8 +4,8 @@
 
 /* So this file only gets included once */
 
-#ifndef __MAPPERINTERFACE_H__
-#define __MAPPERINTERFACE_H__
+#ifndef MAPPERINTERFACE_H
+#define MAPPERINTERFACE_H
 
 /* Standard header files, used by all mappers */
 
@@ -202,4 +202,4 @@ void	MapperInterface_Release (void);
 BOOL	MapperInterface_LoadMapper (CPROMInfo ROM);
 void	MapperInterface_UnloadMapper (void);
 
-#endif		/* __MAPPERINTERFACE_H__ */
+#endif /* MAPPERINTERFACE_H */

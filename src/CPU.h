@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __CPU_H__
-#define __CPU_H__
+#ifndef CPU_H
+#define CPU_H
 
 #include "MapperInterface.h"
 
@@ -40,7 +40,7 @@ struct tCPU
 
 #ifndef NSFPLAYER
 	unsigned char WantNMI;
-#endif
+#endif /* NSFPLAYER */
 	unsigned char WantIRQ;
 
 	unsigned char A, X, Y, SP, P;
@@ -74,5 +74,4 @@ void	_MAPINT	CPU_Write4k (int,int,int);
 int	_MAPINT	CPU_ReadPRG (int,int);
 void	_MAPINT	CPU_WritePRG (int,int,int);
 
-#endif
-
+#endif /* CPU_H */

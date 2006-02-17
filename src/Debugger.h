@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __DEBUGGER_H__
-#define __DEBUGGER_H__
+#ifndef DEBUGGER_H
+#define DEBUGGER_H
 
 #ifdef ENABLE_DEBUGGER
 
@@ -89,4 +89,4 @@ unsigned char	Debugger_TraceMem (unsigned short Addy);
 
 #endif	/* ENABLE_DEBUGGER */
 
-#endif
+#endif /* DEBUGGER_H */

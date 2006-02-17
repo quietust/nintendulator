@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __NES_H__
-#define __NES_H__
+#ifndef NES_H
+#define NES_H
 
 #include "MapperInterface.h"
 #include "resource.h"
@@ -71,4 +71,4 @@ void	NES_SaveSettings (void);
 void	NES_Repaint (void);
 void	NES_MapperConfig (void);
 
-#endif
+#endif /* NES_H */

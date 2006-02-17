@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __AVI_H__
-#define __AVI_H__
+#ifndef AVI_H
+#define AVI_H
 
 DECLARE_HANDLE(HAVI);
 extern HAVI aviout;
@@ -31,4 +31,4 @@ void AVI_AddVideo(void);
 void AVI_AddAudio(void);
 void AVI_End(void);
 
-#endif
+#endif /* AVI_H */

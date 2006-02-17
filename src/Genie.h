@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __GENIE_H__
-#define __GENIE_H__
+#ifndef GENIE_H
+#define GENIE_H
 
 struct tGenie
 {
@@ -38,4 +38,4 @@ void	Genie_Init (void);
 int	Genie_Save (FILE *);
 int	Genie_Load (FILE *);
 
-#endif
+#endif /* GENIE_H */

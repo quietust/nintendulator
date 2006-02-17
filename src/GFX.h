@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __GFX_H__
-#define __GFX_H__
+#ifndef GFX_H
+#define GFX_H
 
 #define	DIRECTDRAW_VERSION 0x0700
 #include <ddraw.h>
@@ -67,4 +67,4 @@ void	GFX_SetFrameskip (void);
 void	__cdecl	GFX_ShowText (char *, ...);
 void	GFX_UpdateTitlebar (void);
 
-#endif
+#endif /* GFX_H */

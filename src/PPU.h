@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __PPU_H__
-#define __PPU_H__
+#ifndef PPU_H
+#define PPU_H
 
 #include "MapperInterface.h"
 
@@ -83,4 +83,4 @@ int	_MAPINT	PPU_BusRead (int,int);
 void	_MAPINT	PPU_BusWriteCHR (int,int,int);
 void	_MAPINT	PPU_BusWriteNT (int,int,int);
 
-#endif
+#endif /* PPU_H */

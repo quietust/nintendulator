@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __CONTROLLERS_H__
-#define __CONTROLLERS_H__
+#ifndef CONTROLLERS_H
+#define CONTROLLERS_H
 
 #define DIRECTINPUT_VERSION 0x0700
 #include <dinput.h>
@@ -111,4 +111,4 @@ void	Controllers_PlayMovie (BOOL);
 void	Controllers_RecordMovie (BOOL);
 void	Controllers_StopMovie (void);
 
-#endif
+#endif /* CONTROLLERS_H */

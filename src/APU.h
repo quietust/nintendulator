@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __APU_H__
-#define __APU_H__
+#ifndef APU_H
+#define APU_H
 
 #include <windows.h>
 #ifndef NSFPLAYER
@@ -46,14 +46,14 @@ struct	tAPU
 	short			*buffer;
 	int			buflen;
 	BYTE			Regs[0x18];
-#endif
+#endif /* NSFPLAYER */
 
 	unsigned char		WantFPS;
 	unsigned long		MHz;
 	unsigned long		QuarterFrameLen;
 #ifndef NSFPLAYER
 	unsigned long		LockSize;
-#endif
+#endif /* NSFPLAYER */
 };
 extern struct tAPU APU;
 
@@ -65,11 +65,11 @@ int	APU_Save		(FILE *);
 int	APU_Load		(FILE *);
 void	APU_SoundOFF		(void);
 void	APU_SoundON		(void);
-#endif
+#endif /* NSFPLAYER */
 void	APU_Reset		(void);
 #ifndef NSFPLAYER
 void	APU_Config		(HWND);
-#endif
+#endif /* NSFPLAYER */
 void	APU_Run			(void);
 void	APU_SetFPS		(int);
 void	APU_WriteReg		(int,unsigned char);
@@ -78,6 +78,6 @@ unsigned char	APU_Read4015	(void);
 #ifdef NSFPLAYER
 extern	short	sample_pos;
 extern	BOOL	sample_ok;
-#endif
+#endif /* NSFPLAYER */
 
-#endif
+#endif /* APU_H */

@@ -20,8 +20,8 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __NINTENDULATOR_H__
-#define __NINTENDULATOR_H__
+#ifndef NINTENDULATOR_H
+#define NINTENDULATOR_H
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -52,4 +52,4 @@ extern	char		ProgPath[MAX_PATH];	/* program path */
 extern void	SetWindowClientArea (HWND hWnd, int w, int h);
 extern BOOL	ProcessMessages	(void);
 
-#endif /* __NINTENDULATOR_H__ */
+#endif /* NINTENDULATOR_H */
