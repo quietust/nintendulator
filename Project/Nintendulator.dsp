@@ -166,6 +166,10 @@ SOURCE=..\src\Debugger.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\Genie.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\GFX.c
 # End Source File
 # Begin Source File
@@ -211,6 +215,10 @@ SOURCE=..\src\CPU.h
 # Begin Source File
 
 SOURCE=..\src\Debugger.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\Genie.h
 # End Source File
 # Begin Source File
 
