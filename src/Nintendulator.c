@@ -657,6 +657,7 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			EnableWindow(GetDlgItem(hDlg,IDC_INESVS),TRUE);
 			EnableWindow(GetDlgItem(hDlg,IDC_INESPC10),TRUE);
 		}
+		return TRUE;
 		break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
