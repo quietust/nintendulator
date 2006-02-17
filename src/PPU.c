@@ -382,10 +382,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				PPU_GetGFXPtr();
 			}
 			else if (PPU.SLnum == 240)
-			{
-				PPU.SprAddr = 0;
 				PPU.IsRendering = PPU.OnScreen = FALSE;
-			}
 			else if (PPU.SLnum == 241)
 			{
 				PPU.Reg2002 |= 0x80;
@@ -634,7 +631,6 @@ __inline static	void	RunNoSkip (int NumTicks)
 		if ((PPU.Clockticks < 256) && (PPU.OnScreen))
 		{
 			register int PalIndex;
-			PPU.SprAddr = PPU.Clockticks;
 			if ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x02))
 				TC = PPU.TileData[PPU.Clockticks + PPU.IntX];
 			else	TC = 0;
@@ -708,10 +704,7 @@ __inline static	void	RunSkip (int NumTicks)
 			if (PPU.SLnum < 240)
 				PPU.OnScreen = TRUE;
 			else if (PPU.SLnum == 240)
-			{
-				PPU.SprAddr = 0;
 				PPU.IsRendering = PPU.OnScreen = FALSE;
-			}
 			else if (PPU.SLnum == 241)
 			{
 				PPU.Reg2002 |= 0x80;
@@ -934,15 +927,11 @@ __inline static	void	RunSkip (int NumTicks)
 		}
 		if (!(PPU.Clockticks & 1))
 			PPU_PPUCycle(PPU.IOAddr,PPU.SLnum,PPU.Clockticks,PPU.IsRendering);
-		if ((PPU.Clockticks < 256) && (PPU.OnScreen))
+		if ((PPU.Clockticks < 255) && (PPU.OnScreen) && (PPU.Spr0InLine) && (PPU.Reg2001 & 0x10) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x04)))
 		{
-			PPU.SprAddr = PPU.Clockticks;
-			if ((PPU.Clockticks < 255) && (PPU.Spr0InLine) && (PPU.Reg2001 & 0x10) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x04)))
-			{
-				register int SprPixel = PPU.Clockticks - PPU.SprBuff[3];
-				if (!(SprPixel & ~7) && (PPU.SprData[0][SprPixel] & 0x3) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x02)) && (PPU.TileData[PPU.Clockticks + PPU.IntX] & 0x3))
-					PPU.Reg2002 |= 0x40;	/* Sprite 0 hit */
-			}
+			register int SprPixel = PPU.Clockticks - PPU.SprBuff[3];
+			if (!(SprPixel & ~7) && (PPU.SprData[0][SprPixel] & 0x3) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x02)) && (PPU.TileData[PPU.Clockticks + PPU.IntX] & 0x3))
+				PPU.Reg2002 |= 0x40;	/* Sprite 0 hit */
 		}
 	}
 }
@@ -981,6 +970,8 @@ static	int	__fastcall	Read2 (void)
 
 static	int	__fastcall	Read4 (void)
 {
+	if (PPU.OnScreen)
+		return 0xFF;
 	return PPU.ppuLatch = PPU.Sprite[PPU.SprAddr];
 }
 
@@ -1042,6 +1033,8 @@ static	void	__fastcall	Write3 (int What)
 
 static	void	__fastcall	Write4 (int What)
 {
+	if (PPU.OnScreen)
+		What = 0xFF;
 	PPU.Sprite[PPU.SprAddr++] = What;
 }
 
