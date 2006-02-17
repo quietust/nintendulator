@@ -32,7 +32,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct	tStates	States;
 
-#define	STATES_VERSION	"0910"
+#define	STATES_VERSION	"0920"
 
 extern FILE *movie;
 
