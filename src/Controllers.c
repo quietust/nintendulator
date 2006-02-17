@@ -525,7 +525,6 @@ void	Controllers_PlayMovie (BOOL Review)
 	else if (!memcmp(buf,"NSS\x1a",4))
 	{
 		int len;
-		char *desc;
 
 		fread(buf,1,4,movie);
 		if (memcmp(buf,STATES_VERSION,4))
@@ -605,12 +604,16 @@ void	Controllers_PlayMovie (BOOL Review)
 		ExpPort_SetControllerType(&Controllers.ExpPort,buf[2]);
 
 		fread(&ReRecords,4,1,movie);
-		fread(&len,4,1,movie);	// 
-		desc = malloc(len);
-		fread(desc,len,1,movie);
 		fread(&len,4,1,movie);
-		EI.DbgOut("Description: %s",desc);
+		if (len)
+		{
+			char *desc = malloc(len);
+			fread(desc,len,1,movie);
+			EI.DbgOut("Description: %s",desc);
+			free(desc);
+		}
 		EI.DbgOut("Re-record count: %i",ReRecords);
+		fread(&len,4,1,movie);
 	}
 	else
 	{
@@ -731,10 +734,9 @@ void	Controllers_StopMovie (void)
 		fseek(movie,8,SEEK_SET);		len -= 16;
 		fwrite(&len,4,1,movie);			// 1: set the file length
 		fseek(movie,16,SEEK_SET);
-
 		fread(tps,4,1,movie);
 		fread(&mlen,4,1,movie);			len -= 8;
-		while (strncmp(tps,"NMOV",4))
+		while (memcmp(tps,"NMOV",4))
 		{	/* find the NMOV block in the movie */
 			fseek(movie,mlen,SEEK_CUR);	len -= mlen;
 			fread(tps,4,1,movie);
