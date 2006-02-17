@@ -260,6 +260,8 @@ void	GFX_SetFrameskip (void)
 void	GFX_Update (void)
 {
 	register unsigned short *src = DrawArray;
+	if (!GFX.DirectDraw)
+		return;
 	WaitForSingleObject(GFX.Semaphore,INFINITE);
 	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),_T("Failed to lock secondary surface"),ReleaseSemaphore(GFX.Semaphore,1,NULL))
 	if (GFX.Depth == 32)
@@ -302,22 +304,21 @@ void	GFX_Update (void)
 
 void	GFX_Repaint (void)
 {
-	if (GFX.DirectDraw)
-	{
-		RECT rect;
-		POINT pt = {0,0};
-		GetClientRect(mWnd,&rect);
-		if ((rect.right == 0) || (rect.bottom == 0))
-			return;
-		ClientToScreen(mWnd,&pt);
-		rect.left += pt.x;
-		rect.right += pt.x;
-		rect.top += pt.y;
-		rect.bottom += pt.y;
-		WaitForSingleObject(GFX.Semaphore,INFINITE);
-		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),_T("Failed to blit to primary surface"),ReleaseSemaphore(GFX.Semaphore,1,NULL))
-		ReleaseSemaphore(GFX.Semaphore,1,NULL);
-	}
+	RECT rect;
+	POINT pt = {0,0};
+	if (!GFX.DirectDraw)
+		return;
+	GetClientRect(mWnd,&rect);
+	if ((rect.right == 0) || (rect.bottom == 0))
+		return;
+	ClientToScreen(mWnd,&pt);
+	rect.left += pt.x;
+	rect.right += pt.x;
+	rect.top += pt.y;
+	rect.bottom += pt.y;
+	WaitForSingleObject(GFX.Semaphore,INFINITE);
+	GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),_T("Failed to blit to primary surface"),ReleaseSemaphore(GFX.Semaphore,1,NULL))
+	ReleaseSemaphore(GFX.Semaphore,1,NULL);
 }
 
 static unsigned char cPalette[5][64][3] = {
