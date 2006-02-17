@@ -454,8 +454,8 @@ void	States_LoadState (void)
 		return;
 	}
 	fread(tpchr,1,4,in);
-	if (0 && memcmp(tpchr,STATES_VERSION,4))
-	{	/* For now, allow savestates with wrong version */
+	if (memcmp(tpchr,STATES_VERSION,4))
+	{
 		fclose(in);
 		tpchr[4] = 0;
 		GFX_ShowText("Incorrect savestate version (%s): %i", tpchr, States.SelSlot);
