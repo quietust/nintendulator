@@ -66,6 +66,8 @@ struct tExpPort
 enum	EXPCONT_TYPE	{ EXP_UNCONNECTED, EXP_FAMI4PLAY, EXP_ARKANOIDPADDLE, EXP_FAMILYBASICKEYBOARD, EXP_ALTKEYBOARD, EXP_FAMTRAINER, EXP_TABLET, EXP_MAX };
 void	ExpPort_SetControllerType (struct tExpPort *,int);
 
+enum	JOY_AXIS	{ AXIS_X, AXIS_Y, AXIS_Z, AXIS_RX, AXIS_RY, AXIS_RZ, AXIS_S0, AXIS_S1 };
+
 struct tControllers
 {
 	struct tStdPort Port1, Port2;
@@ -76,8 +78,16 @@ struct tControllers
 
 	int	NumDevices;
 	BOOL	DeviceUsed[MAX_CONTROLLERS];
-	TCHAR	DeviceName[MAX_CONTROLLERS][MAX_PATH];
-	int	NumButtons[MAX_CONTROLLERS], NumAxes[MAX_CONTROLLERS];
+	TCHAR	*DeviceName[MAX_CONTROLLERS];
+
+	int	NumButtons[MAX_CONTROLLERS];
+	BYTE	AxisFlags[MAX_CONTROLLERS],
+		POVFlags[MAX_CONTROLLERS];
+	
+	TCHAR	*ButtonNames[MAX_CONTROLLERS][128],
+		*AxisNames[MAX_CONTROLLERS][8],
+		*POVNames[MAX_CONTROLLERS][4],
+		*KeyNames[256];
 
 	LPDIRECTINPUT7		DirectInput;
 	LPDIRECTINPUTDEVICE7	DIDevices[MAX_CONTROLLERS];
