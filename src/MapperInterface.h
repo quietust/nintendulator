@@ -100,7 +100,7 @@ typedef enum	{ COMPAT_FULL, COMPAT_NEARLY, COMPAT_PARTIAL, COMPAT_NONE } COMPAT_
 
 /* Mapper Information structure - Contains pointers to mapper functions, sent to emulator on load mapper  */
 
-typedef	enum	{ RESET_SOFT, RESET_HARD, RESET_FULL } RESET_TYPE;
+typedef	enum	{ RESET_NONE, RESET_SOFT, RESET_HARD, RESET_FULL } RESET_TYPE;
 
 typedef	enum	{ STATE_SAVE, STATE_LOAD, STATE_SIZE } SAVELOAD_TYPE;
 
