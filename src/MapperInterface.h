@@ -1,5 +1,5 @@
 /*
- * Nintendulator Mapper Interface v3.2
+ * Nintendulator Mapper Interface
  */
 
 /* So this file only gets included once */
