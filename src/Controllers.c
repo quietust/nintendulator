@@ -563,6 +563,10 @@ void	Controllers_PlayMovie (BOOL Review)
 
 	MoviePos = MovieLen = 0;
 
+	NES.SRAM_Size = 0;		// when messing with movies, don't save SRAM
+
+	if (RI.ROMType == ROM_FDS)	// when playing FDS movies, discard savedata; if there is savestate data, we'll be reloading it
+		memcpy(PRG_ROM[0x000],PRG_ROM[0x400],RI.FDS_NumSides << 16);
 	NES_Reset(RESET_HARD);
 	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
 	if (!States_LoadData(movie,len))
@@ -704,6 +708,8 @@ void	Controllers_RecordMovie (BOOL fromState)
 	ReRecords = 0;
 	MoviePos = MovieLen = 0;
 
+	NES.SRAM_Size = 0;		// when messing with movies, don't save SRAM
+
 	fwrite("NSS\x1A",1,4,movie);
 	fwrite(STATES_VERSION,1,4,movie);
 	fwrite(&len,1,4,movie);
@@ -711,7 +717,12 @@ void	Controllers_RecordMovie (BOOL fromState)
 
 	if (fromState)
 		States_SaveData(movie);
-	else	NES_Reset(RESET_HARD);
+	else
+	{
+		if (RI.ROMType == ROM_FDS)	// if recording an FDS movie from reset, discard all savedata
+			memcpy(PRG_ROM[0x000],PRG_ROM[0x400],RI.FDS_NumSides << 16);
+		NES_Reset(RESET_HARD);
+	}
 
 	fwrite("NMOV",1,4,movie);
 	fwrite(&len,1,4,movie);

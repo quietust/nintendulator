@@ -593,7 +593,7 @@ const char *	NES_OpenFileFDS (char *filename)
 		fread(PRG_ROM[i << 4],1,65500,in);
 	fclose(in);
 
-	memcpy(&PRG_ROM[0x400],&PRG_ROM[0x000],numSides << 16);
+	memcpy(PRG_ROM[0x400],PRG_ROM[0x000],numSides << 16);
 
 	RI.FDS_NumSides = numSides;
 

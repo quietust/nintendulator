@@ -429,9 +429,7 @@ static	void	_MAPINT	Mirror_Custom (int M1, int M2, int M3, int M4)
 static	void	_MAPINT	Set_SRAMSize (int Size)	/* Sets the size of the SRAM (in bytes) and clears PRG_RAM */
 {
 #ifndef NSFPLAYER
-	if (Controllers.MovieMode)		/* Do not save SRAM when recording movies */
-		NES.SRAM_Size = 0;
-	else	NES.SRAM_Size = Size;
+	NES.SRAM_Size = Size;
 	memset(PRG_RAM,0,sizeof(PRG_RAM));
 #endif
 }
