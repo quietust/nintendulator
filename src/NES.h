@@ -27,9 +27,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "resource.h"
 #include <windows.h>
 
-#define RESET_SOFT 1
-#define RESET_HARD 2
-
 struct tNES
 {
 	int SRAM_Size;

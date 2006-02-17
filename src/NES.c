@@ -158,7 +158,7 @@ void	NES_OpenFile (char *filename)
 	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 
-	NES_Reset(0);
+	NES_Reset(RESET_FULL);
 	if ((NES.AutoRun) || (RI.ROMType == ROM_NSF))
 	{
 		if (NES.Stopped)
@@ -751,7 +751,8 @@ void	NES_Reset (int ResetType)
 	}
 	switch (ResetType)
 	{
-	case 0:	ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
+	case RESET_FULL:
+		ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		EI.DbgOut("Performing initial hard reset...");
 		PPU_PowerOn();
@@ -759,7 +760,7 @@ void	NES_Reset (int ResetType)
 		EI.SetCHR_RAM8(0,0);
 		EI.Mirror_4();
 		if ((MI) && (MI->Reset))
-			MI->Reset(1);
+			MI->Reset(RESET_HARD);
 		break;
 	case RESET_HARD:
 		EI.DbgOut("Performing hard reset...");
@@ -781,7 +782,7 @@ void	NES_Reset (int ResetType)
 			EI.SetCHR_RAM8(0,0);
 			EI.Mirror_4();
 			if ((MI) && (MI->Reset))
-				MI->Reset(1);
+				MI->Reset(RESET_HARD);
 		}
 		break;
 	case RESET_SOFT:
@@ -802,7 +803,7 @@ void	NES_Reset (int ResetType)
 			else	Genie_Reset();	// map the Game Genie back in its place
 		}
 		if ((MI) && (MI->Reset))
-			MI->Reset(0);
+			MI->Reset(RESET_SOFT);
 		break;
 	}
 #ifdef ENABLE_DEBUGGER
