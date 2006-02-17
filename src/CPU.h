@@ -46,15 +46,14 @@ struct tCPU
 	unsigned char A, X, Y, SP, P;
 	unsigned char FC, FZ, FI, FD, FV, FN;
 	unsigned char LastRead;
-#undef _PC
-	union SplitReg _PC;
+	union SplitReg rPC;
 };
 extern	struct tCPU CPU;
 extern	unsigned char CPU_RAM[0x800];
 
-#define PC _PC.Full
-#define PCL _PC.Segment[0]
-#define PCH _PC.Segment[1]
+#define PC rPC.Full
+#define PCL rPC.Segment[0]
+#define PCH rPC.Segment[1]
 
 unsigned char	__fastcall	CPU_MemGet (unsigned int);
 void	__fastcall	CPU_MemSet (unsigned int,unsigned char);

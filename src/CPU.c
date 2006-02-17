@@ -39,21 +39,21 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 struct tCPU CPU;
 unsigned char CPU_RAM[0x800];
 
-union SplitReg _CalcAddr;
-union SplitReg _TmpAddr;
+union SplitReg rCalcAddr;
+union SplitReg rTmpAddr;
 signed char BranchOffset;
 
-#define CalcAddr _CalcAddr.Full
-#define CalcAddrL _CalcAddr.Segment[0]
-#define CalcAddrH _CalcAddr.Segment[1]
+#define CalcAddr rCalcAddr.Full
+#define CalcAddrL rCalcAddr.Segment[0]
+#define CalcAddrH rCalcAddr.Segment[1]
 
-#define TmpAddr _TmpAddr.Full
-#define TmpAddrL _TmpAddr.Segment[0]
-#define TmpAddrH _TmpAddr.Segment[1]
+#define TmpAddr rTmpAddr.Full
+#define TmpAddrL rTmpAddr.Segment[0]
+#define TmpAddrH rTmpAddr.Segment[1]
 
-static __forceinline void FixPC (void)
+static	__forceinline void	FixPC (void)
 {
-	CPU._PC.Segment[2] = 0;
+	CPU.rPC.Segment[2] = 0;
 }
 
 unsigned char TmpData;
@@ -82,7 +82,7 @@ static	__forceinline void	RunCycle (void)
 #endif
 }
 #define	CPU_MemGetCode	CPU_MemGet
-unsigned char __fastcall	CPU_MemGet (unsigned int Addr)
+unsigned char	__fastcall	CPU_MemGet (unsigned int Addr)
 {
 	static int buf;
 	RunCycle();
@@ -102,7 +102,7 @@ unsigned char __fastcall	CPU_MemGet (unsigned int Addr)
 		CPU.LastRead = buf;
 	return CPU.LastRead;
 }
-void __fastcall	CPU_MemSet (unsigned int Addr, unsigned char Val)
+void	__fastcall	CPU_MemSet (unsigned int Addr, unsigned char Val)
 {
 	RunCycle();
 	if (CPU.PCMCycles)

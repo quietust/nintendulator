@@ -68,5 +68,7 @@ void	GFX_Repaint (void);
 void	GFX_LoadPalette (int);
 void	GFX_SetFrameskip (void);
 void	GFX_PaletteConfig (void);
+void	GFX_GetCursorPos (POINT *);
+void	GFX_SetCursorPos (int,int);
 
 #endif /* GFX_H */

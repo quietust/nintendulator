@@ -27,6 +27,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Controllers.h"
 #include "MapperInterface.h"
 #include "PPU.h"
+#include "GFX.h"
 
 #define	PosX	Data[0]
 #define	PosY	Data[1]
@@ -39,17 +40,13 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 		Cont->PosX = Cont->MovData[0];
 		Cont->PosY = Cont->MovData[1];
 		Cont->Button = Cont->MovData[2];
-		pos.x = Cont->PosX * SizeMult;
-		pos.y = Cont->PosY * SizeMult;
-		ClientToScreen(mWnd,&pos);
-		SetCursorPos(pos.x,pos.y);
+		GFX_SetCursorPos(Cont->PosX, Cont->PosY);
 	}
 	else
 	{
-		GetCursorPos(&pos);
-		ScreenToClient(mWnd,&pos);
-		Cont->PosX = pos.x / SizeMult;
-		Cont->PosY = pos.y / SizeMult;
+		GFX_GetCursorPos(&pos);
+		Cont->PosX = pos.x;
+		Cont->PosY = pos.y;
 		if ((Cont->PosX < 0) || (Cont->PosX > 255) || (Cont->PosY < 0) || (Cont->PosY > 239))
 			Cont->PosX = Cont->PosY = 255;	// if it's off-screen, push it to the bottom
 		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);

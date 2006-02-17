@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "resource.h"
 #include "Movie.h"
 #include "Controllers.h"
+#include "GFX.h"
 
 #define	Bits	Data[0]
 #define	Strobe	Data[1]
@@ -42,17 +43,13 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 		Cont->PosX = Cont->MovData[0];
 		Cont->PosY = Cont->MovData[1];
 		Cont->Button = Cont->MovData[2];
-		pos.x = Cont->PosX * SizeMult;
-		pos.y = Cont->PosY * SizeMult;
-		ClientToScreen(mWnd,&pos);
-		SetCursorPos(pos.x,pos.y);
+		GFX_SetCursorPos(Cont->PosX, Cont->PosY);
 	}
 	else
 	{
-		GetCursorPos(&pos);
-		ScreenToClient(mWnd,&pos);
-		Cont->PosX = pos.x / SizeMult;
-		Cont->PosY = pos.y / SizeMult;
+		GFX_GetCursorPos(&pos);
+		Cont->PosX = pos.x;
+		Cont->PosY = pos.y;
 		if ((Cont->PosX < 0) || (Cont->PosX > 255) || (Cont->PosY < 0) || (Cont->PosY > 239))
 			Cont->PosX = Cont->PosY = 0;
 		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);

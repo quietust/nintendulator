@@ -201,7 +201,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	HDC hdc;
 	PAINTSTRUCT ps;
 	int wmId, wmEvent;
-	TCHAR FileName[256];
+	TCHAR FileName[MAX_PATH];
 	OPENFILENAME ofn;
 	BOOL running = NES.Running;
 
@@ -555,7 +555,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	case WM_DROPFILES:
-		DragQueryFile((HDROP)wParam,0,FileName,256);
+		DragQueryFile((HDROP)wParam,0,FileName,MAX_PATH);
 		DragFinish((HDROP)wParam);
 		NES_Stop();
 		NES_OpenFile(FileName);
@@ -655,7 +655,7 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 	static char header[16];
 	int i;
 	FILE *rom;
-	TCHAR name[256];
+	TCHAR name[MAX_PATH];
 	switch (message)
 	{
 	case WM_INITDIALOG:

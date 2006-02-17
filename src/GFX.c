@@ -385,6 +385,37 @@ void	GFX_Repaint (void)
 	}
 }
 
+void	GFX_GetCursorPos (POINT *pos)
+{
+	GetCursorPos(pos);
+	if (!GFX.Fullscreen)
+	{
+		RECT rect;
+		ScreenToClient(mWnd,pos);
+		GetClientRect(mWnd,&rect);
+		pos->x = pos->x * 256 / (rect.right - rect.left);
+		pos->y = pos->y * 240 / (rect.bottom - rect.top);
+	}
+	else	pos->x -= 32;	// TODO: make fullscreen work correctly with zapper/tablet
+}
+
+void	GFX_SetCursorPos (int x, int y)
+{
+	POINT pos;
+	pos.x = x;
+	pos.y = y;
+	if (!GFX.Fullscreen)
+	{
+		RECT rect;
+		GetClientRect(mWnd,&rect);
+		pos.x = pos.x * (rect.right - rect.left) / 256;
+		pos.y = pos.y * (rect.bottom - rect.top) / 240;
+		ClientToScreen(mWnd,&pos);
+	}
+	else	pos.x += 32;
+	SetCursorPos(pos.x, pos.y);
+}
+
 enum PALETTE { PALETTE_NTSC, PALETTE_PAL, PALETTE_PC10, PALETTE_EXT, PALETTE_VS1, /* PALETTE_VS2, PALETTE_VS3, PALETTE_VS4,*/ PALETTE_TEMP, PALETTE_MAX };
 
 static unsigned char cPalette[PALETTE_MAX][64][3] = {

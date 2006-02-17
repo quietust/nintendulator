@@ -25,18 +25,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "resource.h"
 #include "Movie.h"
 #include "Controllers.h"
-
-static	BOOL	LockCursorPos (int x, int y)
-{
-	POINT pos;
-	pos.x = 0;
-	pos.y = 0;
-	ClientToScreen(mWnd,&pos);
-	pos.x += x * SizeMult;
-	pos.y += y * SizeMult;
-	SetCursorPos(pos.x,pos.y);
-	return TRUE;
-}
+#include "GFX.h"
 
 #define	Bits	Data[0]
 #define	Pos	Data[1]
@@ -54,7 +43,7 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 	}
 	else
 	{
-		LockCursorPos(128,220);
+		GFX_SetCursorPos(128, 220);
 		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);
 		Cont->Pos += Controllers.MouseState.lX;
 		if (Cont->Pos < 196)

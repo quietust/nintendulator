@@ -20,7 +20,6 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#define	CDECL __cdecl
 #include "stdafx.h"
 #include "Nintendulator.h"
 #include "resource.h"
@@ -303,7 +302,7 @@ void	AVI_Start (void)
 	HRESULT hr;
 	AVICOMPRESSOPTIONS opts;
 
-	TCHAR FileName[256] = {0};
+	TCHAR FileName[MAX_PATH] = {0};
 	OPENFILENAME ofn;
 
 	if (aviout)

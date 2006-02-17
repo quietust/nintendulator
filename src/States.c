@@ -65,7 +65,7 @@ void	States_SetFilename (TCHAR *Filename)
 
 void	States_SetSlot (int Slot)
 {
-	TCHAR tpchr[256];
+	TCHAR tpchr[MAX_PATH];
 	FILE *tmp;
 	States.SelSlot = Slot;
 	_stprintf(tpchr,_T("%s.ns%i"),States.BaseFilename,Slot);
@@ -185,7 +185,7 @@ int	States_SaveData (FILE *out)
 
 void	States_SaveState (void)
 {
-	TCHAR tps[256];
+	TCHAR tps[MAX_PATH];
 	int flen;
 	FILE *out;
 
@@ -291,7 +291,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 
 void	States_LoadState (void)
 {
-	TCHAR tps[256];
+	TCHAR tps[MAX_PATH];
 	char tpc[5];
 	FILE *in;
 	int flen;
