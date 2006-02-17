@@ -511,11 +511,17 @@ void	Controllers_PlayMovie (BOOL Review)
 	if (!memcmp(buf,"FMV\x1a",4))
 	{
 		fread(&x,1,1,movie);
-		fread(&x,1,1,movie);
-		if (!(x & 0x80))
+		if (x & 0x80)
 		{
 			fclose(movie);
 			MessageBox(mWnd,"Movies recorded from savestates are not supported!","Nintendulator",MB_OK);
+			return;
+		}
+		fread(&x,1,1,movie);
+		if (x & 0x20)
+		{
+			fclose(movie);
+			MessageBox(mWnd,"FDS movies are not supported!","Nintendulator",MB_OK);
 			return;
 		}
 		Controllers.MovieMode = MOV_PLAY | MOV_FMV;
@@ -533,7 +539,9 @@ void	Controllers_PlayMovie (BOOL Review)
 			if (Controllers.FSPort4.Type)	MOV_ControllerTypes[1] |= 0x08;
 		}
 
-		StdPort_SetControllerType(&Controllers.Port1,STD_STDCONTROLLER);
+		if (x & 0x80)
+			StdPort_SetControllerType(&Controllers.Port1,STD_STDCONTROLLER);
+		else	StdPort_SetControllerType(&Controllers.Port1,STD_UNCONNECTED);
 		if (x & 0x40)
 			StdPort_SetControllerType(&Controllers.Port2,STD_STDCONTROLLER);
 		else	StdPort_SetControllerType(&Controllers.Port2,STD_UNCONNECTED);
