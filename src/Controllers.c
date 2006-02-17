@@ -374,6 +374,7 @@ void	Controllers_Init (void)
 	
 	Controllers.NumDevices = 2;
 	IDirectInput7_EnumDevices(Controllers.DirectInput,DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
+	Controllers.MovieMode = 0;
 }
 
 void	Controllers_Release (void)
@@ -663,11 +664,13 @@ void	Controllers_PlayMovie (BOOL Review)
 		fclose(movie);
 		return;
 	}
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_BYCOMMAND | MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_BYCOMMAND | MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
 	if (Controllers.Port1.MovLen)
 		memset(Controllers.Port1.MovData,0,Controllers.Port1.MovLen);
 	if (Controllers.Port2.MovLen)
@@ -750,11 +753,13 @@ void	Controllers_RecordMovie (BOOL fromState)
 	fwrite(&len,4,1,movie);	// movie data length
 
 	ReRecords = 0;
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_BYCOMMAND | MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_BYCOMMAND | MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
 }
 
 void	Controllers_StopMovie (void)
@@ -823,11 +828,13 @@ void	Controllers_StopMovie (void)
 		StdPort_SetControllerType(&Controllers.Port2,MOV_ControllerTypes[1]);
 	}
 	ExpPort_SetControllerType(&Controllers.ExpPort,MOV_ControllerTypes[2]);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_BYCOMMAND | MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_ENABLED);
 }
 
 void	Controllers_UpdateInput (void)

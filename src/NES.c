@@ -117,8 +117,37 @@ void	NES_OpenFile (char *filename)
 	NES.ROMLoaded = TRUE;
 	EI.DbgOut("Loaded successfully!");
 	if (MI->Config)
-		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_ENABLED);
-	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_ENABLED);
+	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
+
+	if (RI.ROMType == ROM_NSF)
+	{
+		NES.GameGenie = FALSE;
+		CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
+		EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_GRAYED);
+	}
+	else
+	{
+		EnableMenuItem(GetMenu(mWnd),ID_CPU_SAVESTATE,MF_ENABLED);
+		EnableMenuItem(GetMenu(mWnd),ID_CPU_LOADSTATE,MF_ENABLED);
+		EnableMenuItem(GetMenu(mWnd),ID_CPU_PREVSTATE,MF_ENABLED);
+		EnableMenuItem(GetMenu(mWnd),ID_CPU_NEXTSTATE,MF_ENABLED);
+
+		EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_ENABLED);
+		EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_ENABLED);
+		EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_ENABLED);
+		EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_ENABLED);
+
+		EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_ENABLED);
+	}
+
+	EnableMenuItem(GetMenu(mWnd),ID_FILE_CLOSE,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_RUN,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_STEP,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_STOP,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_SOFTRESET,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_HARDRESET,MF_ENABLED);
+
 	DrawMenuBar(mWnd);
 
 	States_SetFilename(filename);
@@ -170,7 +199,30 @@ void	NES_CloseFile (void)
 		memset(&RI,0,sizeof(RI));
 	}
 
-	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_GRAYED);
+	if (aviout)
+		AVI_End();
+	if (Controllers.MovieMode)
+		Controllers_StopMovie();
+
+	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_SAVESTATE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_LOADSTATE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_PREVSTATE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_NEXTSTATE,MF_GRAYED);
+
+	EnableMenuItem(GetMenu(mWnd),ID_FILE_CLOSE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_RUN,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_STEP,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_STOP,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_SOFTRESET,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_HARDRESET,MF_GRAYED);
+
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_GRAYED);
 
 	for (i = 0; i < 16; i++)
 	{
@@ -184,10 +236,6 @@ void	NES_CloseFile (void)
 		PPU.WriteHandler[i] = PPU_BusWriteCHR;
 		PPU.Writable[i] = FALSE;
 	}
-	if (aviout)
-		AVI_End();
-	if (Controllers.MovieMode)
-		Controllers_StopMovie();
 }
 
 #define MKID(a) ((unsigned long) \
@@ -526,7 +574,7 @@ const char *	NES_OpenFileNSF (char *filename)
 	}
 
 	NES.PRGMask = MAX_PRGROM_MASK;
-	
+
 	if (!MapperInterface_LoadMapper(&RI))
 		return "NSF support not found!";
 	EI.DbgOut("NSF loaded: %s - %s",MI->Description,CompatLevel[MI->Compatibility]);
