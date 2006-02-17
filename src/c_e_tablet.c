@@ -71,8 +71,8 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 		Cont->NewBits |= 0x0002;
 	else if (Cont->Button)
 		Cont->NewBits |= 0x0003;
-	x = Cont->PosX * 240 / 256 + 8;
-	y = Cont->PosY * 256 / 240 - 16;
+	x = (Cont->PosX + 8) * 240 / 256;
+	y = (Cont->PosY - 14) * 256 / 240;
 	if (y < 0) y = 0;
 	if (y > 255) y = 255;
 	Cont->NewBits |= (x << 10) | (y << 2);
