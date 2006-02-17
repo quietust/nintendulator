@@ -620,10 +620,9 @@ __inline static	void	RunNoSkip (int NumTicks)
 				for (y = 0; y < PPU.SprCount; y += 4)
 				{
 					register int SprPixel = PPU.Clockticks - PPU.SprBuff[y | 3];
-					register unsigned char SprFlags, SprDat;
+					register unsigned char SprDat;
 					if (SprPixel & ~7)
 						continue;
-					SprFlags = PPU.SprBuff[y | 2];
 					SprDat = PPU.SprData[y >> 2][SprPixel];
 					if (SprDat & 0x3)
 					{
@@ -632,7 +631,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 							PPU.Reg2002 |= 0x40;	/* Sprite 0 hit */
 							PPU.Spr0InLine = FALSE;
 						}
-						if (!((TC & 0x3) && (SprFlags & 0x20)))
+						if (!((TC & 0x3) && (PPU.SprBuff[y | 2] & 0x20)))
 							TC = SprDat | 0x10;
 						break;
 					}
@@ -970,7 +969,9 @@ static	int	__fastcall	Read4 (void)
 			PPU.ppuLatch = PPU.Sprite[((PPU.Clockticks - 64) << 1) & 0xFC];
 		else if (PPU.Clockticks < 256)
 			PPU.ppuLatch = (PPU.Clockticks & 1) ? PPU.Sprite[0xFC] : PPU.Sprite[((PPU.Clockticks - 192) << 1) & 0xFC];
-		else	PPU.ppuLatch = 0xFF;
+		else if (PPU.Clockticks < 320)
+			PPU.ppuLatch = 0xFF;
+		else	PPU.ppuLatch = PPU.Sprite[0];
 	}
 	else	PPU.ppuLatch = PPU.Sprite[PPU.SprAddr];
 	return PPU.ppuLatch;
