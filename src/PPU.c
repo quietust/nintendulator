@@ -389,6 +389,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				PPU.IsRendering = PPU.OnScreen = FALSE;
 			else if (PPU.SLnum == 241)
 			{
+				PPU.HVTog = TRUE;
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
 					CPU.WantNMI = TRUE;
