@@ -861,7 +861,9 @@ void	NES_Reset (RESET_TYPE ResetType)
 		EI.DbgOut(_T("Performing initial hard reset..."));
 		PPU_PowerOn();
 		CPU_PowerOn();
-		if ((MI) && (MI->Reset))
+		if (NES.GameGenie)
+			Genie_Reset();
+		else	if ((MI) && (MI->Reset))
 			MI->Reset(RESET_HARD);
 		break;
 	case RESET_HARD:
