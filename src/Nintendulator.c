@@ -528,7 +528,7 @@ LRESULT CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-char DebugText[32768];
+char DebugText[32767];
 int DebugLen;
 
 LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -562,6 +562,7 @@ void	AddDebug (char *txt)
 	strcat(DebugText,txt);
 	strcat(DebugText,"\r\n");
 	DebugLen += i + 2;
+	SetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText);
 }
 void	ShowDebug (void)
 {
