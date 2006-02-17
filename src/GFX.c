@@ -24,6 +24,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "NES.h"
 #include "GFX.h"
 #include "PPU.h"
+#include <math.h>
 
 struct tGFX GFX;
 
