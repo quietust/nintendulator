@@ -89,7 +89,7 @@ void	Movie_Play (BOOL Review)
 	}
 
 	fread(buf,1,4,Movie.Data);
-	if (memcmp(buf,STATES_VERSION,4))
+	if ((memcmp(buf,STATES_VERSION,4)) && (memcmp(buf,STATES_COMPAT,4)))
 	{
 		MessageBox(mWnd,_T("Incorrect movie version!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);

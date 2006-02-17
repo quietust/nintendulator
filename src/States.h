@@ -23,7 +23,8 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #ifndef STATES_H
 #define STATES_H
 
-#define	STATES_VERSION	"0950"
+#define	STATES_VERSION	"0955"
+#define	STATES_COMPAT	"0950"
 
 struct tStates
 {
