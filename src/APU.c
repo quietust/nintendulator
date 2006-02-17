@@ -231,7 +231,7 @@ const	signed char	TriDuty[32] = {-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,7,6,5,4
 __inline void	Triangle_CheckActive (void)
 {
 	if (Triangle.freq >= 4)
-		Triangle.Active = Triangle.Enabled && Triangle.Timer && (Triangle.LinCtr || Triangle.LinReload);
+		Triangle.Active = Triangle.Enabled && Triangle.Timer && Triangle.LinCtr;
 	else	Triangle.Active = FALSE;
 	if (!Triangle.Active)
 		Triangle.Pos = 0;
@@ -251,6 +251,8 @@ __inline void	Triangle_Write (int Reg, unsigned char Val)
 		if (Triangle.Enabled)
 			Triangle.Timer = LengthCounts[(Val >> 3) & 0x1F];
 		Triangle.LinReload = 1;
+		if (!Triangle.LinCtr)
+			Triangle.LinCtr = 1;
 		break;
 	case 4:	if (!(Triangle.Enabled = Val ? TRUE : FALSE))
 			Triangle.Timer = 0;
