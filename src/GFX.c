@@ -441,9 +441,7 @@ void	GFX_UpdateTitlebar (void)
 	else	sprintf(titlebar,"Nintendulator - %i FPS (%i %sFSkip)",GFX.FPSnum,GFX.FSkip,GFX.aFSkip?"Auto":"");
 	if (GFX.ShowTextCounter > 0)
 	{
-		if (NES.Stopped)
-			GFX.ShowTextCounter = 0;
-		else	GFX.ShowTextCounter--;
+		GFX.ShowTextCounter--;
 		strcat(titlebar," - ");
 		strcat(titlebar,GFX.TextDisp);
 	}
