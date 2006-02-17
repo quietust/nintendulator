@@ -55,6 +55,7 @@ void	StdPort_SetZapper		(struct tStdPort *);
 void	StdPort_SetArkanoidPaddle	(struct tStdPort *);
 void	StdPort_SetPowerPad		(struct tStdPort *);
 void	StdPort_SetFourScore		(struct tStdPort *);
+void	StdPort_SetSnesController	(struct tStdPort *);
 
 void	StdPort_SetControllerType (struct tStdPort *Cont, int Type)
 {
@@ -67,6 +68,7 @@ void	StdPort_SetControllerType (struct tStdPort *Cont, int Type)
 	case STD_ARKANOIDPADDLE:	StdPort_SetArkanoidPaddle(Cont);	break;
 	case STD_POWERPAD:		StdPort_SetPowerPad(Cont);		break;
 	case STD_FOURSCORE:		StdPort_SetFourScore(Cont);		break;
+	case STD_SNESCONTROLLER:	StdPort_SetSnesController(Cont);	break;
 	default:MessageBox(mWnd,"Error: selected invalid controller type for standard port!","Nintendulator",MB_OK | MB_ICONERROR);	break;
 	}
 }
@@ -79,6 +81,7 @@ void	StdPort_SetMappings (void)
 	StdPort_Mappings[STD_ARKANOIDPADDLE] = "Arkanoid Paddle";
 	StdPort_Mappings[STD_POWERPAD] = "Power Pad";
 	StdPort_Mappings[STD_FOURSCORE] = "Four Score";
+	StdPort_Mappings[STD_SNESCONTROLLER] = "SNES Controller";
 }
 
 void	ExpPort_SetUnconnected		(struct tExpPort *);
