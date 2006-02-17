@@ -156,6 +156,20 @@ static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.FSPort2.Type,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_SETCURSEL,Controllers.FSPort3.Type,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_SETCURSEL,Controllers.FSPort4.Type,0);
+		if (Controllers.MovieMode)
+		{
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),FALSE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT3),FALSE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT4),FALSE);
+		}
+		else
+		{
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT3),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT4),TRUE);
+		}
 		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 

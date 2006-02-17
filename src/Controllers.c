@@ -139,6 +139,18 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		for (i = 0; i < EXP_MAX; i++)
 			SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)ExpPort_Mappings[i]);
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_SETCURSEL,Controllers.ExpPort.Type,0);
+		if (Controllers.MovieMode)
+		{
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),FALSE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SEXPPORT),FALSE);
+		}
+		else
+		{
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SEXPPORT),TRUE);
+		}
 		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
@@ -209,11 +221,6 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 }
 void	Controllers_OpenConfig (void)
 {
-	if (Controllers.MovieMode)
-	{
-		MessageBox(mWnd,"Controller configuration is not available during movie recording/playback!","Nintendulator",MB_OK | MB_ICONERROR);
-		return;
-	}
 	DialogBox(hInst,(LPCTSTR)IDD_CONTROLLERS,mWnd,ControllerProc);
 	Controllers_SetDeviceUsed();
 }
@@ -400,6 +407,9 @@ void	Controllers_SetDeviceUsed (void)
 {
 	int i;
 
+	if (!NES.Stopped)
+		Controllers_UnAcquire();
+
 	for (i = 0; i < Controllers.NumDevices; i++)
 		Controllers.DeviceUsed[i] = FALSE;
 
@@ -426,6 +436,9 @@ void	Controllers_SetDeviceUsed (void)
 		if (i < Controllers.ExpPort.NumButtons)
 			Controllers.DeviceUsed[Controllers.ExpPort.Buttons[i] >> 16] = TRUE;
 	}
+
+	if (!NES.Stopped)
+		Controllers_Acquire();
 }
 
 void	Controllers_Acquire (void)
