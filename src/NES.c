@@ -639,8 +639,8 @@ void	NES_SetCPUMode (int NewMode)
 	{
 		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
 		PPU.SLEndFrame = 262;
-		if (PPU.SLnum >= PPU.SLEndFrame)	/* if we switched from PAL, scanline number could be invalid */
-			PPU.SLnum = PPU.SLEndFrame - 1;
+		if (PPU.SLnum >= PPU.SLEndFrame - 1)	/* if we switched from PAL, scanline number could be invalid */
+			PPU.SLnum = PPU.SLEndFrame - 2;
 		GFX.WantFPS = 60;
 		GFX_LoadPalette(0);
 		APU_SetFPS(60);
