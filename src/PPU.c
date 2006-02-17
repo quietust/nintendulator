@@ -774,7 +774,7 @@ __inline static	void	RunSkip (int NumTicks)
 			case  69:	case  77:	case  85:	case  93:	case 101:	case 109:	case 117:	case 125:
 			case 133:	case 141:	case 149:	case 157:	case 165:	case 173:	case 181:	case 189:
 			case 197:	case 205:	case 213:	case 221:	case 229:	case 237:	case 245:	case 253:
-				if ((PPU.Spr0InLine) && (PPU.Reg2001 & 0x08))
+				if (PPU.Spr0InLine)
 				{
 					TC = ReverseCHR[RenderData[2]];
 					CurTileData = &PPU.TileData[PPU.Clockticks + 11];
@@ -783,7 +783,7 @@ __inline static	void	RunSkip (int NumTicks)
 				}
 				break;
 			case 325:	case 333:
-				if ((PPU.Spr0InLine) && (PPU.Reg2001 & 0x08))
+				if (PPU.Spr0InLine)
 				{
 					TC = ReverseCHR[RenderData[2]];
 					CurTileData = &PPU.TileData[PPU.Clockticks - 325];
@@ -802,7 +802,7 @@ __inline static	void	RunSkip (int NumTicks)
 			case  71:	case  79:	case  87:	case  95:	case 103:	case 111:	case 119:	case 127:
 			case 135:	case 143:	case 151:	case 159:	case 167:	case 175:	case 183:	case 191:
 			case 199:	case 207:	case 215:	case 223:	case 231:	case 239:	case 247:	case 255:
-				if ((PPU.Spr0InLine) && (PPU.Reg2001 & 0x08))
+				if (PPU.Spr0InLine)
 				{
 					TC = ReverseCHR[RenderData[3]];
 					CurTileData = &PPU.TileData[PPU.Clockticks + 9];
@@ -811,7 +811,7 @@ __inline static	void	RunSkip (int NumTicks)
 				}
 				break;
 			case 327:	case 335:
-				if ((PPU.Spr0InLine) && (PPU.Reg2001 & 0x08))
+				if (PPU.Spr0InLine)
 				{
 					TC = ReverseCHR[RenderData[3]];
 					CurTileData = &PPU.TileData[PPU.Clockticks - 327];
