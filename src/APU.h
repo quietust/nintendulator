@@ -44,7 +44,7 @@ struct	tAPU
 	LPDIRECTSOUNDBUFFER	Buffer;
 
 	short			*buffer;
-	BYTE			Regs[0x17];
+	BYTE			Regs[0x18];
 #endif
 
 	unsigned char		WantFPS;
