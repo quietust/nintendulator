@@ -453,10 +453,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 322:	case 330:
 				PPU.RenderAddr = 0x23C0 | (PPU.VRAMAddr & 0xC00) | AttribLoc[(PPU.VRAMAddr >> 2) & 0xFF];
 				break;
-			case   3:	case  11:	case  19:	case  27:	case  35:	case  43:	case  51:	case  59:
-			case  67:	case  75:	case  83:	case  91:	case  99:	case 107:	case 115:	case 123:
-			case 131:	case 139:	case 147:	case 155:	case 163:	case 171:	case 179:	case 187:
-			case 195:	case 203:	case 211:	case 219:	case 227:	case 235:	case 243:
+			case 251:
 				CurTileData = &PPU.TileData[PPU.Clockticks + 13];
 				TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
 				((unsigned long *)CurTileData)[0] = TL;
@@ -464,12 +461,6 @@ __inline static	void	RunNoSkip (int NumTicks)
 				if ((PPU.VRAMAddr & 0x1F) == 0x1F)
 					PPU.VRAMAddr ^= 0x41F;
 				else	PPU.VRAMAddr++;
-				break;
-			case 251:
-				CurTileData = &PPU.TileData[PPU.Clockticks + 13];
-				TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
-				((unsigned long *)CurTileData)[0] = TL;
-				((unsigned long *)CurTileData)[1] = TL;
 				if ((PPU.VRAMAddr & 0x7000) == 0x7000)
 				{
 					register int YScroll = PPU.VRAMAddr & 0x3E0;
@@ -768,6 +759,9 @@ __inline static	void	RunSkip (int NumTicks)
 				else	PPU.VRAMAddr++;
 				break;
 			case 251:
+				if ((PPU.VRAMAddr & 0x1F) == 0x1F)
+					PPU.VRAMAddr ^= 0x41F;
+				else	PPU.VRAMAddr++;
 				if ((PPU.VRAMAddr & 0x7000) == 0x7000)
 				{
 					register int YScroll = PPU.VRAMAddr & 0x3E0;
