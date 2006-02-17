@@ -732,8 +732,12 @@ void	NES_Reset (int ResetType)
 			MI->Shutdown();
 		EI.SetCHR_RAM8(0,0);
 		EI.Mirror_4();
-		if ((NES.GameGenie) && (Genie.CodeStat & 1))
-			Genie_Init();	// Set up the PRG read handlers BEFORE resetting the mapper
+		if (NES.GameGenie)
+		{
+			if (Genie.CodeStat & 1)
+				Genie_Init();	// Set up the PRG read handlers BEFORE resetting the mapper
+			else	Genie_Reset();	// map the Game Genie back in its place
+		}
 		if ((MI) && (MI->Reset))
 			MI->Reset(0);
 		break;
