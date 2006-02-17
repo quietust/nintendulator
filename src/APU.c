@@ -912,6 +912,10 @@ void	APU_Run (void)
 #endif
 		if ((MI) && (MI->GenSound))
 			samppos += MI->GenSound(sampcycles);
+		if (samppos < -0x8000)
+			samppos = -0x8000;
+		if (samppos > 0x7FFF)
+			samppos = 0x7FFF;
 #ifndef	NSFPLAYER
 		APU.buffer[APU.BufPos] = samppos;
 #else
