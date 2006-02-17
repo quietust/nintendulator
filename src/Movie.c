@@ -260,7 +260,6 @@ void	Movie_Record (BOOL fromState)
 	Path_NMV[ofn.nFileOffset-1] = 0;
 
 	Controllers_OpenConfig();	// Allow user to choose the desired controllers
-	Movie.Mode = MOV_RECORD;	// ...and lock it out until the movie ends
 
 	Movie.Data = _tfopen(Movie.Filename,_T("w+b"));
 	len = 0;
@@ -282,6 +281,8 @@ void	Movie_Record (BOOL fromState)
 			memcpy(PRG_ROM[0x000],PRG_ROM[0x400],RI.FDS_NumSides << 16);
 		NES_Reset(RESET_HARD);
 	}
+	// save savestate BEFORE enabling recording, so we don't try to re-save the NMOV block
+	Movie.Mode = MOV_RECORD;
 
 	fwrite("NMOV",1,4,Movie.Data);
 	fwrite(&len,1,4,Movie.Data);
