@@ -906,7 +906,7 @@ void	APU_Run (void)
 	{
 		APU.BufPos = NewBufPos;
 #ifdef	SOUND_FILTERING
-		samppos = (samppos / sampcycles) << 6;
+		samppos = (samppos << 6) / sampcycles;
 #else
 		samppos = (Square0.Pos + Square1.Pos + Triangle.Pos + Noise.Pos + DPCM.Pos) << 6;
 #endif
