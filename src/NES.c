@@ -116,6 +116,8 @@ void	NES_OpenFile (char *filename)
 	}
 	NES.ROMLoaded = TRUE;
 	EI.DbgOut("Loaded successfully!");
+	States_SetFilename(filename);
+
 	if (MI->Config)
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_ENABLED);
 	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
@@ -150,8 +152,6 @@ void	NES_OpenFile (char *filename)
 	EnableMenuItem(GetMenu(mWnd),ID_CPU_HARDRESET,MF_ENABLED);
 
 	DrawMenuBar(mWnd);
-
-	States_SetFilename(filename);
 
 #ifdef ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
@@ -214,10 +214,7 @@ void	NES_SaveSRAM (void)
 	char Filename[MAX_PATH];
 	FILE *SRAMFile;
 	if (!NES.SRAM_Size)
-	{
-		EI.DbgOut("No SRAM to save!");
 		return;
-	}
 	if (RI.ROMType == ROM_FDS)
 		sprintf(Filename,"%s.fsv",States.BaseFilename);
 	else	sprintf(Filename,"%s.sav",States.BaseFilename);
@@ -240,10 +237,7 @@ void	NES_LoadSRAM (void)
 	FILE *SRAMFile;
 	int len;
 	if (!NES.SRAM_Size)
-	{
-		EI.DbgOut("No SRAM to load!");
 		return;
-	}
 	if (RI.ROMType == ROM_FDS)
 		sprintf(Filename,"%s.fsv",States.BaseFilename);
 	else	sprintf(Filename,"%s.sav",States.BaseFilename);
