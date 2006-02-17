@@ -37,9 +37,12 @@ extern FILE *movie;
 
 void	States_Init (void)
 {
+	char tmp[MAX_PATH];
+	sprintf(tmp,"%sSaves",ProgPath);
 	States.SelSlot = 0;
 	States.NeedSave = FALSE;
 	States.NeedLoad = FALSE;
+	CreateDirectory(tmp,NULL);	// attempt to create Saves dir (if it exists, it fails silently)
 }
 
 void	States_SetFilename (char *Filename)
