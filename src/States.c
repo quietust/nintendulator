@@ -59,8 +59,16 @@ void	States_SetFilename (char *Filename)
 
 void	States_SetSlot (int Slot)
 {
+	char tpchr[256];
+	FILE *tmp;
 	States.SelSlot = Slot;
-	GFX_ShowText("State Selected: %i", Slot);
+	sprintf(tpchr,"%s.ns%i",States.BaseFilename,Slot);
+	if (tmp = fopen(tpchr,"rb"))
+	{
+		fclose(tmp);
+		GFX_ShowText("State Selected: %i (occupied)", Slot);
+	}
+	else	GFX_ShowText("State Selected: %i (empty)", Slot);
 }
 
 int	States_SaveData (FILE *out)
