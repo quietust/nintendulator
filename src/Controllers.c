@@ -216,20 +216,56 @@ void	Controllers_OpenConfig (void)
 
 BOOL CALLBACK	EnumJoysticksCallback (const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
 {
-	if (SUCCEEDED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&pdidInstance->guidInstance,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIJoystick[Controllers.NumDevices-2],NULL)))
+	int DevNum = Controllers.NumDevices;
+	if (SUCCEEDED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&pdidInstance->guidInstance,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIJoystick[DevNum-2],NULL)))
 	{
+		int i, j;
 		HRESULT hr;
 		DIDEVCAPS tpc;
-		if (FAILED(hr = IDirectInputDevice7_SetDataFormat(Controllers.DIJoystick[Controllers.NumDevices-2],&c_dfDIJoystick2)))
+		DIJOYSTATE2 joystate;
+		if (FAILED(hr = IDirectInputDevice7_SetDataFormat(Controllers.DIJoystick[DevNum-2],&c_dfDIJoystick2)))
 			return hr;
-		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Controllers.NumDevices-2],mWnd,DISCL_FOREGROUND | DISCL_EXCLUSIVE)))
+		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[DevNum-2],mWnd,DISCL_BACKGROUND | DISCL_NONEXCLUSIVE)))
 			return hr;
-		strcpy(Controllers.DeviceName[Controllers.NumDevices],pdidInstance->tszProductName);
+		strcpy(Controllers.DeviceName[DevNum],pdidInstance->tszProductName);
 		tpc.dwSize = sizeof(DIDEVCAPS);
-		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(Controllers.DIJoystick[Controllers.NumDevices-2],&tpc)))
+		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(Controllers.DIJoystick[DevNum-2],&tpc)))
 			return hr;
-		Controllers.NumButtons[Controllers.NumDevices] = tpc.dwButtons;
-		Controllers.NumAxes[Controllers.NumDevices] = tpc.dwAxes;
+		if (FAILED(hr = IDirectInputDevice7_Acquire(Controllers.DIJoystick[DevNum-2])))
+			return hr;
+		if (FAILED(hr = IDirectInputDevice7_Poll(Controllers.DIJoystick[DevNum-2])))
+			return hr;
+		if (FAILED(hr = IDirectInputDevice7_GetDeviceState(Controllers.DIJoystick[DevNum-2],sizeof(DIJOYSTATE2),&joystate)))
+			return hr;
+		if (FAILED(hr = IDirectInputDevice7_Unacquire(Controllers.DIJoystick[DevNum-2])))
+			return hr;
+		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[DevNum-2],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+			return hr;
+
+		Controllers.NumButtons[DevNum] = tpc.dwButtons;
+		Controllers.NumAxes[DevNum] = 0;
+		if (joystate.lX)
+			Controllers.NumAxes[DevNum] |= 0x01;
+		if (joystate.lY)
+			Controllers.NumAxes[DevNum] |= 0x02;
+		if (joystate.lZ)
+			Controllers.NumAxes[DevNum] |= 0x04;
+		if (joystate.lRx)
+			Controllers.NumAxes[DevNum] |= 0x08;
+		if (joystate.lRy)
+			Controllers.NumAxes[DevNum] |= 0x10;
+		if (joystate.lRz)
+			Controllers.NumAxes[DevNum] |= 0x20;
+		if (joystate.rglSlider[0])
+			Controllers.NumAxes[DevNum] |= 0x40;
+		if (joystate.rglSlider[1])
+			Controllers.NumAxes[DevNum] |= 0x80;
+		j = tpc.dwAxes;
+		for (i = 0; i < 8; i++)
+			if ((Controllers.NumAxes[DevNum] >> i) & 0x01)
+				j--;
+		if (j)	// our previous method failed, so assume it's the first N axes
+			Controllers.NumAxes[DevNum] = 0xFF >> (8 - tpc.dwAxes);
 		Controllers.NumDevices++;
 	}
 	return DIENUM_CONTINUE;
@@ -735,11 +771,6 @@ int	Controllers_GetConfigKey (HWND hWnd)
 	while (Key == -1)
 	{
 		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIKeyboard,256,Controllers.KeyState);
-		while ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
-		{
-			IDirectInputDevice7_Acquire(Controllers.DIKeyboard);
-			hr = IDirectInputDevice7_GetDeviceState(Controllers.DIKeyboard,256,Controllers.KeyState);
-		}
 		for (i = 0; i < Controllers.NumButtons[0]; i++)
 		{
 			if (Controllers_IsPressed(i))
@@ -775,13 +806,7 @@ int	Controllers_GetConfigMouse (HWND hWnd)
 	IDirectInputDevice7_Acquire(Controllers.DIMouse);
 	while (Key == -1)
 	{
-
 		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIMouse,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
-		while ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
-		{
-			IDirectInputDevice7_Acquire(Controllers.DIMouse);
-			hr = IDirectInputDevice7_GetDeviceState(Controllers.DIMouse,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
-		}
 		for (i = 0; i < Controllers.NumButtons[1]; i++)
 		{
 			if (Controllers_IsPressed((1 << 16) | i))
@@ -817,7 +842,7 @@ int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
 	int i;
 	int Key = -1;
 
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Dev],hWnd,DISCL_FOREGROUND | DISCL_EXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Dev],hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
 		MessageBox(mWnd,"Unable to modify joystick input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
 		return Key;
@@ -826,13 +851,7 @@ int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
 	IDirectInputDevice7_Acquire(Controllers.DIJoystick[Dev]);
 	while (Key == -1)
 	{
-
 		hr = IDirectInputDevice7_Poll(Controllers.DIJoystick[Dev]);
-		while ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
-		{
-			IDirectInputDevice7_Acquire(Controllers.DIJoystick[Dev]);
-			hr = IDirectInputDevice7_Poll(Controllers.DIJoystick[Dev]);
-		}
 		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIJoystick[Dev],sizeof(DIJOYSTATE2),&Controllers.JoyState[Dev]);
 		for (i = 0; i < Controllers.NumButtons[Dev+2]; i++)
 		{
@@ -844,7 +863,7 @@ int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
 		}
 		if (Key != -1)	/* if we got a button, don't check for an axis */
 			break;
-		for (i = 0x80; i < (0x80 | Controllers.NumAxes[Dev+2]); i++)
+		for (i = 0x80; i < 0x90; i++)
 		{
 			if (Controllers_IsPressed(((Dev+2) << 16) | i))
 			{
@@ -854,7 +873,7 @@ int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
 		}
 	}
 	IDirectInputDevice7_Unacquire(Controllers.DIJoystick[Dev]);
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Dev],mWnd,DISCL_FOREGROUND | DISCL_EXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Dev],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
 		MessageBox(mWnd,"Unable to restore joystick input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
 		return Key;
@@ -964,22 +983,22 @@ BOOL	Controllers_IsPressed (int Button)
 		{
 			switch (Button & 0xF)
 			{
-			case 0x0:	return (Controllers.JoyState[DevNum-2].lX < 0x4000 && Controllers.JoyState[DevNum-2].lX != 0x0000) ? TRUE : FALSE;	break;
-			case 0x1:	return (Controllers.JoyState[DevNum-2].lX > 0xC000 && Controllers.JoyState[DevNum-2].lX != 0xFFFF) ? TRUE : FALSE;	break;
-			case 0x2:	return (Controllers.JoyState[DevNum-2].lY < 0x4000 && Controllers.JoyState[DevNum-2].lY != 0x0000) ? TRUE : FALSE;	break;
-			case 0x3:	return (Controllers.JoyState[DevNum-2].lY > 0xC000 && Controllers.JoyState[DevNum-2].lY != 0xFFFF) ? TRUE : FALSE;	break;
-			case 0x4:	return (Controllers.JoyState[DevNum-2].lZ < 0x4000 && Controllers.JoyState[DevNum-2].lZ != 0x0000) ? TRUE : FALSE;	break;
-			case 0x5:	return (Controllers.JoyState[DevNum-2].lZ > 0xC000 && Controllers.JoyState[DevNum-2].lZ != 0xFFFF) ? TRUE : FALSE;	break;
-			case 0x6:	return (Controllers.JoyState[DevNum-2].lRx < 0x4000 && Controllers.JoyState[DevNum-2].lRx != 0x0000) ? TRUE : FALSE;	break;
-			case 0x7:	return (Controllers.JoyState[DevNum-2].lRx > 0xC000 && Controllers.JoyState[DevNum-2].lRx != 0xFFFF) ? TRUE : FALSE;	break;
-			case 0x8:	return (Controllers.JoyState[DevNum-2].lRy < 0x4000 && Controllers.JoyState[DevNum-2].lRy != 0x0000) ? TRUE : FALSE;	break;
-			case 0x9:	return (Controllers.JoyState[DevNum-2].lRy > 0xC000 && Controllers.JoyState[DevNum-2].lRy != 0xFFFF) ? TRUE : FALSE;	break;
-			case 0xA:	return (Controllers.JoyState[DevNum-2].lRz < 0x4000 && Controllers.JoyState[DevNum-2].lRz != 0x0000) ? TRUE : FALSE;	break;
-			case 0xB:	return (Controllers.JoyState[DevNum-2].lRz > 0xC000 && Controllers.JoyState[DevNum-2].lRz != 0xFFFF) ? TRUE : FALSE;	break;
-			case 0xC:	return (Controllers.JoyState[DevNum-2].rglSlider[0] < 0x4000 && Controllers.JoyState[DevNum-2].rglSlider[0] != 0x0000) ? TRUE : FALSE;	break;
-			case 0xD:	return (Controllers.JoyState[DevNum-2].rglSlider[0] > 0xC000 && Controllers.JoyState[DevNum-2].rglSlider[0] != 0xFFFF) ? TRUE : FALSE;	break;
-			case 0xE:	return (Controllers.JoyState[DevNum-2].rglSlider[1] < 0x4000 && Controllers.JoyState[DevNum-2].rglSlider[1] != 0x0000) ? TRUE : FALSE;	break;
-			case 0xF:	return (Controllers.JoyState[DevNum-2].rglSlider[1] > 0xC000 && Controllers.JoyState[DevNum-2].rglSlider[1] != 0xFFFF) ? TRUE : FALSE;	break;
+			case 0x0:	return ((Controllers.NumAxes[DevNum] & 0x01) && (Controllers.JoyState[DevNum-2].lX < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x1:	return ((Controllers.NumAxes[DevNum] & 0x01) && (Controllers.JoyState[DevNum-2].lX > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x2:	return ((Controllers.NumAxes[DevNum] & 0x02) && (Controllers.JoyState[DevNum-2].lY < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x3:	return ((Controllers.NumAxes[DevNum] & 0x02) && (Controllers.JoyState[DevNum-2].lY > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x4:	return ((Controllers.NumAxes[DevNum] & 0x04) && (Controllers.JoyState[DevNum-2].lZ < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x5:	return ((Controllers.NumAxes[DevNum] & 0x04) && (Controllers.JoyState[DevNum-2].lZ > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x6:	return ((Controllers.NumAxes[DevNum] & 0x08) && (Controllers.JoyState[DevNum-2].lRx < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x7:	return ((Controllers.NumAxes[DevNum] & 0x08) && (Controllers.JoyState[DevNum-2].lRx > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x8:	return ((Controllers.NumAxes[DevNum] & 0x10) && (Controllers.JoyState[DevNum-2].lRy < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x9:	return ((Controllers.NumAxes[DevNum] & 0x10) && (Controllers.JoyState[DevNum-2].lRy > 0xC000)) ? TRUE : FALSE;	break;
+			case 0xA:	return ((Controllers.NumAxes[DevNum] & 0x20) && (Controllers.JoyState[DevNum-2].lRz < 0x4000)) ? TRUE : FALSE;	break;
+			case 0xB:	return ((Controllers.NumAxes[DevNum] & 0x20) && (Controllers.JoyState[DevNum-2].lRz > 0xC000)) ? TRUE : FALSE;	break;
+			case 0xC:	return ((Controllers.NumAxes[DevNum] & 0x40) && (Controllers.JoyState[DevNum-2].rglSlider[0] < 0x4000)) ? TRUE : FALSE;	break;
+			case 0xD:	return ((Controllers.NumAxes[DevNum] & 0x40) && (Controllers.JoyState[DevNum-2].rglSlider[0] > 0xC000)) ? TRUE : FALSE;	break;
+			case 0xE:	return ((Controllers.NumAxes[DevNum] & 0x80) && (Controllers.JoyState[DevNum-2].rglSlider[1] < 0x4000)) ? TRUE : FALSE;	break;
+			case 0xF:	return ((Controllers.NumAxes[DevNum] & 0x80) && (Controllers.JoyState[DevNum-2].rglSlider[1] > 0xC000)) ? TRUE : FALSE;	break;
 			default:	return FALSE;
 			}
 		}
