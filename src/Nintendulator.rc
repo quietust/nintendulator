@@ -191,8 +191,8 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    ICON            IDI_NINTENDULATOR,IDC_MYICON,8,8,21,20
-    LTEXT           "Nintendulator Version 0.960\nCopyright © 2002-2006 QMT Productions\nDebugger written by David 'Akilla' de Regt",
+    ICON            IDI_NINTENDULATOR,IDC_MYICON,8,8,20,20
+    LTEXT           "Nintendulator Version 0.965\nCopyright © 2002-2006 QMT Productions\nDebugger written by David 'Akilla' de Regt",
                     IDC_STATIC,32,4,144,28
     DEFPUSHBUTTON   "OK",IDOK,180,8,56,20,WS_GROUP
 END
@@ -217,7 +217,10 @@ BEGIN
     LTEXT           "Expansion Port",IDC_STATIC,8,40,56,12
     CONTROL         "Allow simultaneous Left+Right and Up+Down",
                     IDC_CONT_UDLR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,60,
-                    156,16
+                    156,8
+    CONTROL         "Configure POV triggers as axes (temporary)",
+                    IDC_CONT_POV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,68,
+                    156,8
 END
 
 IDD_STDPORT_ZAPPER DIALOG  0, 0, 244, 57
@@ -1423,8 +1426,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,9,6,0
- PRODUCTVERSION 0,9,6,0
+ FILEVERSION 0,9,6,5
+ PRODUCTVERSION 0,9,6,5
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1440,12 +1443,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Nintendulator"
-            VALUE "FileVersion", "0, 9, 6, 0"
+            VALUE "FileVersion", "0, 9, 6, 5"
             VALUE "InternalName", "Nintendulator"
             VALUE "LegalCopyright", "Copyright © 2002-2006"
             VALUE "OriginalFilename", "Nintendulator.exe"
             VALUE "ProductName", "Nintendulator"
-            VALUE "ProductVersion", "0, 9, 6, 0"
+            VALUE "ProductVersion", "0, 9, 6, 5"
         END
     END
     BLOCK "VarFileInfo"

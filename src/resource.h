@@ -115,9 +115,11 @@
 #define IDC_PAL_10                      1088
 #define IDC_CONT_UDLR                   1088
 #define IDC_PAL_20                      1089
+#define IDC_CONT_UDLR2                  1089
 #define IDC_PAL_30                      1090
 #define IDC_DLL_LIST                    1090
 #define IDC_PAL_01                      1091
+#define IDC_CONT_POV                    1091
 #define IDC_PAL_02                      1092
 #define IDC_PAL_03                      1093
 #define IDC_PAL_04                      1094
@@ -248,7 +250,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         32843
-#define _APS_NEXT_CONTROL_VALUE         1091
+#define _APS_NEXT_CONTROL_VALUE         1092
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

@@ -102,6 +102,8 @@ void	ExpPort_SetMappings (void)
 	ExpPort_Mappings[EXP_TABLET] = _T("Oeka Kids Tablet");
 }
 
+static	BOOL	POVAxis = FALSE;
+
 LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -149,8 +151,12 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		wmEvent = HIWORD(wParam); 
 		switch (wmId)
 		{
+		case IDC_CONT_POV:
+			POVAxis = (IsDlgButtonChecked(hDlg,IDC_CONT_POV) == BST_CHECKED);
+			break;
 		case IDOK:
 			Controllers.EnableOpposites = (IsDlgButtonChecked(hDlg,IDC_CONT_UDLR) == BST_CHECKED);
+			POVAxis = FALSE;
 			EndDialog(hDlg,1);
 			break;
 		case IDC_CONT_SPORT1:
@@ -478,6 +484,7 @@ void	Controllers_Init (void)
 		MessageBox(mWnd,_T("Unable to initialize DirectInput!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
+
 	if (!InitKeyboard())
 		MessageBox(mWnd,_T("Failed to initialize keyboard!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 	if (!InitMouse())
@@ -717,7 +724,7 @@ int	Controllers_GetConfigButton (HWND hWnd, int DevNum)
 		FirstAxis = 0x80;
 		LastAxis = 0x90;
 		FirstPOV = 0xC0;
-		LastPOV = 0xE0;
+		LastPOV = 0xF0;
 	}
 
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(dev,hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
@@ -826,19 +833,27 @@ TCHAR *	Controllers_GetButtonLabel (int DevNum, int Button)
 	}
 	else
 	{
-		if ((Button & 0xC0) == 0x80)
+		if ((Button & 0xE0) == 0x80)
 		{
 			Button &= 0x0F;
 			if (Controllers.AxisNames[DevNum][Button >> 1])
 				_stprintf(str,_T("%s %s"), Controllers.AxisNames[DevNum][Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
 			return str;
 		}
-		else if ((Button & 0xC0) == 0xC0)
+		else if ((Button & 0xE0) == 0xC0)
 		{
 			const TCHAR *POVs[8] = {_T("(N)"), _T("(NE)"), _T("(E)"), _T("(SE)"), _T("(S)"), _T("(SW)"), _T("(W)"), _T("(NW)") };
 			Button &= 0x1F;
 			if (Controllers.POVNames[DevNum][Button >> 3])
 				_stprintf(str,_T("%s %s"), Controllers.POVNames[DevNum][Button >> 3], POVs[Button & 0x7]);
+			return str;
+		}
+		else if ((Button & 0xE0) == 0xE0)
+		{
+			const TCHAR *POVs[4] = {_T("Y (-)"), _T("X (+)"), _T("Y (+)"), _T("X (-)") };
+			Button &= 0xF;
+			if (Controllers.POVNames[DevNum][Button >> 2])
+				_stprintf(str,_T("%s %s"), Controllers.POVNames[DevNum][Button >> 2], POVs[Button & 0x3]);
 			return str;
 		}
 		else
@@ -891,7 +906,7 @@ BOOL	Controllers_IsPressed (int Button)
 	}
 	else
 	{
-		if ((Button & 0xC0) == 0x80)
+		if ((Button & 0xE0) == 0x80)
 		{	/* axis */
 			switch (Button & 0xF)
 			{
@@ -914,8 +929,10 @@ BOOL	Controllers_IsPressed (int Button)
 			default:	return FALSE;
 			}
 		}
-		else if ((Button & 0xC0) == 0xC0)
-		{	/* POV trigger */
+		else if ((Button & 0xE0) == 0xC0)
+		{	/* POV trigger (8-button mode) */
+			if (POVAxis)
+				return FALSE;
 			switch (Button & 0x1F)
 			{
 			case 0x00:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 33750) || (Controllers.JoyState[DevNum].rgdwPOV[0] <  2250)) && (Controllers.JoyState[DevNum].rgdwPOV[0] != -1)) ? TRUE : FALSE;	break;
@@ -950,6 +967,29 @@ BOOL	Controllers_IsPressed (int Button)
 			case 0x1D:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 24750))) ? TRUE : FALSE;	break;
 			case 0x1E:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 24750) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 29250))) ? TRUE : FALSE;	break;
 			case 0x1F:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 29250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 33750))) ? TRUE : FALSE;	break;
+			default:	return FALSE;
+			}
+		}
+		else if ((Button & 0xE0) == 0xE0)
+		{	/* POV trigger (axis mode) */
+			switch (Button & 0x0F)
+			{
+			case 0x0:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 29250) || (Controllers.JoyState[DevNum].rgdwPOV[0] <  6750)) && (Controllers.JoyState[DevNum].rgdwPOV[0] != -1)) ? TRUE : FALSE;	break;
+			case 0x1:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 15750))) ? TRUE : FALSE;	break;
+			case 0x2:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 24750))) ? TRUE : FALSE;	break;
+			case 0x3:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 33750))) ? TRUE : FALSE;	break;
+			case 0x4:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 29250) || (Controllers.JoyState[DevNum].rgdwPOV[1] <  6750)) && (Controllers.JoyState[DevNum].rgdwPOV[1] != -1)) ? TRUE : FALSE;	break;
+			case 0x5:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 15750))) ? TRUE : FALSE;	break;
+			case 0x6:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 24750))) ? TRUE : FALSE;	break;
+			case 0x7:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 33750))) ? TRUE : FALSE;	break;
+			case 0x8:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 29250) || (Controllers.JoyState[DevNum].rgdwPOV[2] <  6750)) && (Controllers.JoyState[DevNum].rgdwPOV[2] != -1)) ? TRUE : FALSE;	break;
+			case 0x9:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 15750))) ? TRUE : FALSE;	break;
+			case 0xA:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 24750))) ? TRUE : FALSE;	break;
+			case 0xB:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 33750))) ? TRUE : FALSE;	break;
+			case 0xC:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 29250) || (Controllers.JoyState[DevNum].rgdwPOV[3] <  6750)) && (Controllers.JoyState[DevNum].rgdwPOV[3] != -1)) ? TRUE : FALSE;	break;
+			case 0xD:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 15750))) ? TRUE : FALSE;	break;
+			case 0xE:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 24750))) ? TRUE : FALSE;	break;
+			case 0xF:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 33750))) ? TRUE : FALSE;	break;
 			default:	return FALSE;
 			}
 		}
