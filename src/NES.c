@@ -914,7 +914,6 @@ void	NES_Reset (RESET_TYPE ResetType)
 
 DWORD	WINAPI	NES_Thread (void *param)
 {
-	NES.Running = TRUE;
 #ifdef	CPU_BENCHMARK
 	/* Run with cyctest.nes */
 	int i;
@@ -1002,6 +1001,7 @@ void	NES_Start (BOOL step)
 	DWORD ThreadID;
 	if (NES.Running)
 		return;
+	NES.Running = TRUE;
 	Debugger.Step = step;
 	NES.Stop = FALSE;
 	CloseHandle(CreateThread(NULL,0,NES_Thread,NULL,0,&ThreadID));
