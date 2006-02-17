@@ -32,8 +32,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct tDebugger Debugger;
 
-extern	unsigned char CPU_Flags[0x10000];
-
 LRESULT CALLBACK PaletteProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK PatternProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK NameProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
