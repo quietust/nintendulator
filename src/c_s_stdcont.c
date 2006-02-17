@@ -32,22 +32,7 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	int i;
 	if (mode & MOV_PLAY)
-	{
-		if (mode & MOV_FMV)
-		{
-			unsigned char x = Cont->MovData[0], y = 0;
-			if (x & 0x01)	y |= 0x80;	// right
-			if (x & 0x02)	y |= 0x40;	// left
-			if (x & 0x04)	y |= 0x10;	// up
-			if (x & 0x08)	y |= 0x20;	// down
-			if (x & 0x10)	y |= 0x02;	// A
-			if (x & 0x20)	y |= 0x01;	// B
-			if (x & 0x40)	y |= 0x04;	// sel
-			if (x & 0x80)	y |= 0x08;	// start
-			Cont->MovData[0] = y;
-		}
 		Cont->NewBits = Cont->MovData[0];
-	}
 	else
 	{
 		Cont->NewBits = 0;
