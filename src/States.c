@@ -474,7 +474,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 				Controllers.Port2.Frame(&Controllers.Port2,MOV_PLAY);
 				Controllers.ExpPort.Frame(&Controllers.ExpPort,MOV_PLAY);
 				if ((Cmd) && (MI) && (MI->Config))
-					MI->Config(CFG_CMD,Cmd);				
+					MI->Config(CFG_CMD,Cmd);
 			}
 			else	// skip it
 			{

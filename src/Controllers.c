@@ -558,18 +558,20 @@ void	Controllers_PlayMovie (BOOL Review)
 
 	MOV_ControllerTypes[3] = 0;	// Reset 'loaded controller state' flag
 
-	Controllers.MovieMode = MOV_PLAY;
-	if (Review)
-		Controllers.MovieMode |= MOV_REVIEW;
+	MoviePos = MovieLen = 0;
 
 	NES_Reset(RESET_HARD);
-
+	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
 	if (!States_LoadData(movie,len))
 	{
 		fclose(movie);
 		MessageBox(mWnd,"Failed to load movie!", "Nintendulator", MB_OK | MB_ICONERROR);
 		return;
 	}
+
+	Controllers.MovieMode = MOV_PLAY;
+	if (Review)
+		Controllers.MovieMode |= MOV_REVIEW;
 	
 	rewind(movie);
 	fseek(movie,16,SEEK_SET);
