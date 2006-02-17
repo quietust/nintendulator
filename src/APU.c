@@ -626,22 +626,7 @@ unsigned char	APU_Read4015 (void)
 	return result;
 }
 
-#ifdef	NSFPLAYER
-#define	APU_Try(action,errormsg)\
-{\
-	if (FAILED(action))\
-	{\
-		APU_Release();\
-		APU_Create();\
-		if (FAILED(action))\
-		{\
-			APU_SoundOFF();\
-			MessageBox(mod.hMainWindow,errormsg,"Nintendulator",MB_OK | MB_ICONERROR);\
-			return;\
-		}\
-	}\
-}
-#else
+#ifndef	NSFPLAYER
 #define	APU_Try(action,errormsg)\
 {\
 	if (FAILED(action))\
