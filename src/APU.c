@@ -564,13 +564,13 @@ void	APU_WriteReg (int Addy, unsigned char Val)
 unsigned char	APU_Read4015 (void)
 {
 	unsigned char result =
-		(( Square0.Enabled &&  Square0.Timer) ? 0x01 : 0) |
-		(( Square1.Enabled &&  Square1.Timer) ? 0x02 : 0) |
-		((Triangle.Enabled && Triangle.Timer) ? 0x04 : 0) |
-		((   Noise.Enabled &&    Noise.Timer) ? 0x08 : 0) |
-		((                    DPCM.LengthCtr) ? 0x10 : 0) |
-		((    (CPU.WantIRQ &      IRQ_FRAME)) ? 0x40 : 0) |
-		((    (CPU.WantIRQ &       IRQ_DPCM)) ? 0x80 : 0);
+		((Square0.Enabled && Square0.Timer) ? 0x01 : 0) |
+		((Square1.Enabled && Square1.Timer) ? 0x02 : 0) |
+		((                 Triangle.Active) ? 0x04 : 0) |
+		((                    Noise.Active) ? 0x08 : 0) |
+		((                  DPCM.LengthCtr) ? 0x10 : 0) |
+		((   (CPU.WantIRQ &     IRQ_FRAME)) ? 0x40 : 0) |
+		((   (CPU.WantIRQ &      IRQ_DPCM)) ? 0x80 : 0);
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 	return result;
 }
