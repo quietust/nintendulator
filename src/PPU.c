@@ -31,7 +31,7 @@ struct	tPPU	PPU;
 unsigned char	PPU_VRAM[0x4][0x400];
 unsigned short	DrawArray[256*240];
 
-/*#define	SHOIRQ	/* Enable ShoIRQ(tm) technology */
+/*#define	SHORQ	/* Enable ShoRQ(tm) technology */
 
 const	unsigned char	ReverseCHR[256] =
 {
@@ -644,10 +644,10 @@ __inline static	void	RunNoSkip (int NumTicks)
 				PalIndex = PPU.Palette[PPU.VRAMAddr & 0x1F];
 			PalIndex &= PPU.GrayScale;
 			PalIndex |= PPU.ColorEmphasis;
-#ifdef	SHOIRQ
+#ifdef	SHORQ
 			if (CPU.WantIRQ)
 				PalIndex ^= 0x80;
-#endif /* SHOIRQ */
+#endif /* SHORQ */
 			*PPU.GfxData = PalIndex;
 			PPU.GfxData++;
 		}
