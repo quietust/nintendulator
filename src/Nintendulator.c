@@ -42,11 +42,11 @@ HINSTANCE	hInst;		// current instance
 HWND		mWnd;		// main window
 HACCEL		hAccelTable;	// accelerators
 int		SizeMult;	// size multiplier
-wchar_t		ProgPath[MAX_PATH];	// program path
-wchar_t		Path_ROM[MAX_PATH];	// current ROM directory
-wchar_t		Path_NMV[MAX_PATH];	// current movie directory
-wchar_t		Path_AVI[MAX_PATH];	// current AVI directory
-wchar_t		Path_PAL[MAX_PATH];	// current palette directory
+TCHAR		ProgPath[MAX_PATH];	// program path
+TCHAR		Path_ROM[MAX_PATH];	// current ROM directory
+TCHAR		Path_NMV[MAX_PATH];	// current movie directory
+TCHAR		Path_AVI[MAX_PATH];	// current AVI directory
+TCHAR		Path_PAL[MAX_PATH];	// current palette directory
 BOOL		MaskKeyboard = FALSE;	// mask keyboard accelerators (for when Family Basic Keyboard is active)
 HWND		hDebug;		// Debug Info window
 BOOL		dbgVisible;	// whether or not the Debug window is open
@@ -64,7 +64,7 @@ LRESULT CALLBACK	DebugWnd(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	InesHeader(HWND, UINT, WPARAM, LPARAM);
 void	ShowDebug (void);
 
-wchar_t	TitlebarBuffer[256];
+TCHAR	TitlebarBuffer[256];
 int	TitlebarDelay;
 
 int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
