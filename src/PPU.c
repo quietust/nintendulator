@@ -424,11 +424,10 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 128:	case 136:	case 144:	case 152:	case 160:	case 168:	case 176:	case 184:
 			case 192:	case 200:	case 208:	case 216:	case 224:	case 232:	case 240:	case 248:
 			case 320:	case 328:
-				if (!PPU.IOMode)
-				{
-					PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
-					PPU.IOMode = 1;
-				}
+				if (PPU.IOMode)
+					break;
+				PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
+				PPU.IOMode = 1;
 				break;
 			case   1:	case   9:	case  17:	case  25:	case  33:	case  41:	case  49:	case  57:
 			case  65:	case  73:	case  81:	case  89:	case  97:	case 105:	case 113:	case 121:
@@ -442,11 +441,10 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 130:	case 138:	case 146:	case 154:	case 162:	case 170:	case 178:	case 186:
 			case 194:	case 202:	case 210:	case 218:	case 226:	case 234:	case 242:	case 250:
 			case 322:	case 330:
-				if (!PPU.IOMode)
-				{
-					PPU.IOAddr = 0x23C0 | (PPU.VRAMAddr & 0xC00) | AttribLoc[(PPU.VRAMAddr >> 2) & 0xFF];
-					PPU.IOMode = 1;
-				}
+				if (PPU.IOMode)
+					break;
+				PPU.IOAddr = 0x23C0 | (PPU.VRAMAddr & 0xC00) | AttribLoc[(PPU.VRAMAddr >> 2) & 0xFF];
+				PPU.IOMode = 1;
 				break;
 			case   3:	case  11:	case  19:	case  27:	case  35:	case  43:	case  51:	case  59:
 			case  67:	case  75:	case  83:	case  91:	case  99:	case 107:	case 115:	case 123:
@@ -502,11 +500,10 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 132:	case 140:	case 148:	case 156:	case 164:	case 172:	case 180:	case 188:
 			case 196:	case 204:	case 212:	case 220:	case 228:	case 236:	case 244:	case 252:
 			case 324:	case 332:
-				if (!PPU.IOMode)
-				{
-					PPU.IOAddr = PatAddr;
-					PPU.IOMode = 1;
-				}
+				if (PPU.IOMode)
+					break;
+				PPU.IOAddr = PatAddr;
+				PPU.IOMode = 1;
 				break;
 			case   5:	case  13:	case  21:	case  29:	case  37:	case  45:	case  53:	case  61:
 			case  69:	case  77:	case  85:	case  93:	case 101:	case 109:	case 117:	case 125:
@@ -534,11 +531,10 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 134:	case 142:	case 150:	case 158:	case 166:	case 174:	case 182:	case 190:
 			case 198:	case 206:	case 214:	case 222:	case 230:	case 238:	case 246:	case 254:
 			case 326:	case 334:
-				if (!PPU.IOMode)
-				{
-					PPU.IOAddr = PatAddr | 8;
-					PPU.IOMode = 1;
-				}
+				if (PPU.IOMode)
+					break;
+				PPU.IOAddr = PatAddr | 8;
+				PPU.IOMode = 1;
 				break;
 			case   7:	case  15:	case  23:	case  31:	case  39:	case  47:	case  55:	case  63:
 			case  71:	case  79:	case  87:	case  95:	case 103:	case 111:	case 119:	case 127:
