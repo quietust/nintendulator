@@ -1,0 +1,53 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "Nintendulator"=.\Nintendulator.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/Nintendulator", PBAAAAAA
+    ..
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "in_nintendulator"=.\in_nintendulator.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+    begin source code control
+    "$/Nintendulator", PBAAAAAA
+    ..
+    end source code control
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+    begin source code control
+    "$/Nintendulator", PBAAAAAA
+    .
+    end source code control
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+
