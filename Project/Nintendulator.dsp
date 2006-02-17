@@ -230,10 +230,6 @@ SOURCE=..\src\PPU.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\resource.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\States.h
 # End Source File
 # End Group
@@ -247,6 +243,10 @@ SOURCE=..\src\Nintendulator.ico
 # Begin Source File
 
 SOURCE=..\src\Nintendulator.rc
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\resource.h
 # End Source File
 # Begin Source File
 
