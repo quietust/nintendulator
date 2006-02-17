@@ -68,6 +68,7 @@ static	unsigned char	Read (struct tStdPort *Cont)
 		Cont->Bits1 = Cont->NewBit1;
 		Cont->Bits2 = Cont->NewBit2;
 		Cont->BitPtr = 0;
+
 	}
 	if (Cont->BitPtr < 8)
 		result |= ((unsigned char)(Cont->Bits1 >> Cont->BitPtr) & 1) << 3;
@@ -75,7 +76,7 @@ static	unsigned char	Read (struct tStdPort *Cont)
 	if (Cont->BitPtr < 4)
 		result |= ((unsigned char)(Cont->Bits2 >> Cont->BitPtr) & 1) << 4;
 	else	result |= 0x10;
-	if (Cont->BitPtr < 8)
+	if ((!Cont->Strobe) && (Cont->BitPtr < 8))
 		Cont->BitPtr++;
 	return result;
 }

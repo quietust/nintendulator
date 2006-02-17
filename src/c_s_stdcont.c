@@ -75,10 +75,14 @@ static	unsigned char	Read (struct tStdPort *Cont)
 	{
 		Cont->Bits = Cont->NewBits;
 		Cont->BitPtr = 0;
+		result = Cont->Bits & 1;
 	}
-	if (Cont->BitPtr < 8)
-		result = (unsigned char)(Cont->Bits >> Cont->BitPtr++) & 1;
-	else	result = 1;
+	else
+	{
+		if (Cont->BitPtr < 8)
+			result = (unsigned char)(Cont->Bits >> Cont->BitPtr++) & 1;
+		else	result = 1;
+	}
 	return result;
 }
 static	void	Write (struct tStdPort *Cont, unsigned char Val)

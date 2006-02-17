@@ -76,9 +76,13 @@ static	unsigned char	Read1 (struct tExpPort *Cont)
 	{
 		Cont->Bits1 = Cont->NewBit1;
 		Cont->BitPtr1 = 0;
+		result = Cont->Bits1 & 1;
 	}
-	if (Cont->BitPtr1 < 8)
-		result = (unsigned char)(Cont->Bits1 >> Cont->BitPtr1++) & 1;
+	else
+	{
+		if (Cont->BitPtr1 < 8)
+			result = (unsigned char)(Cont->Bits1 >> Cont->BitPtr1++) & 1;
+	}
 	return result << 1;
 }
 static	unsigned char	Read2 (struct tExpPort *Cont)
@@ -88,9 +92,13 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 	{
 		Cont->Bits2 = Cont->NewBit2;
 		Cont->BitPtr2 = 0;
+		result = Cont->Bits2 & 1;
 	}
-	if (Cont->BitPtr2 < 8)
-		result = (unsigned char)(Cont->Bits2 >> Cont->BitPtr2++) & 1;
+	else
+	{
+		if (Cont->BitPtr2 < 8)
+			result = (unsigned char)(Cont->Bits2 >> Cont->BitPtr2++) & 1;
+	}
 	return result << 1;
 }
 static	void	Write (struct tExpPort *Cont, unsigned char Val)
