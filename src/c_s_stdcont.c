@@ -75,7 +75,7 @@ static	unsigned char	Read (struct tStdPort *Cont)
 	{
 		Cont->Bits = Cont->NewBits;
 		Cont->BitPtr = 0;
-		result = Cont->Bits & 1;
+		result = (unsigned char)(Cont->Bits & 1);
 	}
 	else
 	{

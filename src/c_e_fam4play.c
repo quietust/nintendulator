@@ -76,7 +76,7 @@ static	unsigned char	Read1 (struct tExpPort *Cont)
 	{
 		Cont->Bits1 = Cont->NewBit1;
 		Cont->BitPtr1 = 0;
-		result = Cont->Bits1 & 1;
+		result = (unsigned char)(Cont->Bits1 & 1);
 	}
 	else
 	{
@@ -92,7 +92,7 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 	{
 		Cont->Bits2 = Cont->NewBit2;
 		Cont->BitPtr2 = 0;
-		result = Cont->Bits2 & 1;
+		result = (unsigned char)(Cont->Bits2 & 1);
 	}
 	else
 	{
