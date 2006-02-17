@@ -195,7 +195,7 @@ void	States_SaveState (void)
 		fwrite("NMOV",1,4,out);	flen += 4;
 		clen = ftell(movie);
 		fwrite(&clen,1,4,out);	flen += 4;
-		fseek(movie,0,SEEK_SET);
+		rewind(movie);
 		for (; clen >= 0; clen--)
 		{
 			char tpc;
@@ -354,13 +354,13 @@ void	States_LoadState (void)
 				ReRecords++;
 				fclose(movie);
 				movie = fopen(MovieName,"wb");
-				rewind(movie);
 				for (; clen >= 0; clen--)
 				{
 					char tpc;
 					fread(&tpc,1,1,in);
 					fwrite(&tpc,1,1,movie);
 				}
+				clen++;
 			}
 			else
 			{	// nope, skip it
