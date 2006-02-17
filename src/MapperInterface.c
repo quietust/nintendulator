@@ -195,6 +195,12 @@ static	unsigned char *	_MAPINT	GetPRG_Ptr4 (int Where)
 {
 	return CPU.PRGPointer[Where];
 }
+static	void	_MAPINT	SetPRG_Ptr4 (int Where, unsigned char *Data, BOOL Writable)
+{
+	CPU.PRGPointer[Where] = Data;
+	CPU.Readable[Where] = TRUE;
+	CPU.Writable[Where] = Writable;
+}
 static	void	_MAPINT	SetPRG_OB4 (int Where)	/* Open bus */
 {
 	CPU.Readable[Where] = FALSE;
@@ -305,12 +311,47 @@ static	int	_MAPINT	GetCHR_RAM1 (int Where)	/* -1 if no ROM mapped */
 
 /******************************************************************************/
 
+static	__inline void	_MAPINT	SetCHR_NT1 (int Where, int What)
+{
+#ifndef NSFPLAYER
+	PPU.CHRPointer[Where] = PPU_VRAM[What & 3];
+	PPU.Writable[Where] = TRUE;
+#ifdef ENABLE_DEBUGGER
+	Debugger.NTabChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
+#endif
+}
+static	int	_MAPINT	GetCHR_NT1 (int Where)	/* -1 if no ROM mapped */
+{
+#ifndef NSFPLAYER
+	int tpi = (int)((PPU.CHRPointer[Where] - PPU_VRAM[0]) >> 10);
+	if ((tpi < 0) || (tpi > 4)) return -1;
+	else return tpi;
+#else
+	return -1;
+#endif
+}
+
+/******************************************************************************/
+
 static	unsigned char *	_MAPINT	GetCHR_Ptr1 (int Where)
 {
 #ifndef NSFPLAYER
 	return PPU.CHRPointer[Where];
 #else
 	return NULL;
+#endif
+}
+
+static	void	_MAPINT	SetCHR_Ptr1 (int Where, unsigned char *Data, BOOL Writable)
+{
+#ifndef NSFPLAYER
+	PPU.CHRPointer[Where] = Data;
+	PPU.Writable[Where] = Writable;
+#ifdef ENABLE_DEBUGGER
+	Debugger.PatChanged = TRUE;
+	Debugger.NTabChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
 #endif
 }
 
@@ -331,37 +372,55 @@ static	void	_MAPINT	SetCHR_OB1 (int Where)
 static	void	_MAPINT	Mirror_H (void)
 {
 #ifndef NSFPLAYER
-	PPU_SetMirroring(0,0,1,1);
+	SetCHR_NT1(0x8,0);	SetCHR_NT1(0xC,0);
+	SetCHR_NT1(0x9,0);	SetCHR_NT1(0xD,0);
+	SetCHR_NT1(0xA,1);	SetCHR_NT1(0xE,1);
+	SetCHR_NT1(0xB,1);	SetCHR_NT1(0xF,1);
 #endif
 }
 static	void	_MAPINT	Mirror_V (void)
 {
 #ifndef NSFPLAYER
-	PPU_SetMirroring(0,1,0,1);
+	SetCHR_NT1(0x8,0);	SetCHR_NT1(0xC,0);
+	SetCHR_NT1(0x9,1);	SetCHR_NT1(0xD,1);
+	SetCHR_NT1(0xA,0);	SetCHR_NT1(0xE,0);
+	SetCHR_NT1(0xB,1);	SetCHR_NT1(0xF,1);
 #endif
 }
 static	void	_MAPINT	Mirror_4 (void)
 {
 #ifndef NSFPLAYER
-	PPU_SetMirroring(0,1,2,3);
+	SetCHR_NT1(0x8,0);	SetCHR_NT1(0xC,0);
+	SetCHR_NT1(0x9,1);	SetCHR_NT1(0xD,1);
+	SetCHR_NT1(0xA,2);	SetCHR_NT1(0xE,2);
+	SetCHR_NT1(0xB,3);	SetCHR_NT1(0xF,3);
 #endif
 }
 static	void	_MAPINT	Mirror_S0 (void)
 {
 #ifndef NSFPLAYER
-	PPU_SetMirroring(0,0,0,0);
+	SetCHR_NT1(0x8,0);	SetCHR_NT1(0xC,0);
+	SetCHR_NT1(0x9,0);	SetCHR_NT1(0xD,0);
+	SetCHR_NT1(0xA,0);	SetCHR_NT1(0xE,0);
+	SetCHR_NT1(0xB,0);	SetCHR_NT1(0xF,0);
 #endif
 }
 static	void	_MAPINT	Mirror_S1 (void)
 {
 #ifndef NSFPLAYER
-	PPU_SetMirroring(1,1,1,1);
+	SetCHR_NT1(0x8,1);	SetCHR_NT1(0xC,1);
+	SetCHR_NT1(0x9,1);	SetCHR_NT1(0xD,1);
+	SetCHR_NT1(0xA,1);	SetCHR_NT1(0xE,1);
+	SetCHR_NT1(0xB,1);	SetCHR_NT1(0xF,1);
 #endif
 }
 static	void	_MAPINT	Mirror_Custom (int M1, int M2, int M3, int M4)
 {
 #ifndef NSFPLAYER
-	PPU_SetMirroring(M1,M2,M3,M4);
+	SetCHR_NT1(0x8,M1);	SetCHR_NT1(0xC,M1);
+	SetCHR_NT1(0x9,M2);	SetCHR_NT1(0xD,M2);
+	SetCHR_NT1(0xA,M3);	SetCHR_NT1(0xE,M3);
+	SetCHR_NT1(0xB,M4);	SetCHR_NT1(0xF,M4);
 #endif
 }
 
@@ -514,6 +573,7 @@ void	MapperInterface_Init (void)
 	EI.SetPRG_RAM32 = SetPRG_RAM32;
 	EI.GetPRG_RAM4 = GetPRG_RAM4;
 	EI.GetPRG_Ptr4 = GetPRG_Ptr4;
+	EI.SetPRG_Ptr4 = SetPRG_Ptr4;
 	EI.SetPRG_OB4 = SetPRG_OB4;
 	EI.SetCHR_ROM1 = SetCHR_ROM1;
 	EI.SetCHR_ROM2 = SetCHR_ROM2;
@@ -525,7 +585,10 @@ void	MapperInterface_Init (void)
 	EI.SetCHR_RAM4 = SetCHR_RAM4;
 	EI.SetCHR_RAM8 = SetCHR_RAM8;
 	EI.GetCHR_RAM1 = GetCHR_RAM1;
+	EI.SetCHR_NT1 = SetCHR_NT1;
+	EI.GetCHR_NT1 = GetCHR_NT1;
 	EI.GetCHR_Ptr1 = GetCHR_Ptr1;
+	EI.SetCHR_Ptr1 = SetCHR_Ptr1;
 	EI.SetCHR_OB1 = SetCHR_OB1;
 	EI.Mirror_H = Mirror_H;
 	EI.Mirror_V = Mirror_V;
