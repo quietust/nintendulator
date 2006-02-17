@@ -173,7 +173,7 @@ int	States_SaveData (FILE *out)
 			free(tpmi);
 		}
 	}
-	if (Controllers.MovieMode & (MOV_RECORD | MOV_PLAY))
+	if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
 	{
 		int moviepos = ftell(movie);
 		int mlen, mpos;
@@ -257,7 +257,7 @@ void	States_SaveState (void)
 	fwrite("NSS\x1A",1,4,out);
 	fwrite(STATES_VERSION,1,4,out);
 	fwrite(&flen,1,4,out);
-	if (Controllers.MovieMode & (MOV_RECORD | MOV_PLAY))
+	if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
 		fwrite("NREC",1,4,out);
 	else	fwrite("NSAV",1,4,out);
 
