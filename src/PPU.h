@@ -69,9 +69,9 @@ extern	struct	tPPU	PPU;
 extern	unsigned char	PPU_VRAM[0x4][0x400];
 extern	unsigned char	PPU_OpenBus[0x400];
 
-void	PPU_Init (void);
 void	PPU_GetHandlers (void);
 void	PPU_PowerOn (void);
+void	PPU_Reset (void);
 int	PPU_Save (FILE *);
 int	PPU_Load (FILE *);
 int	_MAPINT	PPU_IntRead (int,int);

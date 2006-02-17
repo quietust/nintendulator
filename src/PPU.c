@@ -189,8 +189,16 @@ void	_MAPINT	PPU_BusWriteNT (int Bank, int Addr, int Val)
 	PPU.CHRPointer[Bank][Addr] = Val;
 }
 
-void	PPU_Init (void)
+void	PPU_Reset (void)
 {
+	PPU.SprAddr = 0;
+	PPU.IsRendering = FALSE;
+	PPU.OnScreen = FALSE;
+	PPU.IOAddr = 0;
+	PPU.IOVal = 0;
+	PPU.IOMode = 0;
+	PPU.Clockticks = 0;
+	PPU.SLnum = 241;
 }
 void	PPU_GetHandlers (void)
 {
@@ -250,7 +258,6 @@ void	PPU_PowerOn()
 	PPU.ColorEmphasis = 0;
 	PPU.GrayScale = 0x3F;
 	PPU.VRAMAddr = PPU.IntReg = 0;
-	PPU.SLnum = 0;
 	PPU.IntX = 0;
 	PPU.ppuLatch = 0;
 	PPU.Reg2002 = 0;

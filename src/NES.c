@@ -44,7 +44,6 @@ void	NES_Init (void)
 {
 	SetWindowPos(mWnd,mWnd,0,0,256,240,SWP_NOZORDER);
 	MapperInterface_Init();
-	PPU_Init();
 	APU_Init();
 	GFX_Init();
 #ifdef ENABLE_DEBUGGER
@@ -750,10 +749,9 @@ void	NES_Reset (int ResetType)
 #ifdef ENABLE_DEBUGGER
 	Debugger.TraceOffset = -1;
 #endif	/* ENABLE_DEBUGGER */
-	PPU.Clockticks = 0;
-	PPU.SLnum = 241;
 	APU_Reset();
 	CPU_Reset();
+	PPU_Reset();
 #ifdef ENABLE_DEBUGGER
 	if (Debugger.Enabled)
 		Debugger_Update();
