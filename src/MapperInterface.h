@@ -102,7 +102,7 @@ typedef enum	{ COMPAT_FULL, COMPAT_NEARLY, COMPAT_PARTIAL, COMPAT_NONE } COMPAT_
 
 typedef	enum	{ RESET_NONE, RESET_SOFT, RESET_HARD, RESET_FULL } RESET_TYPE;
 
-typedef	enum	{ STATE_SAVE, STATE_LOAD, STATE_SIZE } SAVELOAD_TYPE;
+typedef	enum	{ STATE_SAVE, STATE_LOAD, STATE_SIZE } STATE_TYPE;
 
 typedef	enum	{ CFG_WINDOW, CFG_QUERY, CFG_CMD } CFG_TYPE;
 
@@ -118,7 +118,7 @@ typedef	struct	MapperInfo
 		void		(_MAPINT *Shutdown)	(void);
 		void		(_MAPINT *CPUCycle)	(void);
 		void		(_MAPINT *PPUCycle)	(int,int,int,int);
-		int		(_MAPINT *SaveLoad)	(SAVELOAD_TYPE,int,unsigned char *);
+		int		(_MAPINT *SaveLoad)	(STATE_TYPE,int,unsigned char *);
 		int		(_MAPINT *GenSound)	(int);
 		unsigned char	(_MAPINT *Config)	(CFG_TYPE,unsigned char);
 }	TMapperInfo, *PMapperInfo;
