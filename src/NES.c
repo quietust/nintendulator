@@ -1088,8 +1088,8 @@ void	NES_LoadSettings (void)
 	RegQueryValueEx(SettingsBase,_T("FSPort4T"),0,&Type,(unsigned char *)&FSPort4T,&Size);
 	RegQueryValueEx(SettingsBase,_T("ExpPortT"),0,&Type,(unsigned char *)&ExpPortT,&Size);
 
-	if ((Port1T == STD_POWERPAD) || (Port2T == STD_POWERPAD))
-		StdPort_SetControllerType(&Controllers.Port1,STD_POWERPAD);
+	if ((Port1T == STD_FOURSCORE) || (Port2T == STD_FOURSCORE))
+		StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
 	else
 	{
 		StdPort_SetControllerType(&Controllers.Port1,Port1T);
