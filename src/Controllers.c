@@ -253,29 +253,29 @@ void	Controllers_OpenConfig (void)
 BOOL CALLBACK	EnumJoysticksCallback (const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
 {
 	int DevNum = Controllers.NumDevices;
-	if (SUCCEEDED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&pdidInstance->guidInstance,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIJoystick[DevNum-2],NULL)))
+	if (SUCCEEDED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&pdidInstance->guidInstance,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[DevNum],NULL)))
 	{
 		int i, j;
 		HRESULT hr;
 		DIDEVCAPS tpc;
 		DIJOYSTATE2 joystate;
-		if (FAILED(hr = IDirectInputDevice7_SetDataFormat(Controllers.DIJoystick[DevNum-2],&c_dfDIJoystick2)))
+		if (FAILED(hr = IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[DevNum],&c_dfDIJoystick2)))
 			return hr;
-		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[DevNum-2],mWnd,DISCL_BACKGROUND | DISCL_NONEXCLUSIVE)))
+		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[DevNum],mWnd,DISCL_BACKGROUND | DISCL_NONEXCLUSIVE)))
 			return hr;
 		_tcscpy(Controllers.DeviceName[DevNum],pdidInstance->tszProductName);
 		tpc.dwSize = sizeof(DIDEVCAPS);
-		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(Controllers.DIJoystick[DevNum-2],&tpc)))
+		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(Controllers.DIDevices[DevNum],&tpc)))
 			return hr;
-		if (FAILED(hr = IDirectInputDevice7_Acquire(Controllers.DIJoystick[DevNum-2])))
+		if (FAILED(hr = IDirectInputDevice7_Acquire(Controllers.DIDevices[DevNum])))
 			return hr;
-		if (FAILED(hr = IDirectInputDevice7_Poll(Controllers.DIJoystick[DevNum-2])))
+		if (FAILED(hr = IDirectInputDevice7_Poll(Controllers.DIDevices[DevNum])))
 			return hr;
-		if (FAILED(hr = IDirectInputDevice7_GetDeviceState(Controllers.DIJoystick[DevNum-2],sizeof(DIJOYSTATE2),&joystate)))
+		if (FAILED(hr = IDirectInputDevice7_GetDeviceState(Controllers.DIDevices[DevNum],sizeof(DIJOYSTATE2),&joystate)))
 			return hr;
-		if (FAILED(hr = IDirectInputDevice7_Unacquire(Controllers.DIJoystick[DevNum-2])))
+		if (FAILED(hr = IDirectInputDevice7_Unacquire(Controllers.DIDevices[DevNum])))
 			return hr;
-		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[DevNum-2],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[DevNum],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 			return hr;
 
 		Controllers.NumButtons[DevNum] = tpc.dwButtons;
@@ -312,9 +312,10 @@ void	Controllers_Init (void)
 	int i;
 	
 	for (i = 0; i < Controllers.NumDevices; i++)
+	{
 		Controllers.DeviceUsed[i] = FALSE;
-	for (i = 2; i < Controllers.NumDevices; i++)
-		Controllers.DIJoystick[i-2] = NULL;
+		Controllers.DIDevices[i] = NULL;
+	}
 
 	ZeroMemory(Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
 	ZeroMemory(Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
@@ -337,22 +338,22 @@ void	Controllers_Init (void)
 		MessageBox(mWnd,_T("Unable to initialize DirectInput!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
-	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&GUID_SysKeyboard,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIKeyboard,NULL)))
+	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&GUID_SysKeyboard,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[0],NULL)))
 	{
 		IDirectInput7_Release(Controllers.DirectInput);
 		MessageBox(mWnd,_T("Unable to initialize keyboard input device!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
-	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIKeyboard,&c_dfDIKeyboard)))
+	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[0],&c_dfDIKeyboard)))
 	{
-		IDirectInputDevice7_Release(Controllers.DIKeyboard);
+		IDirectInputDevice7_Release(Controllers.DIDevices[0]);
 		IDirectInput7_Release(Controllers.DirectInput);
 		MessageBox(mWnd,_T("Unable to set keyboard input data format!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIKeyboard,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[0],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		IDirectInputDevice7_Release(Controllers.DIKeyboard);
+		IDirectInputDevice7_Release(Controllers.DIDevices[0]);
 		IDirectInput7_Release(Controllers.DirectInput);
 		MessageBox(mWnd,_T("Unable to set keyboard input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
@@ -361,30 +362,30 @@ void	Controllers_Init (void)
 	Controllers.NumAxes[0] = 0;
 	_tcscpy(Controllers.DeviceName[0],_T("Keyboard"));
 
-	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&GUID_SysMouse,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIMouse,NULL)))
+	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&GUID_SysMouse,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[1],NULL)))
 	{
 		IDirectInput7_Release(Controllers.DirectInput);
 		MessageBox(mWnd,_T("Unable to initialize mouse input device!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
-	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIMouse,&c_dfDIMouse2)))
+	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[1],&c_dfDIMouse2)))
 	{
-		IDirectInputDevice7_Release(Controllers.DIMouse);
+		IDirectInputDevice7_Release(Controllers.DIDevices[1]);
 		IDirectInput7_Release(Controllers.DirectInput);
 		MessageBox(mWnd,_T("Unable to set mouse input data format!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIMouse,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[1],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		IDirectInputDevice7_Release(Controllers.DIMouse);
+		IDirectInputDevice7_Release(Controllers.DIDevices[1]);
 		IDirectInput7_Release(Controllers.DirectInput);
 		MessageBox(mWnd,_T("Unable to set mouse input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	tpc.dwSize = sizeof(DIDEVCAPS);
-	if (FAILED(IDirectInputDevice7_GetCapabilities(Controllers.DIMouse,&tpc)))
+	if (FAILED(IDirectInputDevice7_GetCapabilities(Controllers.DIDevices[1],&tpc)))
 	{
-		IDirectInputDevice7_Release(Controllers.DIMouse);
+		IDirectInputDevice7_Release(Controllers.DIDevices[1]);
 		IDirectInput7_Release(Controllers.DirectInput);
 		MessageBox(mWnd,_T("Unable to get mouse input capabilities!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
@@ -411,15 +412,11 @@ void	Controllers_Release (void)
 	Controllers.FSPort3.Unload(&Controllers.FSPort3);
 	Controllers.FSPort4.Unload(&Controllers.FSPort4);
 	Controllers.ExpPort.Unload(&Controllers.ExpPort);
-	IDirectInputDevice7_Unacquire(Controllers.DIKeyboard);
-	IDirectInputDevice7_Release(Controllers.DIKeyboard);
-	IDirectInputDevice7_Unacquire(Controllers.DIMouse);
-	IDirectInputDevice7_Release(Controllers.DIMouse);
-	for (i = 2; i < Controllers.NumDevices; i++)
-		if (Controllers.DIJoystick[i-2])
+	for (i = 0; i < Controllers.NumDevices; i++)
+		if (Controllers.DIDevices[i])
 		{
-			IDirectInputDevice7_Unacquire(Controllers.DIJoystick[i-2]);
-			IDirectInputDevice7_Release(Controllers.DIJoystick[i-2]);
+			IDirectInputDevice7_Unacquire(Controllers.DIDevices[i]);
+			IDirectInputDevice7_Release(Controllers.DIDevices[i]);
 		}
 	IDirectInput7_Release(Controllers.DirectInput);
 }
@@ -513,23 +510,18 @@ void	Controllers_SetDeviceUsed (void)
 void	Controllers_Acquire (void)
 {
 	int i;
-	IDirectInputDevice7_Acquire(Controllers.DIKeyboard);
-	IDirectInputDevice7_Acquire(Controllers.DIMouse);
-	for (i = 2; i < Controllers.NumDevices; i++)
-		IDirectInputDevice7_Acquire(Controllers.DIJoystick[i-2]);
+	for (i = 0; i < Controllers.NumDevices; i++)
+		IDirectInputDevice7_Acquire(Controllers.DIDevices[i]);
 	if ((Controllers.ExpPort.Type == EXP_FAMILYBASICKEYBOARD) || (Controllers.ExpPort.Type == EXP_ALTKEYBOARD))
 		MaskKeyboard = 1;
 }
 void	Controllers_UnAcquire (void)
 {
 	int i;
-	IDirectInputDevice7_Unacquire(Controllers.DIKeyboard);
-	IDirectInputDevice7_Unacquire(Controllers.DIMouse);
-	for (i = 2; i < Controllers.NumDevices; i++)
-		IDirectInputDevice7_Unacquire(Controllers.DIJoystick[i-2]);
+	for (i = 0; i < Controllers.NumDevices; i++)
+		IDirectInputDevice7_Unacquire(Controllers.DIDevices[i]);
 	MaskKeyboard = 0;
 }
-
 
 void	Controllers_UpdateInput (void)
 {
@@ -538,33 +530,33 @@ void	Controllers_UpdateInput (void)
 	unsigned char Cmd = 0;
 	if (Controllers.DeviceUsed[0])
 	{
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIKeyboard,256,Controllers.KeyState);
+		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIDevices[0],256,Controllers.KeyState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
-			IDirectInputDevice7_Acquire(Controllers.DIKeyboard);
+			IDirectInputDevice7_Acquire(Controllers.DIDevices[0]);
 			ZeroMemory(Controllers.KeyState,sizeof(Controllers.KeyState));
 		}
 	}
 	if (Controllers.DeviceUsed[1])
 	{
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIMouse,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
+		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIDevices[1],sizeof(DIMOUSESTATE2),&Controllers.MouseState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
-			IDirectInputDevice7_Acquire(Controllers.DIMouse);
+			IDirectInputDevice7_Acquire(Controllers.DIDevices[1]);
 			ZeroMemory(&Controllers.MouseState,sizeof(Controllers.MouseState));
 		}
 	}
 	for (i = 2; i < Controllers.NumDevices; i++)
 		if (Controllers.DeviceUsed[i])
 		{
-			hr = IDirectInputDevice7_Poll(Controllers.DIJoystick[i-2]);
+			hr = IDirectInputDevice7_Poll(Controllers.DIDevices[i]);
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 			{
-				IDirectInputDevice7_Acquire(Controllers.DIJoystick[i-2]);
+				IDirectInputDevice7_Acquire(Controllers.DIDevices[i]);
 				ZeroMemory(&Controllers.JoyState[i-2],sizeof(DIJOYSTATE2));
 				continue;
 			}
-			hr = IDirectInputDevice7_GetDeviceState(Controllers.DIJoystick[i-2],sizeof(DIJOYSTATE2),&Controllers.JoyState[i-2]);
+			hr = IDirectInputDevice7_GetDeviceState(Controllers.DIDevices[i],sizeof(DIJOYSTATE2),&Controllers.JoyState[i-2]);
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 				ZeroMemory(&Controllers.JoyState[i-2],sizeof(DIJOYSTATE2));
 		}
@@ -585,68 +577,44 @@ void	Controllers_UpdateInput (void)
 		Movie_SaveInput(Cmd);
 }
 
-int	Controllers_GetConfigKey (HWND hWnd)
+int	Controllers_GetConfigButton (HWND hWnd, int DevNum)
 {
+	LPDIRECTINPUTDEVICE7 dev = Controllers.DIDevices[DevNum];
 	HRESULT hr;
 	int i;
 	int Key = -1;
+	int FirstAxis, LastAxis;
 
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIKeyboard,hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(dev,hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,_T("Unable to modify keyboard input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to modify device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
-	IDirectInputDevice7_Acquire(Controllers.DIKeyboard);
+	IDirectInputDevice7_Acquire(dev);
 	while (Key == -1)
 	{
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIKeyboard,256,Controllers.KeyState);
-		for (i = 0; i < Controllers.NumButtons[0]; i++)
+		if (DevNum == 0)
 		{
-			if (Controllers_IsPressed(i))
-			{
-				Key = i;
-				break;
-			}
+			hr = IDirectInputDevice7_GetDeviceState(dev,256,Controllers.KeyState);
+			FirstAxis = LastAxis = 0;
 		}
-	}
-	{
-waitrelease:
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIKeyboard,256,Controllers.KeyState);
-		for (i = 0; i < Controllers.NumButtons[0]; i++)
-			if (Controllers_IsPressed(i))
-				goto waitrelease;
-	}
-	IDirectInputDevice7_Unacquire(Controllers.DIKeyboard);
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIKeyboard,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
-	{
-		MessageBox(mWnd,_T("Unable to restore keyboard input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return Key;
-	}
-
-	return Key;
-}
-
-
-int	Controllers_GetConfigMouse (HWND hWnd)
-{
-	HRESULT hr;
-	int i;
-	int Key = -1;
-
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIMouse,hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
-	{
-		MessageBox(mWnd,_T("Unable to modify mouse input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return Key;
-	}
-
-	IDirectInputDevice7_Acquire(Controllers.DIMouse);
-	while (Key == -1)
-	{
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIMouse,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
-		for (i = 0; i < Controllers.NumButtons[1]; i++)
+		else if (DevNum == 1)
 		{
-			if (Controllers_IsPressed((1 << 16) | i))
+			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
+			FirstAxis = 0x08;
+			LastAxis = 0x08 | (Controllers.NumAxes[DevNum] << 1);
+		}
+		else
+		{
+			hr = IDirectInputDevice7_Poll(dev);
+			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIJOYSTATE2),&Controllers.JoyState[DevNum]);
+			FirstAxis = 0x80;
+			LastAxis = 0x90;
+		}
+		for (i = 0; i < Controllers.NumButtons[DevNum]; i++)
+		{
+			if (Controllers_IsPressed((DevNum << 16) | i))
 			{
 				Key = i;
 				break;
@@ -654,9 +622,9 @@ int	Controllers_GetConfigMouse (HWND hWnd)
 		}
 		if (Key != -1)	/* if we got a button, don't check for an axis */
 			break;
-		for (i = 0x08; i < (0x08 | (Controllers.NumAxes[1] << 1)); i++)
+		for (i = FirstAxis; i < LastAxis; i++)
 		{
-			if (Controllers_IsPressed((1 << 16) | i))
+			if (Controllers_IsPressed((DevNum << 16) | i))
 			{
 				Key = i;
 				break;
@@ -665,80 +633,33 @@ int	Controllers_GetConfigMouse (HWND hWnd)
 	}
 	{
 waitrelease:
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIMouse,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
-		for (i = 0; i < Controllers.NumButtons[1]; i++)
-			if (Controllers_IsPressed((1 << 16) | i))
+		if (DevNum == 0)
+			hr = IDirectInputDevice7_GetDeviceState(dev,256,Controllers.KeyState);
+		else if (DevNum == 1)
+			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
+		else
+		{
+			hr = IDirectInputDevice7_Poll(dev);
+			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIJOYSTATE2),&Controllers.JoyState[DevNum]);
+		}
+		// don't need to reset FirstAxis/LastAxis, since they were set in the previous loop
+		for (i = 0; i < Controllers.NumButtons[DevNum]; i++)
+			if (Controllers_IsPressed((DevNum << 16) | i))
 				goto waitrelease;
-		for (i = 0x08; i < (0x08 | (Controllers.NumAxes[1] << 1)); i++)
-			if (Controllers_IsPressed((1 << 16) | i))
+		for (i = FirstAxis; i < LastAxis; i++)
+			if (Controllers_IsPressed((DevNum << 16) | i))
 				goto waitrelease;
 	}
-	IDirectInputDevice7_Unacquire(Controllers.DIMouse);
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIMouse,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	IDirectInputDevice7_Unacquire(dev);
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(dev,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,_T("Unable to restore mouse input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to restore device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
-
 	return Key;
 }
 
-int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
-{
-	HRESULT hr;
-	int i;
-	int Key = -1;
 
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Dev],hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
-	{
-		MessageBox(mWnd,_T("Unable to modify joystick input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return Key;
-	}
-
-	IDirectInputDevice7_Acquire(Controllers.DIJoystick[Dev]);
-	while (Key == -1)
-	{
-		hr = IDirectInputDevice7_Poll(Controllers.DIJoystick[Dev]);
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIJoystick[Dev],sizeof(DIJOYSTATE2),&Controllers.JoyState[Dev]);
-		for (i = 0; i < Controllers.NumButtons[Dev+2]; i++)
-		{
-			if (Controllers_IsPressed(((Dev+2) << 16) | i))
-			{
-				Key = i;
-				break;
-			}
-		}
-		if (Key != -1)	/* if we got a button, don't check for an axis */
-			break;
-		for (i = 0x80; i < 0x90; i++)
-		{
-			if (Controllers_IsPressed(((Dev+2) << 16) | i))
-			{
-				Key = i;
-				break;
-			}
-		}
-	}
-	{
-waitrelease:
-		hr = IDirectInputDevice7_Poll(Controllers.DIJoystick[Dev]);
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIJoystick[Dev],sizeof(DIJOYSTATE2),&Controllers.JoyState[Dev]);
-		for (i = 0; i < Controllers.NumButtons[Dev+2]; i++)
-			if (Controllers_IsPressed(((Dev+2) << 16) | i))
-				goto waitrelease;
-		for (i = 0x80; i < 0x90; i++)
-			if (Controllers_IsPressed(((Dev+2) << 16) | i))
-				goto waitrelease;
-	}
-	IDirectInputDevice7_Unacquire(Controllers.DIJoystick[Dev]);
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Dev],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
-	{
-		MessageBox(mWnd,_T("Unable to restore joystick input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return Key;
-	}
-
-	return Key;
-}
 
 TCHAR *	Controllers_GetButtonLabel (int DevNum, int Button)
 {
@@ -788,11 +709,7 @@ void	Controllers_ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 		key = CreateDialog(hInst,(LPCTSTR)IDD_KEYCONFIG,hDlg,NULL);
 		ShowWindow(key,TRUE);	/* FIXME - center this window properly */
 		ProcessMessages();	/* let the "Press a key..." dialog display itself */
-		if (Device == 0)
-			*Button = Controllers_GetConfigKey(key);
-		else if (Device == 1)
-			*Button = Controllers_GetConfigMouse(key);
-		else	*Button = Controllers_GetConfigJoy(key,Device-2);
+		*Button = Controllers_GetConfigButton(key,Device);
 		ProcessMessages();	/* flush all keypresses - don't want them going back to the parent dialog */
 		DestroyWindow(key);	/* close the little window */
 		key = NULL;

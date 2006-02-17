@@ -27,7 +27,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include <dinput.h>
 
 #define	CONTROLLERS_MAXBUTTONS	32
-#define	MAX_CONTROLLERS	32
+#define	MAX_CONTROLLERS	32	// this includes keyboard and mouse
 
 struct tStdPort
 {
@@ -76,17 +76,15 @@ struct tControllers
 
 	int	NumDevices;
 	BOOL	DeviceUsed[MAX_CONTROLLERS];
-	TCHAR	DeviceName[MAX_CONTROLLERS][64];
+	TCHAR	DeviceName[MAX_CONTROLLERS][MAX_PATH];
 	int	NumButtons[MAX_CONTROLLERS], NumAxes[MAX_CONTROLLERS];
+
+	LPDIRECTINPUT7		DirectInput;
+	LPDIRECTINPUTDEVICE7	DIDevices[MAX_CONTROLLERS];
 
 	BYTE		KeyState[256];
 	DIMOUSESTATE2	MouseState;
-	DIJOYSTATE2	JoyState[MAX_CONTROLLERS-2];
-
-	LPDIRECTINPUT7		DirectInput;
-	LPDIRECTINPUTDEVICE7	DIKeyboard;
-	LPDIRECTINPUTDEVICE7	DIMouse;
-	LPDIRECTINPUTDEVICE7	DIJoystick[MAX_CONTROLLERS-2];
+	DIJOYSTATE2	JoyState[MAX_CONTROLLERS];	// first 2 entries are unused
 };
 extern struct tControllers Controllers;
 
