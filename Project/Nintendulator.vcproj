@@ -19,16 +19,21 @@
 			ConfigurationType="1"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			CharacterSet="2"
+			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
+				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="2"
+				OptimizeForWindowsApplication="TRUE"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
+				EnableFunctionLevelLinking="FALSE"
 				PrecompiledHeaderFile="$(IntDir)/Nintendulator.pch"
 				AssemblerOutput="2"
 				AssemblerListingLocation="$(IntDir)/"
@@ -48,6 +53,7 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				SubSystem="2"
+				EntryPointSymbol=""
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -92,6 +98,7 @@
 				Optimization="0"
 				OptimizeForProcessor="2"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				PrecompiledHeaderFile="$(IntDir)/Nintendulator.pch"
@@ -160,6 +167,7 @@
 				Optimization="0"
 				OptimizeForProcessor="2"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				PrecompiledHeaderFile="$(IntDir)/Nintendulator.pch"
@@ -217,21 +225,26 @@
 		</Configuration>
 		<Configuration
 			Name="Release (Unicode)|Win32"
-			OutputDirectory=".\..\"
+			OutputDirectory=".\.."
 			IntermediateDirectory=".\..\obj_emu"
 			ConfigurationType="1"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="1">
+			CharacterSet="1"
+			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
+				FavorSizeOrSpeed="1"
 				OptimizeForProcessor="2"
+				OptimizeForWindowsApplication="TRUE"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
+				EnableFunctionLevelLinking="FALSE"
 				PrecompiledHeaderFile="$(IntDir)/Nintendulator.pch"
 				AssemblerOutput="2"
 				AssemblerListingLocation="$(IntDir)/"
