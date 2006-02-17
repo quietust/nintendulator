@@ -1052,6 +1052,8 @@ static	void	__fastcall	Write4 (int What)
 {
 	if (PPU.OnScreen && PPU.IsRendering)
 		What = 0xFF;
+	if ((PPU.SprAddr & 0x03) == 0x02)
+		What &= 0xE3;
 	PPU.Sprite[PPU.SprAddr++] = What;
 }
 
