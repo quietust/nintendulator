@@ -182,7 +182,7 @@ int	States_SaveData (FILE *out)
 			free(tpmi);
 		}
 	}
-	if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
+	if (Controllers.MovieMode)	// save state when recording, reviewing, OR playing
 	{
 		extern int MoviePos;
 		int mlen;
@@ -263,7 +263,7 @@ void	States_SaveState (void)
 	fwrite("NSS\x1A",1,4,out);
 	fwrite(STATES_VERSION,1,4,out);
 	fwrite(&flen,1,4,out);
-	if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
+	if (Controllers.MovieMode)	// save NREC during playback as well
 		fwrite("NREC",1,4,out);
 	else	fwrite("NSAV",1,4,out);
 
@@ -354,18 +354,16 @@ BOOL	States_LoadData (FILE *in, int flen)
 		}
 		else if (!memcmp(csig,"NMOV",4))
 		{
+			extern int MoviePos;
+			extern int ReRecords;
+			char tps[4];
+			int mlen;
+			int tpi;
+			unsigned long tpl;
+			unsigned char tpc;
+			unsigned char Cmd;
 			if (Controllers.MovieMode & MOV_RECORD)
-			{	// are we recording?
-				extern int MoviePos;
-				extern char MovieName[256];
-				extern int ReRecords;
-				char tps[5];
-				int mlen;
-				int tpi;
-				unsigned long tpl;
-				unsigned char tpc;
-				unsigned char Cmd;
-
+			{	// zoom to the correct position and update the necessary fields along the way
 				rewind(movie);
 				fseek(movie,16,SEEK_SET);
 				fread(tps,4,1,movie);
@@ -426,8 +424,60 @@ BOOL	States_LoadData (FILE *in, int flen)
 				if ((Cmd) && (MI) && (MI->Config))
 					MI->Config(CFG_CMD,Cmd);
 			}
-			else
-			{	// nope, skip it
+			else if (Controllers.MovieMode & MOV_PLAY)
+			{	// zoom to the current position in playback, READ from movie file instead of writing it
+				rewind(movie);
+				fseek(movie,16,SEEK_SET);
+				fread(tps,4,1,movie);
+				fread(&mlen,4,1,movie);
+				while (memcmp(tps,"NMOV",4))
+				{	/* find the NMOV block in the movie file */
+					fseek(movie,mlen,SEEK_CUR);
+					fread(tps,4,1,movie);
+					fread(&mlen,4,1,movie);
+				}
+				fread(&tpl,4,1,in);	fread(&tpl,4,1,movie);		clen -= 4;	// CTRL0, CTRL1, CTEXT, EXTR
+				fread(&tpl,4,1,in);	fread(&tpl,4,1,movie);		clen -= 4;	// RREC
+				fread(&tpl,4,1,in);	fread(&tpi,4,1,movie);		clen -= 4;	// ILEN
+				fseek(in,tpl,SEEK_CUR);	fseek(movie,tpi,SEEK_CUR);	clen -= tpl;	// INFO
+				fread(&MoviePos,4,1,in);fread(&tpl,4,1,movie);		clen -= 4;	// MLEN
+				tpi = MoviePos;						clen -= tpi;	// MDAT
+				Cmd = 0;
+				while (tpi > 0)
+				{
+					if (Controllers.Port1.MovLen)
+					{
+						fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,in);
+						fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
+						tpi -= Controllers.Port1.MovLen;
+					}
+					if (Controllers.Port2.MovLen)
+					{
+						fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,in);
+						fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+						tpi -= Controllers.Port2.MovLen;
+					}
+					if (Controllers.ExpPort.MovLen)
+					{
+						fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,in);
+						fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
+						tpi -= Controllers.ExpPort.MovLen;
+					}
+					if (NES.HasMenu)
+					{
+						fread(&Cmd,1,1,in);
+						fread(&Cmd,1,1,movie);
+						tpi--;
+					}
+				}
+				Controllers.Port1.Frame(&Controllers.Port1,MOV_PLAY);
+				Controllers.Port2.Frame(&Controllers.Port2,MOV_PLAY);
+				Controllers.ExpPort.Frame(&Controllers.ExpPort,MOV_PLAY);
+				if ((Cmd) && (MI) && (MI->Config))
+					MI->Config(CFG_CMD,Cmd);				
+			}
+			else	// skip it
+			{
 				fseek(in,clen,SEEK_CUR);
 				clen = 0;
 			}
@@ -453,11 +503,6 @@ void	States_LoadState (void)
 	int flen;
 
 	States.NeedLoad = FALSE;
-	if ((Controllers.MovieMode & MOV_PLAY) && !(Controllers.MovieMode & MOV_REVIEW))
-	{
-		GFX_ShowText("Cannot load state while playing a movie!");
-		return;
-	}
 
 	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
 	in = fopen(tpchr,"rb");
@@ -471,7 +516,7 @@ void	States_LoadState (void)
 	if (memcmp(tpchr,"NSS\x1a",4))
 	{
 		fclose(in);
-		GFX_ShowText("Corrupted save state: %i", States.SelSlot);
+		GFX_ShowText("Not a valid savestate file: %i", States.SelSlot);
 		return;
 	}
 	fread(tpchr,1,4,in);
@@ -497,8 +542,8 @@ void	States_LoadState (void)
 	}
 	else if (!memcmp(tpchr,"NSAV",4))
 	{
-		/* Non-movie savestate, can NOT load these while recording */
-		if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
+		/* Non-movie savestate, can NOT load these while a movie is open */
+		if (Controllers.MovieMode)
 		{
 			fclose(in);
 			GFX_ShowText("Selected savestate (%i) does not contain movie data!", States.SelSlot);
