@@ -322,7 +322,7 @@ void AVI_Start ()
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = "";
 	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-	ofn.lpstrDefExt = NULL;
+	ofn.lpstrDefExt = "AVI";
 	ofn.lCustData = 0;
 	ofn.lpfnHook = NULL;
 	ofn.lpTemplateName = NULL;
