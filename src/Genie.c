@@ -24,641 +24,9 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "NES.h"
 #include "CPU.h"
 #include "PPU.h"
-#include "APU.h"
-#include "GFX.h"
-#include "AVI.h"
-#include "Debugger.h"
-#include "States.h"
-#include "Controllers.h"
+#include "Genie.h"
 
-struct tNES NES;
-unsigned char PRG_ROM[0x800][0x1000];	/* 8192 KB */
-unsigned char CHR_ROM[0x1000][0x400];	/* 4096 KB */
-unsigned char PRG_RAM[0x10][0x1000];	/*   64 KB */
-unsigned char CHR_RAM[0x20][0x400];	/*   32 KB */
-
-static	char *CompatLevel[COMPAT_NONE] = {"Fully supported!","Mostly supported","Partially supported"};
-
-void	NES_Init (void)
-{
-	SetWindowPos(mWnd,mWnd,0,0,256,240,SWP_NOZORDER);
-	MapperInterface_Init();
-	PPU_Init();
-	APU_Init();
-	GFX_Init();
-#ifdef ENABLE_DEBUGGER
-	Debugger_Init();
-#endif	/* ENABLE_DEBUGGER */
-	States_Init();
-	Controllers_Init();
-#ifdef ENABLE_DEBUGGER
-	Debugger_SetMode(0);
-#endif	/* ENABLE_DEBUGGER */
-	NES_LoadSettings();
-	NES_CloseFile();
-
-	NES.Stopped = TRUE;
-	NES.Stop = FALSE;
-	NES.NeedQuit = FALSE;
-	NES.GameGenie = FALSE;
-	NES.ROMLoaded = FALSE;
-	memset(&RI,0,sizeof(RI));
-
-	GFX_UpdateTitlebar();
-}
-
-void	NES_Release (void)
-{
-	if (NES.ROMLoaded)
-		NES_CloseFile();
-	APU_Release();
-	GFX_Release();
-	Controllers_Release();
-	MapperInterface_Release();
-
-	NES_SaveSettings();
-	DestroyWindow(mWnd);
-}
-
-void	NES_OpenFile (char *filename)
-{
-	size_t len = strlen(filename);
-	const char *LoadRet = NULL;
-	if (NES.ROMLoaded)
-		NES_CloseFile();
-
-	EI.DbgOut("Loading file '%s'...",filename);
-	if (!stricmp(filename + len - 4, ".NES"))
-		LoadRet = NES_OpenFileiNES(filename);
-	else if (!stricmp(filename + len - 4, ".NSF"))
-		LoadRet = NES_OpenFileNSF(filename);
-	else if (!stricmp(filename + len - 4, ".UNF"))
-		LoadRet = NES_OpenFileUNIF(filename);
-	else if (!stricmp(filename + len - 5, ".UNIF"))
-		LoadRet = NES_OpenFileUNIF(filename);
-	else if (!stricmp(filename + len - 4, ".FDS"))
-		LoadRet = NES_OpenFileFDS(filename);
-/*	else if (!stricmp(filename + len - 4, ".NRF"))
-		LoadRet = NES_OpenFileNRFF(filename);
-	else if (!stricmp(filename + len - 5, ".NRFF"))
-		LoadRet = NES_OpenFileNRFF(filename);*/
-	else if (!stricmp(filename + len - 4, ".ZIP"))
-		LoadRet = "ZIP support has not yet been implemented!";
-	else	LoadRet = "File type not recognized!";
-
-	if (LoadRet)
-	{
-		MessageBox(mWnd,LoadRet,"Nintendulator",MB_OK | MB_ICONERROR);
-		NES_CloseFile();
-		return;
-	}
-	NES.ROMLoaded = TRUE;
-	EI.DbgOut("Loaded successfully!");
-	if (MI->Config)
-		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_ENABLED);
-	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_GRAYED);
-	DrawMenuBar(mWnd);
-
-	States_SetFilename(filename);
-
-#ifdef ENABLE_DEBUGGER
-	Debugger.NTabChanged = TRUE;
-	Debugger.PalChanged = TRUE;
-	Debugger.PatChanged = TRUE;
-#endif	/* ENABLE_DEBUGGER */
-
-	NES_Reset(0);
-	if ((NES.AutoRun) || (RI.ROMType == ROM_NSF))
-	{
-		if (NES.Stopped)
-		{
-			NES.Stop = FALSE;
-			NES_Run();
-		}
-		else
-		{
-			NES.Stop = TRUE;
-			NES.NeedReset = RESET_SOFT;
-		}
-	}
-}
-
-void	NES_CloseFile (void)
-{
-	int i;
-
-	if (NES.ROMLoaded)
-	{
-		MapperInterface_UnloadMapper();
-		NES.ROMLoaded = FALSE;
-		EI.DbgOut("ROM unloaded.");
-	}
-
-	if (RI.ROMType)
-	{
-		if (RI.ROMType == ROM_UNIF)
-			free(RI.UNIF_BoardName);
-		else if (RI.ROMType == ROM_NSF)
-		{
-			free(RI.NSF_Title);
-			free(RI.NSF_Artist);
-			free(RI.NSF_Copyright);
-		}
-		free(RI.Filename);
-		memset(&RI,0,sizeof(RI));
-	}
-
-	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_GRAYED);
-
-	for (i = 0; i < 16; i++)
-	{
-		CPU.PRGPointer[i] = PRG_RAM[0];
-		CPU.ReadHandler[i] = CPU_ReadPRG;
-		CPU.WriteHandler[i] = CPU_WritePRG;
-		CPU.Readable[i] = FALSE;
-		CPU.Writable[i] = FALSE;
-		PPU.CHRPointer[i] = CHR_RAM[0];
-		PPU.ReadHandler[i] = PPU_BusRead;
-		PPU.WriteHandler[i] = PPU_BusWriteCHR;
-		PPU.Writable[i] = FALSE;
-	}
-	if (aviout)
-		AVI_End();
-	if (Controllers.MovieMode)
-		Controllers_StopMovie();
-}
-
-#define MKID(a) ((unsigned long) \
-		(((a) >> 24) & 0x000000FF) | \
-		(((a) >>  8) & 0x0000FF00) | \
-		(((a) <<  8) & 0x00FF0000) | \
-		(((a) << 24) & 0xFF000000))
-
-const char *	NES_OpenFileiNES (char *filename)
-{
-	FILE *in;
-	unsigned char Header[4];
-	unsigned long tmp;
-	BOOL p2Found;
-
-	in = fopen(filename,"rb");
-	fread(&tmp,4,1,in);
-	if (tmp != MKID('NES\x1A'))
-	{
-		fclose(in);
-		return "iNES header signature not found!";
-	}
-	RI.Filename = strdup(filename);
-	RI.ROMType = ROM_INES;
-	fread(Header,1,4,in);
-	for (tmp = 8; tmp < 0x10; tmp++)
-	{
-		unsigned char x;
-		fread(&x,1,1,in);
-		if (x)
-		{
-			fclose(in);
-			return "Invalid data found in header!";
-		}
-	}
-	
-	RI.INES_PRGSize = Header[0];
-	RI.INES_CHRSize = Header[1];
-	RI.INES_MapperNum = ((Header[2] & 0xF0) >> 4) | (Header[3] & 0xF0);
-	RI.INES_Flags = (Header[2] & 0xF) | ((Header[3] & 0xF) << 4);
-
-	if (RI.INES_Flags & 0x04)
-	{
-		fclose(in);
-		return "Trained ROMs are unsupported!";
-	}
-
-	fread(PRG_ROM,1,RI.INES_PRGSize * 0x4000,in);
-	fread(CHR_ROM,1,RI.INES_CHRSize * 0x2000,in);
-
-	fclose(in);
-
-	NES.PRGMask = ((RI.INES_PRGSize << 2) - 1) & MAX_PRGROM_MASK;
-	NES.CHRMask = ((RI.INES_CHRSize << 3) - 1) & MAX_CHRROM_MASK;
-
-	p2Found = FALSE;
-	for (tmp = 1; tmp < 0x40000000; tmp <<= 1)
-		if (tmp == RI.INES_PRGSize)
-			p2Found = TRUE;
-	if (!p2Found)
-		NES.PRGMask = MAX_PRGROM_MASK;
-
-	p2Found = FALSE;
-	for (tmp = 1; tmp < 0x40000000; tmp <<= 1)
-		if (tmp == RI.INES_CHRSize)
-			p2Found = TRUE;
-	if (!p2Found)
-		NES.CHRMask = MAX_CHRROM_MASK;
-	
-	if (!MapperInterface_LoadMapper(&RI))
-	{
-		static char err[256];
-		sprintf(err,"Mapper %i not supported!",RI.INES_MapperNum);
-		return err;
-	}
-	EI.DbgOut("iNES ROM image loaded: mapper %i (%s) - %s",RI.INES_MapperNum,MI->Description,CompatLevel[MI->Compatibility]);
-	EI.DbgOut("PRG: %iKB; CHR: %iKB",RI.INES_PRGSize << 4,RI.INES_CHRSize << 3);
-	EI.DbgOut("Flags: %s%s",RI.INES_Flags & 0x02 ? "Battery-backed SRAM, " : "", RI.INES_Flags & 0x08 ? "Four-screen VRAM" : (RI.INES_Flags & 0x01 ? "Vertical mirroring" : "Horizontal mirroring"));
-	return NULL;
-}
-
-const char *	NES_OpenFileUNIF (char *filename)
-{
-	unsigned long Signature, BlockLen;
-	unsigned char *tPRG[0x10], *tCHR[0x10];
-	unsigned char *PRGPoint, *CHRPoint;
-	unsigned long PRGsize, CHRsize;
-	int i;
-	unsigned char tp;
-	BOOL p2Found;
-	DWORD p2;
-
-	FILE *in = fopen(filename,"rb");
-	if (!in)
-		return FALSE;
-	fread(&Signature,4,1,in);
-	if (Signature != MKID('UNIF'))
-	{
-		fclose(in);
-		return "UNIF header signature not found!";
-	}
-
-	fseek(in,28,SEEK_CUR);	/* skip "expansion area" */
-
-	RI.Filename = strdup(filename);
-	RI.ROMType = ROM_UNIF;
-
-	for (i = 0; i < 0x10; i++)
-	{
-		tPRG[i] = tCHR[i] = 0;
-	}
-
-	while (!feof(in))
-	{
-		int id = 0;
-		fread(&Signature,4,1,in);
-		fread(&BlockLen,4,1,in);
-		if (feof(in))
-			continue;
-		switch (Signature)
-		{
-		case MKID('MAPR'):
-			RI.UNIF_BoardName = (char *)malloc(BlockLen);
-			fread(RI.UNIF_BoardName,1,BlockLen,in);
-			break;
-		case MKID('TVCI'):
-			fread(&tp,1,1,in);
-			RI.UNIF_NTSCPAL = tp;
-			if (tp == 0) NES_SetCPUMode(0);
-			if (tp == 1) NES_SetCPUMode(1);
-			break;
-		case MKID('BATR'):
-			fread(&tp,1,1,in);
-			RI.UNIF_Battery = TRUE;
-			break;
-		case MKID('MIRR'):
-			fread(&tp,1,1,in);
-			RI.UNIF_Mirroring = tp;
-			break;
-		case MKID('PRGF'):	id++;
-		case MKID('PRGE'):	id++;
-		case MKID('PRGD'):	id++;
-		case MKID('PRGC'):	id++;
-		case MKID('PRGB'):	id++;
-		case MKID('PRGA'):	id++;
-		case MKID('PRG9'):	id++;
-		case MKID('PRG8'):	id++;
-		case MKID('PRG7'):	id++;
-		case MKID('PRG6'):	id++;
-		case MKID('PRG5'):	id++;
-		case MKID('PRG4'):	id++;
-		case MKID('PRG3'):	id++;
-		case MKID('PRG2'):	id++;
-		case MKID('PRG1'):	id++;
-		case MKID('PRG0'):
-			RI.UNIF_NumPRG++;
-			RI.UNIF_PRGSize[id] = BlockLen;
-			tPRG[id] = (unsigned char *)malloc(BlockLen);
-			fread(tPRG[id],1,BlockLen,in);
-			break;
-
-		case MKID('CHRF'):	id++;
-		case MKID('CHRE'):	id++;
-		case MKID('CHRD'):	id++;
-		case MKID('CHRC'):	id++;
-		case MKID('CHRB'):	id++;
-		case MKID('CHRA'):	id++;
-		case MKID('CHR9'):	id++;
-		case MKID('CHR8'):	id++;
-		case MKID('CHR7'):	id++;
-		case MKID('CHR6'):	id++;
-		case MKID('CHR5'):	id++;
-		case MKID('CHR4'):	id++;
-		case MKID('CHR3'):	id++;
-		case MKID('CHR2'):	id++;
-		case MKID('CHR1'):	id++;
-		case MKID('CHR0'):
-			RI.UNIF_NumCHR++;
-			RI.UNIF_CHRSize[id] = BlockLen;
-			tCHR[id] = (unsigned char *)malloc(BlockLen);
-			fread(tCHR[id],1,BlockLen,in);
-			break;
-		default:
-			fseek(in,BlockLen,SEEK_CUR);
-		}
-	}
-
-	PRGPoint = PRG_ROM[0];
-	CHRPoint = CHR_ROM[0];
-	
-	for (i = 0; i < 0x10; i++)
-	{
-		if (tPRG[i])
-		{
-			memcpy(PRGPoint, tPRG[i], RI.UNIF_PRGSize[i]);
-			PRGPoint += RI.UNIF_PRGSize[i];
-			free(tPRG[i]);
-		}
-		if (tCHR[i])
-		{
-			memcpy(CHRPoint, tCHR[i], RI.UNIF_CHRSize[i]);
-			CHRPoint += RI.UNIF_CHRSize[i];
-			free(tCHR[i]);
-		}
-	}
-
-	fclose(in);
-
-	PRGsize = (unsigned int)(PRGPoint - PRG_ROM[0]);
-	NES.PRGMask = ((PRGsize / 0x1000) - 1) & MAX_PRGROM_MASK;
-	CHRsize = (unsigned int)(CHRPoint - CHR_ROM[0]);
-	NES.CHRMask = ((CHRsize / 0x400) - 1) & MAX_CHRROM_MASK;
-
-	p2Found = FALSE;
-	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
-		if (p2 == PRGsize)
-			p2Found = TRUE;
-	if (!p2Found)
-		NES.PRGMask = MAX_PRGROM_MASK;
-
-	p2Found = FALSE;
-	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
-		if (p2 == CHRsize)
-			p2Found = TRUE;
-	if (!p2Found)
-		NES.CHRMask = MAX_CHRROM_MASK;
-
-	if (!MapperInterface_LoadMapper(&RI))
-	{
-		static char err[256];
-		sprintf(err,"UNIF boardset \"%s\" not supported!",RI.UNIF_BoardName);
-		return err;
-	}
-	EI.DbgOut("UNIF file loaded: %s (%s) - %s",RI.UNIF_BoardName,MI->Description,CompatLevel[MI->Compatibility]);
-	EI.DbgOut("PRG: %iKB; CHR: %iKB",PRGsize >> 10,CHRsize >> 10);
-	EI.DbgOut("Battery status: %s",RI.UNIF_Battery ? "present" : "not present");
-	{
-		const char *mir[6] = {"Horizontal","Vertical","Single-screen L","Single-screen H","Four-screen","Dynamic"};
-		EI.DbgOut("Mirroring mode: %i (%s)",RI.UNIF_Mirroring,mir[RI.UNIF_Mirroring]);
-	}
-	{
-		const char *ntscpal[3] = {"NTSC","PAL","Dual"};
-		EI.DbgOut("Television standard: %s",ntscpal[RI.UNIF_NTSCPAL]);
-	}
-	return NULL;
-}
-
-const char *	NES_OpenFileFDS (char *filename)
-{
-	FILE *in;
-	unsigned long Header;
-	unsigned char numSides;
-	int i;
-
-	in = fopen(filename,"rb");
-	fread(&Header,4,1,in);
-	if (Header != MKID('FDS\x1a'))
-	{
-		fclose(in);
-		return "FDS header signature not found!";
-	}
-	fread(&numSides,1,1,in);
-	fseek(in,11,SEEK_CUR);
-	RI.Filename = strdup(filename);
-	RI.ROMType = ROM_FDS;
-
-	for (i = 0; i < numSides; i++)
-		fread(PRG_ROM[i << 4],1,65500,in);
-	fclose(in);
-
-	RI.FDS_NumSides = numSides;
-
-	NES.PRGMask = (((0x10000 * RI.FDS_NumSides) << 4) - 1) & MAX_PRGROM_MASK;
-
-	if (!MapperInterface_LoadMapper(&RI))
-		return "Famicom Disk System support not found!";
-
-	EI.DbgOut("FDS file loaded: %s - %s",MI->Description,CompatLevel[MI->Compatibility]);
-	EI.DbgOut("Data length: %i disk side(s)",RI.FDS_NumSides);
-	return NULL;
-}
-
-const char *	NES_OpenFileNSF (char *filename)
-{
-	FILE *in;
-	unsigned char Header[128];	/* Header Bytes */
-	int ROMlen;
-
-	in = fopen(filename,"rb");
-	fseek(in,0,SEEK_END);
-	ROMlen = ftell(in) - 128;
-	fseek(in,0,SEEK_SET);
-	fread(Header,1,128,in);
-	if (memcmp(Header,"NESM\x1a\x01",6))
-	{
-		fclose(in);
-		return "NSF header signature not found!";
-	}
-
-	RI.Filename = strdup(filename);
-	RI.ROMType = ROM_NSF;
-	RI.NSF_DataSize = ROMlen;
-	RI.NSF_NumSongs = Header[0x06];
-	RI.NSF_SoundChips = Header[0x7B];
-	RI.NSF_NTSCPAL = Header[0x7A];
-	RI.NSF_NTSCSpeed = Header[0x6E] | (Header[0x6F] << 8);
-	RI.NSF_PALSpeed = Header[0x78] | (Header[0x79] << 8);
-	memcpy(RI.NSF_InitBanks,&Header[0x70],8);
-	RI.NSF_InitSong = Header[0x07];
-	RI.NSF_InitAddr = Header[0x0A] | (Header[0x0B] << 8);
-	RI.NSF_PlayAddr = Header[0x0C] | (Header[0x0D] << 8);
-	RI.NSF_Title = (char *)malloc(32);
-	RI.NSF_Artist = (char *)malloc(32);
-	RI.NSF_Copyright = (char *)malloc(32);
-	memcpy(RI.NSF_Title,&Header[0x0E],32);
-	memcpy(RI.NSF_Artist,&Header[0x2E],32);
-	memcpy(RI.NSF_Copyright,&Header[0x4E],32);
-	if (memcmp(RI.NSF_InitBanks,"\0\0\0\0\0\0\0\0",8))
-		fread(&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF),1,ROMlen,in);
-	else
-	{
-		memcpy(RI.NSF_InitBanks,"\x00\x01\x02\x03\x04\x05\x06\x07",8);
-		fread(&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF),1,ROMlen,in);
-	}
-	fclose(in);
-
-	NES.PRGMask = MAX_PRGROM_MASK;
-	
-	if (!MapperInterface_LoadMapper(&RI))
-		return "NSF support not found!";
-	EI.DbgOut("NSF loaded: %s - %s",MI->Description,CompatLevel[MI->Compatibility]);
-	EI.DbgOut("Data length: %iKB",RI.NSF_DataSize >> 10);
-	return NULL;
-}
-/*
-const char *	NES_OpenFileNRFF (char *filename)
-{
-	unsigned long BlockSig, tp, i;
-	int BlockHeader;
-	char *BoardName;
-	unsigned char *tbuf, *PRGPoint = PRG_ROM[0], *CHRPoint = CHR_ROM[0];
-	BOOL p2Found = FALSE;
-	int p2;
-	FILE *in = fopen(filename,"rb");
-
-	if (!in)
-		return FALSE;
-	fread(&BlockSig,1,4,in);
-	if (BlockSig != MKID('NRFF'))
-	{
-		fclose(in);
-		return "NRFF header signature not found!";
-	}
-	fseek(in,4,SEEK_CUR);
-	EI.Flags = 0;
-	while (!feof(in))
-	{
-		fread(&BlockSig,1,4,in);
-		fread(&BlockHeader,1,4,in);
-		if (feof(in))
-			break;
-		switch (BlockSig)
-		{
-		case MKID('BORD'):
-			BoardName = (char *)malloc(BlockHeader);
-			fread(BoardName,1,BlockHeader,in);
-			break;
-		case MKID('TVCI'):
-			fread(&tp,1,4,in);
-			if (BlockHeader-4)
-				fseek(in,BlockHeader-4,SEEK_CUR);
-			if (tp == 0) NES_SetCPUMode(0);
-			if (tp == 1) NES_SetCPUMode(1);	
-			break;
-		case MKID('BATT'):
-			EI.Flags |= 0x02;
-			break;
-		case MKID('MIRR'):
-			fread(&tp,1,4,in);
-			if (BlockHeader-4)
-				fseek(in,BlockHeader-4,SEEK_CUR);
-			if (tp == 3)
-				tp = 5;
-			EI.Flags |= (tp & 0x0F) << 8;
-			break;
-		case MKID('PRGM'):
-			fread(&tp,1,4,in);
-			fseek(in,4,SEEK_CUR);
-			BlockHeader -= 8;
-			if (BlockHeader < 0)
-			{
-				fclose(in);
-				return "Invalid NRFF - PRGM block corrupt!";
-			}
-			if (BlockHeader)
-			{
-				tbuf = (unsigned char *)malloc(BlockHeader);
-				fread(tbuf, 1, BlockHeader, in);
-				for (i = 0; i < tp; i += BlockHeader)
-					memcpy(PRGPoint+i,tbuf,BlockHeader);
-			}
-			else	memset(PRGPoint,0,tp);	// open bus
-			PRGPoint += tp;
-			break;
-		case MKID('CHAR'):
-			fread(&tp,1,4,in);
-			fseek(in,4,SEEK_CUR);
-			BlockHeader -= 8;
-			if (BlockHeader < 0)
-			{
-				fclose(in);
-				return "Invalid NRFF - CHAR block corrupt!";
-			}
-			if (BlockHeader)
-			{
-				tbuf = (unsigned char *)malloc(BlockHeader);
-				fread(tbuf, 1, BlockHeader, in);
-				for (i = 0; i < tp; i += BlockHeader)
-					memcpy(CHRPoint+i,tbuf,BlockHeader);
-			}
-			else	memset(CHRPoint,0,tp);	// open bus
-			CHRPoint += tp;
-			break;
-		default:
-			fseek(in,BlockHeader,SEEK_CUR);
-			break;
-		}
-	}
-	fclose(in);
-	EI.PRG_ROM_Size = (int)(PRGPoint - PRG_ROM[0]);
-	EI.CHR_ROM_Size = (int)(CHRPoint - CHR_ROM[0]);
-	NES.PRGMask = ((EI.PRG_ROM_Size >> 12) - 1) & MAX_PRGROM_MASK;
-	NES.CHRMask = ((EI.CHR_ROM_Size >> 10) - 1) & MAX_CHRROM_MASK;
-	for (p2 = 1; p2 < 0x10000000; p2 <<= 1)
-		if (p2 == EI.PRG_ROM_Size) p2Found = FALSE;
-	if (!p2Found) NES.PRGMask = 0xFFFFFFFF;
-	GFX_ShowText("ROM loaded (%s, %i/%i)",BoardName,EI.PRG_ROM_Size >> 10,EI.CHR_ROM_Size >> 10);
-	if (!MapperInterface_LoadByBoard(BoardName))
-	{
-		static char err[256];
-		sprintf(err,"Boardset \"%s\" not supported!",RI.NRFF_BoardName);
-		return err;
-	}
-	free(BoardName);
-	return NULL;
-}
-*/
-void	NES_SetCPUMode (int NewMode)
-{
-	HMENU hMenu = GetMenu(mWnd);
-	if (NewMode == 0)
-	{
-		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
-		PPU.SLEndFrame = 262;
-		if (PPU.SLnum >= PPU.SLEndFrame - 1)	/* if we switched from PAL, scanline number could be invalid */
-			PPU.SLnum = PPU.SLEndFrame - 2;
-		GFX.WantFPS = 60;
-		GFX_LoadPalette(0);
-		APU_SetFPS(60);
-		PPU.IsPAL = FALSE;
-		EI.DbgOut("Emulation switched to NTSC");
-	}
-	else
-	{
-		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
-		PPU.SLEndFrame = 312;
-		GFX.WantFPS = 50;
-		GFX_LoadPalette(1);
-		APU_SetFPS(50);
-		PPU.IsPAL = TRUE;
-		EI.DbgOut("Emulation switched to PAL");
-	}
-}
+struct tGenie Genie;
 
 unsigned char GameGeniePRG[0x1000] = {
 0x78,0xD8,0xA9,0x00,0x8D,0x00,0x20,0xA2,0xFF,0x9A,0xA9,0x00,0x8D,0xF0,0xFF,0x20,0x1E,0xF0,0x8D,0xF1,0xFF,0x20,0x1E,0xF0,0x8D,0xF0,0xFF,0x4C,0x29,0xF0,0xA2,0x60,
@@ -823,23 +191,17 @@ unsigned char GameGenieCHR[0x400] = {
 0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xF0,0xF0,0xF0,0xF0,0xFF,0xFF,0xFF,0xFF,0xF0,0xF0,0xF0,0xF0,
 0xFF,0xFF,0xFF,0xFF,0x0F,0x0F,0x0F,0x0F,0xFF,0xFF,0xFF,0xFF,0x0F,0x0F,0x0F,0x0F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
-static int Code1B, Code2B, Code3B;
-static int Code1A, Code2A, Code3A;
-static int Code1O, Code2O, Code3O;
-static int Code1V, Code2V, Code3V;
-static unsigned char CodeStat;
-
 int	_MAPINT	GenieRead (int Bank, int Addy)
 {
 	int result = CPU_ReadPRG(Bank,Addy);
 	if (NES.GameGenie)
 	{
-		if ((CodeStat & 0x10) && (Addy == Code1A) && (Bank == Code1B) && ((CodeStat & 0x02) || (result == Code1O)))
-			return Code1V;
-		if ((CodeStat & 0x20) && (Addy == Code2A) && (Bank == Code2B) && ((CodeStat & 0x04) || (result == Code2O)))
-			return Code2V;
-		if ((CodeStat & 0x40) && (Addy == Code3A) && (Bank == Code3B) && ((CodeStat & 0x08) || (result == Code3O)))
-			return Code3V;
+		if ((Genie.CodeStat & 0x10) && (Addy == Genie.Code1A) && (Bank == Genie.Code1B) && ((Genie.CodeStat & 0x02) || (result == Genie.Code1O)))
+			return Genie.Code1V;
+		if ((Genie.CodeStat & 0x20) && (Addy == Genie.Code2A) && (Bank == Genie.Code2B) && ((Genie.CodeStat & 0x04) || (result == Genie.Code2O)))
+			return Genie.Code2V;
+		if ((Genie.CodeStat & 0x40) && (Addy == Genie.Code3A) && (Bank == Genie.Code3B) && ((Genie.CodeStat & 0x08) || (result == Genie.Code3O)))
+			return Genie.Code3V;
 	}
 	return result;
 }
@@ -850,15 +212,17 @@ void	_MAPINT	GenieWrite (int Bank, int Addy, int Val)
 	switch (Addy)
 	{
 	case 0:	if (Val & 1)
-			CodeStat = Val ^ 0x7F;
+			Genie.CodeStat = Val ^ 0x7F;
 		else
 		{
 			EI.SetCHR_RAM8(0,0);
 			EI.Mirror_4();
 			for (i = 0x8; i < 0x10; i++)
 			{
-				CPU.WriteHandler[i] = CPU_WritePRG;
+				CPU.PRGPointer[i] = NULL;
 				CPU.ReadHandler[i] = GenieRead;
+				CPU.WriteHandler[i] = CPU_WritePRG;
+				CPU.Writable[i] = FALSE;
 				CPU.Readable[i] = FALSE;
 			}
 			MI = MI2;
@@ -868,395 +232,115 @@ void	_MAPINT	GenieWrite (int Bank, int Addy, int Val)
 				MI->Reset(0);
 		}
 		break;
-	case 1:	Code1B = 8 | (Val >> 4);
-		Code1A = (Code1A & 0xFF) | ((Val << 8) & 0xF00);
+	case 1:	Genie.Code1B = 8 | (Val >> 4);
+		Genie.Code1A = (Genie.Code1A & 0xFF) | ((Val << 8) & 0xF00);
 		break;
-	case 2:	Code1A = (Code1A & 0xF00) | (Val);
+	case 2:	Genie.Code1A = (Genie.Code1A & 0xF00) | (Val);
 		break;
-	case 3:	Code1O = Val;
+	case 3:	Genie.Code1O = Val;
 		break;
-	case 4:	Code1V = Val;
+	case 4:	Genie.Code1V = Val;
 		break;
-	case 5:	Code2B = 8 | (Val >> 4);
-		Code2A = (Code2A & 0xFF) | ((Val << 8) & 0xF00);
+	case 5:	Genie.Code2B = 8 | (Val >> 4);
+		Genie.Code2A = (Genie.Code2A & 0xFF) | ((Val << 8) & 0xF00);
 		break;
-	case 6:	Code2A = (Code2A & 0xF00) | (Val);
+	case 6:	Genie.Code2A = (Genie.Code2A & 0xF00) | (Val);
 		break;
-	case 7:	Code2O = Val;
+	case 7:	Genie.Code2O = Val;
 		break;
-	case 8:	Code2V = Val;
+	case 8:	Genie.Code2V = Val;
 		break;
-	case 9:	Code3B = 8 | (Val >> 4);
-		Code3A = (Code3A & 0xFF) | ((Val << 8) & 0xF00);
+	case 9:	Genie.Code3B = 8 | (Val >> 4);
+		Genie.Code3A = (Genie.Code3A & 0xFF) | ((Val << 8) & 0xF00);
 		break;
-	case 10:Code3A = (Code3A & 0xF00) | (Val);
+	case 10:Genie.Code3A = (Genie.Code3A & 0xF00) | (Val);
 		break;
-	case 11:Code3O = Val;
+	case 11:Genie.Code3O = Val;
 		break;
-	case 12:Code3V = Val;
+	case 12:Genie.Code3V = Val;
 		break;
 	}
 }
 
-void	NES_Reset (int ResetType)
+void	Genie_Reset (void)
 {
 	int i;
-	for (i = 0x0; i < 0x10; i++)
-	{
-		CPU.ReadHandler[i] = CPU_ReadPRG;
-		CPU.WriteHandler[i] = CPU_WritePRG;
-		CPU.Readable[i] = FALSE;
-		CPU.Writable[i] = FALSE;
-		CPU.PRGPointer[i] = NULL;
-	}
-	CPU.ReadHandler[0] = CPU_ReadRAM;	CPU.WriteHandler[0] = CPU_WriteRAM;
-	CPU.ReadHandler[1] = CPU_ReadRAM;	CPU.WriteHandler[1] = CPU_WriteRAM;
-	CPU.ReadHandler[2] = PPU_IntRead;	CPU.WriteHandler[2] = PPU_IntWrite;
-	CPU.ReadHandler[3] = PPU_IntRead;	CPU.WriteHandler[3] = PPU_IntWrite;
-	CPU.ReadHandler[4] = CPU_Read4k;	CPU.WriteHandler[4] = CPU_Write4k;
-	for (i = 0x0; i < 0x8; i++)
-	{
-		PPU.ReadHandler[i] = PPU_BusRead;
-		PPU.WriteHandler[i] = PPU_BusWriteCHR;
-	}
+	Genie.Code1B = Genie.Code2B = Genie.Code3B = 0;
+	Genie.Code1A = Genie.Code2A = Genie.Code3A = 0;
+	Genie.Code1O = Genie.Code2O = Genie.Code3O = 0;
+	Genie.Code1V = Genie.Code2V = Genie.Code3V = 0;
+	Genie.CodeStat = 0;
 	for (i = 0x8; i < 0x10; i++)
 	{
-		PPU.ReadHandler[i] = PPU_BusRead;
-		PPU.WriteHandler[i] = PPU_BusWriteNT;
+		CPU.Readable[i] = TRUE;
+		CPU.PRGPointer[i] = GameGeniePRG;
 	}
-	switch (ResetType)
+	CPU.WriteHandler[0x8] = GenieWrite;
+	for (i = 0; i < 8; i++)
 	{
-	case 0:	ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
-		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
-		EI.DbgOut("Performing initial hard reset...");
-		PPU_PowerOn();
-		CPU_PowerOn();
-		EI.SetCHR_RAM8(0,0);
-		EI.Mirror_4();
-		if ((MI) && (MI->Reset))
-			MI->Reset(1);
-		break;
-	case RESET_HARD:
-		EI.DbgOut("Performing hard reset...");
-		if ((MI) && (MI->Shutdown))
-			MI->Shutdown();
-		ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
-		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
-		CPU_PowerOn();
-		if (MI2)
-		{
-			MI = MI2;
-			MI2 = NULL;
-		}
-		PPU_PowerOn();
-		if (NES.GameGenie)
-		{
-			Code1B = Code2B = Code3B = 0;
-			Code1A = Code2A = Code3A = 0;
-			Code1O = Code2O = Code3O = 0;
-			Code1V = Code2V = Code3V = 0;
-			CodeStat = 0;
-			for (i = 0x8; i < 0x10; i++)
-			{
-				CPU.Readable[i] = TRUE;
-				CPU.PRGPointer[i] = GameGeniePRG;
-			}
-			CPU.WriteHandler[0x8] = GenieWrite;
-			for (i = 0; i < 8; i++)
-			{
-				PPU.Writable[i] = FALSE;
-				PPU.CHRPointer[i] = GameGenieCHR;
-			}
-			EI.Mirror_V();
-			MI2 = MI;
-			MI = NULL;
-			PPU_GetHandlers();
-			CPU_GetHandlers();
-			break;
-		}
-		EI.SetCHR_RAM8(0,0);
-		EI.Mirror_4();
-		if ((MI) && (MI->Reset))
-			MI->Reset(1);
-		break;
-	case RESET_SOFT:
-		EI.DbgOut("Performing soft reset...");
-		if ((MI) && (MI->Shutdown))
-			MI->Shutdown();
-		EI.SetCHR_RAM8(0,0);
-		EI.Mirror_4();
-		if ((NES.GameGenie) && (CodeStat & 1))
-		{
-			for (i = 0x8; i < 0x10; i++)
-				CPU.ReadHandler[i] = GenieRead;
-		}
-		if ((MI) && (MI->Reset))
-			MI->Reset(0);
-		break;
+		PPU.Writable[i] = FALSE;
+		PPU.CHRPointer[i] = GameGenieCHR;
 	}
-#ifdef ENABLE_DEBUGGER
-	Debugger.TraceOffset = -1;
-#endif	/* ENABLE_DEBUGGER */
-	PPU.Clockticks = 0;
-	PPU.SLnum = 241;
-	APU_Reset();
-	CPU_Reset();
-#ifdef ENABLE_DEBUGGER
-	if (Debugger.Enabled)
-		Debugger_Update();
-#endif	/* ENABLE_DEBUGGER */
-	EI.DbgOut("Reset complete.");
+	EI.Mirror_V();
+	MI2 = MI;
+	MI = NULL;
+	PPU_GetHandlers();
+	CPU_GetHandlers();
 }
 
-void	NES_Run (void)
+void	Genie_Init (void)
 {
-#ifdef	CPU_BENCHMARK
-	/* Run with cyctest.nes */
 	int i;
-	LARGE_INTEGER ClockFreq;
-	LARGE_INTEGER ClockVal1, ClockVal2;
-	QueryPerformanceFrequency(&ClockFreq);
-	QueryPerformanceCounter(&ClockVal1);
-	for (i = 0; i < 454211; i++)
-	{
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-	}
-	QueryPerformanceCounter(&ClockVal2);
-
-	EI.DbgOut("10 seconds emulated in %lu milliseconds",(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
-#else
-rerun:
-	NES.Stopped = FALSE;
-
-#ifdef ENABLE_DEBUGGER
-	Debugger.TraceOffset = -1;
-#endif	/* ENABLE_DEBUGGER */
-
-	Controllers_Acquire();
-	if ((!NES.Stop) && (NES.SoundEnabled))
-		APU_SoundON();
-
-	NES.NeedReset = 0;
-	do
-	{
-#ifdef ENABLE_DEBUGGER
-		if (Debugger.Enabled)
-			Debugger_AddInst();
-#endif	/* ENABLE_DEBUGGER */
-		CPU_ExecOp();
-#ifdef ENABLE_DEBUGGER
-		if (Debugger.Enabled)
-			Debugger_Update();
-#endif	/* ENABLE_DEBUGGER */
-		if (NES.Scanline)
-		{
-			int SLnum = PPU.SLnum;
-			NES.Scanline = FALSE;
-			ProcessMessages();
-			if (SLnum > 241)
-			{
-				if (States.NeedSave)
-					States_SaveState();
-				if (States.NeedLoad)
-					States_LoadState();
-			}
-#ifdef ENABLE_DEBUGGER
-			if ((SLnum == 240) && (Debugger.Enabled))
-				Debugger_UpdateGraphics();
-#endif	/* ENABLE_DEBUGGER */
-			if (SLnum == 241)
-				Controllers_UpdateInput();
-		}
-	}	while (!NES.Stop);
-
-	APU_SoundOFF();
-	Controllers_UnAcquire();
-
-	NES.Stopped = TRUE;
-	GFX_UpdateTitlebar();
-
-	if (!NES.ROMLoaded)
-	{
-		NES.ROMLoaded = TRUE;	/* so CloseFile() flushes the mapper */
-		NES_CloseFile();
-		return;
-	}
-	if (NES.NeedQuit)
-	{
-		NES_Release();
-		return;
-	}
-	if (NES.NeedReset == RESET_HARD)
-	{
-		NES.NeedReset = 0;
-		NES_Reset(RESET_HARD);
-	}
-	else if (NES.NeedReset == RESET_SOFT)
-	{
-		NES.NeedReset = 0;
-		NES_Reset(RESET_SOFT);
-		NES.Stop = FALSE;
-		goto rerun;
-	}
-#endif	/* CPU_BENCHMARK */
+	for (i = 0x8; i < 0x10; i++)
+		CPU.ReadHandler[i] = GenieRead;
 }
 
-void	NES_MapperConfig (void)
+int	Genie_Save (FILE *out)
 {
-	MI->Config();
+	int clen = 0;
+	unsigned char val;
+	unsigned short addr;
+		//Data
+	val = NES.GameGenie;				fwrite(&val,1,1,out);	clen++;
+	val = Genie.CodeStat;				fwrite(&val,1,1,out);	clen++;
+
+	addr = (Genie.Code1B << 12) | Genie.Code1A;	fwrite(&addr,2,1,out);	clen += 2;
+	val = Genie.Code1O;				fwrite(&val,1,1,out);	clen++;
+	val = Genie.Code1V;				fwrite(&val,1,1,out);	clen++;
+
+	addr = (Genie.Code2B << 12) | Genie.Code2A;	fwrite(&addr,2,1,out);	clen += 2;
+	val = Genie.Code2O;				fwrite(&val,1,1,out);	clen++;
+	val = Genie.Code2V;				fwrite(&val,1,1,out);	clen++;
+
+	addr = (Genie.Code3B << 12) | Genie.Code3A;	fwrite(&addr,2,1,out);	clen += 2;
+	val = Genie.Code3O;				fwrite(&val,1,1,out);	clen++;
+	val = Genie.Code3V;				fwrite(&val,1,1,out);	clen++;
+
+	return clen;
 }
 
-void	NES_UpdateInterface (void)
+int	Genie_Load (FILE *in)
 {
-#ifdef ENABLE_DEBUGGER
-	Debugger_SetMode(Debugger.Mode);
-#endif	/* ENABLE_DEBUGGER */
-	SetWindowClientArea(mWnd,256 * SizeMult,240 * SizeMult);
-}
+	int clen = 0;
+	unsigned char val;
+	unsigned short addr;
+	fread(&val,1,1,in);	clen++;		NES.GameGenie = val;
+	fread(&val,1,1,in);	clen++;		Genie.CodeStat = val;
 
-void	NES_LoadSettings (void)
-{
-	HMENU hMenu = GetMenu(mWnd);
-	HKEY SettingsBase;
-	unsigned long Size = 4;	unsigned long Type = REG_DWORD;
-	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
-	int PosX, PosY;
+	fread(&addr,2,1,in);	clen += 2;	Genie.Code1A = addr & 0xFFF; Genie.Code1B = addr >> 12;
+	fread(&val,1,1,in);	clen++;		Genie.Code1O = val;
+	fread(&val,1,1,in);	clen++;		Genie.Code1V = val;
 
-	/* Load Defaults */
-	SizeMult = 1;
-	NES.SoundEnabled = 1;
-	GFX.aFSkip = 1;
-	GFX.FSkip = 0;
-	Controllers.Port1.Type = 0;
-	ZeroMemory(Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
-	Controllers.Port2.Type = 0;
-	ZeroMemory(Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
-	Controllers.ExpPort.Type = 0;
-	ZeroMemory(Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
-	/* End Defaults */
+	fread(&addr,2,1,in);	clen += 2;	Genie.Code2A = addr & 0xFFF; Genie.Code2B = addr >> 12;
+	fread(&val,1,1,in);	clen++;		Genie.Code2O = val;
+	fread(&val,1,1,in);	clen++;		Genie.Code2V = val;
 
-	RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Nintendulator\\", 0, KEY_ALL_ACCESS, &SettingsBase);
-	RegQueryValueEx(SettingsBase,"SoundEnabled",0,&Type,(unsigned char *)&NES.SoundEnabled,&Size);
-	RegQueryValueEx(SettingsBase,"SizeMult"    ,0,&Type,(unsigned char *)&SizeMult   ,&Size);
-	RegQueryValueEx(SettingsBase,"FSkip"       ,0,&Type,(unsigned char *)&GFX.FSkip  ,&Size);
-	RegQueryValueEx(SettingsBase,"aFSkip"      ,0,&Type,(unsigned char *)&GFX.aFSkip ,&Size);
-	RegQueryValueEx(SettingsBase,"PPUMode"     ,0,&Type,(unsigned char *)&PPU.IsPAL  ,&Size);
-	RegQueryValueEx(SettingsBase,"AutoRun"     ,0,&Type,(unsigned char *)&NES.AutoRun,&Size);
-	RegQueryValueEx(SettingsBase,"PosX"        ,0,&Type,(unsigned char *)&PosX       ,&Size);
-	RegQueryValueEx(SettingsBase,"PosY"        ,0,&Type,(unsigned char *)&PosY       ,&Size);
+	fread(&addr,2,1,in);	clen += 2;	Genie.Code3A = addr & 0xFFF; Genie.Code3B = addr >> 12;
+	fread(&val,1,1,in);	clen++;		Genie.Code3O = val;
+	fread(&val,1,1,in);	clen++;		Genie.Code3V = val;
 
-	RegQueryValueEx(SettingsBase,"Port1T"  ,0,&Type,(unsigned char *)&Port1T  ,&Size);
-	RegQueryValueEx(SettingsBase,"Port2T"  ,0,&Type,(unsigned char *)&Port2T  ,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort1T",0,&Type,(unsigned char *)&FSPort1T,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort2T",0,&Type,(unsigned char *)&FSPort2T,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort3T",0,&Type,(unsigned char *)&FSPort3T,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort4T",0,&Type,(unsigned char *)&FSPort4T,&Size);
-	RegQueryValueEx(SettingsBase,"ExpPortT",0,&Type,(unsigned char *)&ExpPortT,&Size);
-
-
-	if ((Port1T == STD_POWERPAD) || (Port2T == STD_POWERPAD))
-		StdPort_SetControllerType(&Controllers.Port1,STD_POWERPAD);
-	else
-	{
-		StdPort_SetControllerType(&Controllers.Port1,Port1T);
-		StdPort_SetControllerType(&Controllers.Port2,Port2T);
-	}
-	StdPort_SetControllerType(&Controllers.FSPort1,FSPort1T);
-	StdPort_SetControllerType(&Controllers.FSPort2,FSPort2T);
-	StdPort_SetControllerType(&Controllers.FSPort3,FSPort3T);
-	StdPort_SetControllerType(&Controllers.FSPort4,FSPort4T);
-	ExpPort_SetControllerType(&Controllers.ExpPort,ExpPortT);
-
-	Type = REG_BINARY;
-	Size = sizeof(Controllers.Port1.Buttons);
-	RegQueryValueEx(SettingsBase,"Port1D"  ,0,&Type,(unsigned char *)Controllers.Port1.Buttons  ,&Size);
-	RegQueryValueEx(SettingsBase,"Port2D"  ,0,&Type,(unsigned char *)Controllers.Port2.Buttons  ,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort1D",0,&Type,(unsigned char *)Controllers.FSPort1.Buttons,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort2D",0,&Type,(unsigned char *)Controllers.FSPort2.Buttons,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort3D",0,&Type,(unsigned char *)Controllers.FSPort3.Buttons,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort4D",0,&Type,(unsigned char *)Controllers.FSPort4.Buttons,&Size);
-	Size = sizeof(Controllers.ExpPort.Buttons);
-	RegQueryValueEx(SettingsBase,"ExpPortD",0,&Type,(unsigned char *)Controllers.ExpPort.Buttons,&Size);
-	Controllers_SetDeviceUsed();
-	
-	RegCloseKey(SettingsBase);
-	
-	if (NES.SoundEnabled)
-		CheckMenuItem(hMenu, ID_SOUND_ENABLED, MF_CHECKED);
-	
-	if (GFX.aFSkip)
-		CheckMenuItem(hMenu, ID_PPU_FRAMESKIP_AUTO, MF_CHECKED);
-
-	if (NES.AutoRun)
-		CheckMenuItem(hMenu, ID_CPU_AUTORUN, MF_CHECKED);
-
-	GFX_SetFrameskip();
-
-	switch (SizeMult)
-	{
-	case 1:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_1X,MF_BYCOMMAND);	break;
-	default:SizeMult = 2;
-	case 2:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);	break;
-	case 3:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_3X,MF_BYCOMMAND);	break;
-	case 4:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);	break;
-	}
-
-	if (PPU.IsPAL)
-		NES_SetCPUMode(1);
-	else	NES_SetCPUMode(0);
-	
-	CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
-
-	SetWindowPos(mWnd,mWnd,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
-
-	NES_UpdateInterface();
-}
-
-void	NES_SaveSettings (void)
-{
-	HKEY SettingsBase;
-	RECT wRect;
-	GetWindowRect(mWnd,&wRect);
-	if (RegOpenKeyEx(HKEY_CURRENT_USER,"SOFTWARE\\Nintendulator\\",0,KEY_ALL_ACCESS,&SettingsBase))
-		RegCreateKeyEx(HKEY_CURRENT_USER,"SOFTWARE\\Nintendulator\\",0,"NintendulatorClass",REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&SettingsBase,NULL);
-	RegSetValueEx(SettingsBase,"SoundEnabled",0,REG_DWORD,(unsigned char *)&NES.SoundEnabled,4);
-	RegSetValueEx(SettingsBase,"SizeMult"    ,0,REG_DWORD,(unsigned char *)&SizeMult        ,4);
-	RegSetValueEx(SettingsBase,"FSkip"       ,0,REG_DWORD,(unsigned char *)&GFX.FSkip       ,4);
-	RegSetValueEx(SettingsBase,"aFSkip"      ,0,REG_DWORD,(unsigned char *)&GFX.aFSkip      ,4);
-	RegSetValueEx(SettingsBase,"PPUMode"     ,0,REG_DWORD,(unsigned char *)&PPU.IsPAL       ,4);
-	RegSetValueEx(SettingsBase,"AutoRun"     ,0,REG_DWORD,(unsigned char *)&NES.AutoRun     ,4);
-	RegSetValueEx(SettingsBase,"PosX"        ,0,REG_DWORD,(unsigned char *)&wRect.left      ,4);
-	RegSetValueEx(SettingsBase,"PosY"        ,0,REG_DWORD,(unsigned char *)&wRect.top       ,4);
-
-	RegSetValueEx(SettingsBase,"Port1T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port1.Type  ,sizeof(Controllers.Port1.Type));
-	RegSetValueEx(SettingsBase,"Port2T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port2.Type  ,sizeof(Controllers.Port2.Type));
-	RegSetValueEx(SettingsBase,"FSPort1T",0,REG_DWORD,(unsigned char *)&Controllers.FSPort1.Type,sizeof(Controllers.FSPort1.Type));
-	RegSetValueEx(SettingsBase,"FSPort2T",0,REG_DWORD,(unsigned char *)&Controllers.FSPort2.Type,sizeof(Controllers.FSPort2.Type));
-	RegSetValueEx(SettingsBase,"FSPort3T",0,REG_DWORD,(unsigned char *)&Controllers.FSPort3.Type,sizeof(Controllers.FSPort3.Type));
-	RegSetValueEx(SettingsBase,"FSPort4T",0,REG_DWORD,(unsigned char *)&Controllers.FSPort4.Type,sizeof(Controllers.FSPort4.Type));
-	RegSetValueEx(SettingsBase,"ExpPortT",0,REG_DWORD,(unsigned char *)&Controllers.ExpPort.Type,sizeof(Controllers.ExpPort.Type));
-	
-	RegSetValueEx(SettingsBase,"Port1D"  ,0,REG_BINARY,(unsigned char *)Controllers.Port1.Buttons  ,sizeof(Controllers.Port1.Buttons));
-	RegSetValueEx(SettingsBase,"Port2D"  ,0,REG_BINARY,(unsigned char *)Controllers.Port2.Buttons  ,sizeof(Controllers.Port2.Buttons));
-	RegSetValueEx(SettingsBase,"FSPort1D",0,REG_BINARY,(unsigned char *)Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));
-	RegSetValueEx(SettingsBase,"FSPort2D",0,REG_BINARY,(unsigned char *)Controllers.FSPort2.Buttons,sizeof(Controllers.FSPort2.Buttons));
-	RegSetValueEx(SettingsBase,"FSPort3D",0,REG_BINARY,(unsigned char *)Controllers.FSPort3.Buttons,sizeof(Controllers.FSPort3.Buttons));
-	RegSetValueEx(SettingsBase,"FSPort4D",0,REG_BINARY,(unsigned char *)Controllers.FSPort4.Buttons,sizeof(Controllers.FSPort4.Buttons));
-	RegSetValueEx(SettingsBase,"ExpPortD",0,REG_BINARY,(unsigned char *)Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
-	
-	RegCloseKey(SettingsBase);
-}
-
-void	NES_Repaint (void)
-{
-	GFX_Repaint();
+	Genie_Init();
+	if ((MI) && (MI->Reset))// need to reinit the mapper here
+		MI->Reset(1);	// so it can re-get the read handler for 8000-FFFF
+	return clen;
 }

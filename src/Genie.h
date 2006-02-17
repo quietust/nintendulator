@@ -20,55 +20,22 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifndef __NES_H__
-#define __NES_H__
+#ifndef __GENIE_H__
+#define __GENIE_H__
 
-#include "MapperInterface.h"
-#include "resource.h"
-#include <windows.h>
-
-#define RESET_SOFT 1
-#define RESET_HARD 2
-
-struct tNES
+struct tGenie
 {
-	int SRAM_Size;
-
-	int PRGMask, CHRMask;
-
-	BOOL ROMLoaded;
-	BOOL Stop, Stopped, NeedReset, NeedQuit, Scanline;
-	BOOL GameGenie;
-	BOOL SoundEnabled;
-	BOOL AutoRun;
+	int Code1B, Code2B, Code3B;
+	int Code1A, Code2A, Code3A;
+	int Code1O, Code2O, Code3O;
+	int Code1V, Code2V, Code3V;
+	unsigned char CodeStat;
 };
-extern	struct tNES NES;
+extern	struct tGenie Genie;
 
-#define	MAX_PRGROM_MASK	0x7FF
-#define	MAX_PRGRAM_MASK	0xF
-#define	MAX_CHRROM_MASK	0xFFF
-#define	MAX_CHRRAM_MASK	0x1F
-extern	unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];	/* 8192 KB */
-extern	unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];	/*   64 KB */
-extern	unsigned char CHR_ROM[MAX_CHRROM_MASK+1][0x400];	/* 4096 KB */
-extern	unsigned char CHR_RAM[MAX_CHRRAM_MASK+1][0x400];	/*   32 KB */
-
-void	NES_Init (void);
-void	NES_Release (void);
-void	NES_OpenFile (char *);
-void	NES_CloseFile (void);
-const char *	NES_OpenFileiNES (char *);
-const char *	NES_OpenFileUNIF (char *);
-const char *	NES_OpenFileFDS (char *);
-const char *	NES_OpenFileNSF (char *);
-/*BOOL	NES_OpenFileNRFF (char *); */
-void	NES_SetCPUMode (int);
-void	NES_Reset (int);
-void	NES_Run (void);
-void	NES_UpdateInterface (void);
-void	NES_LoadSettings (void);
-void	NES_SaveSettings (void);
-void	NES_Repaint (void);
-void	NES_MapperConfig (void);
+void	Genie_Reset (void);
+void	Genie_Init (void);
+int	Genie_Save (FILE *);
+int	Genie_Load (FILE *);
 
 #endif

@@ -28,6 +28,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "APU.h"
 #include "Controllers.h"
 #include "GFX.h"
+#include "Genie.h"
 #include "MapperInterface.h"
 
 struct	tStates	States;
@@ -107,6 +108,15 @@ int	States_SaveData (FILE *out)
 		fwrite(Controllers.FSPort3.Data,Controllers.FSPort3.DataLen,1,out);	clen += Controllers.FSPort3.DataLen;
 		fwrite(Controllers.FSPort4.Data,Controllers.FSPort4.DataLen,1,out);	clen += Controllers.FSPort4.DataLen;
 		fwrite(Controllers.ExpPort.Data,Controllers.ExpPort.DataLen,1,out);	clen += Controllers.ExpPort.DataLen;
+		fseek(out,-clen - 4,SEEK_CUR);
+		fwrite(&clen,1,4,out);
+		fseek(out,clen,SEEK_CUR);	flen += clen;
+	}
+	if (Genie.CodeStat & 1)
+	{
+		fwrite("GENI",1,4,out);		flen += 4;
+		fwrite(&clen,1,4,out);		flen += 4;
+		clen = Genie_Save(out);
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
@@ -281,6 +291,8 @@ BOOL	States_LoadData (FILE *in, int flen)
 			fread(Controllers.FSPort4.Data,Controllers.FSPort4.DataLen,1,in);	clen -= Controllers.FSPort4.DataLen;
 			fread(Controllers.ExpPort.Data,Controllers.ExpPort.DataLen,1,in);	clen -= Controllers.ExpPort.DataLen;
 		}
+		else if (!memcmp(csig,"GENI",4))
+			clen -= Genie_Load(in);
 		else if (!memcmp(csig,"NPRA",4))
 		{
 			memset(PRG_RAM,0,sizeof(PRG_RAM));
