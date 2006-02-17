@@ -41,6 +41,7 @@ static	char *CompatLevel[COMPAT_NONE] = {"Fully supported!","Mostly supported","
 
 void	NES_Init (void)
 {
+	SetWindowPos(mWnd,mWnd,0,0,256,240,SWP_NOZORDER);
 	MapperInterface_Init();
 	PPU_Init();
 	APU_Init();
