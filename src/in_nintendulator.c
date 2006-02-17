@@ -214,14 +214,19 @@ void stop() {
 	mod.outMod->Close();
 
 	mod.SAVSADeInit();
-	MI->Shutdown();
-	if (RI.ROMType == ROM_NSF)
+
+	if (RI.ROMType != 0)
 	{
-		free(RI.NSF_Title);
-		free(RI.NSF_Artist);
-		free(RI.NSF_Copyright);
+		MapperInterface_UnloadMapper();
+		
+		if (RI.ROMType == ROM_NSF)
+		{
+			free(RI.NSF_Title);
+			free(RI.NSF_Artist);
+			free(RI.NSF_Copyright);
+		}
+		RI.ROMType = 0;
 	}
-	RI.ROMType = 0;
 }
 
 int getlength() { 
