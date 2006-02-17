@@ -375,25 +375,59 @@ void	States_LoadState (void)
 				fclose(movie);
 				movie = fopen(MovieName,"w+b");
 				{
+					unsigned char tpc;
 					unsigned long tpl;
 					fread(&tpl,4,1,in);
 					fwrite(&tpl,4,1,movie);
-					fread(&tpl,4,1,in);
-					fwrite(&tpl,4,1,movie);
-					fread(&tps,2,1,in);
-					fwrite(&tps,2,1,movie);
+					fread(&tpc,1,1,in);
+					fwrite(&tpc,1,1,movie);
+					fread(tpchr,1,5,in);
+					fwrite(tpchr,1,5,movie);
+					StdPort_SetControllerType(&Controllers.Port1,tpchr[0]);
+					StdPort_SetControllerType(&Controllers.Port2,tpchr[1]);
+					ExpPort_SetControllerType(&Controllers.ExpPort,tpchr[4]);
+					if (tpc & 0x02)
+					{
+						StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
+						StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+
+						StdPort_SetControllerType(&Controllers.FSPort1,tpchr[0]);
+						StdPort_SetControllerType(&Controllers.FSPort2,tpchr[1]);
+						StdPort_SetControllerType(&Controllers.FSPort3,tpchr[2]);
+						StdPort_SetControllerType(&Controllers.FSPort4,tpchr[3]);
+					}
 					fread(&tpl,4,1,in);
 					if (ReRecords < (int)tpl)
 						ReRecords = tpl;
 					fwrite(&tpl,4,1,movie);
+					if (tpc & 0x01)
+						;	// copy the savestate through
 				}
 				ReRecords++;
-				for (clen -= 14; clen > 0; clen--)
+				while (clen > 0)
 				{
-					char tpc;
-					fread(&tpc,1,1,in);
-					fwrite(&tpc,1,1,movie);
+					if (Controllers.Port1.MovLen)
+					{
+						fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,in);
+						fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
+						clen -= Controllers.Port1.MovLen;
+					}
+					if (Controllers.Port2.MovLen)
+					{
+						fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,in);
+						fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+						clen -= Controllers.Port2.MovLen;
+					}
+					if (Controllers.ExpPort.MovLen)
+					{
+						fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,in);
+						fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
+						clen -= Controllers.ExpPort.MovLen;
+					}
 				}
+				Controllers.Port1.Frame(&Controllers.Port1,Controllers.MovieMode | MOV_PLAY);
+				Controllers.Port2.Frame(&Controllers.Port2,Controllers.MovieMode | MOV_PLAY);
+				Controllers.ExpPort.Frame(&Controllers.ExpPort,Controllers.MovieMode | MOV_PLAY);
 			}
 			else
 			{	// nope, skip it
