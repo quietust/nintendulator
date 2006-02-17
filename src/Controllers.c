@@ -22,6 +22,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #include "Nintendulator.h"
 #include "Controllers.h"
+#include "States.h"
 #include "GFX.h"
 #include "NES.h"
 #include <commdlg.h>
@@ -445,7 +446,7 @@ void	Controllers_UnAcquire (void)
 }
 
 FILE *movie;
-unsigned char MOV_ControllerTypes[5];
+unsigned char MOV_ControllerTypes[3];
 int	ReRecords;
 char MovieName[256];
 
@@ -484,7 +485,7 @@ void	Controllers_PlayMovie (void)
 
 	movie = fopen(MovieName,"rb");
 	fread(buf,1,4,movie);
-	if (!memcmp(buf,"FMV\x1A",4))
+	if (!memcmp(buf,"FMV\x1a",4))
 	{
 		fread(&x,1,1,movie);
 		fread(&x,1,1,movie);
@@ -521,48 +522,95 @@ void	Controllers_PlayMovie (void)
 
 		NES_Reset(RESET_HARD);
 	}
-	else if (!memcmp(buf,"NMV\x1A",4))
+	else if (!memcmp(buf,"NSS\x1a",4))
 	{
-		fread(&x,1,1,movie);
-		if (!(x & 0x01))
-		{
+		int len;
+		char *desc;
+
+		fread(buf,1,4,movie);
+		if (1 || memcmp(buf,STATES_VERSION,4))
+		{	/* For now, allow savestates with wrong version */
 			fclose(movie);
-			MessageBox(mWnd,"Movies recorded from savestates are not supported!","Nintendulator",MB_OK);
+			MessageBox(mWnd,"Incorrect movie version!", "Nintendulator", MB_OK | MB_ICONERROR);
 			return;
 		}
+		fread(&len,4,1,movie);
+		fread(buf,1,4,movie);
+
+		if (memcmp(buf,"NMOV",4))
+		{
+			fclose(movie);
+			MessageBox(mWnd,"This is not a valid Nintendulator movie recording!", "Nintendulator", MB_OK | MB_ICONERROR);
+			return;
+		}
+		fseek(movie,16,SEEK_SET);
+
+		NES_Reset(RESET_HARD);
+
+		if (States_LoadData(movie, len))
+		{
+			fclose(movie);
+			MessageBox(mWnd,"Failed to load movie!", "Nintendulator", MB_OK | MB_ICONERROR);
+			return;
+		}
+		
 		Controllers.MovieMode = MOV_PLAY;
+		MOV_ControllerTypes[0] = Controllers.Port1.Type;
+		MOV_ControllerTypes[1] = Controllers.Port2.Type;
+		MOV_ControllerTypes[2] = Controllers.ExpPort.Type;
+
 		if (Controllers.Port1.Type == STD_FOURSCORE)
 		{
-			MOV_ControllerTypes[0] = Controllers.FSPort1.Type;
-			MOV_ControllerTypes[1] = Controllers.FSPort3.Type;
-			MOV_ControllerTypes[2] = Controllers.FSPort2.Type;
-			MOV_ControllerTypes[3] = Controllers.FSPort4.Type;
-			MOV_ControllerTypes[4] = Controllers.ExpPort.Type;
+			MOV_ControllerTypes[1] = 0;
+			if (Controllers.FSPort1.Type)	MOV_ControllerTypes[1] |= 0x01;
+			if (Controllers.FSPort2.Type)	MOV_ControllerTypes[1] |= 0x02;
+			if (Controllers.FSPort3.Type)	MOV_ControllerTypes[1] |= 0x04;
+			if (Controllers.FSPort4.Type)	MOV_ControllerTypes[1] |= 0x08;
+		}
+		rewind(movie);
+		fseek(movie,16,SEEK_SET);
+		fread(buf,4,1,movie);
+		fread(&len,4,1,movie);
+		while (strncmp(buf,"NMOV",4))
+		{	/* find the NMOV block in the movie */
+			fseek(movie,len,SEEK_CUR);
+			fread(buf,4,1,movie);
+			fread(&len,4,1,movie);
+		}
+
+		fread(buf,1,4,movie);
+
+		if (buf[0] == STD_FOURSCORE)
+		{
+			if (buf[1] & 0x01)
+				StdPort_SetControllerType(&Controllers.FSPort1,STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers.FSPort1,STD_UNCONNECTED);
+			if (buf[1] & 0x02)
+				StdPort_SetControllerType(&Controllers.FSPort2,STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers.FSPort2,STD_UNCONNECTED);
+			if (buf[1] & 0x04)
+				StdPort_SetControllerType(&Controllers.FSPort3,STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers.FSPort3,STD_UNCONNECTED);
+			if (buf[1] & 0x08)
+				StdPort_SetControllerType(&Controllers.FSPort4,STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers.FSPort4,STD_UNCONNECTED);
+			StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
+			StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
 		}
 		else
 		{
-			MOV_ControllerTypes[0] = Controllers.Port1.Type;
-			MOV_ControllerTypes[1] = Controllers.Port2.Type;
-			MOV_ControllerTypes[2] = STD_UNCONNECTED;
-			MOV_ControllerTypes[3] = STD_UNCONNECTED;
-			MOV_ControllerTypes[4] = Controllers.ExpPort.Type;
+			StdPort_SetControllerType(&Controllers.Port1,buf[0]);
+			StdPort_SetControllerType(&Controllers.Port2,buf[1]);
 		}
-		fread(buf,1,5,movie);
-		StdPort_SetControllerType(&Controllers.Port1,buf[0]);
-		StdPort_SetControllerType(&Controllers.Port2,buf[1]);
-		ExpPort_SetControllerType(&Controllers.ExpPort,buf[4]);
-		if (x & 0x02)
-		{
-			StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-			StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+		ExpPort_SetControllerType(&Controllers.ExpPort,buf[2]);
 
-			StdPort_SetControllerType(&Controllers.FSPort1,buf[0]);
-			StdPort_SetControllerType(&Controllers.FSPort2,buf[1]);
-			StdPort_SetControllerType(&Controllers.FSPort3,buf[2]);
-			StdPort_SetControllerType(&Controllers.FSPort4,buf[3]);
-		}
-		fseek(movie,4,SEEK_CUR);	// skip re-record count
-		NES_Reset(RESET_HARD);
+		fread(&ReRecords,4,1,movie);
+		fread(&len,4,1,movie);	// 
+		desc = malloc(len);
+		fread(desc,len,1,movie);
+		fread(&len,4,1,movie);
+		EI.DbgOut("Description: %s",desc);
+		EI.DbgOut("Re-record count: %i",ReRecords);
 	}
 	else
 	{
@@ -584,7 +632,7 @@ void	Controllers_PlayMovie (void)
 void	Controllers_RecordMovie (void)
 {
 	OPENFILENAME ofn;
-	unsigned char x;
+	int len;
 
 	if (Controllers.MovieMode)
 	{
@@ -614,41 +662,42 @@ void	Controllers_RecordMovie (void)
 		return;
 
 	movie = fopen(MovieName,"w+b");
-	fwrite("NMV\x1A",1,4,movie);
-	x = 0;
-	if (1)	// record from reset
-		x |= 0x01;
+
+	len = 0;
+
+	fwrite("NSS\x1A",1,4,movie);
+	fwrite(STATES_VERSION,1,4,movie);
+	fwrite(&len,1,4,movie);
+	fwrite("NMOV",1,4,movie);
+
+	if (0)
+		States_SaveData(movie);
+
+	fwrite("NMOV",1,4,movie);
+	fwrite(&len,1,4,movie);
+	
 	Controllers_OpenConfig();		// Allow user to choose the desired controllers
 	Controllers.MovieMode = MOV_RECORD;	// ...and lock it out until the movie ends
-	if (Controllers.Port1.Type == STD_FOURSCORE)
-		x |= 0x02;
-	fwrite(&x,1,1,movie);
-	if (!(x & 0x01))
+
+	MOV_ControllerTypes[0] = Controllers.Port1.Type;
+	MOV_ControllerTypes[1] = Controllers.Port2.Type;
+	MOV_ControllerTypes[2] = Controllers.ExpPort.Type;
+
+	if (MOV_ControllerTypes[0] == STD_FOURSCORE)
 	{
-		// save state
+		MOV_ControllerTypes[1] = 0;
+		if (Controllers.FSPort1.Type)	MOV_ControllerTypes[1] |= 0x01;
+		if (Controllers.FSPort2.Type)	MOV_ControllerTypes[1] |= 0x02;
+		if (Controllers.FSPort3.Type)	MOV_ControllerTypes[1] |= 0x04;
+		if (Controllers.FSPort4.Type)	MOV_ControllerTypes[1] |= 0x08;
 	}
-	if (x & 0x02)
-	{
-		MOV_ControllerTypes[0] = Controllers.FSPort1.Type;
-		MOV_ControllerTypes[1] = Controllers.FSPort3.Type;
-		MOV_ControllerTypes[2] = Controllers.FSPort2.Type;
-		MOV_ControllerTypes[3] = Controllers.FSPort4.Type;
-		MOV_ControllerTypes[4] = Controllers.ExpPort.Type;
-	}
-	else
-	{
-		MOV_ControllerTypes[0] = Controllers.Port1.Type;
-		MOV_ControllerTypes[1] = Controllers.Port2.Type;
-		MOV_ControllerTypes[2] = STD_UNCONNECTED;
-		MOV_ControllerTypes[3] = STD_UNCONNECTED;
-		MOV_ControllerTypes[4] = Controllers.ExpPort.Type;
-	}
-	fwrite(MOV_ControllerTypes,1,5,movie);
-	x = 0;
-	fwrite(&x,1,1,movie);
-	fwrite(&x,1,1,movie);
-	fwrite(&x,1,1,movie);
-	fwrite(&x,1,1,movie);
+	fwrite(MOV_ControllerTypes,1,3,movie);
+	fwrite(&len,1,1,movie);	// extra byte
+	fwrite(&len,4,1,movie);	// rerecord count
+	fwrite(&len,4,1,movie);	// comment length
+	// TODO - Actually store comment text
+	fwrite(&len,4,1,movie);	// movie data length
+
 	NES_Reset(RESET_HARD);
 	NES.Scanline = FALSE;
 	ReRecords = 0;
@@ -666,25 +715,61 @@ void	Controllers_StopMovie (void)
 	}
 	if (Controllers.MovieMode & MOV_RECORD)
 	{
-		fseek(movie,10,SEEK_SET);
-		fwrite(&ReRecords,4,1,movie);
+		int len = ftell(movie);
+		int mlen, mpos;
+		char tps[4];
+
+		fseek(movie,8,SEEK_SET);		len -= 16;
+		fwrite(&len,4,1,movie);			// 1: set the file length
+		fseek(movie,16,SEEK_SET);
+
+		fread(tps,4,1,movie);
+		fread(&mlen,4,1,movie);
+		mpos = ftell(movie);			len -= 8;
+		while (strncmp(tps,"NMOV",4))
+		{	/* find the NMOV block in the movie */
+			fseek(movie,mlen,SEEK_CUR);	len -= mlen;
+			fread(tps,4,1,movie);
+			fread(&mlen,4,1,movie);
+			mpos = ftell(movie);		len -= 8;
+		}
+		fseek(movie,-4,SEEK_CUR);
+		fwrite(&len,4,1,movie);			// 2: set the NMOV block length
+		fseek(movie,4,SEEK_CUR);		len -= 4;
+		fwrite(&ReRecords,4,1,movie);		len -= 4;	// write the final re-record count
+		fread(&mlen,4,1,movie);			len -= 4;
+		fseek(movie,mlen,SEEK_CUR);		len -= mlen;	// skip the description
+		len -= 4;
+		fwrite(&len,4,1,movie);			// 3: terminate the movie data
+		fseek(movie,len,SEEK_CUR);
+		// TODO - truncate the file to this point
 	}
 	fclose(movie);
 	Controllers.MovieMode = 0;
 
-	StdPort_SetControllerType(&Controllers.Port1,MOV_ControllerTypes[0]);
-	StdPort_SetControllerType(&Controllers.Port2,MOV_ControllerTypes[1]);
-	if (MOV_ControllerTypes[2] != STD_UNCONNECTED)
+	if (MOV_ControllerTypes[0] == STD_FOURSCORE)
 	{
+		if (MOV_ControllerTypes[1] & 0x01)
+			StdPort_SetControllerType(&Controllers.FSPort1,STD_STDCONTROLLER);
+		else	StdPort_SetControllerType(&Controllers.FSPort1,STD_UNCONNECTED);
+		if (MOV_ControllerTypes[1] & 0x02)
+			StdPort_SetControllerType(&Controllers.FSPort2,STD_STDCONTROLLER);
+		else	StdPort_SetControllerType(&Controllers.FSPort2,STD_UNCONNECTED);
+		if (MOV_ControllerTypes[1] & 0x04)
+			StdPort_SetControllerType(&Controllers.FSPort3,STD_STDCONTROLLER);
+		else	StdPort_SetControllerType(&Controllers.FSPort3,STD_UNCONNECTED);
+		if (MOV_ControllerTypes[1] & 0x08)
+			StdPort_SetControllerType(&Controllers.FSPort4,STD_STDCONTROLLER);
+		else	StdPort_SetControllerType(&Controllers.FSPort4,STD_UNCONNECTED);
 		StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
 		StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
-
-		StdPort_SetControllerType(&Controllers.FSPort1,MOV_ControllerTypes[0]);
-		StdPort_SetControllerType(&Controllers.FSPort2,MOV_ControllerTypes[1]);
-		StdPort_SetControllerType(&Controllers.FSPort3,MOV_ControllerTypes[2]);
-		StdPort_SetControllerType(&Controllers.FSPort4,MOV_ControllerTypes[3]);
 	}
-	ExpPort_SetControllerType(&Controllers.ExpPort,MOV_ControllerTypes[4]);
+	else
+	{
+		StdPort_SetControllerType(&Controllers.Port1,MOV_ControllerTypes[0]);
+		StdPort_SetControllerType(&Controllers.Port2,MOV_ControllerTypes[1]);
+	}
+	ExpPort_SetControllerType(&Controllers.ExpPort,MOV_ControllerTypes[2]);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_GRAYED);

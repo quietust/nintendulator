@@ -32,8 +32,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct	tStates	States;
 
-#define	STATES_VERSION	"0930"
-
 extern FILE *movie;
 
 void	States_Init (void)
@@ -195,7 +193,6 @@ int	States_SaveData (FILE *out)
 	}
 	return flen;
 }
-
 
 void	States_SaveState (void)
 {
@@ -428,7 +425,7 @@ void	States_LoadState (void)
 	}
 
 	fseek(in,16,SEEK_SET);
-	NES_Reset(RESET_SOFT);
+	NES_Reset(RESET_HARD);
 
 	if (States_LoadData(in, flen))
 		GFX_ShowText("State loaded: %i", States.SelSlot);

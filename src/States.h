@@ -23,6 +23,8 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #ifndef __STATES_H__
 #define __STATES_H__
 
+#define	STATES_VERSION	"0930"
+
 struct tStates
 {
 	char BaseFilename[256];
@@ -35,6 +37,8 @@ extern	struct	tStates	States;
 void	States_Init (void);
 void	States_SetFilename (char *);
 void	States_SetSlot (int Slot);
+int	States_SaveData (FILE *);
+BOOL	States_LoadData (FILE *, int);
 void	States_SaveState (void);
 void	States_LoadState (void);
 
