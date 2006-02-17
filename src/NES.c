@@ -164,7 +164,7 @@ void	NES_OpenFile (TCHAR *filename)
 	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 
-	NES_Reset(RESET_FULL);
+	NES_Reset(RESET_HARD);
 	if ((NES.AutoRun) || (RI.ROMType == ROM_NSF))
 		NES_Start(FALSE);
 }
@@ -855,27 +855,16 @@ void	NES_Reset (RESET_TYPE ResetType)
 	}
 	switch (ResetType)
 	{
-	case RESET_FULL:
-		ZeroMemory((unsigned char *)PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
-		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
-		EI.DbgOut(_T("Performing initial hard reset..."));
-		PPU_PowerOn();
-		CPU_PowerOn();
-		if (NES.GameGenie)
-			Genie_Reset();
-		else	if ((MI) && (MI->Reset))
-			MI->Reset(RESET_HARD);
-		break;
 	case RESET_HARD:
 		EI.DbgOut(_T("Performing hard reset..."));
 		ZeroMemory((unsigned char *)PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
-		CPU_PowerOn();
 		if (MI2)
 		{
 			MI = MI2;
 			MI2 = NULL;
 		}
+		CPU_PowerOn();
 		PPU_PowerOn();
 		if (NES.GameGenie)
 			Genie_Reset();
