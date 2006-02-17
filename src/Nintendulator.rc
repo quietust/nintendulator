@@ -842,6 +842,20 @@ BEGIN
     PUSHBUTTON      "",IDC_CONT_K0,172,16,64,12
 END
 
+IDD_DLLSELECT DIALOGEX 0, 0, 186, 95
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Select Mapper DLL"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,4,76,56,16
+    PUSHBUTTON      "Cancel",IDCANCEL,126,76,56,16
+    LISTBOX         IDC_DLL_LIST,4,24,178,48,LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    CTEXT           "This ROM is supported by multiple mapper DLLs.\nPlease select the one you wish to use.",
+                    IDC_STATIC,4,4,178,16
+END
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -1370,6 +1384,18 @@ BEGIN
         HORZGUIDE, 28
         HORZGUIDE, 36
         HORZGUIDE, 52
+    END
+
+    IDD_DLLSELECT, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 182
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 91
+        HORZGUIDE, 20
+        HORZGUIDE, 24
+        HORZGUIDE, 72
+        HORZGUIDE, 76
     END
 END
 #endif    // APSTUDIO_INVOKED

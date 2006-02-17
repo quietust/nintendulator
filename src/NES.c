@@ -115,9 +115,6 @@ void	NES_OpenFile (TCHAR *filename)
 	EI.DbgOut(_T("Loaded successfully!"));
 	States_SetFilename(filename);
 
-	if (MI->Load)
-		MI->Load();
-
 	NES.HasMenu = FALSE;
 	if (MI->Config)
 	{

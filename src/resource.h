@@ -38,6 +38,7 @@
 #define IDD_INESHEADER                  148
 #define IDD_STDPORT_SNESCONTROLLER      149
 #define IDD_EXPPORT_TABLET              150
+#define IDD_DLLSELECT                   151
 #define IDC_DUMP_PPU_MEM                1001
 #define IDC_START_LOGGING               1002
 #define IDC_STOP_LOGGING                1003
@@ -108,10 +109,11 @@
 #define IDC_PAL_CUSTFILE                1085
 #define IDC_PAL_SATSLIDER               1087
 #define IDC_PAL_10                      1088
-#define IDC_CHECK1                      1088
 #define IDC_CONT_UDLR                   1088
 #define IDC_PAL_20                      1089
 #define IDC_PAL_30                      1090
+#define IDC_LIST1                       1090
+#define IDC_DLL_LIST                    1090
 #define IDC_PAL_01                      1091
 #define IDC_PAL_02                      1092
 #define IDC_PAL_03                      1093
@@ -238,9 +240,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        151
+#define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         32843
-#define _APS_NEXT_CONTROL_VALUE         1089
+#define _APS_NEXT_CONTROL_VALUE         1091
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

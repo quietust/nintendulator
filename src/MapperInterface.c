@@ -27,6 +27,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #else
 # include "stdafx.h"
 # include "Nintendulator.h"
+# include "resource.h"
 # include "MapperInterface.h"
 # include "NES.h"
 # include "CPU.h"
@@ -570,18 +571,99 @@ void	MapperInterface_Init (void)
 #endif
 }
 
+#ifndef NSFPLAYER
+LRESULT CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	static PDLLInfo *DLLs;
+	int i;
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		DLLs = (PDLLInfo *)lParam;
+		for (i = 0; DLLs[i] != NULL; i++)
+		{
+			TCHAR *desc = malloc(sizeof(TCHAR) * (_tcslen(DLLs[i]->Description) + 32));
+			_stprintf(desc,_T("\"%s\" v%x.%x (%04x/%02x/%02x)"),
+				DLLs[i]->Description,
+				(DLLs[i]->Version >> 16) & 0xFFFF, DLLs[i]->Version & 0xFFFF,
+				(DLLs[i]->Date >> 16) & 0xFFFF, (DLLs[i]->Date >> 8) & 0xFF, DLLs[i]->Date & 0xFF);
+			SendDlgItemMessage(hDlg, IDC_DLL_LIST, LB_INSERTSTRING, i, (LPARAM)desc);
+			free(desc);
+		}
+		return TRUE;
+		break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDC_DLL_LIST:
+			if (HIWORD(wParam) != LBN_DBLCLK)
+				break;	// have double-clicks fall through
+		case IDOK:
+			i = SendDlgItemMessage(hDlg, IDC_DLL_LIST, LB_GETCURSEL, 0, 0);
+			if (i == LB_ERR)
+				EndDialog(hDlg, (INT_PTR)NULL);
+			else	EndDialog(hDlg, (INT_PTR)DLLs[i]);
+			break;
+		case IDCANCEL:
+			EndDialog(hDlg, (INT_PTR)NULL);
+			break;
+		}
+	}
+	return FALSE;
+}
+#endif
+
 BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
 {
 #ifndef NSFPLAYER
+	PDLLInfo *DLLs;
+	int num = 1;
 	struct tMapperDLL *ThisDLL = MapperDLLs;
 	while (ThisDLL)
-	{
-		DI = ThisDLL->DI;
-		if (MI = DI->LoadMapper(ROM))
-			return TRUE;
+	{	// 1 - count how many DLLs we have (add 1 for null terminator)
+		num++;
 		ThisDLL = ThisDLL->Next;
 	}
-	DI = NULL;
+
+	DLLs = malloc(num * sizeof(PDLLInfo));
+	num = 0;
+	ThisDLL = MapperDLLs;
+	while (ThisDLL)
+	{	// 2 - see how many DLLs support our mapper
+		DI = ThisDLL->DI;
+		if (DI->LoadMapper(ROM))
+		{
+			DI->UnloadMapper();
+			DLLs[num++] = DI;
+		}
+		ThisDLL = ThisDLL->Next;
+	}
+	if (num == 0)
+	{	// none found
+		DI = NULL;
+		free(DLLs);
+		return FALSE;
+	}
+	if (num == 1)
+	{	// 1 found
+		DI = DLLs[0];
+		MI = DI->LoadMapper(ROM);
+		if (MI->Load)
+			MI->Load();
+		free(DLLs);
+		return TRUE;
+	}
+	// else more than one found
+	DLLs[num] = NULL;
+	if (DI = (PDLLInfo)DialogBoxParam(hInst,(LPCTSTR)IDD_DLLSELECT,mWnd,DllSelect,(LPARAM)DLLs))
+	{
+		MI = DI->LoadMapper(ROM);
+		if (MI->Load)
+			MI->Load();
+		free(DLLs);
+		return TRUE;
+	}
+	free(DLLs);
 #else
 	if (!DI)
 		return FALSE;

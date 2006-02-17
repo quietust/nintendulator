@@ -190,7 +190,7 @@ typedef	const	TROMInfo	CTROMInfo, *CPROMInfo;
 
 typedef	struct	DLLInfo
 {
-	TCHAR *		Author;
+	TCHAR *		Description;
 	int		Date;
 	int		Version;
 	CPMapperInfo	(_MAPINT *LoadMapper)	(CPROMInfo);
