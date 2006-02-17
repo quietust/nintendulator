@@ -220,17 +220,21 @@ __inline static	void	DiscoverSprites (void)
 		PPU.SprBuff[spt+1] = 0xFF;	/* pre-init sprite buffer tile indices */
 	for (spt = 0; spt < 256; spt += 4)
 	{
-		if ((SL - PPU.Sprite[spt]) & ~SprHeight)
+		unsigned char off;
+		if (spt < 8)
+			off = spt + (PPU.SprAddr & 0xF8);
+		else	off = spt;
+		if ((SL - PPU.Sprite[off]) & ~SprHeight)
 			continue;
 		if (PPU.SprCount == 32)
 		{
 			PPU.Reg2002 |= 0x20;
 			break;
 		}
-		PPU.SprBuff[PPU.SprCount] = SL - PPU.Sprite[spt];
-		PPU.SprBuff[PPU.SprCount+1] = PPU.Sprite[spt | 1];
-		PPU.SprBuff[PPU.SprCount+2] = PPU.Sprite[spt | 2];
-		PPU.SprBuff[PPU.SprCount+3] = PPU.Sprite[spt | 3];
+		PPU.SprBuff[PPU.SprCount] = SL - PPU.Sprite[off];
+		PPU.SprBuff[PPU.SprCount+1] = PPU.Sprite[off | 1];
+		PPU.SprBuff[PPU.SprCount+2] = PPU.Sprite[off | 2];
+		PPU.SprBuff[PPU.SprCount+3] = PPU.Sprite[off | 3];
 		PPU.SprCount += 4;
 		if (!spt)
 			PPU.Spr0InLine = TRUE;
