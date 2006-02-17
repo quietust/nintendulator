@@ -467,9 +467,10 @@ void	Controllers_UnAcquire (void)
 
 FILE *movie;
 unsigned char MOV_ControllerTypes[4];
-int	ReRecords;
+int ReRecords;
 char MovieName[256];
 int MovieLen;
+int MovieFrameLen;
 
 void	Controllers_PlayMovie (BOOL Review)
 {
@@ -604,10 +605,10 @@ void	Controllers_PlayMovie (BOOL Review)
 	}
 	NES_SetCPUMode(buf[3] >> 7);	// Set to NTSC or PAL
 
-	len = Controllers.Port1.MovLen + Controllers.Port2.MovLen + Controllers.ExpPort.MovLen;
+	MovieFrameLen = Controllers.Port1.MovLen + Controllers.Port2.MovLen + Controllers.ExpPort.MovLen;
 	if ((MI) && (MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
-		len++;
-	if (len != (buf[3] & 0x7F))
+		MovieFrameLen++;
+	if (MovieFrameLen != (buf[3] & 0x7F))
 		MessageBox(mWnd,"The frame size specified in this movie is incorrect! This movie may not play properly!","Nintendulator",MB_OK | MB_ICONWARNING);
 
 	fread(&ReRecords,4,1,movie);
@@ -682,6 +683,8 @@ void	Controllers_RecordMovie (BOOL fromState)
 
 	movie = fopen(MovieName,"w+b");
 	len = 0;
+	ReRecords = 0;
+	MovieLen = 0;
 
 	fwrite("NSS\x1A",1,4,movie);
 	fwrite(STATES_VERSION,1,4,movie);
@@ -713,19 +716,19 @@ void	Controllers_RecordMovie (BOOL fromState)
 	}
 	fwrite(MOV_ControllerTypes,1,3,movie);
 	x = PPU.IsPAL ? 0x80 : 0x00;
-	x += Controllers.Port1.MovLen;
-	x += Controllers.Port2.MovLen;
-	x += Controllers.ExpPort.MovLen;
+	MovieFrameLen = 0;
+	MovieFrameLen += Controllers.Port1.MovLen;
+	MovieFrameLen += Controllers.Port2.MovLen;
+	MovieFrameLen += Controllers.ExpPort.MovLen;
 	if ((MI) && (MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
-		x++;
-	fwrite(&x,1,1,movie);	// frame size, NTSC/PAL
-	fwrite(&len,4,1,movie);	// rerecord count
-	fwrite(&len,4,1,movie);	// comment length
+		MovieFrameLen++;
+	x |= MovieFrameLen;
+	fwrite(&x,1,1,movie);		// frame size, NTSC/PAL
+	fwrite(&ReRecords,4,1,movie);	// rerecord count
+	fwrite(&len,4,1,movie);		// comment length
 	// TODO - Actually store comment text
-	fwrite(&len,4,1,movie);	// movie data length
+	fwrite(&MovieLen,4,1,movie);	// movie data length
 
-	ReRecords = 0;
-	MovieLen = 0;
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
