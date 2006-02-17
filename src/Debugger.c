@@ -111,7 +111,7 @@ void	Debugger_Init (void)
 	Debugger.FontHeight = 10;
 	
 	Debugger.Depth = GetDeviceCaps(TpHDC,BITSPIXEL);
-	ReleaseDC(GetDesktopWindow(), TpHDC);
+	ReleaseDC(mWnd,TpHDC);
 
 	TpHDC = GetWindowDC(GetDesktopWindow());
 	
@@ -151,7 +151,7 @@ void	Debugger_Init (void)
 	SetBkMode(Debugger.RegDC,TRANSPARENT);
 	SetBkMode(Debugger.TraceDC,TRANSPARENT);
 
-	ReleaseDC(mWnd,TpHDC);
+	ReleaseDC(GetDesktopWindow(), TpHDC);
 	Debugger.Step = FALSE;
 }
 
