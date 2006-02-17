@@ -79,8 +79,8 @@ unsigned char __fastcall	CPU_MemGet (unsigned int Addy)
 {
 	static int buf;
 	RunCycle();
-	if (CPU.PCMCycles == 4)		// if the first thing it hit was a read, then flag it so we do the full 4 reads
-		CPU.PCMCycles = 8;	// otherwise, do nothing - this could've been an interrupt, which finishes with reads
+//	if (CPU.PCMCycles == 4)		// if the first thing it hit was a read, then flag it so we do the full 4 reads
+//		CPU.PCMCycles = 16;	// otherwise, do nothing - this could've been an interrupt, which finishes with reads
 	if (CPU.ReadHandler[(Addy >> 12) & 0xF] == CPU_ReadPRG)
 	{
 		if (CPU.Readable[(Addy >> 12) & 0xF])
