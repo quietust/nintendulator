@@ -207,7 +207,7 @@ void stop() {
 		killPlayThread = TRUE;
 		if (WaitForSingleObject(thread_handle,INFINITE) == WAIT_TIMEOUT)
 		{
-			MessageBox(mod.hMainWindow,_T("error asking thread to die!\n"),_T("error killing decode thread"),0);
+			MessageBox(mod.hMainWindow,"error asking thread to die!\n","error killing decode thread",0);
 			TerminateThread(thread_handle,0);
 		}
 		CloseHandle(thread_handle);

@@ -24,7 +24,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define __IN_NINTENDULATOR_H__
 
 #include <windows.h>
-#include <tchar.h>
+#include <tchar.h>	// this is needed for the CPU and other stuff to build
 
 #define OUT_VER 0x10
 
