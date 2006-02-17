@@ -916,6 +916,7 @@ void	NES_Reset (int ResetType)
 	if (Debugger.Enabled)
 		Debugger_Update();
 #endif	/* ENABLE_DEBUGGER */
+	NES.Scanline = FALSE;
 	EI.DbgOut("Reset complete.");
 }
 
