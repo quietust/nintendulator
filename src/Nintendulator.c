@@ -93,12 +93,15 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	{
 		TCHAR *cmdline = _tcsdup(GetCommandLine());
 		if (cmdline[0] == _T('"'))
-			cmdline = _tcschr(cmdline + 1,'"') + 2;	// EXE filename is enclosed in quotes - skip first char, then past the next quote char and space
-		else	cmdline = _tcschr(cmdline,' ') + 1;	// not in quotes, so just skip past the first space
+			cmdline = _tcschr(cmdline + 1,'"') + 1;	// EXE filename is enclosed in quotes - skip first char, then past the next quote char
+		else	cmdline = _tcschr(cmdline,' ');	// not in quotes, so just skip to the first space
+
+		while (cmdline[0] == _T(' '))
+			cmdline++;	// skip past any spaces (could be more than one!)
 
 		if (cmdline[0] == _T('"'))	// if the filename is in quotes, strip them off (and ignore everything past it)
 		{
-			cmdline = cmdline + 1;		// skip first quote
+			cmdline++;		// skip first quote
 			*_tcschr(cmdline,'"') = 0;	// and nullify the second one
 		}
 		else if (_tcschr(cmdline,' '))	// else just get the filename (and ignore everything past it)
