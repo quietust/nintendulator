@@ -198,6 +198,43 @@ void	CPU_Reset (void)
 	CPU.PCH = CPU_MemGet(0xFFFD);
 }
 
+int	CPU_Save (FILE *out)
+{
+	int clen = 0;
+		//Data
+	fwrite(&CPU.PCH,1,1,out);	clen++;		//	PCL	uint8		Program Counter, low byte
+	fwrite(&CPU.PCL,1,1,out);	clen++;		//	PCH	uint8		Program Counter, high byte
+	fwrite(&CPU.A,1,1,out);		clen++;		//	A	uint8		Accumulator
+	fwrite(&CPU.X,1,1,out);		clen++;		//	X	uint8		X register
+	fwrite(&CPU.Y,1,1,out);		clen++;		//	Y	uint8		Y register
+	fwrite(&CPU.SP,1,1,out);	clen++;		//	SP	uint8		Stack pointer
+	CPU_JoinFlags();
+	fwrite(&CPU.P,1,1,out);		clen++;		//	P	uint8		Processor status register
+	fwrite(&CPU.LastRead,1,1,out);	clen++;		//	BUS	uint8		Last contents of data bus
+	fwrite(&CPU.WantNMI,1,1,out);	clen++;		//	NMI	uint8		TRUE if falling edge detected on /NMI
+	fwrite(&CPU.WantIRQ,1,1,out);	clen++;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
+	fwrite(CPU_RAM,1,0x800,out);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
+	return clen;
+}
+
+int	CPU_Load (FILE *in)
+{
+	int clen = 0;
+	fread(&CPU.PCH,1,1,in);		clen++;		//	PCL	uint8		Program Counter, low byte
+	fread(&CPU.PCL,1,1,in);		clen++;		//	PCH	uint8		Program Counter, high byte
+	fread(&CPU.A,1,1,in);		clen++;		//	A	uint8		Accumulator
+	fread(&CPU.X,1,1,in);		clen++;		//	X	uint8		X register
+	fread(&CPU.Y,1,1,in);		clen++;		//	Y	uint8		Y register
+	fread(&CPU.SP,1,1,in);		clen++;		//	SP	uint8		Stack pointer
+	fread(&CPU.P,1,1,in);		clen++;		//	P	uint8		Processor status register
+	CPU_SplitFlags();
+	fread(&CPU.LastRead,1,1,in);	clen++;		//	BUS	uint8		Last contents of data bus
+	fread(&CPU.WantNMI,1,1,in);	clen++;		//	NMI	uint8		TRUE if falling edge detected on /NMI
+	fread(&CPU.WantIRQ,1,1,in);	clen++;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
+	fread(CPU_RAM,1,0x800,in);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
+	return clen;
+}
+
 int	_MAPINT	CPU_ReadRAM (int Bank, int Addy)
 {
 	return CPU_RAM[Addy & 0x07FF];
@@ -240,8 +277,7 @@ void	_MAPINT	CPU_Write4k (int Bank, int Addy, int Val)
 	case 0x010:case 0x011:case 0x012:case 0x013:
 	case 0x015:case 0x017:
 			APU_WriteReg(Addy,Val);	break;
-	case 0x014:	PPU.SprAddr = 0;	/* Without this, Sachen title 'Huge Insect' does not work */
-			for (i = 0; i < 0x100; i++)
+	case 0x014:	for (i = 0; i < 0x100; i++)
 				CPU_MemSet(0x2004,CPU_MemGet((Val << 8) | i));
 						break;
 #ifndef NSFPLAYER
