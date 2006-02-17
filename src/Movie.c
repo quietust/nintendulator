@@ -455,13 +455,15 @@ void	Movie_SaveInput (unsigned char Cmd)
 
 int	Movie_Save (FILE *out)
 {
-	int clen = 0;
+	int clen = 0, offset;
 
 	int mlen;
 	char tps[4];
 	unsigned char tpc;
 	unsigned long tpl;
 	int tpi;
+
+	offset = ftell(Movie.Data);	// save old offset in movie file
 
 	rewind(Movie.Data);
 	fseek(Movie.Data,16,SEEK_SET);
@@ -500,7 +502,7 @@ int	Movie_Save (FILE *out)
 		tpi--;
 	}
 	rewind(Movie.Data);
-	fseek(Movie.Data,clen+24,SEEK_SET);		// seek the movie to where it left off
+	fseek(Movie.Data,offset,SEEK_SET);		// seek the movie to where it left off
 
 	return clen;
 }
