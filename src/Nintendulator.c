@@ -417,7 +417,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			States.NeedSave = TRUE;
 			if (NES.Stopped)
 			{
-				while (PPU.SLnum <= 240)
+				while (PPU.SLnum <= 241)
 				{
 					do
 					{

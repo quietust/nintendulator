@@ -1062,7 +1062,7 @@ rerun:
 			int SLnum = PPU.SLnum;
 			NES.Scanline = FALSE;
 			ProcessMessages();
-			if (SLnum > 240)
+			if (SLnum > 241)
 			{
 				if (States.NeedSave)
 					States_SaveState();
@@ -1073,7 +1073,7 @@ rerun:
 			if ((SLnum == 240) && (Debugger.Enabled))
 				Debugger_UpdateGraphics();
 #endif	/* ENABLE_DEBUGGER */
-			if (SLnum == 240)
+			if (SLnum == 241)
 				Controllers_UpdateInput();
 		}
 	}	while (!NES.Stop);
