@@ -268,9 +268,9 @@ void	Debugger_StopLogging (void)
 unsigned char TraceMem (unsigned long Addy)
 {
 	Addy &= 0xFFFF;
-	if ((CPU.ReadHandler[Addy >> 12] == PPU_IntRead) || ((CPU.ReadHandler[Addy >> 12] == CPU_Read4k) && ((Addy & 0xFFF) < 0x18)))
-		return 0xFF;
-	else	return CPU.ReadHandler[Addy >> 12](Addy >> 12, Addy & 0xFFF);
+	if ((CPU.ReadHandler[Addy >> 12] == CPU_ReadRAM) || (CPU.ReadHandler[Addy >> 12] == CPU_ReadPRG))
+		return CPU.ReadHandler[Addy >> 12](Addy >> 12, Addy & 0xFFF);
+	else	return 0xFF;
 }
 
 void	DecodeInstruction (unsigned short Addy, char *str)
