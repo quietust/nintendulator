@@ -23,11 +23,10 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #ifndef APU_H
 #define APU_H
 
-#include <windows.h>
 #ifndef NSFPLAYER
-#include <mmsystem.h>
 
 #define DIRECTSOUND_VERSION 0x0700
+#include <mmsystem.h>
 #include <dsound.h>
 #endif
 
