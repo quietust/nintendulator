@@ -43,8 +43,10 @@ IDR_NINTENDULATOR MENU DISCARDABLE
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&Open\tCtrl+O",               ID_FILE_OPEN
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM "&Close",                      ID_FILE_CLOSE
+        MENUITEM SEPARATOR
+        MENUITEM "&Auto-Run",                   ID_CPU_AUTORUN
         MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+F4",               IDM_EXIT
     END
@@ -60,7 +62,6 @@ BEGIN
         MENUITEM "&Load State\tF8",             ID_CPU_LOADSTATE
         MENUITEM "&Prev State\tF6",             ID_CPU_PREVSTATE
         MENUITEM "&Next State\tF7",             ID_CPU_NEXTSTATE
-        MENUITEM "&Incremental",                ID_CPU_INCREMENTAL
         MENUITEM SEPARATOR
         MENUITEM "&Game Genie\tCtrl+G",         ID_CPU_GAMEGENIE
     END
@@ -100,7 +101,7 @@ BEGIN
     END
     POPUP "&Input"
     BEGIN
-        MENUITEM "&Setup",                      ID_INPUT_SETUP
+        MENUITEM "&Setup...",                   ID_INPUT_SETUP
     END
     POPUP "&Debug"
     BEGIN
@@ -112,16 +113,17 @@ BEGIN
     MENUITEM "&Game",                       ID_GAME, GRAYED
     POPUP "&Misc"
     BEGIN
-        MENUITEM "S&tart AVI Capture",          ID_MISC_STARTAVICAPTURE
+        MENUITEM "S&tart AVI Capture...",       ID_MISC_STARTAVICAPTURE
         MENUITEM "St&op AVI Capture",           ID_MISC_STOPAVICAPTURE
+        , GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "P&lay Movie",                 ID_MISC_PLAYMOVIE
-        MENUITEM "&Record Movie",               ID_MISC_RECORDMOVIE
-        MENUITEM "Sto&p Movie",                 ID_MISC_STOPMOVIE
+        MENUITEM "P&lay Movie...",              ID_MISC_PLAYMOVIE
+        MENUITEM "&Record Movie...",            ID_MISC_RECORDMOVIE
+        MENUITEM "Sto&p Movie",                 ID_MISC_STOPMOVIE, GRAYED
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About ...",                  IDM_ABOUT
+        MENUITEM "&About...",                   IDM_ABOUT
     END
 END
 
