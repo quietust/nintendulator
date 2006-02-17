@@ -282,6 +282,8 @@ void AVI_End ()
 	}
 	CloseAvi(aviout);
 	aviout = NULL;
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPAVICAPTURE,MF_BYCOMMAND | MF_GRAYED);
 }
 void AVI_Start ()
 {
@@ -298,6 +300,12 @@ void AVI_Start ()
 	if (aviout)
 	{
 		MessageBox(mWnd,"An AVI capture is already in progress!","Nintendulator",MB_OK);
+		return;
+	}
+
+	if (GFX.Depth != 32)
+	{
+		MessageBox(mWnd,"AVI capture currently requires 32-bit color!","Nintendulator",MB_OK);
 		return;
 	}
 
@@ -334,7 +342,7 @@ void AVI_Start ()
 
 	bmih.biSize = sizeof(BITMAPINFOHEADER);
 	bmih.biWidth = 256;
-	bmih.biHeight = -240;
+	bmih.biHeight = 240;
 	bmih.biPlanes = 1;
 	bmih.biBitCount = 32;
 	bmih.biCompression = BI_RGB;
@@ -356,6 +364,8 @@ void AVI_Start ()
 		return;
 	}
 	DeleteObject(hbm);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPAVICAPTURE,MF_BYCOMMAND | MF_ENABLED);
 }
 
 void AVI_AddVideo ()
@@ -364,6 +374,7 @@ void AVI_AddVideo ()
 	long *pBits;
 	BITMAPINFOHEADER bmih;
 	HRESULT hr;
+	int i;
 
 	if (!aviout)
 	{
@@ -384,7 +395,8 @@ void AVI_AddVideo ()
 	
 	hbm = CreateDIBSection(NULL,(BITMAPINFO *)&bmih,DIB_RGB_COLORS,&pBits,NULL,0);
 
-	memcpy(pBits,GFX.DrawArray,GFX.SurfSize);
+	for (i = 0; i < 240; i++)
+		memcpy((unsigned char *)pBits + GFX.Pitch*i,(unsigned char *)GFX.DrawArray + GFX.Pitch*(239 - i),GFX.Pitch);
 	if (hr = AddAviFrame(aviout,hbm))
 	{
 		char msg[256];
