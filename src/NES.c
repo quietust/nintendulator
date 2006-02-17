@@ -186,7 +186,7 @@ int	NES_FDSSave (FILE *out)
 		{
 			if (PRG_ROM[x][y] != PRG_ROM[0x400 | x][y])
 			{
-				data = y | (x << 12) || (PRG_ROM[x][y] << 24);
+				data = y | (x << 12) | (PRG_ROM[x][y] << 24);
 				fwrite(&data,4,1,out);	clen += 4;
 			}
 		}
