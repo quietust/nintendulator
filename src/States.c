@@ -331,7 +331,6 @@ void	States_LoadState (void)
 			fread(&clen,4,1,in);	flen -= 4;
 		}
 	}
-	APU_WriteReg(0x015,0x0F);
 	fclose(in);
 	if (SSOK)
 		GFX_ShowText("State loaded: %i", States.SelSlot);
