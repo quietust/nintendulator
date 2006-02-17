@@ -528,21 +528,21 @@ int	Movie_Load (FILE *in)
 			fread(&mlen,4,1,Movie.Data);
 		}
 		fseek(Movie.Data,0,SEEK_CUR);
-		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Movie.Data);	clen -= 4;	// CTRL0, CTRL1, CTEXT, EXTR
-		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Movie.Data);	clen -= 4;	// RREC
+		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Movie.Data);	clen += 4;	// CTRL0, CTRL1, CTEXT, EXTR
+		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Movie.Data);	clen += 4;	// RREC
 		if (Movie.ReRecords < (int)tpl)
 			Movie.ReRecords = tpl;
 		Movie.ReRecords++;
-		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Movie.Data);	clen -= 4;	// ILEN
-		tpi = tpl;						clen -= tpi;	// INFO
+		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Movie.Data);	clen += 4;	// ILEN
+		tpi = tpl;						clen += tpi;	// INFO
 		while (tpi > 0)
 		{
 			fread(&tpc,1,1,in);
 			fwrite(&tpc,1,1,Movie.Data);
 			tpi--;
 		}
-		fread(&Movie.Pos,4,1,in);	fwrite(&Movie.Pos,4,1,Movie.Data);	clen -= 4;	// MLEN
-		tpi = Movie.Pos;					clen -= tpi;	// MDAT
+		fread(&Movie.Pos,4,1,in);	fwrite(&Movie.Pos,4,1,Movie.Data);	clen += 4;	// MLEN
+		tpi = Movie.Pos;					clen += tpi;	// MDAT
 		Cmd = 0;
 		while (tpi > 0)
 		{
@@ -589,12 +589,12 @@ int	Movie_Load (FILE *in)
 			fread(tps,4,1,Movie.Data);
 			fread(&mlen,4,1,Movie.Data);
 		}
-		fread(&tpl,4,1,in);	fread(&tpl,4,1,Movie.Data);		clen -= 4;	// CTRL0, CTRL1, CTEXT, EXTR
-		fread(&tpl,4,1,in);	fread(&tpl,4,1,Movie.Data);		clen -= 4;	// RREC
-		fread(&tpl,4,1,in);	fread(&tpi,4,1,Movie.Data);		clen -= 4;	// ILEN
-		fseek(in,tpl,SEEK_CUR);	fseek(Movie.Data,tpi,SEEK_CUR);		clen -= tpl;	// INFO
-		fread(&Movie.Pos,4,1,in);	fread(&Movie.Len,4,1,Movie.Data);	clen -= 4;	// MLEN
-		tpi = Movie.Pos;	fseek(Movie.Data,tpi,SEEK_CUR);	clen -= tpi;	// MDAT
+		fread(&tpl,4,1,in);	fread(&tpl,4,1,Movie.Data);		clen += 4;	// CTRL0, CTRL1, CTEXT, EXTR
+		fread(&tpl,4,1,in);	fread(&tpl,4,1,Movie.Data);		clen += 4;	// RREC
+		fread(&tpl,4,1,in);	fread(&tpi,4,1,Movie.Data);		clen += 4;	// ILEN
+		fseek(in,tpl,SEEK_CUR);	fseek(Movie.Data,tpi,SEEK_CUR);		clen += tpl;	// INFO
+		fread(&Movie.Pos,4,1,in);	fread(&Movie.Len,4,1,Movie.Data);	clen += 4;	// MLEN
+		tpi = Movie.Pos;	fseek(Movie.Data,tpi,SEEK_CUR);		clen += tpi;	// MDAT
 		Cmd = 0;
 		while (tpi > 0)
 		{
@@ -625,10 +625,13 @@ int	Movie_Load (FILE *in)
 		if ((Cmd) && (MI) && (MI->Config))
 			MI->Config(CFG_CMD,Cmd);
 	}
-	else	// skip it
+	else
 	{
-		fseek(in,clen,SEEK_CUR);
-		clen = 0;
+		fseek(in,8,SEEK_CUR);	clen += 8;
+		fread(&tpl,4,1,in);	clen += 4;
+		fseek(in,tpl,SEEK_CUR);	clen += tpl;
+		fread(&tpl,4,1,in);	clen += 4;
+		fseek(in,tpl,SEEK_CUR);	clen += tpl;
 	}
 	return clen;
 }
