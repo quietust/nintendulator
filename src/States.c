@@ -152,7 +152,7 @@ int	States_SaveData (FILE *out)
 		fread(tps,4,1,movie);
 		fread(&mlen,4,1,movie);
 		mpos = ftell(movie);
-		while (strncmp(tps,"NMOV",4))
+		while (memcmp(tps,"NMOV",4))
 		{	/* find the NMOV block in the movie */
 			fseek(movie,mlen,SEEK_CUR);
 			fread(tps,4,1,movie);
@@ -232,23 +232,23 @@ BOOL	States_LoadData (FILE *in, int flen)
 	while (flen > 0)
 	{
 		flen -= clen;
-		if (!strncmp(csig,"CPUS",4))
+		if (!memcmp(csig,"CPUS",4))
 			clen -= CPU_Load(in);
-		else if (!strncmp(csig,"PPUS",4))
+		else if (!memcmp(csig,"PPUS",4))
 			clen -= PPU_Load(in);
-		else if (!strncmp(csig,"APUS",4))
+		else if (!memcmp(csig,"APUS",4))
 			clen -= APU_Load(in);
-		else if (!strncmp(csig,"NPRA",4))
+		else if (!memcmp(csig,"NPRA",4))
 		{
 			memset(PRG_RAM,0,sizeof(PRG_RAM));
 			fread(PRG_RAM,1,clen,in);	clen = 0;
 		}
-		else if (!strncmp(csig,"NCRA",4))
+		else if (!memcmp(csig,"NCRA",4))
 		{
 			memset(CHR_RAM,0,sizeof(CHR_RAM));
 			fread(CHR_RAM,1,clen,in);	clen = 0;
 		}
-		else if (!strncmp(csig,"MAPR",4))
+		else if (!memcmp(csig,"MAPR",4))
 		{
 			if ((MI) && (MI->SaveLoad))
 			{
@@ -266,7 +266,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 				SSOK = FALSE;	// since we didn't read past the end of the chunk
 			}
 		}
-		else if (!strncmp(csig,"NMOV",4))
+		else if (!memcmp(csig,"NMOV",4))
 		{
 			/* TODO - rewrite this */
 			if (Controllers.MovieMode & MOV_RECORD)
@@ -283,7 +283,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 				fseek(movie,16,SEEK_SET);
 				fread(tps,4,1,movie);
 				fread(&mlen,4,1,movie);
-				while (strncmp(tps,"NMOV",4))
+				while (memcmp(tps,"NMOV",4))
 				{	/* find the NMOV block in the movie */
 					fseek(movie,mlen,SEEK_CUR);
 					fread(tps,4,1,movie);
