@@ -107,8 +107,8 @@ void	Controllers_ConfigButton (int *,int,HWND,BOOL);
 BOOL	Controllers_IsPressed (int);
 void	Controllers_ParseConfigMessages (HWND,int,int *,int *,int *,UINT,WPARAM,LPARAM);
 
-void	Controllers_PlayMovie (void);
-void	Controllers_RecordMovie (void);
+void	Controllers_PlayMovie (BOOL);
+void	Controllers_RecordMovie (BOOL);
 void	Controllers_StopMovie (void);
 
 #endif

@@ -450,7 +450,7 @@ unsigned char MOV_ControllerTypes[3];
 int	ReRecords;
 char MovieName[256];
 
-void	Controllers_PlayMovie (void)
+void	Controllers_PlayMovie (BOOL Review)
 {
 	unsigned char buf[5];
 	OPENFILENAME ofn;
@@ -483,7 +483,7 @@ void	Controllers_PlayMovie (void)
 	if (!GetOpenFileName(&ofn))
 		return;
 
-	movie = fopen(MovieName,"rb");
+	movie = fopen(MovieName,"r+b");
 	fread(buf,1,4,movie);
 	if (!memcmp(buf,"FMV\x1a",4))
 	{
@@ -571,7 +571,7 @@ void	Controllers_PlayMovie (void)
 		fseek(movie,16,SEEK_SET);
 		fread(buf,4,1,movie);
 		fread(&len,4,1,movie);
-		while (strncmp(buf,"NMOV",4))
+		while (memcmp(buf,"NMOV",4))
 		{	/* find the NMOV block in the movie */
 			fseek(movie,len,SEEK_CUR);
 			fread(buf,4,1,movie);
@@ -629,7 +629,7 @@ void	Controllers_PlayMovie (void)
 		memset(Controllers.ExpPort.MovData,0,Controllers.ExpPort.MovLen);
 }
 
-void	Controllers_RecordMovie (void)
+void	Controllers_RecordMovie (BOOL fromState)
 {
 	OPENFILENAME ofn;
 	int len;
@@ -670,7 +670,7 @@ void	Controllers_RecordMovie (void)
 	fwrite(&len,1,4,movie);
 	fwrite("NMOV",1,4,movie);
 
-	if (0)
+	if (fromState)
 		States_SaveData(movie);
 
 	fwrite("NMOV",1,4,movie);
