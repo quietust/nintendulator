@@ -68,14 +68,21 @@ static	__forceinline void	RunCycle (void)
 #define	CPU_MemGetCode	CPU_MemGet
 unsigned char __fastcall	CPU_MemGet (unsigned int Addy)
 {
+	static unsigned char buf;
 	RunCycle();
 	if (CPU.ReadHandler[(Addy >> 12) & 0xF] == CPU_ReadPRG)
 	{
 		if (CPU.Readable[(Addy >> 12) & 0xF])
-			CPU.LastRead = CPU.PRGPointer[(Addy >> 12) & 0xF][Addy & 0xFFF];
+			buf = CPU.PRGPointer[(Addy >> 12) & 0xF][Addy & 0xFFF];
+		else	buf = -1;
+		if (buf != -1)
+			CPU.LastRead = buf;
 		return CPU.LastRead;
 	}
-	return CPU.LastRead = CPU.ReadHandler[(Addy >> 12) & 0xF]((Addy >> 12) & 0xF,Addy & 0xFFF);
+	buf = CPU.ReadHandler[(Addy >> 12) & 0xF]((Addy >> 12) & 0xF,Addy & 0xFFF);
+	if (buf != -1)
+		CPU.LastRead = buf;
+	return CPU.LastRead;
 }
 void __fastcall	CPU_MemSet (unsigned int Addy, unsigned char Val)
 {
