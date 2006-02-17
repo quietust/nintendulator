@@ -1038,11 +1038,12 @@ static	__forceinline void	IV_RRA (void)
 		mov	al,CPU.FC
 		add	al,0xFF
 		rcr	TmpData,1
-		mov	al,CPU.A
-		adc	TmpData,al
+		mov	al,TmpData
+		adc	CPU.A,al
 		setc	CPU.FC
 		setz	CPU.FZ
 		sets	CPU.FN
+		seto	CPU.FV
 	}
 	CPU_MemSet(CalcAddr,TmpData);
 }
@@ -1147,14 +1148,14 @@ case 0xA1:AM_INX();  IN_LDA();break;case 0xB1:AM_INY();  IN_LDA();break;case 0xA
 case 0xC1:AM_INX();  IN_CMP();break;case 0xD1:AM_INY();  IN_CMP();break;case 0xC9:AM_IMM();  IN_CMP();break;case 0xD9:AM_ABY();  IN_CMP();break;case 0xC5:AM_ZPG();  IN_CMP();break;case 0xD5:AM_ZPX();  IN_CMP();break;case 0xCD:AM_ABS();  IN_CMP();break;case 0xDD:AM_ABX();  IN_CMP();break;
 case 0xE1:AM_INX();  IN_SBC();break;case 0xF1:AM_INY();  IN_SBC();break;case 0xE9:AM_IMM();  IN_SBC();break;case 0xF9:AM_ABY();  IN_SBC();break;case 0xE5:AM_ZPG();  IN_SBC();break;case 0xF5:AM_ZPX();  IN_SBC();break;case 0xED:AM_ABS();  IN_SBC();break;case 0xFD:AM_ABX();  IN_SBC();break;
 
-case 0x03:AM_INX();  IV_SLO();break;case 0x13:AM_INY();  IV_SLO();break;case 0x0B:AM_IMM();  IV_UNK();break;case 0x1B:AM_ABY();  IV_SLO();break;case 0x07:AM_ZPG();  IV_SLO();break;case 0x17:AM_ZPX();  IV_SLO();break;case 0x0F:AM_ABS();  IV_SLO();break;case 0x1F:AM_ABX();  IV_SLO();break;
-case 0x23:AM_INX();  IV_RLA();break;case 0x33:AM_INY();  IV_RLA();break;case 0x2B:AM_IMM();  IV_UNK();break;case 0x3B:AM_ABY();  IV_RLA();break;case 0x27:AM_ZPG();  IV_RLA();break;case 0x37:AM_ZPX();  IV_RLA();break;case 0x2F:AM_ABS();  IV_RLA();break;case 0x3F:AM_ABX();  IV_RLA();break;
-case 0x43:AM_INX();  IV_SRE();break;case 0x53:AM_INY();  IV_SRE();break;case 0x4B:AM_IMM();  IV_UNK();break;case 0x5B:AM_ABY();  IV_SRE();break;case 0x47:AM_ZPG();  IV_SRE();break;case 0x57:AM_ZPX();  IV_SRE();break;case 0x4F:AM_ABS();  IV_SRE();break;case 0x5F:AM_ABX();  IV_SRE();break;
-case 0x63:AM_INX();  IV_RRA();break;case 0x73:AM_INY();  IV_RRA();break;case 0x6B:AM_IMM();  IV_UNK();break;case 0x7B:AM_ABY();  IV_RRA();break;case 0x67:AM_ZPG();  IV_RRA();break;case 0x77:AM_ZPX();  IV_RRA();break;case 0x6F:AM_ABS();  IV_RRA();break;case 0x7F:AM_ABX();  IV_RRA();break;
+case 0x03:AM_INX();  IV_SLO();break;case 0x13:AM_INYW(); IV_SLO();break;case 0x0B:AM_IMM();  IV_UNK();break;case 0x1B:AM_ABYW(); IV_SLO();break;case 0x07:AM_ZPG();  IV_SLO();break;case 0x17:AM_ZPX();  IV_SLO();break;case 0x0F:AM_ABS();  IV_SLO();break;case 0x1F:AM_ABXW(); IV_SLO();break;
+case 0x23:AM_INX();  IV_RLA();break;case 0x33:AM_INYW(); IV_RLA();break;case 0x2B:AM_IMM();  IV_UNK();break;case 0x3B:AM_ABYW(); IV_RLA();break;case 0x27:AM_ZPG();  IV_RLA();break;case 0x37:AM_ZPX();  IV_RLA();break;case 0x2F:AM_ABS();  IV_RLA();break;case 0x3F:AM_ABXW(); IV_RLA();break;
+case 0x43:AM_INX();  IV_SRE();break;case 0x53:AM_INYW(); IV_SRE();break;case 0x4B:AM_IMM();  IV_UNK();break;case 0x5B:AM_ABYW(); IV_SRE();break;case 0x47:AM_ZPG();  IV_SRE();break;case 0x57:AM_ZPX();  IV_SRE();break;case 0x4F:AM_ABS();  IV_SRE();break;case 0x5F:AM_ABXW(); IV_SRE();break;
+case 0x63:AM_INX();  IV_RRA();break;case 0x73:AM_INYW(); IV_RRA();break;case 0x6B:AM_IMM();  IV_UNK();break;case 0x7B:AM_ABYW(); IV_RRA();break;case 0x67:AM_ZPG();  IV_RRA();break;case 0x77:AM_ZPX();  IV_RRA();break;case 0x6F:AM_ABS();  IV_RRA();break;case 0x7F:AM_ABXW(); IV_RRA();break;
 case 0x83:AM_INX();  IV_SAX();break;case 0x93:AM_INY();  IV_UNK();break;case 0x8B:AM_IMM();  IV_UNK();break;case 0x9B:AM_ABY();  IV_UNK();break;case 0x87:AM_ZPG();  IV_SAX();break;case 0x97:AM_ZPY();  IV_SAX();break;case 0x8F:AM_ABS();  IV_SAX();break;case 0x9F:AM_ABY();  IV_UNK();break;
 case 0xA3:AM_INX();  IV_LAX();break;case 0xB3:AM_INY();  IV_LAX();break;case 0xAB:AM_IMM();  IV_UNK();break;case 0xBB:AM_ABY();  IV_UNK();break;case 0xA7:AM_ZPG();  IV_LAX();break;case 0xB7:AM_ZPY();  IV_LAX();break;case 0xAF:AM_ABS();  IV_LAX();break;case 0xBF:AM_ABY();  IV_LAX();break;
-case 0xC3:AM_INX();  IV_DCP();break;case 0xD3:AM_INY();  IV_DCP();break;case 0xCB:AM_IMM();  IV_UNK();break;case 0xDB:AM_ABY();  IV_DCP();break;case 0xC7:AM_ZPG();  IV_DCP();break;case 0xD7:AM_ZPX();  IV_DCP();break;case 0xCF:AM_ABS();  IV_DCP();break;case 0xDF:AM_ABX();  IV_DCP();break;
-case 0xE3:AM_INX();  IV_ISB();break;case 0xF3:AM_INY();  IV_ISB();break;case 0xEB:AM_IMM();  IV_SBC();break;case 0xFB:AM_ABY();  IV_ISB();break;case 0xE7:AM_ZPG();  IV_ISB();break;case 0xF7:AM_ZPX();  IV_ISB();break;case 0xEF:AM_ABS();  IV_ISB();break;case 0xFF:AM_ABX();  IV_ISB();break;
+case 0xC3:AM_INX();  IV_DCP();break;case 0xD3:AM_INYW(); IV_DCP();break;case 0xCB:AM_IMM();  IV_UNK();break;case 0xDB:AM_ABYW(); IV_DCP();break;case 0xC7:AM_ZPG();  IV_DCP();break;case 0xD7:AM_ZPX();  IV_DCP();break;case 0xCF:AM_ABS();  IV_DCP();break;case 0xDF:AM_ABXW(); IV_DCP();break;
+case 0xE3:AM_INX();  IV_ISB();break;case 0xF3:AM_INYW(); IV_ISB();break;case 0xEB:AM_IMM();  IV_SBC();break;case 0xFB:AM_ABYW(); IV_ISB();break;case 0xE7:AM_ZPG();  IV_ISB();break;case 0xF7:AM_ZPX();  IV_ISB();break;case 0xEF:AM_ABS();  IV_ISB();break;case 0xFF:AM_ABXW(); IV_ISB();break;
 	}
 	DPCM_Fetch();
 
