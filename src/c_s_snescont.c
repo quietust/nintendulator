@@ -33,8 +33,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	int i;
-	unsigned char CBits1[12] = {0x02,0x01,0x00,0x00,0x04,0x10,0x80,0x00,0x08,0x20,0x40,0x00};
-	unsigned char CBits2[12] = {0x00,0x00,0x02,0x01,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x04};
 	if (mode & MOV_PLAY)
 	{
 		Cont->NewBit1 = Cont->MovData[0];
@@ -44,16 +42,22 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 	{
 		Cont->NewBit1 = 0;
 		Cont->NewBit2 = 0;
-		for (i = 0; i < 12; i++)
+		for (i = 0; i < 8; i++)
 		{
 			if (Controllers_IsPressed(Cont->Buttons[i]))
-			{
-				Cont->NewBit1 |= CBits1[i];
-				Cont->NewBit2 |= CBits2[i];
-			}
+				Cont->NewBit1 |= 1 << i;
+			if ((i < 4) && (Controllers_IsPressed(Cont->Buttons[i+8])))
+				Cont->NewBit2 |= 1 << i;
+		}
+		if (!(Controllers.MovieMode & MOV_RECORD))
+		{	/* prevent simultaneously pressing left+right or up+down, but not when recording a movie :) */
+			if ((Cont->NewBit1 & 0xC0) == 0xC0)
+				Cont->NewBit1 &= 0x3F;
+			if ((Cont->NewBit1 & 0x30) == 0x30)
+				Cont->NewBit1 &= 0xCF;
 		}
 	}
-	if (mode & MOV_RECORD)
+	if (Controllers.MovieMode & MOV_RECORD)
 	{
 		Cont->MovData[0] = (unsigned char)Cont->NewBit1;
 		Cont->MovData[1] = (unsigned char)Cont->NewBit2;
@@ -62,22 +66,21 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 
 static	unsigned char	Read (struct tStdPort *Cont)
 {
-	unsigned char result = 0;
+	unsigned char result = 1;
 	if (Cont->Strobe)
 	{
 		Cont->Bits1 = Cont->NewBit1;
 		Cont->Bits2 = Cont->NewBit2;
 		Cont->BitPtr = 0;
-
+		result = (unsigned char)(Cont->Bits1 & 1);
 	}
-	if (Cont->BitPtr < 8)
-		result |= ((unsigned char)(Cont->Bits1 >> Cont->BitPtr) & 1) << 3;
-	else	result |= 0x08;
-	if (Cont->BitPtr < 4)
-		result |= ((unsigned char)(Cont->Bits2 >> Cont->BitPtr) & 1) << 4;
-	else	result |= 0x10;
-	if ((!Cont->Strobe) && (Cont->BitPtr < 8))
-		Cont->BitPtr++;
+	else
+	{
+		if (Cont->BitPtr < 8)
+			result = (unsigned char)(Cont->Bits1 >> Cont->BitPtr++) & 1;
+		else if (Cont->BitPtr < 16)
+			result = (unsigned char)(Cont->Bits2 >> (Cont->BitPtr++ - 8)) & 1;
+	}
 	return result;
 }
 static	void	Write (struct tStdPort *Cont, unsigned char Val)
@@ -97,40 +100,19 @@ static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	static struct tStdPort *Cont = NULL;
 	if (uMsg == WM_INITDIALOG)
 		Cont = (struct tStdPort *)lParam;
-	if ((uMsg == WM_COMMAND) && (LOWORD(wParam) == IDC_CONT_FLIP))
-	{
-		int i;
-		int Buttons[12];
-		for (i = 0; i < 12; i++)
-			Buttons[i] = Cont->Buttons[i];
-		Cont->Buttons[0] = Buttons[3];
-		Cont->Buttons[1] = Buttons[2];
-		Cont->Buttons[2] = Buttons[1];
-		Cont->Buttons[3] = Buttons[0];
-		Cont->Buttons[4] = Buttons[7];
-		Cont->Buttons[5] = Buttons[6];
-		Cont->Buttons[6] = Buttons[5];
-		Cont->Buttons[7] = Buttons[4];
-		Cont->Buttons[8] = Buttons[11];
-		Cont->Buttons[9] = Buttons[10];
-		Cont->Buttons[10] = Buttons[9];
-		Cont->Buttons[11] = Buttons[8];
-		for (i = 0; i < 12; i++)
-			Controllers_ConfigButton(&Cont->Buttons[i],Cont->Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),FALSE);
-	}
-	else	Controllers_ParseConfigMessages(hDlg,12,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+	Controllers_ParseConfigMessages(hDlg,12,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
 	return FALSE;
 }
 static	void	Config (struct tStdPort *Cont, HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_POWERPAD,hWnd,ConfigProc,(LPARAM)Cont);
+	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_SNESCONTROLLER,hWnd,ConfigProc,(LPARAM)Cont);
 }
 static	void	Unload (struct tStdPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	StdPort_SetPowerPad (struct tStdPort *Cont)
+void	StdPort_SetSnesController (struct tStdPort *Cont)
 {
 	Cont->Read = Read;
 	Cont->Write = Write;
