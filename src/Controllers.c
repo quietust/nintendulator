@@ -386,6 +386,7 @@ void	Controllers_Init (void)
 void	Controllers_Release (void)
 {
 	int i;
+	Controllers_UnAcquire();
 	Controllers.Port1.Unload(&Controllers.Port1);
 	Controllers.Port2.Unload(&Controllers.Port2);
 	Controllers.FSPort1.Unload(&Controllers.FSPort1);
