@@ -174,6 +174,8 @@ __inline static	void	DiscoverSprites (void)
 	int spt;
 	PPU.SprCount = 0;
 	PPU.Spr0InLine = FALSE;
+	for (spt = 0; spt < 32; spt += 4)
+		PPU.SprBuff[spt+1] = PPU.Sprite[spt | 1];	// pre-init sprite buffer tile indices
 	for (spt = 0; spt < 256; spt += 4)
 	{
 		if ((SL >= PPU.Sprite[spt]) && (SL < (PPU.Sprite[spt] + SprHeight)))
@@ -183,10 +185,11 @@ __inline static	void	DiscoverSprites (void)
 				PPU.Reg2002 |= 0x20;
 				break;
 			}
-			PPU.SprBuff[PPU.SprCount++] = SL - PPU.Sprite[spt];
-			PPU.SprBuff[PPU.SprCount++] = PPU.Sprite[spt | 1];
-			PPU.SprBuff[PPU.SprCount++] = PPU.Sprite[spt | 2];
-			PPU.SprBuff[PPU.SprCount++] = PPU.Sprite[spt | 3];
+			PPU.SprBuff[PPU.SprCount] = SL - PPU.Sprite[spt];
+			PPU.SprBuff[PPU.SprCount+1] = PPU.Sprite[spt | 1];
+			PPU.SprBuff[PPU.SprCount+2] = PPU.Sprite[spt | 2];
+			PPU.SprBuff[PPU.SprCount+3] = PPU.Sprite[spt | 3];
+			PPU.SprCount += 4;
 			if (!spt)
 				PPU.Spr0InLine = TRUE;
 		}
