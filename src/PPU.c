@@ -209,7 +209,7 @@ void	PPU_GetHandlers (void)
 }
 __inline static	void	DiscoverSprites (void)
 {
-	int SprHeight = (PPU.Reg2000 & 0x20) ? 16 : 8;
+	int SprHeight = 7 | ((PPU.Reg2000 & 0x20) >> 2);
 	int SL = PPU.SLnum;
 	int spt;
 	PPU.SprCount = 0;
@@ -220,21 +220,20 @@ __inline static	void	DiscoverSprites (void)
 		PPU.SprBuff[spt+1] = 0xFF;	/* pre-init sprite buffer tile indices */
 	for (spt = 0; spt < 256; spt += 4)
 	{
-		if ((SL >= PPU.Sprite[spt]) && (SL < (PPU.Sprite[spt] + SprHeight)))
+		if ((SL - PPU.Sprite[spt]) & ~SprHeight)
+			continue;
+		if (PPU.SprCount == 32)
 		{
-			if (PPU.SprCount == 32)
-			{
-				PPU.Reg2002 |= 0x20;
-				break;
-			}
-			PPU.SprBuff[PPU.SprCount] = SL - PPU.Sprite[spt];
-			PPU.SprBuff[PPU.SprCount+1] = PPU.Sprite[spt | 1];
-			PPU.SprBuff[PPU.SprCount+2] = PPU.Sprite[spt | 2];
-			PPU.SprBuff[PPU.SprCount+3] = PPU.Sprite[spt | 3];
-			PPU.SprCount += 4;
-			if (!spt)
-				PPU.Spr0InLine = TRUE;
+			PPU.Reg2002 |= 0x20;
+			break;
 		}
+		PPU.SprBuff[PPU.SprCount] = SL - PPU.Sprite[spt];
+		PPU.SprBuff[PPU.SprCount+1] = PPU.Sprite[spt | 1];
+		PPU.SprBuff[PPU.SprCount+2] = PPU.Sprite[spt | 2];
+		PPU.SprBuff[PPU.SprCount+3] = PPU.Sprite[spt | 3];
+		PPU.SprCount += 4;
+		if (!spt)
+			PPU.Spr0InLine = TRUE;
 	}
 }
 void	PPU_GetGFXPtr (void)
