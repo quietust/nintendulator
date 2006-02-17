@@ -796,6 +796,7 @@ void	NES_SetCPUMode (int NewMode)
 	HMENU hMenu = GetMenu(mWnd);
 	if (NewMode == 0)
 	{
+		PPU.IsPAL = FALSE;
 		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
 		PPU.SLEndFrame = 262;
 		if (PPU.SLnum >= PPU.SLEndFrame - 1)	/* if we switched from PAL, scanline number could be invalid */
@@ -803,17 +804,16 @@ void	NES_SetCPUMode (int NewMode)
 		GFX.WantFPS = 60;
 		GFX_LoadPalette(GFX.PaletteNTSC);
 		APU_SetFPS(60);
-		PPU.IsPAL = FALSE;
 		EI.DbgOut(_T("Emulation switched to NTSC"));
 	}
 	else
 	{
+		PPU.IsPAL = TRUE;
 		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
 		PPU.SLEndFrame = 312;
 		GFX.WantFPS = 50;
 		GFX_LoadPalette(GFX.PalettePAL);
 		APU_SetFPS(50);
-		PPU.IsPAL = TRUE;
 		EI.DbgOut(_T("Emulation switched to PAL"));
 	}
 }
