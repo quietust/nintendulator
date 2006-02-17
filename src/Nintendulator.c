@@ -488,10 +488,16 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			AVI_End();
 			break;
 		case ID_MISC_PLAYMOVIE:
-			Controllers_PlayMovie();
+			Controllers_PlayMovie(FALSE);
+			break;
+		case ID_MISC_RESUMEMOVIE:
+			Controllers_PlayMovie(TRUE);
 			break;
 		case ID_MISC_RECORDMOVIE:
-			Controllers_RecordMovie();
+			Controllers_RecordMovie(FALSE);
+			break;
+		case ID_MISC_RECORDSTATE:
+			Controllers_RecordMovie(TRUE);
 			break;
 		case ID_MISC_STOPMOVIE:
 			Controllers_StopMovie();

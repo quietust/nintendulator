@@ -122,7 +122,9 @@ BEGIN
         , GRAYED
         MENUITEM SEPARATOR
         MENUITEM "P&lay Movie...",              ID_MISC_PLAYMOVIE
-        MENUITEM "&Record Movie...",            ID_MISC_RECORDMOVIE
+        MENUITEM "&Record Movie from Reset...", ID_MISC_RECORDMOVIE
+        MENUITEM "&Record Movie from Current State...", ID_MISC_RECORDSTATE
+        MENUITEM "Resu&me Movie...",            ID_MISC_RESUMEMOVIE
         MENUITEM "Sto&p Movie",                 ID_MISC_STOPMOVIE, GRAYED
     END
     POPUP "&Help"
