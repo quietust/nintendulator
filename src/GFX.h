@@ -46,7 +46,7 @@ struct tGFX
 	int aFPScnt, aFPSnum;
 
 	int PaletteNTSC, PalettePAL;
-	int NTSChue, NTSCtint;
+	int NTSChue, NTSCsat;
 	char CustPaletteNTSC[256], CustPalettePAL[256];
 
 	LPDIRECTDRAW7		DirectDraw;

@@ -666,13 +666,13 @@ BEGIN
     CONTROL         "&Custom...",IDC_PAL_CUSTOM,"Button",BS_AUTORADIOBUTTON,
                     12,64,44,12
     RTEXT           "&Hue:",IDC_STATIC,60,16,20,12,SS_CENTERIMAGE
-    CONTROL         "Slider1",IDC_PAL_HUESLIDER,"msctls_trackbar32",
+    CONTROL         "Hue",IDC_PAL_HUESLIDER,"msctls_trackbar32",
                     TBS_AUTOTICKS | WS_TABSTOP,84,16,96,12
     EDITTEXT        IDC_PAL_HUE,184,16,20,12,ES_READONLY | ES_NUMBER
-    RTEXT           "&Tint:",IDC_STATIC,60,32,20,12,SS_CENTERIMAGE
-    CONTROL         "Slider1",IDC_PAL_TINTSLIDER,"msctls_trackbar32",
+    RTEXT           "&Sat:",IDC_STATIC,60,32,20,12,SS_CENTERIMAGE
+    CONTROL         "Saturation",IDC_PAL_SATSLIDER,"msctls_trackbar32",
                     TBS_AUTOTICKS | WS_TABSTOP,84,32,96,12
-    EDITTEXT        IDC_PAL_TINT,184,32,20,12,ES_READONLY | ES_NUMBER
+    EDITTEXT        IDC_PAL_SAT,184,32,20,12,ES_READONLY | ES_NUMBER
     EDITTEXT        IDC_PAL_CUSTFILE,60,64,104,12,ES_AUTOHSCROLL
     PUSHBUTTON      "&Browse",IDC_PAL_BROWSE,168,64,36,12
     GROUPBOX        "Preview",IDC_STATIC,4,84,208,68

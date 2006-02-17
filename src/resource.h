@@ -104,7 +104,7 @@
 #define IDC_PAL_HUE                     1081
 #define IDC_PAL_BROWSE                  1084
 #define IDC_PAL_CUSTFILE                1085
-#define IDC_PAL_TINTSLIDER              1087
+#define IDC_PAL_SATSLIDER               1087
 #define IDC_PAL_10                      1088
 #define IDC_PAL_20                      1089
 #define IDC_PAL_30                      1090
@@ -123,7 +123,7 @@
 #define IDC_PAL_0D                      1103
 #define IDC_PAL_0E                      1104
 #define IDC_PAL_0F                      1105
-#define IDC_PAL_TINT                    1106
+#define IDC_PAL_SAT                     1106
 #define IDC_PAL_CUSTOM                  1107
 #define IDC_PAL_11                      1108
 #define IDC_PAL_12                      1109

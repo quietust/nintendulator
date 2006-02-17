@@ -890,7 +890,7 @@ void	NES_LoadSettings (void)
 	GFX.PaletteNTSC = 0;
 	GFX.PalettePAL = 1;
 	GFX.NTSChue = 340;
-	GFX.NTSCtint = 30;
+	GFX.NTSCsat = 30;
 	GFX.CustPaletteNTSC[0] = GFX.CustPalettePAL[0] = 0;
 	Controllers.Port1.Type = 0;
 	ZeroMemory(Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
@@ -914,7 +914,7 @@ void	NES_LoadSettings (void)
 	RegQueryValueEx(SettingsBase,"PaletteNTSC" ,0,&Type,(unsigned char *)&GFX.PaletteNTSC,&Size);
 	RegQueryValueEx(SettingsBase,"PalettePAL"  ,0,&Type,(unsigned char *)&GFX.PalettePAL ,&Size);
 	RegQueryValueEx(SettingsBase,"NTSChue"     ,0,&Type,(unsigned char *)&GFX.NTSChue    ,&Size);
-	RegQueryValueEx(SettingsBase,"NTSCtint"    ,0,&Type,(unsigned char *)&GFX.NTSCtint   ,&Size);
+	RegQueryValueEx(SettingsBase,"NTSCsat"     ,0,&Type,(unsigned char *)&GFX.NTSCsat    ,&Size);
 
 	Size = 256;
 	RegQueryValueEx(SettingsBase,"CustPaletteNTSC",0,&Type,(unsigned char *)&GFX.CustPaletteNTSC,&Size);
@@ -1005,7 +1005,7 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,"PaletteNTSC" ,0,REG_DWORD,(unsigned char *)&GFX.PaletteNTSC ,4);
 	RegSetValueEx(SettingsBase,"PalettePAL"  ,0,REG_DWORD,(unsigned char *)&GFX.PalettePAL  ,4);
 	RegSetValueEx(SettingsBase,"NTSChue"     ,0,REG_DWORD,(unsigned char *)&GFX.NTSChue     ,4);
-	RegSetValueEx(SettingsBase,"NTSCtint"    ,0,REG_DWORD,(unsigned char *)&GFX.NTSCtint    ,4);
+	RegSetValueEx(SettingsBase,"NTSCsat"     ,0,REG_DWORD,(unsigned char *)&GFX.NTSCsat     ,4);
 
 	RegSetValueEx(SettingsBase,"CustPaletteNTSC",0,REG_SZ,(unsigned char *)GFX.CustPaletteNTSC,sizeof(GFX.CustPaletteNTSC));
 	RegSetValueEx(SettingsBase,"CustPalettePAL" ,0,REG_SZ,(unsigned char *)GFX.CustPalettePAL ,sizeof(GFX.CustPalettePAL));

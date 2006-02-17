@@ -76,7 +76,7 @@ void	GFX_Init (void)
 	GFX.PaletteNTSC = 0;
 	GFX.PalettePAL = 1;
 	GFX.NTSChue = 330;
-	GFX.NTSCtint = 50;
+	GFX.NTSCsat = 50;
 	GFX_Create();
 }
 
@@ -359,7 +359,7 @@ static unsigned char cPalette[5][64][3] = {
 	}
 };
 
-void	GFX_GenerateNTSC (int hue, int tint, BOOL config)
+void	GFX_GenerateNTSC (int hue, int sat, BOOL config)
 {
 	const int chroma[0x10] = {0,240,210,180,150,120,90,60,30,0,330,300,270,0,0,0};
 	const double brightness[3][4] = {{0.50,0.75,1.00,1.00},{0.29,0.45,0.73,0.90},{0.00,0.24,0.47,0.77}};
@@ -373,7 +373,7 @@ void	GFX_GenerateNTSC (int hue, int tint, BOOL config)
 			double s, y, r, g, b, theta;
 			unsigned char ir, ig, ib;
 			int p = config ? 4 : 0;
-			s = tint / 100.0;
+			s = sat / 100.0;
 			if ((z < 1) || (z > 12))
 				s = 0;
 			if (z == 0)
@@ -445,7 +445,7 @@ void	GFX_LoadPalette (int PalNum)
 	unsigned int RV, GV, BV;
 	int i;
 	if (PalNum == 0)
-		GFX_GenerateNTSC(GFX.NTSChue,GFX.NTSCtint,FALSE);
+		GFX_GenerateNTSC(GFX.NTSChue,GFX.NTSCsat,FALSE);
 	if (PalNum == 3)
 	{
 		if (!GFX_ImportPalette(PPU.IsPAL ? GFX.CustPalettePAL : GFX.CustPaletteNTSC,FALSE))
@@ -521,8 +521,8 @@ void	UpdatePalette (HWND hDlg, int pal)
 {
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_HUESLIDER),(pal == 0));
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_HUE),(pal == 0));
-	EnableWindow(GetDlgItem(hDlg,IDC_PAL_TINTSLIDER),(pal == 0));
-	EnableWindow(GetDlgItem(hDlg,IDC_PAL_TINT),(pal == 0));
+	EnableWindow(GetDlgItem(hDlg,IDC_PAL_SATSLIDER),(pal == 0));
+	EnableWindow(GetDlgItem(hDlg,IDC_PAL_SAT),(pal == 0));
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_CUSTFILE),(pal == 3));
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_BROWSE),(pal == 3));
 	RedrawWindow(hDlg,NULL,NULL,RDW_INVALIDATE);
@@ -545,26 +545,26 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	HDC hdc;
 
 	static BOOL ispal;
-	static int hue, tint, pal, i;
+	static int hue, sat, pal, i;
 
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
 		ispal = PPU.IsPAL;
 		hue = GFX.NTSChue;
-		tint = GFX.NTSCtint;
+		sat = GFX.NTSCsat;
 		pal = ispal ? GFX.PalettePAL : GFX.PaletteNTSC;
 		if (pal == 0)
-			GFX_GenerateNTSC(hue,tint,TRUE);
+			GFX_GenerateNTSC(hue,sat,TRUE);
 		else	memcpy(cPalette[4],cPalette[pal],64*3);
 		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETRANGE,FALSE,MAKELONG(300,360));
 		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETTICFREQ,5,0);
 		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETPOS,TRUE,hue);
 		SetDlgItemInt(hDlg,IDC_PAL_HUE,hue,FALSE);
-		SendDlgItemMessage(hDlg,IDC_PAL_TINTSLIDER,TBM_SETRANGE,FALSE,MAKELONG(10,90));
-		SendDlgItemMessage(hDlg,IDC_PAL_TINTSLIDER,TBM_SETTICFREQ,5,0);
-		SendDlgItemMessage(hDlg,IDC_PAL_TINTSLIDER,TBM_SETPOS,TRUE,tint);
-		SetDlgItemInt(hDlg,IDC_PAL_TINT,tint,FALSE);
+		SendDlgItemMessage(hDlg,IDC_PAL_SATSLIDER,TBM_SETRANGE,FALSE,MAKELONG(10,90));
+		SendDlgItemMessage(hDlg,IDC_PAL_SATSLIDER,TBM_SETTICFREQ,5,0);
+		SendDlgItemMessage(hDlg,IDC_PAL_SATSLIDER,TBM_SETPOS,TRUE,sat);
+		SetDlgItemInt(hDlg,IDC_PAL_SAT,sat,FALSE);
 		SetDlgItemText(hDlg,IDC_PAL_CUSTFILE,ispal ? GFX.CustPalettePAL : GFX.CustPaletteNTSC);
 		CheckRadioButton(hDlg,IDC_PAL_NTSC,IDC_PAL_CUSTOM,paltable[pal]);
 		UpdatePalette(hDlg,pal);
@@ -577,7 +577,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 		case IDC_PAL_NTSC:
 			pal = 0;
-			GFX_GenerateNTSC(hue,tint,TRUE);
+			GFX_GenerateNTSC(hue,sat,TRUE);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_PAL:
@@ -630,7 +630,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			if (pal == 0)
 			{
 				GFX.NTSChue = hue;
-				GFX.NTSCtint = tint;
+				GFX.NTSCsat = sat;
 			}
 			if (pal == 3)
 				GetDlgItemText(hDlg,IDC_PAL_CUSTFILE,ispal ? GFX.CustPalettePAL : GFX.CustPaletteNTSC,256);
@@ -648,14 +648,14 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 			hue = SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_GETPOS,0,0);
 			SetDlgItemInt(hDlg,IDC_PAL_HUE,hue,FALSE);
-			GFX_GenerateNTSC(hue,tint,TRUE);
+			GFX_GenerateNTSC(hue,sat,TRUE);
 			UpdatePalette(hDlg,pal);
 		}
-		if (lParam == (LPARAM)GetDlgItem(hDlg,IDC_PAL_TINTSLIDER))
+		if (lParam == (LPARAM)GetDlgItem(hDlg,IDC_PAL_SATSLIDER))
 		{
-			tint = SendDlgItemMessage(hDlg,IDC_PAL_TINTSLIDER,TBM_GETPOS,0,0);
-			SetDlgItemInt(hDlg,IDC_PAL_TINT,tint,FALSE);
-			GFX_GenerateNTSC(hue,tint,TRUE);
+			sat = SendDlgItemMessage(hDlg,IDC_PAL_SATSLIDER,TBM_GETPOS,0,0);
+			SetDlgItemInt(hDlg,IDC_PAL_SAT,sat,FALSE);
+			GFX_GenerateNTSC(hue,sat,TRUE);
 			UpdatePalette(hDlg,pal);
 		}
 		break;
