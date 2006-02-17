@@ -230,7 +230,7 @@ void	_MAPINT	GenieWrite (int Bank, int Addy, int Val)
 			PPU_GetHandlers();
 			CPU_GetHandlers();
 			if ((MI) && (MI->Reset))
-				MI->Reset(0);
+				MI->Reset(RESET_HARD);
 		}
 		break;
 	case 1:	Genie.Code1B = 8 | (Val >> 4);
@@ -344,10 +344,8 @@ int	Genie_Load (FILE *in)
 		CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_CHECKED);
 	else	CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
-	if ((MI) && (MI->Shutdown))
-		MI->Shutdown();	// shut down the mapper
 	Genie_Init();		// reset the I/O handlers
 	if ((MI) && (MI->Reset))
-		MI->Reset(0);	// and then start the mapper up again; we'll load its state momentarily
+		MI->Reset(RESET_SOFT);	// and then (soft) reset the mapper again; we'll load its state momentarily
 	return clen;
 }

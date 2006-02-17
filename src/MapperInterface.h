@@ -9,9 +9,9 @@
 
 /* Standard header files, used by all mappers */
 
-/* Mapper Interface version (3.5) */
+/* Mapper Interface version (3.6) */
 
-#define	CurrentMapperInterface 0x00030005
+#define	CurrentMapperInterface 0x00030006
 
 /* Function types */
 
@@ -115,8 +115,9 @@ typedef	struct	MapperInfo
 	COMPAT_TYPE	Compatibility;
 
 /* Mapper Functions */
+	void		(_MAPINT *Load)		(void);
 	void		(_MAPINT *Reset)	(RESET_TYPE);
-	void		(_MAPINT *Shutdown)	(void);
+	void		(_MAPINT *Unload)	(void);
 	void		(_MAPINT *CPUCycle)	(void);
 	void		(_MAPINT *PPUCycle)	(int,int,int,int);
 	int		(_MAPINT *SaveLoad)	(STATE_TYPE,int,unsigned char *);

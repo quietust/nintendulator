@@ -598,8 +598,8 @@ void	MapperInterface_UnloadMapper (void)
 {
 	if (MI)
 	{
-		if (MI->Shutdown)
-			MI->Shutdown();
+		if (MI->Unload)
+			MI->Unload();
 		MI = NULL;
 	}
 #ifndef	NSFPLAYER

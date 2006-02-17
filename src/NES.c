@@ -118,6 +118,9 @@ void	NES_OpenFile (char *filename)
 	EI.DbgOut("Loaded successfully!");
 	States_SetFilename(filename);
 
+	if (MI->Load)
+		MI->Load();
+
 	NES.HasMenu = FALSE;
 	if (MI->Config)
 	{
@@ -869,8 +872,6 @@ void	NES_Reset (int ResetType)
 		break;
 	case RESET_HARD:
 		EI.DbgOut("Performing hard reset...");
-		if ((MI) && (MI->Shutdown))
-			MI->Shutdown();
 		ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		CPU_PowerOn();
@@ -892,8 +893,6 @@ void	NES_Reset (int ResetType)
 		break;
 	case RESET_SOFT:
 		EI.DbgOut("Performing soft reset...");
-		if ((MI) && (MI->Shutdown))
-			MI->Shutdown();
 		if (MI2)
 		{
 			MI = MI2;
