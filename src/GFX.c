@@ -35,8 +35,8 @@ struct tGFX GFX;
 {\
 	if (FAILED(action))\
 	{\
-		MessageBox(mWnd,errormsg ", retrying","Nintendulator",MB_OK | MB_ICONWARNING);\
 		GFX_Release();\
+		MessageBox(mWnd,errormsg ", retrying","Nintendulator",MB_OK | MB_ICONWARNING);\
 		GFX_Create();\
 		PPU_GetGFXPtr();\
 		if (FAILED(action))\
