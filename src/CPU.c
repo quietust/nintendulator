@@ -867,9 +867,9 @@ static	__forceinline void	IN_RTI (void)
 {
 	CPU_MemGet(0x100 | CPU.SP);
 	CPU.P = Pull();
+	CPU_SplitFlags();
 	CPU.PCL = Pull();
 	CPU.PCH = Pull();
-	CPU_SplitFlags();	// do this down here so it executes atleast 1 instruction after the RTI
 }
 static	__forceinline void	IN_RTS (void)
 {
