@@ -779,6 +779,7 @@ void	APU_Create (void)
 		MessageBox(mWnd,_T("Failed to create secondary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
+	EI.DbgOut(_T("Created %iHz %i bit audio buffer, %i frames (%i bytes per frame)"), WFX.nSamplesPerSec, WFX.wBitsPerSample, DSBD.dwBufferBytes / APU.LockSize, APU.LockSize);
 #endif
 }
 
