@@ -342,6 +342,8 @@ void	Debugger_Update (void)
 {
 	if (Debugger.Mode >= 3)
 	{
+		if (CPU.WantIRQ & IRQ_DEBUG)
+			CPU.WantIRQ &= ~IRQ_DEBUG;
 		if (Debugger.BreakP[CPU.PC] || Debugger.Step)
 			NES.Stop = TRUE;
 		if (NES.Stop)
@@ -685,9 +687,7 @@ LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 			Debugger_StopLogging();
 			break;
 		case IDC_IRQBUTTON:
-			CPU.WantIRQ &= ~IRQ_DEBUG;
-			if (IsDlgButtonChecked(hwndDlg,IDC_IRQBUTTON))
-				CPU.WantIRQ |= IRQ_DEBUG;
+			CPU.WantIRQ |= IRQ_DEBUG;
 			break;
 		}
 		break;
