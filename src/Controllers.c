@@ -473,12 +473,13 @@ unsigned char MOV_ControllerTypes[4];
 int ReRecords;
 char MovieName[256];
 int MovieLen;
+int MoviePos;
 int MovieFrameLen;
 
 void	Controllers_ShowFrame (void)
 {
 	if (Controllers.MovieMode)
-		EI.StatusOut("Frame %i",MovieLen / MovieFrameLen);
+		EI.StatusOut("Frame %i",MoviePos / MovieFrameLen);
 }
 
 void	Controllers_PlayMovie (BOOL Review)
@@ -513,8 +514,6 @@ void	Controllers_PlayMovie (BOOL Review)
 
 	if (!GetOpenFileName(&ofn))
 		return;
-
-	MovieLen = 0;
 
 	if (Review)
 		movie = fopen(MovieName,"r+b");
@@ -630,6 +629,7 @@ void	Controllers_PlayMovie (BOOL Review)
 		free(desc);
 	}
 	EI.DbgOut("Re-record count: %i",ReRecords);
+	MoviePos = 0;
 	fread(&MovieLen,4,1,movie);
 
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
@@ -693,7 +693,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 	movie = fopen(MovieName,"w+b");
 	len = 0;
 	ReRecords = 0;
-	MovieLen = 0;
+	MoviePos = MovieLen = 0;
 
 	fwrite("NSS\x1A",1,4,movie);
 	fwrite(STATES_VERSION,1,4,movie);
@@ -736,7 +736,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 	fwrite(&ReRecords,4,1,movie);	// rerecord count
 	fwrite(&len,4,1,movie);		// comment length
 	// TODO - Actually store comment text
-	fwrite(&MovieLen,4,1,movie);	// movie data length
+	fwrite(&MovieLen,4,1,movie);	// movie data length (this gets filled in later)
 
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
@@ -783,7 +783,7 @@ void	Controllers_StopMovie (void)
 		}
 		fread(tps,4,1,movie);			len -= 4;	// read movie data len
 		fseek(movie,-4,SEEK_CUR);		// rewind
-		if (len != MovieLen)
+		if (len != MoviePos)
 			EI.DbgOut("Error - movie length mismatch!");
 		fwrite(&len,4,1,movie);			// 3: terminate the movie data
 		// fseek(movie,len,SEEK_CUR);
@@ -867,14 +867,14 @@ void	Controllers_UpdateInput (void)
 	if (Controllers.MovieMode & MOV_PLAY)
 	{
 		if (Controllers.Port1.MovLen)
-			fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);	MovieLen -= Controllers.Port1.MovLen;
+			fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);	MoviePos += Controllers.Port1.MovLen;
 		if (Controllers.Port2.MovLen)
-			fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);	MovieLen -= Controllers.Port2.MovLen;
+			fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);	MoviePos += Controllers.Port2.MovLen;
 		if (Controllers.ExpPort.MovLen)
-			fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);	MovieLen -= Controllers.ExpPort.MovLen;
-		if (MovieLen <= 0)
+			fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);	MoviePos += Controllers.ExpPort.MovLen;
+		if (MoviePos >= MovieLen)
 		{
-			if (!MovieLen)
+			if (MoviePos == MovieLen)
 				GFX_ShowText("Movie stopped.");
 			else	GFX_ShowText("Unexpected EOF in movie!");
 			Controllers_StopMovie();
@@ -882,7 +882,7 @@ void	Controllers_UpdateInput (void)
 		if (NES.HasMenu)
 		{
 			fread(&Cmd,1,1,movie);
-			MovieLen--;
+			MoviePos++;
 		}
 	}
 	else
@@ -897,17 +897,20 @@ void	Controllers_UpdateInput (void)
 		MI->Config(CFG_CMD,Cmd);
 	if (Controllers.MovieMode & MOV_RECORD)
 	{
+		int len = 0;
 		if (Controllers.Port1.MovLen)
-			fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);	MovieLen += Controllers.Port1.MovLen;
+			fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);	len += Controllers.Port1.MovLen;
 		if (Controllers.Port2.MovLen)
-			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);	MovieLen += Controllers.Port2.MovLen;
+			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);	len += Controllers.Port2.MovLen;
 		if (Controllers.ExpPort.MovLen)
-			fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);	MovieLen += Controllers.ExpPort.MovLen;
+			fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);	len += Controllers.ExpPort.MovLen;
 		if (NES.HasMenu)
 		{
 			fwrite(&Cmd,1,1,movie);
-			MovieLen++;
+			len++;
 		}
+		MoviePos += len;
+		MovieLen += len;
 	}
 }
 

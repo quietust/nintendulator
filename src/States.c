@@ -184,7 +184,7 @@ int	States_SaveData (FILE *out)
 	}
 	if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
 	{
-		extern int MovieLen;
+		extern int MoviePos;
 		int mlen;
 		char tps[4];
 		unsigned char tpc;
@@ -223,9 +223,9 @@ int	States_SaveData (FILE *out)
 		}
 
 		fread(&tpl,4,1,movie);				clen += 4;	// the MLEN field, which is NOT yet accurate
-		fwrite(&MovieLen,4,1,out);
+		fwrite(&MoviePos,4,1,out);
 		
-		tpi = MovieLen;					clen += tpi;
+		tpi = MoviePos;					clen += tpi;
 		while (tpi > 0)
 		{
 			fread(&tpc,1,1,movie);
@@ -356,7 +356,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 		{
 			if (Controllers.MovieMode & MOV_RECORD)
 			{	// are we recording?
-				extern int MovieLen;
+				extern int MoviePos;
 				extern char MovieName[256];
 				extern int ReRecords;
 				char tps[5];
@@ -390,8 +390,8 @@ BOOL	States_LoadData (FILE *in, int flen)
 					fwrite(&tpc,1,1,movie);
 					tpi--;
 				}
-				fread(&MovieLen,4,1,in);	fwrite(&MovieLen,4,1,movie);	clen -= 4;	// MLEN
-				tpi = MovieLen;					clen -= tpi;	// MDAT
+				fread(&MoviePos,4,1,in);	fwrite(&MoviePos,4,1,movie);	clen -= 4;	// MLEN
+				tpi = MoviePos;					clen -= tpi;	// MDAT
 				Cmd = 0;
 				while (tpi > 0)
 				{
@@ -448,7 +448,6 @@ BOOL	States_LoadData (FILE *in, int flen)
 
 void	States_LoadState (void)
 {
-	extern int MovieLen, MovieFrameLen;
 	char tpchr[256];
 	FILE *in;
 	int flen;
