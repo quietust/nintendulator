@@ -562,7 +562,9 @@ __inline void	Frame_Run (void)
 			Square1_QuarterFrame();
 			Triangle_QuarterFrame();
 			Noise_QuarterFrame();
-			Frame.Cycles = APU.QuarterFrameLen;	break;
+			Frame.Cycles = APU.QuarterFrameLen;
+			if (APU.WantFPS == 60)
+				Frame.Cycles++;		break;
 		case 1:	Square0_QuarterFrame();
 			Square1_QuarterFrame();
 			Triangle_QuarterFrame();
@@ -576,7 +578,9 @@ __inline void	Frame_Run (void)
 			Square1_QuarterFrame();
 			Triangle_QuarterFrame();
 			Noise_QuarterFrame();
-			Frame.Cycles = APU.QuarterFrameLen;	break;
+			Frame.Cycles = APU.QuarterFrameLen;
+			if (APU.WantFPS == 60)
+				Frame.Cycles++;		break;
 		case 3:	Square0_QuarterFrame();
 			Square1_QuarterFrame();
 			Triangle_QuarterFrame();
