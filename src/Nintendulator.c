@@ -52,6 +52,7 @@ BOOL			InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	DebugWnd(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK	InesHeader(HWND, UINT, WPARAM, LPARAM);
 void	ShowDebug (void);
 
 int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -175,6 +176,8 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	HDC hdc;
 	PAINTSTRUCT ps;
 	int wmId, wmEvent;
+	char FileName[256];
+	OPENFILENAME ofn;
 
 	switch (message) 
 	{
@@ -192,13 +195,10 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SendMessage(hWnd,WM_CLOSE,0,0);
 			break;
 		case ID_FILE_OPEN:
-		{
-			char FileName[256] = {0};
-			OPENFILENAME ofn;
-
 			if ((!NES.Stopped) && (NES.SoundEnabled))
 				APU_SoundOFF();
 
+			FileName[0] = 0;
 			ZeroMemory(&ofn,sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = mWnd;
@@ -236,7 +236,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			else if ((!NES.Stopped) && (NES.SoundEnabled))
 				APU_SoundON();
-		}	break;
+			break;
 		case ID_FILE_CLOSE:
 			if (!NES.ROMLoaded)
 				break;
@@ -246,6 +246,32 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				NES.ROMLoaded = FALSE;
 			}
 			else	NES_CloseFile();
+			break;
+		case ID_FILE_HEADER:
+			if ((!NES.Stopped) && (NES.SoundEnabled))
+				APU_SoundOFF();
+
+			FileName[0] = 0;
+			ZeroMemory(&ofn,sizeof(ofn));
+			ofn.lStructSize = sizeof(ofn);
+			ofn.hwndOwner = mWnd;
+			ofn.hInstance = hInst;
+			ofn.lpstrFilter = "iNES ROM Images (*.NES)\0" "*.NES\0" "\0";
+			ofn.lpstrCustomFilter = NULL;
+			ofn.nFilterIndex = 1;
+			ofn.lpstrFile = FileName;
+			ofn.nMaxFile = 256;
+			ofn.lpstrFileTitle = NULL;
+			ofn.nMaxFileTitle = 0;
+			ofn.lpstrInitialDir = "";
+			ofn.lpstrTitle = "Edit Header";
+			ofn.Flags = OFN_FILEMUSTEXIST;
+			ofn.lpstrDefExt = NULL;
+			ofn.lCustData = 0;
+			ofn.lpfnHook = NULL;
+			ofn.lpTemplateName = NULL;
+			if (GetOpenFileName(&ofn))
+				DialogBoxParam(hInst,(LPCTSTR)IDD_INESHEADER,hWnd,InesHeader,(LPARAM)FileName);
 			break;
 		case ID_CPU_RUN:
 			if (!NES.ROMLoaded)
@@ -296,7 +322,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
 			else	CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 			break;
-		case ID_CPU_AUTORUN:
+		case ID_FILE_AUTORUN:
 			NES.AutoRun = !NES.AutoRun;
 			if (NES.AutoRun)
 				CheckMenuItem(MyMenu,ID_CPU_AUTORUN,MF_CHECKED);
@@ -561,6 +587,7 @@ void	AddDebug (char *txt)
 	strcat(DebugText,txt);
 	strcat(DebugText,"\r\n");
 	SetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText);
+	/* Scroll it to the bottom - how? */
 }
 void	ShowDebug (void)
 {
@@ -570,12 +597,173 @@ void	ShowDebug (void)
 	ShowWindow(hDebug,SW_SHOW);
 }
 
+LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	static char *filename;
+	static char header[16];
+	int i;
+	FILE *rom;
+	char name[256];
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		filename = (char *)lParam;
+		rom = fopen(filename,"rb");
+		if (!rom)
+		{
+			MessageBox(mWnd,"Unable to open ROM!","Nintendulator",MB_OK | MB_ICONERROR);
+			EndDialog(hDlg,0);
+		}
+		fread(header,16,1,rom);
+		fclose(rom);
+		if (memcmp(header,"NES\x1A",4))
+		{
+			MessageBox(mWnd,"Selected file is not an iNES ROM image!","Nintendulator",MB_OK | MB_ICONERROR);
+			EndDialog(hDlg,0);
+		}
+		i = strlen(filename)-1;
+		while ((i >= 0) && (filename[i] != '\\'))
+			i--;
+		strcpy(name,filename+i+1);
+		name[strlen(name)-4] = 0;
+		SetDlgItemText(hDlg,IDC_INESNAME,name);
+		SetDlgItemInt(hDlg,IDC_INESPRG,header[4],FALSE);
+		SetDlgItemInt(hDlg,IDC_INESCHR,header[5],FALSE);
+		SetDlgItemInt(hDlg,IDC_INESMAP,((header[6] >> 4) & 0xF) | (header[7] & 0xF0),FALSE);
+		CheckDlgButton(hDlg,IDC_INESBATT,(header[6] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg,IDC_INESTRAIN,(header[6] & 0x04) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg,IDC_INES4SCR,(header[6] & 0x08) ? BST_CHECKED : BST_UNCHECKED);
+		if (header[6] & 0x01)
+			CheckRadioButton(hDlg,IDC_INESHORIZ,IDC_INESVERT,IDC_INESVERT);
+		else	CheckRadioButton(hDlg,IDC_INESHORIZ,IDC_INESVERT,IDC_INESHORIZ);
+		CheckDlgButton(hDlg,IDC_INESVS,(header[7] & 0x01) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg,IDC_INESPC10,(header[7] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
+		if (IsDlgButtonChecked(hDlg,IDC_INES4SCR))
+		{
+			EnableWindow(GetDlgItem(hDlg,IDC_INESHORIZ),FALSE);
+			EnableWindow(GetDlgItem(hDlg,IDC_INESVERT),FALSE);
+		}
+		else
+		{
+			EnableWindow(GetDlgItem(hDlg,IDC_INESHORIZ),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_INESVERT),TRUE);
+		}
+		if (IsDlgButtonChecked(hDlg,IDC_INESVS))
+			EnableWindow(GetDlgItem(hDlg,IDC_INESPC10),FALSE);
+		else if (IsDlgButtonChecked(hDlg,IDC_INESPC10))
+			EnableWindow(GetDlgItem(hDlg,IDC_INESVS),FALSE);
+		else
+		{
+			EnableWindow(GetDlgItem(hDlg,IDC_INESVS),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_INESPC10),TRUE);
+		}
+		break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDC_INESPRG:
+			i = GetDlgItemInt(hDlg,IDC_INESPRG,NULL,FALSE);
+			if ((i < 0) || (i > 255))
+				SetDlgItemInt(hDlg,IDC_INESPRG,0,FALSE);
+			header[4] = i & 0xFF;
+			break;
+		case IDC_INESCHR:
+			i = GetDlgItemInt(hDlg,IDC_INESCHR,NULL,FALSE);
+			if ((i < 0) || (i > 255))
+				SetDlgItemInt(hDlg,IDC_INESCHR,0,FALSE);
+			header[5] = i & 0xFF;
+			break;
+		case IDC_INESMAP:
+			i = GetDlgItemInt(hDlg,IDC_INESMAP,NULL,FALSE);
+			if ((i < 0) || (i > 255))
+				SetDlgItemInt(hDlg,IDC_INESMAP,0,FALSE);
+			header[6] = (header[6] & 0x0F) | ((i & 0x0F) << 4);
+			header[7] = (header[7] & 0x0F) | (i & 0xF0);
+			break;
+		case IDC_INESBATT:
+			if (IsDlgButtonChecked(hDlg,IDC_INESBATT))
+				header[6] |= 0x02;
+			else	header[6] &= ~0x02;
+			break;
+		case IDC_INESTRAIN:
+			if (IsDlgButtonChecked(hDlg,IDC_INESTRAIN))
+			{
+				MessageBox(hDlg,"Trained ROMs are not supported in Nintendulator!","Nintendulator",MB_OK | MB_ICONWARNING);
+				header[6] |= 0x04;
+			}
+			else	header[6] &= ~0x04;
+			break;
+		case IDC_INES4SCR:
+			if (IsDlgButtonChecked(hDlg,IDC_INES4SCR))
+			{
+				EnableWindow(GetDlgItem(hDlg,IDC_INESHORIZ),FALSE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INESVERT),FALSE);
+				header[6] |= 0x08;
+			}
+			else
+			{
+				EnableWindow(GetDlgItem(hDlg,IDC_INESHORIZ),TRUE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INESVERT),TRUE);
+				header[6] &= ~0x08;
+			}
+			break;
+		case IDC_INESHORIZ:
+			if (IsDlgButtonChecked(hDlg,IDC_INESHORIZ))
+				header[6] &= ~0x01;
+			break;
+		case IDC_INESVERT:
+			if (IsDlgButtonChecked(hDlg,IDC_INESVERT))
+				header[6] |= 0x01;
+			break;
+		case IDC_INESVS:
+			if (IsDlgButtonChecked(hDlg,IDC_INESVS))
+			{
+				EnableWindow(GetDlgItem(hDlg,IDC_INESPC10),FALSE);
+				header[7] |= 0x01;
+			}
+			else
+			{
+				EnableWindow(GetDlgItem(hDlg,IDC_INESPC10),TRUE);
+				header[7] &= ~0x01;
+			}
+			break;
+		case IDC_INESPC10:
+			if (IsDlgButtonChecked(hDlg,IDC_INESPC10))
+			{
+				EnableWindow(GetDlgItem(hDlg,IDC_INESVS),FALSE);
+				header[7] |= 0x02;
+			}
+			else
+			{
+				EnableWindow(GetDlgItem(hDlg,IDC_INESVS),TRUE);
+				header[7] &= ~0x02;
+			}
+			break;
+		case IDOK:
+			if (((header[8] || header[9] || header[10] || header[11] || header[12] || header[13] || header[14] || header[15])) && 
+				(MessageBox(hDlg,"Garbage data has been detected in this ROM's header! Do you wish to remove it?","Nintendulator",MB_YESNO | MB_ICONQUESTION) == IDYES))
+				memset(&header[8],0,8);
+			rom = fopen(filename,"r+b");
+			if (rom)
+			{
+				fwrite(header,16,1,rom);
+				fclose(rom);
+			}
+			else	MessageBox(mWnd,"Failed to open ROM!","Nintendulator",MB_OK | MB_ICONERROR);
+			// fall through
+		case IDCANCEL:
+			EndDialog(hDlg,0);
+			break;
+		}
+	}
+	return FALSE;
+}
+
 void	ProcessMessages (void)
 {
 	MSG msg;
 	while (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
 		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg))
-//		if (MaskKeyboard || !TranslateAccelerator(mWnd,hAccelTable,&msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
