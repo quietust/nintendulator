@@ -27,6 +27,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "CPU.h"
 #include "PPU.h"
 #include "GFX.h"
+#include "Genie.h"
 
 #ifdef ENABLE_DEBUGGER
 
@@ -265,11 +266,12 @@ void	Debugger_StopLogging (void)
 	Debugger.Logging = FALSE;
 }
 
-unsigned char TraceMem (unsigned long Addy)
+unsigned char TraceMem (unsigned long Addr)
 {
-	Addy &= 0xFFFF;
-	if ((CPU.ReadHandler[Addy >> 12] == CPU_ReadRAM) || (CPU.ReadHandler[Addy >> 12] == CPU_ReadPRG))
-		return CPU.ReadHandler[Addy >> 12](Addy >> 12, Addy & 0xFFF);
+	int Bank = (Addr >> 12) & 0xF;
+	FCPURead Read = CPU.ReadHandler[Bank];
+	if ((Read == CPU_ReadRAM) || (Read == CPU_ReadPRG) || (Read == GenieRead) || (Read == GenieRead1) || (Read == GenieRead2) || (Read == GenieRead3))
+		return Read(Bank, Addr & 0xFFF);
 	else	return 0xFF;
 }
 
