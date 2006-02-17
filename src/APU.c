@@ -60,25 +60,29 @@ static	struct
 	int Timer;
 	int EnvCtr, Envelope, BendCtr;
 	BOOL Enabled, ValidFreq, Active;
+	BOOL EnvClk, SwpClk;
 	unsigned long Cycles;
 	signed long Pos;
 }	Square0, Square1;
-const	signed char	Duties[4][16] = {{+4,+4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4},{+4,+4,+4,+4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4},{+4,+4,+4,+4,+4,+4,+4,+4,-4,-4,-4,-4,-4,-4,-4,-4},{+4,+4,+4,+4,+4,+4,+4,+4,+4,+4,+4,+4,-4,-4,-4,-4}};
+const	signed char	Duties[4][8] = {{-4,+4,-4,-4,-4,-4,-4,-4},{-4,+4,+4,-4,-4,-4,-4,-4},{-4,+4,+4,+4,+4,-4,-4,-4},{+4,-4,-4,+4,+4,+4,+4,+4}};
 __inline void	Square0_CheckActive (void)
 {
-	if (Square0.ValidFreq = ((Square0.freq >= 0x8) && (Square0.swpdir || !(Square0.freq + (Square0.freq >> Square0.swpstep) & 0x800))))
-		Square0.Active = Square0.Enabled && Square0.Timer;
-	else	Square0.Active = FALSE;
-	if (Square0.Active)
+	if ((Square0.Timer) && (Square0.ValidFreq = ((Square0.freq >= 0x8) && ((Square0.swpdir) || !((Square0.freq + (Square0.freq >> Square0.swpstep)) & 0x800)))))
+	{
+		Square0.Active = TRUE;
 		Square0.Pos = Duties[Square0.duty][Square0.CurD] * Square0.Vol;
-	else	Square0.Pos = 0;
+	}
+	else
+	{
+		Square0.Active = FALSE;
+		Square0.Pos = 0;
+	}
 }
 __inline void	Square0_Write (int Reg, unsigned char Val)
 {
 	switch (Reg)
 	{
 	case 0:	Square0.volume = Val & 0xF;
-		Square0.EnvCtr = Square0.volume + 1;
 		Square0.envelope = Val & 0x10;
 		Square0.wavehold = Val & 0x20;
 		Square0.duty = (Val >> 6) & 0x3;
@@ -88,6 +92,7 @@ __inline void	Square0_Write (int Reg, unsigned char Val)
 		Square0.swpdir = Val & 0x08;
 		Square0.swpspeed = (Val >> 4) & 0x7;
 		Square0.swpenab = Val & 0x80;
+		Square0.SwpClk = TRUE;
 		break;
 	case 2:	Square0.freq &= 0x700;
 		Square0.freq |= Val;
@@ -96,8 +101,8 @@ __inline void	Square0_Write (int Reg, unsigned char Val)
 		Square0.freq |= (Val & 0x7) << 8;
 		if (Square0.Enabled)
 			Square0.Timer = LengthCounts[(Val >> 3) & 0x1F];
-		Square0.Envelope = 0xF;
 		Square0.CurD = 0;
+		Square0.EnvClk = TRUE;
 		break;
 	case 4:	if (!(Square0.Enabled = Val ? TRUE : FALSE))
 			Square0.Timer = 0;
@@ -107,54 +112,70 @@ __inline void	Square0_Write (int Reg, unsigned char Val)
 }
 __inline void	Square0_Run (void)
 {
-	if (Square0.Active && !--Square0.Cycles)
+	if (!--Square0.Cycles)
 	{
-		Square0.Cycles = Square0.freq + 1;
-		Square0.CurD = (Square0.CurD + 1) & 0xF;
-		Square0.Pos = Duties[Square0.duty][Square0.CurD] * Square0.Vol;
+		Square0.Cycles = (Square0.freq + 1) << 1;
+		Square0.CurD = (Square0.CurD + 1) & 0x7;
+		if (Square0.Active)
+			Square0.Pos = Duties[Square0.duty][Square0.CurD] * Square0.Vol;
 	}
 }
 __inline void	Square0_QuarterFrame (void)
 {
-	if (Square0.Active && !--Square0.EnvCtr)
+	if (Square0.EnvClk)
+	{
+		Square0.EnvClk = FALSE;
+		Square0.Envelope = 0xF;
+		Square0.EnvCtr = Square0.volume + 1;
+	}
+	else if (!--Square0.EnvCtr)
 	{
 		Square0.EnvCtr = Square0.volume + 1;
 		if (Square0.Envelope)
 			Square0.Envelope--;
 		else	Square0.Envelope = Square0.wavehold ? 0xF : 0x0;
-		Square0.Vol = Square0.envelope ? Square0.volume : Square0.Envelope;
 	}
+	Square0.Vol = Square0.envelope ? Square0.volume : Square0.Envelope;
+	Square0_CheckActive();
 }
 __inline void	Square0_HalfFrame (void)
 {
-	if (Square0.Active && Square0.swpenab && !--Square0.BendCtr)
+	if (!--Square0.BendCtr)
 	{
 		Square0.BendCtr = Square0.swpspeed + 1;
-		if (Square0.swpstep)
+		if (Square0.swpenab && Square0.ValidFreq)
 		{
 			int sweep = Square0.freq >> Square0.swpstep;
 			Square0.freq += Square0.swpdir ? ~sweep : sweep;
 		}
 	}
-	if (Square0.Active && !Square0.wavehold)
+	if (Square0.SwpClk)
+	{
+		Square0.SwpClk = FALSE;
+		Square0.BendCtr = Square0.swpspeed + 1;
+	}
+	if (Square0.Timer && !Square0.wavehold)
 		Square0.Timer--;
 	Square0_CheckActive();
 }
 __inline void	Square1_CheckActive (void)
 {
-	if (Square1.ValidFreq = ((Square1.freq >= 0x8) && (Square1.swpdir || !(Square1.freq + (Square1.freq >> Square1.swpstep) & 0x800))))
-		Square1.Active = Square1.Enabled && Square1.Timer;
-	else	Square1.Active = FALSE;
-	if (Square1.Active)
+	if ((Square1.Timer) && (Square1.ValidFreq = ((Square1.freq >= 0x8) && ((Square1.swpdir) || !((Square1.freq + (Square1.freq >> Square1.swpstep)) & 0x800)))))
+	{
+		Square1.Active = TRUE;
 		Square1.Pos = Duties[Square1.duty][Square1.CurD] * Square1.Vol;
-	else	Square1.Pos = 0;
+	}
+	else
+	{
+		Square1.Active = FALSE;
+		Square1.Pos = 0;
+	}
 }
 __inline void	Square1_Write (int Reg, unsigned char Val)
 {
 	switch (Reg)
 	{
 	case 0:	Square1.volume = Val & 0xF;
-		Square1.EnvCtr = Square1.volume + 1;
 		Square1.envelope = Val & 0x10;
 		Square1.wavehold = Val & 0x20;
 		Square1.duty = (Val >> 6) & 0x3;
@@ -164,6 +185,7 @@ __inline void	Square1_Write (int Reg, unsigned char Val)
 		Square1.swpdir = Val & 0x08;
 		Square1.swpspeed = (Val >> 4) & 0x7;
 		Square1.swpenab = Val & 0x80;
+		Square1.SwpClk = TRUE;
 		break;
 	case 2:	Square1.freq &= 0x700;
 		Square1.freq |= Val;
@@ -172,8 +194,8 @@ __inline void	Square1_Write (int Reg, unsigned char Val)
 		Square1.freq |= (Val & 0x7) << 8;
 		if (Square1.Enabled)
 			Square1.Timer = LengthCounts[(Val >> 3) & 0x1F];
-		Square1.Envelope = 0xF;
 		Square1.CurD = 0;
+		Square1.EnvClk = TRUE;
 		break;
 	case 4:	if (!(Square1.Enabled = Val ? TRUE : FALSE))
 			Square1.Timer = 0;
@@ -183,36 +205,49 @@ __inline void	Square1_Write (int Reg, unsigned char Val)
 }
 __inline void	Square1_Run (void)
 {
-	if (Square1.Active && !--Square1.Cycles)
+	if (!--Square1.Cycles)
 	{
-		Square1.Cycles = Square1.freq + 1;
-		Square1.CurD = (Square1.CurD + 1) & 0xF;
-		Square1.Pos = Duties[Square1.duty][Square1.CurD] * Square1.Vol;
+		Square1.Cycles = (Square1.freq + 1) << 1;
+		Square1.CurD = (Square1.CurD + 1) & 0x7;
+		if (Square1.Active)
+			Square1.Pos = Duties[Square1.duty][Square1.CurD] * Square1.Vol;
 	}
 }
 __inline void	Square1_QuarterFrame (void)
 {
-	if (Square1.Active && !--Square1.EnvCtr)
+	if (Square1.EnvClk)
+	{
+		Square1.EnvClk = FALSE;
+		Square1.Envelope = 0xF;
+		Square1.EnvCtr = Square1.volume + 1;
+	}
+	else if (!--Square1.EnvCtr)
 	{
 		Square1.EnvCtr = Square1.volume + 1;
 		if (Square1.Envelope)
 			Square1.Envelope--;
 		else	Square1.Envelope = Square1.wavehold ? 0xF : 0x0;
-		Square1.Vol = Square1.envelope ? Square1.volume : Square1.Envelope;
 	}
+	Square1.Vol = Square1.envelope ? Square1.volume : Square1.Envelope;
+	Square1_CheckActive();
 }
 __inline void	Square1_HalfFrame (void)
 {
-	if (Square1.Active && Square1.swpenab && !--Square1.BendCtr)
+	if (!--Square1.BendCtr)
 	{
 		Square1.BendCtr = Square1.swpspeed + 1;
-		if (Square1.swpstep)
+		if (Square1.swpenab && Square1.ValidFreq)
 		{
 			int sweep = Square1.freq >> Square1.swpstep;
 			Square1.freq += Square1.swpdir ? -sweep : sweep;
 		}
 	}
-	if (Square1.Active && !Square1.wavehold)
+	if (Square1.SwpClk)
+	{
+		Square1.SwpClk = FALSE;
+		Square1.BendCtr = Square1.swpspeed + 1;
+	}
+	if (Square1.Timer && !Square1.wavehold)
 		Square1.Timer--;
 	Square1_CheckActive();
 }
@@ -222,17 +257,16 @@ static	struct
 	unsigned char linear, wavehold;
 	unsigned long freq;
 	unsigned char CurD;
-	int Timer, LinCtr, LinReload;
+	int Timer, LinCtr;
 	BOOL Enabled, Active;
+	BOOL LinClk;
 	unsigned long Cycles;
 	signed long Pos;
 }	Triangle;
 const	signed char	TriDuty[32] = {-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0,-1,-2,-3,-4,-5,-6,-7,-8};
 __inline void	Triangle_CheckActive (void)
 {
-	if (Triangle.freq >= 4)
-		Triangle.Active = Triangle.Enabled && Triangle.Timer && Triangle.LinCtr;
-	else	Triangle.Active = FALSE;
+	Triangle.Active = Triangle.Timer && Triangle.LinCtr;
 }
 __inline void	Triangle_Write (int Reg, unsigned char Val)
 {
@@ -248,9 +282,7 @@ __inline void	Triangle_Write (int Reg, unsigned char Val)
 		Triangle.freq |= (Val & 0x7) << 8;
 		if (Triangle.Enabled)
 			Triangle.Timer = LengthCounts[(Val >> 3) & 0x1F];
-		Triangle.LinReload = 1;
-		if (!Triangle.LinCtr)
-			Triangle.LinCtr = 1;
+		Triangle.LinClk = TRUE;
 		break;
 	case 4:	if (!(Triangle.Enabled = Val ? TRUE : FALSE))
 			Triangle.Timer = 0;
@@ -260,30 +292,30 @@ __inline void	Triangle_Write (int Reg, unsigned char Val)
 }
 __inline void	Triangle_Run (void)
 {
-	if (Triangle.Active && !--Triangle.Cycles)
+	if (!--Triangle.Cycles)
 	{
 		Triangle.Cycles = Triangle.freq + 1;
-		Triangle.CurD++;
-		Triangle.CurD &= 0x1F;
-		Triangle.Pos = TriDuty[Triangle.CurD] * 8;
+		if (Triangle.Active)
+		{
+			Triangle.CurD++;
+			Triangle.CurD &= 0x1F;
+			Triangle.Pos = TriDuty[Triangle.CurD] * 8;
+		}
 	}
 }
 __inline void	Triangle_QuarterFrame (void)
 {
-	if (Triangle.Enabled)
-	{
-		if (Triangle.LinReload)
-			Triangle.LinCtr = Triangle.linear;
-		else	if (Triangle.LinCtr)
-			Triangle.LinCtr--;
-		if (!Triangle.wavehold)
-			Triangle.LinReload = 0;
-	}
+	if (Triangle.LinClk)
+		Triangle.LinCtr = Triangle.linear;
+	else	if (Triangle.LinCtr)
+		Triangle.LinCtr--;
+	if (!Triangle.wavehold)
+		Triangle.LinClk = FALSE;
 	Triangle_CheckActive();
 }
 __inline void	Triangle_HalfFrame (void)
 {
-	if (Triangle.Active && !Triangle.wavehold)
+	if (Triangle.Timer && !Triangle.wavehold)
 		Triangle.Timer--;
 	Triangle_CheckActive();
 }
@@ -296,16 +328,12 @@ static	struct
 	int Vol;
 	int Timer;
 	int EnvCtr, Envelope;
-	BOOL Enabled, Active;
+	BOOL Enabled;
+	BOOL EnvClk;
 	unsigned long Cycles;
 	signed long Pos;
 }	Noise;
 const	unsigned long	NoiseFreq[16] = {0x004,0x008,0x010,0x020,0x040,0x060,0x080,0x0A0,0x0CA,0x0FE,0x17C,0x1FC,0x2FA,0x3F8,0x7F2,0xFE4};
-__inline void	Noise_CheckActive (void)
-{
-	if (!(Noise.Active = Noise.Enabled && Noise.Timer))
-		Noise.Pos = 0;
-}
 __inline void	Noise_Write (int Reg, unsigned char Val)
 {
 	switch (Reg)
@@ -314,48 +342,56 @@ __inline void	Noise_Write (int Reg, unsigned char Val)
 		Noise.envelope = Val & 0x10;
 		Noise.wavehold = Val & 0x20;
 		Noise.Vol = Noise.envelope ? Noise.volume : Noise.Envelope;
-		Noise.Pos = ((Noise.CurD & 0x4000) ? -2 : 2) * Noise.Vol;
+		if (Noise.Timer)
+			Noise.Pos = ((Noise.CurD & 0x4000) ? -2 : 2) * Noise.Vol;
 		break;
 	case 2:	Noise.freq = Val & 0xF;
 		Noise.datatype = Val & 0x80;
 		break;
 	case 3:	if (Noise.Enabled)
 			Noise.Timer = LengthCounts[(Val >> 3) & 0x1F];
-		Noise.Envelope = 0xF;
+		Noise.EnvClk = TRUE;
 		break;
 	case 4:	if (!(Noise.Enabled = Val ? TRUE : FALSE))
 			Noise.Timer = 0;
 		break;
 	}
-	Noise_CheckActive();
 }
 __inline void	Noise_Run (void)
 {
-	if (Noise.Active && !--Noise.Cycles)
+	if (!--Noise.Cycles)
 	{
 		Noise.Cycles = NoiseFreq[Noise.freq];	/* no + 1 here */
 		if (Noise.datatype)
 			Noise.CurD = (Noise.CurD << 1) | (((Noise.CurD >> 14) ^ (Noise.CurD >> 8)) & 0x1);
 		else	Noise.CurD = (Noise.CurD << 1) | (((Noise.CurD >> 14) ^ (Noise.CurD >> 13)) & 0x1);
-		Noise.Pos = ((Noise.CurD & 0x4000) ? -2 : 2) * Noise.Vol;
+		if (Noise.Timer)
+			Noise.Pos = ((Noise.CurD & 0x4000) ? -2 : 2) * Noise.Vol;
 	}
 }
 __inline void	Noise_QuarterFrame (void)
 {
-	if (Noise.Active && !--Noise.EnvCtr)
+	if (Noise.EnvClk)
+	{
+		Noise.EnvClk = FALSE;
+		Noise.Envelope = 0xF;
+		Noise.EnvCtr = Noise.volume + 1;
+	}
+	else if (!--Noise.EnvCtr)
 	{
 		Noise.EnvCtr = Noise.volume + 1;
 		if (Noise.Envelope)
 			Noise.Envelope--;
 		else	Noise.Envelope = Noise.wavehold ? 0xF : 0x0;
-		Noise.Vol = Noise.envelope ? Noise.volume : Noise.Envelope;
 	}
+	Noise.Vol = Noise.envelope ? Noise.volume : Noise.Envelope;
+	if (Noise.Timer)
+		Noise.Pos = ((Noise.CurD & 0x4000) ? -2 : 2) * Noise.Vol;
 }
 __inline void	Noise_HalfFrame (void)
 {
-	if (Noise.Active && !Noise.wavehold)
+	if (Noise.Timer && !Noise.wavehold)
 		Noise.Timer--;
-	Noise_CheckActive();
 }
 
 static	struct
@@ -566,13 +602,13 @@ void	APU_WriteReg (int Addy, unsigned char Val)
 unsigned char	APU_Read4015 (void)
 {
 	unsigned char result =
-		((Square0.Enabled && Square0.Timer) ? 0x01 : 0) |
-		((Square1.Enabled && Square1.Timer) ? 0x02 : 0) |
-		((                 Triangle.Active) ? 0x04 : 0) |
-		((                    Noise.Active) ? 0x08 : 0) |
-		((                  DPCM.LengthCtr) ? 0x10 : 0) |
-		((   (CPU.WantIRQ &     IRQ_FRAME)) ? 0x40 : 0) |
-		((   (CPU.WantIRQ &      IRQ_DPCM)) ? 0x80 : 0);
+		((            Square0.Timer) ? 0x01 : 0) |
+		((            Square1.Timer) ? 0x02 : 0) |
+		((           Triangle.Timer) ? 0x04 : 0) |
+		((              Noise.Timer) ? 0x08 : 0) |
+		((           DPCM.LengthCtr) ? 0x10 : 0) |
+		(((CPU.WantIRQ & IRQ_FRAME)) ? 0x40 : 0) |
+		(((CPU.WantIRQ &  IRQ_DPCM)) ? 0x80 : 0);
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 	return result;
 }
