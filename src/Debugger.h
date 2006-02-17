@@ -63,7 +63,7 @@ struct tDebugger
 	HWND	RegWnd;
 	HBITMAP	RegBMP;
 
-	int	AddyLine[64];
+	int	AddrLine[64];
 	BOOL	BreakP[0x10000];
 	int	TraceOffset;		/* -1 to center on PC, otherwise center on TraceOffset */
 

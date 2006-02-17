@@ -110,149 +110,149 @@ static	FPPURead	_MAPINT	GetPPUReadHandler (int Page)
 
 /******************************************************************************/
 
-static	__inline void	_MAPINT	SetPRG_ROM4 (int Where, int What)
+static	__inline void	_MAPINT	SetPRG_ROM4 (int Bank, int Val)
 {
-	CPU.PRGPointer[Where] = PRG_ROM[What & NES.PRGMask];
-	CPU.Readable[Where] = TRUE;
-	CPU.Writable[Where] = FALSE;
+	CPU.PRGPointer[Bank] = PRG_ROM[Val & NES.PRGMask];
+	CPU.Readable[Bank] = TRUE;
+	CPU.Writable[Bank] = FALSE;
 }
-static	void	_MAPINT	SetPRG_ROM8 (int Where, int What)
+static	void	_MAPINT	SetPRG_ROM8 (int Bank, int Val)
 {
-	What <<= 1;
-	SetPRG_ROM4(Where+0,What+0);
-	SetPRG_ROM4(Where+1,What+1);
+	Val <<= 1;
+	SetPRG_ROM4(Bank+0,Val+0);
+	SetPRG_ROM4(Bank+1,Val+1);
 }
-static	void	_MAPINT	SetPRG_ROM16 (int Where, int What)
+static	void	_MAPINT	SetPRG_ROM16 (int Bank, int Val)
 {
-	What <<= 2;
-	SetPRG_ROM4(Where+0,What+0);
-	SetPRG_ROM4(Where+1,What+1);
-	SetPRG_ROM4(Where+2,What+2);
-	SetPRG_ROM4(Where+3,What+3);
+	Val <<= 2;
+	SetPRG_ROM4(Bank+0,Val+0);
+	SetPRG_ROM4(Bank+1,Val+1);
+	SetPRG_ROM4(Bank+2,Val+2);
+	SetPRG_ROM4(Bank+3,Val+3);
 }
-static	void	_MAPINT	SetPRG_ROM32 (int Where, int What)
+static	void	_MAPINT	SetPRG_ROM32 (int Bank, int Val)
 {
-	What <<= 3;
-	SetPRG_ROM4(Where+0,What+0);
-	SetPRG_ROM4(Where+1,What+1);
-	SetPRG_ROM4(Where+2,What+2);
-	SetPRG_ROM4(Where+3,What+3);
-	SetPRG_ROM4(Where+4,What+4);
-	SetPRG_ROM4(Where+5,What+5);
-	SetPRG_ROM4(Where+6,What+6);
-	SetPRG_ROM4(Where+7,What+7);
+	Val <<= 3;
+	SetPRG_ROM4(Bank+0,Val+0);
+	SetPRG_ROM4(Bank+1,Val+1);
+	SetPRG_ROM4(Bank+2,Val+2);
+	SetPRG_ROM4(Bank+3,Val+3);
+	SetPRG_ROM4(Bank+4,Val+4);
+	SetPRG_ROM4(Bank+5,Val+5);
+	SetPRG_ROM4(Bank+6,Val+6);
+	SetPRG_ROM4(Bank+7,Val+7);
 }
-static	int	_MAPINT	GetPRG_ROM4 (int Where)	/* -1 if no ROM mapped */
+static	int	_MAPINT	GetPRG_ROM4 (int Bank)	/* -1 if no ROM mapped */
 {
-	int tpi = (int)((CPU.PRGPointer[Where] - PRG_ROM[0]) >> 12);
+	int tpi = (int)((CPU.PRGPointer[Bank] - PRG_ROM[0]) >> 12);
 	if ((tpi < 0) || (tpi > NES.PRGMask)) return -1;
 	else return tpi;
 }
 
 /******************************************************************************/
 
-static	__inline void	_MAPINT	SetPRG_RAM4 (int Where, int What)
+static	__inline void	_MAPINT	SetPRG_RAM4 (int Bank, int Val)
 {
-	CPU.PRGPointer[Where] = PRG_RAM[What & 0xF];
-	CPU.Readable[Where] = TRUE;
-	CPU.Writable[Where] = TRUE;
+	CPU.PRGPointer[Bank] = PRG_RAM[Val & 0xF];
+	CPU.Readable[Bank] = TRUE;
+	CPU.Writable[Bank] = TRUE;
 }
-static	void	_MAPINT	SetPRG_RAM8 (int Where, int What)
+static	void	_MAPINT	SetPRG_RAM8 (int Bank, int Val)
 {
-	What <<= 1;
-	SetPRG_RAM4(Where+0,What+0);
-	SetPRG_RAM4(Where+1,What+1);
+	Val <<= 1;
+	SetPRG_RAM4(Bank+0,Val+0);
+	SetPRG_RAM4(Bank+1,Val+1);
 }
-static	void	_MAPINT	SetPRG_RAM16 (int Where, int What)
+static	void	_MAPINT	SetPRG_RAM16 (int Bank, int Val)
 {
-	What <<= 2;
-	SetPRG_RAM4(Where+0,What+0);
-	SetPRG_RAM4(Where+1,What+1);
-	SetPRG_RAM4(Where+2,What+2);
-	SetPRG_RAM4(Where+3,What+3);
+	Val <<= 2;
+	SetPRG_RAM4(Bank+0,Val+0);
+	SetPRG_RAM4(Bank+1,Val+1);
+	SetPRG_RAM4(Bank+2,Val+2);
+	SetPRG_RAM4(Bank+3,Val+3);
 }
-static	void	_MAPINT	SetPRG_RAM32 (int Where, int What)
+static	void	_MAPINT	SetPRG_RAM32 (int Bank, int Val)
 {
-	What <<= 3;
-	SetPRG_RAM4(Where+0,What+0);
-	SetPRG_RAM4(Where+1,What+1);
-	SetPRG_RAM4(Where+2,What+2);
-	SetPRG_RAM4(Where+3,What+3);
-	SetPRG_RAM4(Where+4,What+4);
-	SetPRG_RAM4(Where+5,What+5);
-	SetPRG_RAM4(Where+6,What+6);
-	SetPRG_RAM4(Where+7,What+7);
+	Val <<= 3;
+	SetPRG_RAM4(Bank+0,Val+0);
+	SetPRG_RAM4(Bank+1,Val+1);
+	SetPRG_RAM4(Bank+2,Val+2);
+	SetPRG_RAM4(Bank+3,Val+3);
+	SetPRG_RAM4(Bank+4,Val+4);
+	SetPRG_RAM4(Bank+5,Val+5);
+	SetPRG_RAM4(Bank+6,Val+6);
+	SetPRG_RAM4(Bank+7,Val+7);
 }
-static	int	_MAPINT	GetPRG_RAM4 (int Where)	/* -1 if no RAM mapped */
+static	int	_MAPINT	GetPRG_RAM4 (int Bank)	/* -1 if no RAM mapped */
 {
-	int tpi = (int)((CPU.PRGPointer[Where] - PRG_RAM[0]) >> 12);
+	int tpi = (int)((CPU.PRGPointer[Bank] - PRG_RAM[0]) >> 12);
 	if ((tpi < 0) || (tpi > MAX_PRGRAM_MASK)) return -1;
 	else return tpi;
 }
 
 /******************************************************************************/
 
-static	unsigned char *	_MAPINT	GetPRG_Ptr4 (int Where)
+static	unsigned char *	_MAPINT	GetPRG_Ptr4 (int Bank)
 {
-	return CPU.PRGPointer[Where];
+	return CPU.PRGPointer[Bank];
 }
-static	void	_MAPINT	SetPRG_Ptr4 (int Where, unsigned char *Data, BOOL Writable)
+static	void	_MAPINT	SetPRG_Ptr4 (int Bank, unsigned char *Data, BOOL Writable)
 {
-	CPU.PRGPointer[Where] = Data;
-	CPU.Readable[Where] = TRUE;
-	CPU.Writable[Where] = Writable;
+	CPU.PRGPointer[Bank] = Data;
+	CPU.Readable[Bank] = TRUE;
+	CPU.Writable[Bank] = Writable;
 }
-static	void	_MAPINT	SetPRG_OB4 (int Where)	/* Open bus */
+static	void	_MAPINT	SetPRG_OB4 (int Bank)	/* Open bus */
 {
-	CPU.Readable[Where] = FALSE;
-	CPU.Writable[Where] = FALSE;
+	CPU.Readable[Bank] = FALSE;
+	CPU.Writable[Bank] = FALSE;
 }
 
 /******************************************************************************/
 
-static	__inline void	_MAPINT	SetCHR_ROM1 (int Where, int What)
+static	__inline void	_MAPINT	SetCHR_ROM1 (int Bank, int Val)
 {
 #ifndef NSFPLAYER
 	if (!NES.CHRMask)
 		return;
-	PPU.CHRPointer[Where] = CHR_ROM[What & NES.CHRMask];
-	PPU.Writable[Where] = FALSE;
+	PPU.CHRPointer[Bank] = CHR_ROM[Val & NES.CHRMask];
+	PPU.Writable[Bank] = FALSE;
 #ifdef ENABLE_DEBUGGER
 	Debugger.PatChanged = TRUE;
 	Debugger.NTabChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 #endif
 }
-static	void	_MAPINT	SetCHR_ROM2 (int Where, int What)
+static	void	_MAPINT	SetCHR_ROM2 (int Bank, int Val)
 {
-	What <<= 1;
-	SetCHR_ROM1(Where+0,What+0);
-	SetCHR_ROM1(Where+1,What+1);
+	Val <<= 1;
+	SetCHR_ROM1(Bank+0,Val+0);
+	SetCHR_ROM1(Bank+1,Val+1);
 }
-static	void	_MAPINT	SetCHR_ROM4 (int Where, int What)
+static	void	_MAPINT	SetCHR_ROM4 (int Bank, int Val)
 {
-	What <<= 2;
-	SetCHR_ROM1(Where+0,What+0);
-	SetCHR_ROM1(Where+1,What+1);
-	SetCHR_ROM1(Where+2,What+2);
-	SetCHR_ROM1(Where+3,What+3);
+	Val <<= 2;
+	SetCHR_ROM1(Bank+0,Val+0);
+	SetCHR_ROM1(Bank+1,Val+1);
+	SetCHR_ROM1(Bank+2,Val+2);
+	SetCHR_ROM1(Bank+3,Val+3);
 }
-static	void	_MAPINT	SetCHR_ROM8 (int Where, int What)
+static	void	_MAPINT	SetCHR_ROM8 (int Bank, int Val)
 {
-	What <<= 3;
-	SetCHR_ROM1(Where+0,What+0);
-	SetCHR_ROM1(Where+1,What+1);
-	SetCHR_ROM1(Where+2,What+2);
-	SetCHR_ROM1(Where+3,What+3);
-	SetCHR_ROM1(Where+4,What+4);
-	SetCHR_ROM1(Where+5,What+5);
-	SetCHR_ROM1(Where+6,What+6);
-	SetCHR_ROM1(Where+7,What+7);
+	Val <<= 3;
+	SetCHR_ROM1(Bank+0,Val+0);
+	SetCHR_ROM1(Bank+1,Val+1);
+	SetCHR_ROM1(Bank+2,Val+2);
+	SetCHR_ROM1(Bank+3,Val+3);
+	SetCHR_ROM1(Bank+4,Val+4);
+	SetCHR_ROM1(Bank+5,Val+5);
+	SetCHR_ROM1(Bank+6,Val+6);
+	SetCHR_ROM1(Bank+7,Val+7);
 }
-static	int	_MAPINT	GetCHR_ROM1 (int Where)	/* -1 if no ROM mapped */
+static	int	_MAPINT	GetCHR_ROM1 (int Bank)	/* -1 if no ROM mapped */
 {
 #ifndef NSFPLAYER
-	int tpi = (int)((PPU.CHRPointer[Where] - CHR_ROM[0]) >> 10);
+	int tpi = (int)((PPU.CHRPointer[Bank] - CHR_ROM[0]) >> 10);
 	if ((tpi < 0) || (tpi > NES.CHRMask)) return -1;
 	else return tpi;
 #else
@@ -262,47 +262,47 @@ static	int	_MAPINT	GetCHR_ROM1 (int Where)	/* -1 if no ROM mapped */
 
 /******************************************************************************/
 
-static	__inline void	_MAPINT	SetCHR_RAM1 (int Where, int What)
+static	__inline void	_MAPINT	SetCHR_RAM1 (int Bank, int Val)
 {
 #ifndef NSFPLAYER
-	PPU.CHRPointer[Where] = CHR_RAM[What & 0x1F];
-	PPU.Writable[Where] = TRUE;
+	PPU.CHRPointer[Bank] = CHR_RAM[Val & 0x1F];
+	PPU.Writable[Bank] = TRUE;
 #ifdef ENABLE_DEBUGGER
 	Debugger.PatChanged = TRUE;
 	Debugger.NTabChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 #endif
 }
-static	void	_MAPINT	SetCHR_RAM2 (int Where, int What)
+static	void	_MAPINT	SetCHR_RAM2 (int Bank, int Val)
 {
-	What <<= 1;
-	SetCHR_RAM1(Where+0,What+0);
-	SetCHR_RAM1(Where+1,What+1);
+	Val <<= 1;
+	SetCHR_RAM1(Bank+0,Val+0);
+	SetCHR_RAM1(Bank+1,Val+1);
 }
-static	void	_MAPINT	SetCHR_RAM4 (int Where, int What)
+static	void	_MAPINT	SetCHR_RAM4 (int Bank, int Val)
 {
-	What <<= 2;
-	SetCHR_RAM1(Where+0,What+0);
-	SetCHR_RAM1(Where+1,What+1);
-	SetCHR_RAM1(Where+2,What+2);
-	SetCHR_RAM1(Where+3,What+3);
+	Val <<= 2;
+	SetCHR_RAM1(Bank+0,Val+0);
+	SetCHR_RAM1(Bank+1,Val+1);
+	SetCHR_RAM1(Bank+2,Val+2);
+	SetCHR_RAM1(Bank+3,Val+3);
 }
-static	void	_MAPINT	SetCHR_RAM8 (int Where, int What)
+static	void	_MAPINT	SetCHR_RAM8 (int Bank, int Val)
 {
-	What <<= 3;
-	SetCHR_RAM1(Where+0,What+0);
-	SetCHR_RAM1(Where+1,What+1);
-	SetCHR_RAM1(Where+2,What+2);
-	SetCHR_RAM1(Where+3,What+3);
-	SetCHR_RAM1(Where+4,What+4);
-	SetCHR_RAM1(Where+5,What+5);
-	SetCHR_RAM1(Where+6,What+6);
-	SetCHR_RAM1(Where+7,What+7);
+	Val <<= 3;
+	SetCHR_RAM1(Bank+0,Val+0);
+	SetCHR_RAM1(Bank+1,Val+1);
+	SetCHR_RAM1(Bank+2,Val+2);
+	SetCHR_RAM1(Bank+3,Val+3);
+	SetCHR_RAM1(Bank+4,Val+4);
+	SetCHR_RAM1(Bank+5,Val+5);
+	SetCHR_RAM1(Bank+6,Val+6);
+	SetCHR_RAM1(Bank+7,Val+7);
 }
-static	int	_MAPINT	GetCHR_RAM1 (int Where)	/* -1 if no ROM mapped */
+static	int	_MAPINT	GetCHR_RAM1 (int Bank)	/* -1 if no ROM mapped */
 {
 #ifndef NSFPLAYER
-	int tpi = (int)((PPU.CHRPointer[Where] - CHR_RAM[0]) >> 10);
+	int tpi = (int)((PPU.CHRPointer[Bank] - CHR_RAM[0]) >> 10);
 	if ((tpi < 0) || (tpi > MAX_CHRRAM_MASK)) return -1;
 	else return tpi;
 #else
@@ -312,20 +312,20 @@ static	int	_MAPINT	GetCHR_RAM1 (int Where)	/* -1 if no ROM mapped */
 
 /******************************************************************************/
 
-static	__inline void	_MAPINT	SetCHR_NT1 (int Where, int What)
+static	__inline void	_MAPINT	SetCHR_NT1 (int Bank, int Val)
 {
 #ifndef NSFPLAYER
-	PPU.CHRPointer[Where] = PPU_VRAM[What & 3];
-	PPU.Writable[Where] = TRUE;
+	PPU.CHRPointer[Bank] = PPU_VRAM[Val & 3];
+	PPU.Writable[Bank] = TRUE;
 #ifdef ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 #endif
 }
-static	int	_MAPINT	GetCHR_NT1 (int Where)	/* -1 if no ROM mapped */
+static	int	_MAPINT	GetCHR_NT1 (int Bank)	/* -1 if no ROM mapped */
 {
 #ifndef NSFPLAYER
-	int tpi = (int)((PPU.CHRPointer[Where] - PPU_VRAM[0]) >> 10);
+	int tpi = (int)((PPU.CHRPointer[Bank] - PPU_VRAM[0]) >> 10);
 	if ((tpi < 0) || (tpi > 4)) return -1;
 	else return tpi;
 #else
@@ -335,20 +335,20 @@ static	int	_MAPINT	GetCHR_NT1 (int Where)	/* -1 if no ROM mapped */
 
 /******************************************************************************/
 
-static	unsigned char *	_MAPINT	GetCHR_Ptr1 (int Where)
+static	unsigned char *	_MAPINT	GetCHR_Ptr1 (int Bank)
 {
 #ifndef NSFPLAYER
-	return PPU.CHRPointer[Where];
+	return PPU.CHRPointer[Bank];
 #else
 	return NULL;
 #endif
 }
 
-static	void	_MAPINT	SetCHR_Ptr1 (int Where, unsigned char *Data, BOOL Writable)
+static	void	_MAPINT	SetCHR_Ptr1 (int Bank, unsigned char *Data, BOOL Writable)
 {
 #ifndef NSFPLAYER
-	PPU.CHRPointer[Where] = Data;
-	PPU.Writable[Where] = Writable;
+	PPU.CHRPointer[Bank] = Data;
+	PPU.Writable[Bank] = Writable;
 #ifdef ENABLE_DEBUGGER
 	Debugger.PatChanged = TRUE;
 	Debugger.NTabChanged = TRUE;
@@ -356,11 +356,11 @@ static	void	_MAPINT	SetCHR_Ptr1 (int Where, unsigned char *Data, BOOL Writable)
 #endif
 }
 
-static	void	_MAPINT	SetCHR_OB1 (int Where)
+static	void	_MAPINT	SetCHR_OB1 (int Bank)
 {
 #ifndef NSFPLAYER
-	PPU.CHRPointer[Where] = PPU_OpenBus;
-	PPU.Writable[Where] = FALSE;
+	PPU.CHRPointer[Bank] = PPU_OpenBus;
+	PPU.Writable[Bank] = FALSE;
 #ifdef ENABLE_DEBUGGER
 	Debugger.PatChanged = TRUE;
 	Debugger.NTabChanged = TRUE;

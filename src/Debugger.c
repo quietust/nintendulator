@@ -45,7 +45,7 @@ LRESULT CALLBACK RegProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 enum ADDRMODE { IMP, ACC, IMM, ADR, ABS, IND, REL, ABX, ABY, ZPG, ZPX, ZPY, INX, INY, ERR, NUM_ADDR_MODES };
 
-enum ADDRMODE TraceAddyMode[256] =
+enum ADDRMODE TraceAddrMode[256] =
 {
 	IMM,INX,ERR,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,ACC,IMM,ABS,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPX,ZPX,IMP,ABY,IMP,ABY,ABX,ABX,ABX,ABX,
 	ADR,INX,ERR,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,ACC,IMM,ABS,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPX,ZPX,IMP,ABY,IMP,ABY,ABX,ABX,ABX,ABX,
@@ -79,7 +79,7 @@ char TraceArr[256][5] =
 	" BEQ"," SBC","*HLT","*ISB","*NOP"," SBC"," INC","*ISB"," SED"," SBC","*NOP","*ISB","*NOP"," SBC"," INC","*ISB"
 };
 
-unsigned char VMemory (unsigned long Addy) { return PPU.CHRPointer[(Addy & 0x1C00) >> 10][Addy & 0x03FF]; }
+unsigned char VMemory (unsigned long Addr) { return PPU.CHRPointer[(Addr & 0x1C00) >> 10][Addr & 0x03FF]; }
 
 enum {
 	D_PAL_W = 256,
@@ -277,58 +277,58 @@ unsigned char TraceMem (unsigned short Addr)
 	else	return 0xFF;
 }
 
-void	DecodeInstruction (unsigned short Addy, char *str)
+void	DecodeInstruction (unsigned short Addr, char *str)
 {
-	unsigned char OpData[3] = {TraceMem(Addy),0,0};
-	unsigned short Operand = 0, MidAddy = 0, EffectiveAddy = 0;
-	switch (TraceAddyMode[OpData[0]])
+	unsigned char OpData[3] = {TraceMem(Addr),0,0};
+	unsigned short Operand = 0, MidAddr = 0, EffectiveAddr = 0;
+	switch (TraceAddrMode[OpData[0]])
 	{
-	case IND:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = TraceMem(Operand) | (TraceMem(Operand+1) << 8);	break;
-	case ADR:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);									break;
-	case ABS:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);									break;
-	case ABX:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = Operand + CPU.X;				break;
-	case ABY:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = Operand + CPU.Y;				break;
-	case IMM:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];															break;
-	case ZPG:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];															break;
-	case ZPX:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	EffectiveAddy = (Operand + CPU.X) & 0xFF;									break;
-	case ZPY:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	EffectiveAddy = (Operand + CPU.Y) & 0xFF;									break;
-	case INX:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	MidAddy = (Operand + CPU.X) & 0xFF;	EffectiveAddy = TraceMem(MidAddy) | (TraceMem((MidAddy+1) & 0xFF) << 8);break;
-	case INY:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	MidAddy = TraceMem(Operand) | (TraceMem((Operand+1) & 0xFF) << 8);	EffectiveAddy = MidAddy + CPU.Y;	break;
+	case IND:	OpData[1] = TraceMem(Addr+1);	OpData[2] = TraceMem(Addr+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddr = TraceMem(Operand) | (TraceMem(Operand+1) << 8);	break;
+	case ADR:	OpData[1] = TraceMem(Addr+1);	OpData[2] = TraceMem(Addr+2);	Operand = OpData[1] | (OpData[2] << 8);									break;
+	case ABS:	OpData[1] = TraceMem(Addr+1);	OpData[2] = TraceMem(Addr+2);	Operand = OpData[1] | (OpData[2] << 8);									break;
+	case ABX:	OpData[1] = TraceMem(Addr+1);	OpData[2] = TraceMem(Addr+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddr = Operand + CPU.X;				break;
+	case ABY:	OpData[1] = TraceMem(Addr+1);	OpData[2] = TraceMem(Addr+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddr = Operand + CPU.Y;				break;
+	case IMM:	OpData[1] = TraceMem(Addr+1);	Operand = OpData[1];															break;
+	case ZPG:	OpData[1] = TraceMem(Addr+1);	Operand = OpData[1];															break;
+	case ZPX:	OpData[1] = TraceMem(Addr+1);	Operand = OpData[1];	EffectiveAddr = (Operand + CPU.X) & 0xFF;									break;
+	case ZPY:	OpData[1] = TraceMem(Addr+1);	Operand = OpData[1];	EffectiveAddr = (Operand + CPU.Y) & 0xFF;									break;
+	case INX:	OpData[1] = TraceMem(Addr+1);	Operand = OpData[1];	MidAddr = (Operand + CPU.X) & 0xFF;	EffectiveAddr = TraceMem(MidAddr) | (TraceMem((MidAddr+1) & 0xFF) << 8);break;
+	case INY:	OpData[1] = TraceMem(Addr+1);	Operand = OpData[1];	MidAddr = TraceMem(Operand) | (TraceMem((Operand+1) & 0xFF) << 8);	EffectiveAddr = MidAddr + CPU.Y;	break;
 	case IMP:																						break;
 	case ACC:																						break;
 	case ERR:																						break;
-	case REL:	OpData[1] = TraceMem(Addy+1);	Operand = Addy+2+(signed char)OpData[1];												break;
+	case REL:	OpData[1] = TraceMem(Addr+1);	Operand = Addr+2+(signed char)OpData[1];												break;
 	}
 
-	switch (TraceAddyMode[TraceMem(Addy)])
+	switch (TraceAddrMode[TraceMem(Addr)])
 	{
 	case IMP:
-	case ERR:	sprintf(str,"%04X  %02X       %s                           ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
-	case ACC:	sprintf(str,"%04X  %02X       %s A                         ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
-	case IMM:	sprintf(str,"%04X  %02X %02X    %s #$%02X                      ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
-	case REL:	sprintf(str,"%04X  %02X %02X    %s $%04X                     ",		Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
-	case ZPG:	sprintf(str,"%04X  %02X %02X    %s $%02X = %02X                  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
-	case ZPX:	sprintf(str,"%04X  %02X %02X    %s $%02X,X @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	case ZPY:	sprintf(str,"%04X  %02X %02X    %s $%02X,Y @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	case INX:	sprintf(str,"%04X  %02X %02X    %s ($%02X,X) @ %02X = %04X = %02X  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
-	case INY:	sprintf(str,"%04X  %02X %02X    %s ($%02X),Y = %04X @ %04X = %02X",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
-	case ADR:	sprintf(str,"%04X  %02X %02X %02X %s $%04X                     ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand);							break;
-	case ABS:	sprintf(str,"%04X  %02X %02X %02X %s $%04X = %02X                ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
-	case IND:	sprintf(str,"%04X  %02X %02X %02X %s ($%04X) = %04X            ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy);					break;
-	case ABX:	sprintf(str,"%04X  %02X %02X %02X %s $%04X,X @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	case ABY:	sprintf(str,"%04X  %02X %02X %02X %s $%04X,Y @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case ERR:	sprintf(str,"%04X  %02X       %s                           ",		Addr,OpData[0],				TraceArr[OpData[0]]);								break;
+	case ACC:	sprintf(str,"%04X  %02X       %s A                         ",		Addr,OpData[0],				TraceArr[OpData[0]]);								break;
+	case IMM:	sprintf(str,"%04X  %02X %02X    %s #$%02X                      ",	Addr,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
+	case REL:	sprintf(str,"%04X  %02X %02X    %s $%04X                     ",		Addr,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
+	case ZPG:	sprintf(str,"%04X  %02X %02X    %s $%02X = %02X                  ",	Addr,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
+	case ZPX:	sprintf(str,"%04X  %02X %02X    %s $%02X,X @ %02X = %02X           ",	Addr,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddr,TraceMem(EffectiveAddr));		break;
+	case ZPY:	sprintf(str,"%04X  %02X %02X    %s $%02X,Y @ %02X = %02X           ",	Addr,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddr,TraceMem(EffectiveAddr));		break;
+	case INX:	sprintf(str,"%04X  %02X %02X    %s ($%02X,X) @ %02X = %04X = %02X  ",	Addr,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddr,EffectiveAddr,TraceMem(EffectiveAddr));	break;
+	case INY:	sprintf(str,"%04X  %02X %02X    %s ($%02X),Y = %04X @ %04X = %02X",	Addr,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddr,EffectiveAddr,TraceMem(EffectiveAddr));	break;
+	case ADR:	sprintf(str,"%04X  %02X %02X %02X %s $%04X                     ",	Addr,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand);							break;
+	case ABS:	sprintf(str,"%04X  %02X %02X %02X %s $%04X = %02X                ",	Addr,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
+	case IND:	sprintf(str,"%04X  %02X %02X %02X %s ($%04X) = %04X            ",	Addr,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddr);					break;
+	case ABX:	sprintf(str,"%04X  %02X %02X %02X %s $%04X,X @ %04X = %02X       ",	Addr,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddr,TraceMem(EffectiveAddr));		break;
+	case ABY:	sprintf(str,"%04X  %02X %02X %02X %s $%04X,Y @ %04X = %02X       ",	Addr,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddr,TraceMem(EffectiveAddr));		break;
 	default :	strcpy(str,"                                             ");																	break;
 	}
 }
 
-void	Debugger_DrawTraceLine (unsigned short Addy, short y)
+void	Debugger_DrawTraceLine (unsigned short Addr, short y)
 {
 	char tpc[64];
 	TCHAR tps[64];
-	Debugger.AddyLine[y/Debugger.FontHeight] = Addy;
+	Debugger.AddrLine[y/Debugger.FontHeight] = Addr;
 	
-	DecodeInstruction(Addy,tpc);
-	if (Debugger.BreakP[Addy])
+	DecodeInstruction(Addr,tpc);
+	if (Debugger.BreakP[Addr])
 	{
 		HBRUSH RBrush = CreateSolidBrush(RGB(255,0,0));
 		RECT trect;
@@ -361,8 +361,8 @@ void	Debugger_Update (void)
 			RECT trect;
 			TCHAR tps[64];
 			int i, TpVal, CurrY;
-			unsigned short StartAddy;
-			unsigned short CurrAddy;
+			unsigned short StartAddr;
+			unsigned short CurrAddr;
 			unsigned short BackAddies[0x100];
 			int FoundPtr = 0xFF;
 			int StartY;
@@ -406,7 +406,7 @@ void	Debugger_Update (void)
 
 			_stprintf(tps,_T("CPU Ticks: %i/%.3f"),PPU.Clockticks,PPU.Clockticks / (PPU.IsPAL ? 3.2 : 3.0));
 								TextOut(Debugger.RegDC,0, 8*Debugger.FontHeight,tps,(int)_tcslen(tps));
-			_stprintf(tps,_T("VRAMAddy: %04X"),PPU.VRAMAddr);
+			_stprintf(tps,_T("VRAMAddr: %04X"),PPU.VRAMAddr);
 								TextOut(Debugger.RegDC,0, 9*Debugger.FontHeight,tps,(int)_tcslen(tps));
 
 			_stprintf(tps,_T("CPU Pages:"));	TextOut(Debugger.RegDC,0,11*Debugger.FontHeight,tps,(int)_tcslen(tps));
@@ -434,35 +434,35 @@ void	Debugger_Update (void)
 			RedrawWindow(Debugger.RegWnd,NULL,NULL,RDW_INVALIDATE);
 
 			for (i = 0; i < 64; i++)
-				Debugger.AddyLine[i] = -1;
+				Debugger.AddrLine[i] = -1;
 
-			StartAddy = (unsigned short)((Debugger.TraceOffset == -1) ? CPU.PC : Debugger.TraceOffset);
+			StartAddr = (unsigned short)((Debugger.TraceOffset == -1) ? CPU.PC : Debugger.TraceOffset);
 			StartY = D_TRC_H / 2;
 			StartY = StartY - (StartY % Debugger.FontHeight);
 		
-			CurrAddy = StartAddy;
+			CurrAddr = StartAddr;
 			MaxY = D_TRC_H;
 			MaxY = (int) (MaxY/Debugger.FontHeight)*Debugger.FontHeight;
 			if (!((MaxY/Debugger.FontHeight) & 1))
 				MaxY+=Debugger.FontHeight;
 			for (CurrY=StartY; CurrY<MaxY; CurrY+=Debugger.FontHeight)
 			{
-				Debugger_DrawTraceLine(CurrAddy, CurrY);
-				CurrAddy += AddrBytes[TraceAddyMode[TraceMem(CurrAddy)]];
+				Debugger_DrawTraceLine(CurrAddr, CurrY);
+				CurrAddr += AddrBytes[TraceAddrMode[TraceMem(CurrAddr)]];
 			}
-			CurrAddy = StartAddy-0x100;
+			CurrAddr = StartAddr-0x100;
 			for (TpVal=0;TpVal<0x100;TpVal++)
 			{
-				BackAddies[TpVal] = CurrAddy;
-				CurrAddy += AddrBytes[TraceAddyMode[TraceMem(CurrAddy)]];
-				if (CurrAddy == StartAddy) FoundPtr = TpVal;
+				BackAddies[TpVal] = CurrAddr;
+				CurrAddr += AddrBytes[TraceAddrMode[TraceMem(CurrAddr)]];
+				if (CurrAddr == StartAddr) FoundPtr = TpVal;
 			}
 			
-			CurrAddy = BackAddies[FoundPtr--];
+			CurrAddr = BackAddies[FoundPtr--];
 			for (CurrY=StartY-Debugger.FontHeight; CurrY>=0; CurrY-=Debugger.FontHeight)
 			{
-				Debugger_DrawTraceLine(CurrAddy, CurrY);
-				CurrAddy = BackAddies[FoundPtr--];
+				Debugger_DrawTraceLine(CurrAddr, CurrY);
+				CurrAddr = BackAddies[FoundPtr--];
 			}
 
 			MoveToEx(Debugger.TraceDC, 0, StartY, NULL);
@@ -481,9 +481,9 @@ void	Debugger_AddInst (void)
 {
 	if (Debugger.Logging)
 	{
-		unsigned short Addy = (unsigned short)CPU.PC;
+		unsigned short Addr = (unsigned short)CPU.PC;
 		char tps[64];
-		DecodeInstruction(Addy,tps);
+		DecodeInstruction(Addr,tps);
 		DPrint(tps);
 		CPU_JoinFlags();
 		sprintf(tps,"  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n",CPU.A,CPU.X,CPU.Y,CPU.P,CPU.SP,PPU.Clockticks,PPU.SLnum);
@@ -496,7 +496,7 @@ void	Debugger_UpdateGraphics (void)
 	register unsigned char DInc = (Debugger.Depth) == 32 ? 4 : 2;
 	long PatPtr;
 	unsigned char PalVal;
-	int MemAddy;
+	int MemAddr;
 	if (Debugger.Mode >= 1)
 	{
 		if (Debugger.PalChanged)
@@ -542,14 +542,14 @@ void	Debugger_UpdateGraphics (void)
 				for (y = 0; y < 16; y++)
 					for (x = 0; x < 16; x++)
 					{
-						MemAddy = (t << 12) | (y << 8) | (x << 4);
+						MemAddr = (t << 12) | (y << 8) | (x << 4);
 						for (sy = 0; sy < 8; sy++)
 						{
 							PatPtr = (((y << 3) + sy) << 8) + (t << 7) + (x << 3);
 							for (sx = 0; sx < 8; sx++)
 							{
-								PalVal = (VMemory(MemAddy) & (0x80 >> sx)) >> (7-sx);
-								PalVal |= ((VMemory(MemAddy+8) & (0x80 >> sx)) >> (7-sx)) << 1;
+								PalVal = (VMemory(MemAddr) & (0x80 >> sx)) >> (7-sx);
+								PalVal |= ((VMemory(MemAddr+8) & (0x80 >> sx)) >> (7-sx)) << 1;
 								if (Debugger.Depth == 32)
 									((unsigned long *)Debugger.PatternArray)[PatPtr] = GFX.Palette32[PatPal[PalVal]];
 								else if (Debugger.Depth == 16)
@@ -557,7 +557,7 @@ void	Debugger_UpdateGraphics (void)
 								else	((unsigned short *)Debugger.PatternArray)[PatPtr] = GFX.Palette15[PatPal[PalVal]];
 								PatPtr++;
 							}
-							MemAddy++;
+							MemAddr++;
 						}
 					}
 		}
@@ -577,7 +577,7 @@ void	Debugger_UpdateGraphics (void)
 					{
 						AttribNum = (((TileX & 2) >> 1) | (TileY & 2)) << 1;
 						AttribTableVal = (PPU.CHRPointer[8 | NT][0x3C0 | ((TileY >> 2) << 3) | (TileX >> 2)] & (3 << AttribNum)) >> AttribNum;
-						MemAddy = ((PPU.Reg2000 & 0x10) << 8) | (PPU.CHRPointer[8 | NT][TileX | (TileY << 5)] << 4);
+						MemAddr = ((PPU.Reg2000 & 0x10) << 8) | (PPU.CHRPointer[8 | NT][TileX | (TileY << 5)] << 4);
 						for (py = 0; py < 8; py ++)
 						{
 							if (NT & 2)
@@ -586,8 +586,8 @@ void	Debugger_UpdateGraphics (void)
 							
 							for (px = 0; px < 8; px ++)
 							{
-								PalVal = (VMemory(MemAddy) & (0x80 >> px)) >> (7-px);
-								PalVal |= ((VMemory(MemAddy+8) & (0x80 >> px)) >> (7-px)) << 1;
+								PalVal = (VMemory(MemAddr) & (0x80 >> px)) >> (7-px);
+								PalVal |= ((VMemory(MemAddr+8) & (0x80 >> px)) >> (7-px)) << 1;
 								if (PalVal)
 								{
 									PalVal |= (AttribTableVal << 2);
@@ -607,7 +607,7 @@ void	Debugger_UpdateGraphics (void)
 								}
 								PatPtr++;
 							}
-							MemAddy++;
+							MemAddr++;
 						}
 					}
 		}
@@ -739,57 +739,57 @@ LRESULT CALLBACK TraceProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 			Debugger_Update();
 			break;
 		case VK_PRIOR:{
-			unsigned short NewAddy = Debugger.AddyLine[0];
-			if (NewAddy == CPU.PC)
-				NewAddy = -1;
-			Debugger.TraceOffset = NewAddy;
+			unsigned short NewAddr = Debugger.AddrLine[0];
+			if (NewAddr == CPU.PC)
+				NewAddr = -1;
+			Debugger.TraceOffset = NewAddr;
 			Debugger_Update();
 			}break;
 		case VK_UP:{
 			int i;
-			short MaxAddy = 0;
-			unsigned short NewAddy;
+			short MaxAddr = 0;
+			unsigned short NewAddr;
 			for (i = 0; i < 64; i++)
 			{
-				if (Debugger.AddyLine[i] != -1)
-					MaxAddy = i;
+				if (Debugger.AddrLine[i] != -1)
+					MaxAddr = i;
 			}
-			NewAddy = Debugger.AddyLine[(MaxAddy/2) - 1];
-			if (NewAddy == CPU.PC)
+			NewAddr = Debugger.AddrLine[(MaxAddr/2) - 1];
+			if (NewAddr == CPU.PC)
 				Debugger.TraceOffset = -1;
-			else	Debugger.TraceOffset = NewAddy;
+			else	Debugger.TraceOffset = NewAddr;
 			Debugger_Update();
 			}break;
 		case VK_DOWN:{
 			int i;
-			short MaxAddy = 0;
-			unsigned short NewAddy;
+			short MaxAddr = 0;
+			unsigned short NewAddr;
 			for (i=0;i<64;i++)
 			{
-				if (Debugger.AddyLine[i] != -1)
+				if (Debugger.AddrLine[i] != -1)
 				{
-					MaxAddy = i;
+					MaxAddr = i;
 				}
 			}
-			NewAddy = Debugger.AddyLine[(MaxAddy/2) + 1];
-			if (NewAddy == CPU.PC)
+			NewAddr = Debugger.AddrLine[(MaxAddr/2) + 1];
+			if (NewAddr == CPU.PC)
 				Debugger.TraceOffset = -1;
-			else	Debugger.TraceOffset = NewAddy;
+			else	Debugger.TraceOffset = NewAddr;
 			Debugger_Update();
 			}break;
 		case VK_NEXT:{
 			int i;
-			short MaxAddy = 0;
-			unsigned short NewAddy;
+			short MaxAddr = 0;
+			unsigned short NewAddr;
 			for (i=0;i<64;i++)
 			{
-				if (Debugger.AddyLine[i] != -1)
-					MaxAddy = i;
+				if (Debugger.AddrLine[i] != -1)
+					MaxAddr = i;
 			}
-			NewAddy = Debugger.AddyLine[MaxAddy];
-			if (NewAddy == CPU.PC)
+			NewAddr = Debugger.AddrLine[MaxAddr];
+			if (NewAddr == CPU.PC)
 				Debugger.TraceOffset = -1;
-			else	Debugger.TraceOffset = NewAddy;
+			else	Debugger.TraceOffset = NewAddr;
 			Debugger_Update();
 			}break;
 		}
@@ -799,7 +799,7 @@ LRESULT CALLBACK TraceProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		short yPos = HIWORD(lParam);
 		if ((xPos > 0) && (xPos < D_TRC_W) && (yPos > 0) && (yPos < D_TRC_H))
 		{
-			Debugger.BreakP[Debugger.AddyLine[yPos/Debugger.FontHeight]] ^= 1;
+			Debugger.BreakP[Debugger.AddrLine[yPos/Debugger.FontHeight]] ^= 1;
 			Debugger_Update();
 			SetFocus(mWnd);
 		}

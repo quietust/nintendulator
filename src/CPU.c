@@ -82,32 +82,32 @@ static	__forceinline void	RunCycle (void)
 #endif
 }
 #define	CPU_MemGetCode	CPU_MemGet
-unsigned char __fastcall	CPU_MemGet (unsigned int Addy)
+unsigned char __fastcall	CPU_MemGet (unsigned int Addr)
 {
 	static int buf;
 	RunCycle();
 //	if (CPU.PCMCycles == 4)		// if the first thing it hit was a read, then flag it so we do the full 4 reads
 //		CPU.PCMCycles = 16;	// otherwise, do nothing - this could've been an interrupt, which finishes with reads
-	if (CPU.ReadHandler[(Addy >> 12) & 0xF] == CPU_ReadPRG)
+	if (CPU.ReadHandler[(Addr >> 12) & 0xF] == CPU_ReadPRG)
 	{
-		if (CPU.Readable[(Addy >> 12) & 0xF])
-			buf = CPU.PRGPointer[(Addy >> 12) & 0xF][Addy & 0xFFF];
+		if (CPU.Readable[(Addr >> 12) & 0xF])
+			buf = CPU.PRGPointer[(Addr >> 12) & 0xF][Addr & 0xFFF];
 		else	buf = -1;
 		if (buf != -1)
 			CPU.LastRead = buf;
 		return CPU.LastRead;
 	}
-	buf = CPU.ReadHandler[(Addy >> 12) & 0xF]((Addy >> 12) & 0xF,Addy & 0xFFF);
+	buf = CPU.ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF,Addr & 0xFFF);
 	if (buf != -1)
 		CPU.LastRead = buf;
 	return CPU.LastRead;
 }
-void __fastcall	CPU_MemSet (unsigned int Addy, unsigned char Val)
+void __fastcall	CPU_MemSet (unsigned int Addr, unsigned char Val)
 {
 	RunCycle();
 	if (CPU.PCMCycles)
 		CPU.PCMCycles--;
-	CPU.WriteHandler[(Addy >> 12) & 0xF]((Addy >> 12) & 0xF,Addy & 0xFFF,Val);
+	CPU.WriteHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF,Addr & 0xFFF,Val);
 }
 static	__forceinline void	Push (unsigned char Val)
 {
@@ -249,19 +249,19 @@ int	CPU_Load (FILE *in)
 }
 #endif
 
-int	_MAPINT	CPU_ReadRAM (int Bank, int Addy)
+int	_MAPINT	CPU_ReadRAM (int Bank, int Addr)
 {
-	return CPU_RAM[Addy & 0x07FF];
+	return CPU_RAM[Addr & 0x07FF];
 }
 
-void	_MAPINT	CPU_WriteRAM (int Bank, int Addy, int Val)
+void	_MAPINT	CPU_WriteRAM (int Bank, int Addr, int Val)
 {
-	CPU_RAM[Addy & 0x07FF] = Val;
+	CPU_RAM[Addr & 0x07FF] = Val;
 }
 
-int	_MAPINT	CPU_Read4k (int Bank, int Addy)
+int	_MAPINT	CPU_Read4k (int Bank, int Addr)
 {
-	switch (Addy)
+	switch (Addr)
 	{
 	case 0x015:	return APU_Read4015();						break;
 #ifndef NSFPLAYER
@@ -279,10 +279,10 @@ int	_MAPINT	CPU_Read4k (int Bank, int Addy)
 	}
 }
 
-void	_MAPINT	CPU_Write4k (int Bank, int Addy, int Val)
+void	_MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
 {
 	int i;
-	switch (Addy)
+	switch (Addr)
 	{
 	case 0x000:case 0x001:case 0x002:case 0x003:
 	case 0x004:case 0x005:case 0x006:case 0x007:
@@ -290,7 +290,7 @@ void	_MAPINT	CPU_Write4k (int Bank, int Addy, int Val)
 	case 0x00C:case 0x00D:case 0x00E:case 0x00F:
 	case 0x010:case 0x011:case 0x012:case 0x013:
 	case 0x015:case 0x017:
-			APU_WriteReg(Addy,Val);	break;
+			APU_WriteReg(Addr,Val);	break;
 	case 0x014:	for (i = 0; i < 0x100; i++)
 				CPU_MemSet(0x2004,CPU_MemGet((Val << 8) | i));
 			CPU_MemGet(CPU.PC);	break;
@@ -300,17 +300,17 @@ void	_MAPINT	CPU_Write4k (int Bank, int Addy, int Val)
 	}
 }
 
-int	_MAPINT	CPU_ReadPRG (int Bank, int Addy)
+int	_MAPINT	CPU_ReadPRG (int Bank, int Addr)
 {
 	if (CPU.Readable[Bank])
-		return CPU.PRGPointer[Bank][Addy];
+		return CPU.PRGPointer[Bank][Addr];
 	else	return -1;
 }
 
-void	_MAPINT	CPU_WritePRG (int Bank, int Addy, int Val)
+void	_MAPINT	CPU_WritePRG (int Bank, int Addr, int Val)
 {
 	if (CPU.Writable[Bank])
-		CPU.PRGPointer[Bank][Addy] = Val;
+		CPU.PRGPointer[Bank][Addr] = Val;
 }
 
 static	__forceinline void	AM_IMP (void)

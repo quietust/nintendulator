@@ -1163,91 +1163,91 @@ static	int	__fastcall	Read7 (void)
 	else	return PPU.ppuLatch = PPU.buf2007;
 }
 
-int	_MAPINT	PPU_IntRead (int Bank, int Where)
+int	_MAPINT	PPU_IntRead (int Bank, int Addr)
 {
 	static int (__fastcall *funcs[8])(void) = {Read01356,Read01356,Read2,Read01356,Read4,Read01356,Read01356,Read7};
-	return funcs[Where & 7]();
+	return funcs[Addr & 7]();
 }
 
-static	void	__fastcall	Write0 (int What)
+static	void	__fastcall	Write0 (int Val)
 {
-	if ((What & 0x80) && !(PPU.Reg2000 & 0x80) && (PPU.Reg2002 & 0x80))
+	if ((Val & 0x80) && !(PPU.Reg2000 & 0x80) && (PPU.Reg2002 & 0x80))
 		CPU.WantNMI = TRUE;
-	PPU.Reg2000 = What;
+	PPU.Reg2000 = Val;
 	PPU.IntReg &= 0x73FF;
-	PPU.IntReg |= (What & 3) << 10;
+	PPU.IntReg |= (Val & 3) << 10;
 #ifdef ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 }
 
-static	void	__fastcall	Write1 (int What)
+static	void	__fastcall	Write1 (int Val)
 {
-	PPU.Reg2001 = What;
-	if ((What & 0x18) && (PPU.SLnum < 240))
+	PPU.Reg2001 = Val;
+	if ((Val & 0x18) && (PPU.SLnum < 240))
 		PPU.IsRendering = TRUE;
 	else	PPU.IsRendering = FALSE;
-	PPU.ColorEmphasis = (What & 0xE0) << 1;
-	PPU.GrayScale = (What & 0x01) ? 0x30 : 0x3F;
+	PPU.ColorEmphasis = (Val & 0xE0) << 1;
+	PPU.GrayScale = (Val & 0x01) ? 0x30 : 0x3F;
 }
 
-static	void	__fastcall	Write2 (int What)
+static	void	__fastcall	Write2 (int Val)
 {
 }
 
-static	void	__fastcall	Write3 (int What)
+static	void	__fastcall	Write3 (int Val)
 {
-	PPU.SprAddr = What;
+	PPU.SprAddr = Val;
 }
 
-static	void	__fastcall	Write4 (int What)
+static	void	__fastcall	Write4 (int Val)
 {
 	if (PPU.IsRendering)
-		What = 0xFF;
+		Val = 0xFF;
 	if ((PPU.SprAddr & 0x03) == 0x02)
-		What &= 0xE3;
-	PPU.Sprite[PPU.SprAddr++] = What;
+		Val &= 0xE3;
+	PPU.Sprite[PPU.SprAddr++] = Val;
 }
 
-static	void	__fastcall	Write5 (int What)
+static	void	__fastcall	Write5 (int Val)
 {
 	if (PPU.HVTog)
 	{
 		PPU.IntReg &= 0x7FE0;
-		PPU.IntReg |= (What & 0xF8) >> 3;
-		PPU.IntX = What & 7;
+		PPU.IntReg |= (Val & 0xF8) >> 3;
+		PPU.IntX = Val & 7;
 	}
 	else
 	{
 		PPU.IntReg &= 0x0C1F;
-		PPU.IntReg |= (What & 0x07) << 12;
-		PPU.IntReg |= (What & 0xF8) << 2;
+		PPU.IntReg |= (Val & 0x07) << 12;
+		PPU.IntReg |= (Val & 0xF8) << 2;
 	}
 	PPU.HVTog = !PPU.HVTog;
 }
 
-static	void	__fastcall	Write6 (int What)
+static	void	__fastcall	Write6 (int Val)
 {
 	if (PPU.HVTog)
 	{
 		PPU.IntReg &= 0x00FF;
-		PPU.IntReg |= (What & 0x3F) << 8;
+		PPU.IntReg |= (Val & 0x3F) << 8;
 	}
 	else
 	{
 		PPU.IntReg &= 0x7F00;
-		PPU.IntReg |= What;
+		PPU.IntReg |= Val;
 		PPU.VRAMAddr = PPU.IntReg;
 	}
 	PPU.HVTog = !PPU.HVTog;
 }
 
-static	void	__fastcall	Write7 (int What)
+static	void	__fastcall	Write7 (int Val)
 {
 	if ((PPU.VRAMAddr & 0x3F00) == 0x3F00)
 	{
 		register unsigned char Addr = (unsigned char)PPU.VRAMAddr & 0x1F;
-		register unsigned Val = What & 0x3F;
+		register unsigned Val = Val & 0x3F;
 #ifdef ENABLE_DEBUGGER
 		Debugger.PalChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
@@ -1258,7 +1258,7 @@ static	void	__fastcall	Write7 (int What)
 	else
 	{
 		PPU.IOAddr = PPU.VRAMAddr & 0x3FFF;
-		PPU.IOVal = What;
+		PPU.IOVal = Val;
 		PPU.IOMode = 6;
 	}
 	if (PPU.Reg2000 & 0x04)
@@ -1267,9 +1267,9 @@ static	void	__fastcall	Write7 (int What)
 	PPU.VRAMAddr &= 0x7FFF;
 }
 
-void	_MAPINT	PPU_IntWrite (int Bank, int Where, int What)
+void	_MAPINT	PPU_IntWrite (int Bank, int Addr, int Val)
 {
 	static void (__fastcall *funcs[8])(int) = {Write0,Write1,Write2,Write3,Write4,Write5,Write6,Write7};
-	PPU.ppuLatch = What;
-	funcs[Where & 7](What);
+	PPU.ppuLatch = Val;
+	funcs[Addr & 7](Val);
 }
