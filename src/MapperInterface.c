@@ -509,11 +509,11 @@ void	MapperInterface_Init (void)
 	if (MapperDLLs == NULL)
 		MessageBox(mWnd,_T("Fatal error: unable to locate any mapper DLLs!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 #else
-	dInst = LoadLibrary(_T("Plugins\\nsf.dll"));
+	dInst = LoadLibrary("Plugins\\nsf.dll");
 	LoadDLL = (PLoadMapperDLL)GetProcAddress(dInst,"LoadMapperDLL");
 	UnloadDLL = (PUnloadMapperDLL)GetProcAddress(dInst,"UnloadMapperDLL");
 	if ((!LoadDLL) || (!UnloadDLL) || (!(DI = LoadDLL(mod.hMainWindow,&EI,CurrentMapperInterface))))
-		MessageBox(mod.hMainWindow,_T("Fatal error: unable to locate NSF player mapper DLL!"),_T("in_nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(mod.hMainWindow,"Fatal error: unable to locate NSF player mapper DLL!","in_nintendulator",MB_OK | MB_ICONERROR);
 #endif
 	memset(&EI,0,sizeof(EI));
 	memset(&RI,0,sizeof(RI));
