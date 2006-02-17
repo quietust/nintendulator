@@ -688,6 +688,8 @@ void	Controllers_UpdateInput (void)
 			fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
 		if (Controllers.Port2.MovLen)
 			fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+		if (Controllers.ExpPort.MovLen)
+			fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
 		if (feof(movie))
 		{
 			GFX_ShowText("Movie stopped");
@@ -696,12 +698,15 @@ void	Controllers_UpdateInput (void)
 	}
 	Controllers.Port1.Frame(&Controllers.Port1,Controllers.MovieMode);
 	Controllers.Port2.Frame(&Controllers.Port2,Controllers.MovieMode);
+	Controllers.ExpPort.Frame(&Controllers.ExpPort,Controllers.MovieMode);
 	if (Controllers.MovieMode & MOV_RECORD)
 	{
 		if (Controllers.Port1.MovLen)
 			fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
 		if (Controllers.Port2.MovLen)
 			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+		if (Controllers.ExpPort.MovLen)
+			fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
 	}
 }
 
