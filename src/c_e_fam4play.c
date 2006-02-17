@@ -23,18 +23,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Nintendulator.h"
 #include "Controllers.h"
 
-static	BOOL	LockCursorPos (int x, int y)
-{
-	POINT pos;
-	pos.x = 0;
-	pos.y = 0;
-	ClientToScreen(mWnd,&pos);
-	pos.x += x * SizeMult;
-	pos.y += y * SizeMult;
-	SetCursorPos(pos.x,pos.y);
-	return TRUE;
-}
-
 #define	Bits1	Data[0]
 #define	Bits2	Data[1]
 #define	BitPtr1	Data[2]
