@@ -604,8 +604,8 @@ void	Controllers_PlayMovie (BOOL Review)
 
 		fread(buf,1,4,movie);
 
-		if (!MOV_ControllerTypes[3])	// If we've loaded controller state, this is all redundant
-		{				// and, indeed, things will BREAK if we do it again!
+		if (!MOV_ControllerTypes[3])	// ONLY parse this if we did NOT encounter a controller state block
+		{				// otherwise, it would mess up the original states of the controllers
 			if (buf[0] == STD_FOURSCORE)
 			{
 				if (buf[1] & 0x01)
