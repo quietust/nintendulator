@@ -382,7 +382,10 @@ __inline static	void	RunNoSkip (int NumTicks)
 				PPU_GetGFXPtr();
 			}
 			else if (PPU.SLnum == 240)
+			{
+				PPU.SprAddr = 0;
 				PPU.IsRendering = PPU.OnScreen = FALSE;
+			}
 			else if (PPU.SLnum == 241)
 			{
 				PPU.Reg2002 |= 0x80;
@@ -705,7 +708,10 @@ __inline static	void	RunSkip (int NumTicks)
 			if (PPU.SLnum < 240)
 				PPU.OnScreen = TRUE;
 			else if (PPU.SLnum == 240)
+			{
+				PPU.SprAddr = 0;
 				PPU.IsRendering = PPU.OnScreen = FALSE;
+			}
 			else if (PPU.SLnum == 241)
 			{
 				PPU.Reg2002 |= 0x80;
