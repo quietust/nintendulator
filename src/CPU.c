@@ -335,27 +335,23 @@ end:
 }
 static	__forceinline void	AM_ZPG (void)
 {
-	CalcAddrL = CPU_MemGetCode(CPU.PC++);
-	CalcAddrH = 0;
+	CalcAddr = CPU_MemGetCode(CPU.PC++);
 }
 static	__forceinline void	AM_ZPX (void)
 {
-	CalcAddrL = CPU_MemGetCode(CPU.PC++);
-	CalcAddrH = 0;
+	CalcAddr = CPU_MemGetCode(CPU.PC++);
 	CPU_MemGet(CalcAddr);
 	CalcAddrL += CPU.X;
 }
 static	__forceinline void	AM_ZPY (void)
 {
-	CalcAddrL = CPU_MemGetCode(CPU.PC++);
-	CalcAddrH = 0;
+	CalcAddr = CPU_MemGetCode(CPU.PC++);
 	CPU_MemGet(CalcAddr);
 	CalcAddrL += CPU.Y;
 }
 static	__forceinline void	AM_INX (void)
 {
-	TmpAddrL = CPU_MemGetCode(CPU.PC++);
-	TmpAddrH = 0;
+	TmpAddr = CPU_MemGetCode(CPU.PC++);
 	CPU_MemGet(TmpAddr);
 	TmpAddrL += CPU.X;
 	CalcAddrL = CPU_MemGet(TmpAddr);
@@ -364,8 +360,7 @@ static	__forceinline void	AM_INX (void)
 }
 static	__forceinline void	AM_INY (void)
 {
-	TmpAddrL = CPU_MemGetCode(CPU.PC++);
-	TmpAddrH = 0;
+	TmpAddr = CPU_MemGetCode(CPU.PC++);
 	CalcAddrL = CPU_MemGet(TmpAddr);
 	TmpAddrL++;
 	CalcAddrH = CPU_MemGet(TmpAddr);
@@ -382,8 +377,7 @@ noinc:
 }
 static	__forceinline void	AM_INYW (void)
 {
-	TmpAddrL = CPU_MemGetCode(CPU.PC++);
-	TmpAddrH = 0;
+	TmpAddr = CPU_MemGetCode(CPU.PC++);
 	CalcAddrL = CPU_MemGet(TmpAddr);
 	TmpAddrL++;
 	CalcAddrH = CPU_MemGet(TmpAddr);
