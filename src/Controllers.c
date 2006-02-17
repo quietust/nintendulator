@@ -547,7 +547,7 @@ void	Controllers_PlayMovie (BOOL Review)
 
 		NES_Reset(RESET_HARD);
 
-		if (States_LoadData(movie, len))
+		if (!States_LoadData(movie, len))
 		{
 			fclose(movie);
 			MessageBox(mWnd,"Failed to load movie!", "Nintendulator", MB_OK | MB_ICONERROR);
@@ -725,7 +725,7 @@ void	Controllers_StopMovie (void)
 	if (Controllers.MovieMode & MOV_RECORD)
 	{
 		int len = ftell(movie);
-		int mlen, mpos;
+		int mlen;
 		char tps[4];
 
 		fseek(movie,8,SEEK_SET);		len -= 16;
@@ -733,22 +733,23 @@ void	Controllers_StopMovie (void)
 		fseek(movie,16,SEEK_SET);
 
 		fread(tps,4,1,movie);
-		fread(&mlen,4,1,movie);
-		mpos = ftell(movie);			len -= 8;
+		fread(&mlen,4,1,movie);			len -= 8;
 		while (strncmp(tps,"NMOV",4))
 		{	/* find the NMOV block in the movie */
 			fseek(movie,mlen,SEEK_CUR);	len -= mlen;
 			fread(tps,4,1,movie);
-			fread(&mlen,4,1,movie);
-			mpos = ftell(movie);		len -= 8;
+			fread(&mlen,4,1,movie);		len -= 8;
 		}
 		fseek(movie,-4,SEEK_CUR);
 		fwrite(&len,4,1,movie);			// 2: set the NMOV block length
-		fseek(movie,4,SEEK_CUR);		len -= 4;
+		fseek(movie,4,SEEK_CUR);		len -= 4;	// skip controller data
 		fwrite(&ReRecords,4,1,movie);		len -= 4;	// write the final re-record count
-		fread(&mlen,4,1,movie);			len -= 4;
-		fseek(movie,mlen,SEEK_CUR);		len -= mlen;	// skip the description
-		len -= 4;
+		fread(&mlen,4,1,movie);			len -= 4;	// read description len
+		if (mlen)
+		{
+			fseek(movie,mlen,SEEK_CUR);	len -= mlen;	// skip the description
+		}
+		len -= 4;				// subtract size of movie len field
 		fwrite(&len,4,1,movie);			// 3: terminate the movie data
 		fseek(movie,len,SEEK_CUR);
 		// TODO - truncate the file to this point
