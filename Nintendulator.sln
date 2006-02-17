@@ -10,33 +10,43 @@ EndProject
 Global
 	GlobalSection(SourceCodeControl) = preSolution
 		SccNumberOfProjects = 3
-		SccProjectUniqueName0 = Nintendulator.vcproj
-		SccLocalPath0 = ..
+		SccProjectName0 = \u0022$/Nintendulator\u0022,\u0020PBAAAAAA
+		SccLocalPath0 = .
+		SccProvider0 = MSSCCI:Microsoft\u0020Visual\u0020SourceSafe
 		CanCheckoutShared = false
-		SccProjectFilePathRelativizedFromConnection0 = Project\\
-		SccProjectUniqueName1 = in_nintendulator.vcproj
+		SolutionUniqueID = {2567323B-1CA6-4A1A-BCC4-6DAA87F9F39D}
+		SccProjectUniqueName1 = Nintendulator.vcproj
 		SccLocalPath1 = ..
 		CanCheckoutShared = false
 		SccProjectFilePathRelativizedFromConnection1 = Project\\
-		SccProjectName2 = \u0022$/Nintendulator\u0022,\u0020PBAAAAAA
-		SccLocalPath2 = .
-		SccProvider2 = MSSCCI:Microsoft\u0020Visual\u0020SourceSafe
+		SccProjectUniqueName2 = in_nintendulator.vcproj
+		SccLocalPath2 = ..
 		CanCheckoutShared = false
-		SolutionUniqueID = {2567323B-1CA6-4A1A-BCC4-6DAA87F9F39D}
+		SccProjectFilePathRelativizedFromConnection2 = Project\\
 	EndGlobalSection
 	GlobalSection(SolutionConfiguration) = preSolution
-		Debug = Debug
-		Release = Release
+		Debug (ANSI) = Debug (ANSI)
+		Debug (Unicode) = Debug (Unicode)
+		Release (ANSI) = Release (ANSI)
+		Release (Unicode) = Release (Unicode)
 	EndGlobalSection
 	GlobalSection(ProjectConfiguration) = postSolution
-		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Debug.ActiveCfg = Debug|Win32
-		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Debug.Build.0 = Debug|Win32
-		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Release.ActiveCfg = Release|Win32
-		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Release.Build.0 = Release|Win32
-		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Debug.ActiveCfg = Debug|Win32
-		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Debug.Build.0 = Debug|Win32
-		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Release.ActiveCfg = Release|Win32
-		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Release.Build.0 = Release|Win32
+		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Debug (ANSI).ActiveCfg = Debug (ANSI)|Win32
+		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Debug (ANSI).Build.0 = Debug (ANSI)|Win32
+		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Debug (Unicode).ActiveCfg = Debug (Unicode)|Win32
+		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Debug (Unicode).Build.0 = Debug (Unicode)|Win32
+		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Release (ANSI).ActiveCfg = Release (ANSI)|Win32
+		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Release (ANSI).Build.0 = Release (ANSI)|Win32
+		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Release (Unicode).ActiveCfg = Release (ANSI)|Win32
+		{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}.Release (Unicode).Build.0 = Release (ANSI)|Win32
+		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Debug (ANSI).ActiveCfg = Debug (ANSI)|Win32
+		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Debug (ANSI).Build.0 = Debug (ANSI)|Win32
+		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Debug (Unicode).ActiveCfg = Debug (Unicode)|Win32
+		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Debug (Unicode).Build.0 = Debug (Unicode)|Win32
+		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Release (ANSI).ActiveCfg = Release (ANSI)|Win32
+		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Release (ANSI).Build.0 = Release (ANSI)|Win32
+		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Release (Unicode).ActiveCfg = Release (ANSI)|Win32
+		{B4B51A2D-44A5-48A7-9980-CD3E99012802}.Release (Unicode).Build.0 = Release (ANSI)|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
