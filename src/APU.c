@@ -867,7 +867,7 @@ void	APU_Reset  (void)
 	Noise.EnvCtr = 1;
 	DPCM.Cycles = 1;
 	Frame.Cycles = 1;
-	Frame.Bits = 0x00;
+	Frame.Bits = 0x40;	// some games will behave BADLY if we don't do this
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 }
 #ifdef	SOUND_LOGGING
