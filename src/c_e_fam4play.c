@@ -138,6 +138,7 @@ void	ExpPort_SetFami4Play (struct tExpPort *Cont)
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 16;
 	Cont->DataLen = 7;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));

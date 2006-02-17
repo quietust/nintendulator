@@ -120,6 +120,7 @@ void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 1;
 	Cont->DataLen = 5;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));

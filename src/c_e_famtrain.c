@@ -113,6 +113,7 @@ void	ExpPort_SetFamTrainer (struct tExpPort *Cont)
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 12;
 	Cont->DataLen = 3;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));

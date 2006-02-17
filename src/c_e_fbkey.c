@@ -200,6 +200,7 @@ void	ExpPort_SetFamilyBasicKeyboard (struct tExpPort *Cont)
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 0;
 	Cont->DataLen = 2;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
