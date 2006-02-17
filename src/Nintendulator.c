@@ -610,7 +610,8 @@ LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 void	AddDebug (char *txt)
 {
 	int i = strlen(txt), j = GetWindowTextLength(GetDlgItem(hDebug,IDC_DEBUGTEXT));
-	
+	if (!dbgVisible)
+		return;
 	if (i + j + 2 > DebugLen)
 	{
 		while (i + j + 2 > DebugLen)
