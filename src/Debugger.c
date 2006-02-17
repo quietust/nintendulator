@@ -415,8 +415,8 @@ void	Debugger_Update (void)
 					sprintf(tpc,"%03X",EI.GetCHR_ROM1(i));
 				else if (EI.GetCHR_RAM1(i) >= 0)
 					sprintf(tpc,"A%02X",EI.GetCHR_RAM1(i));
-				else if ((EI.GetCHR_Ptr1(i) >= PPU_VRAM[0]) && (EI.GetCHR_Ptr1(i) <= PPU_VRAM[3]))
-					sprintf(tpc,"N%02X",(EI.GetCHR_Ptr1(i) - PPU_VRAM[0]) >> 10);
+				else if (EI.GetCHR_NT1(i) >= 0)
+					sprintf(tpc,"N%02X",EI.GetCHR_NT1(i));
 				else	sprintf(tpc,"???");
 							TextOut(Debugger.RegDC,(i&7)*4*Debugger.FontWidth,(16 + (i >> 3))*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			}
