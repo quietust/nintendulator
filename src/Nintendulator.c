@@ -261,16 +261,17 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lpstrCustomFilter = NULL;
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = FileName;
-			ofn.nMaxFile = 256;
+			ofn.nMaxFile = MAX_PATH;
 			ofn.lpstrFileTitle = NULL;
 			ofn.nMaxFileTitle = 0;
-			ofn.lpstrInitialDir = _T("");
+			ofn.lpstrInitialDir = Path_ROM;
 			ofn.lpstrTitle = _T("Edit Header");
 			ofn.Flags = OFN_FILEMUSTEXIST;
 			ofn.lpstrDefExt = NULL;
 			ofn.lCustData = 0;
 			ofn.lpfnHook = NULL;
 			ofn.lpTemplateName = NULL;
+
 			if (GetOpenFileName(&ofn))
 				DialogBoxParam(hInst,(LPCTSTR)IDD_INESHEADER,hWnd,InesHeader,(LPARAM)FileName);
 			break;
