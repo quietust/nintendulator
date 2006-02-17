@@ -401,7 +401,7 @@ void	Controllers_UnAcquire (void)
 }
 
 FILE *movie;
-int MOV_ControllerTypes[5];
+unsigned char MOV_ControllerTypes[5];
 int	ReRecords;
 char MovieName[256];
 
@@ -519,7 +519,7 @@ void	Controllers_PlayMovie (void)
 			StdPort_SetControllerType(&Controllers.FSPort3,buf[2]);
 			StdPort_SetControllerType(&Controllers.FSPort4,buf[3]);
 		}
-
+		fseek(movie,4,SEEK_CUR);	// skip re-record count
 		NES_Reset(RESET_HARD);
 		NES.Scanline = TRUE;	// read them 1 frame in advance
 		return;
@@ -637,13 +637,17 @@ void	Controllers_UpdateInput (void)
 	int i;
 	if (Controllers.MovieMode & MOV_RECORD)
 	{
-		fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
-		fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+		if (Controllers.Port1.MovLen)
+			fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
+		if (Controllers.Port2.MovLen)
+			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
 	}
 	if (Controllers.MovieMode & MOV_PLAY)
 	{
-		fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
-		fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+		if (Controllers.Port1.MovLen)
+			fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
+		if (Controllers.Port2.MovLen)
+			fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
 		if (feof(movie))
 		{
 			GFX_ShowText("Movie stopped");
