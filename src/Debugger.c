@@ -401,7 +401,7 @@ void	Debugger_Update (void)
 				(CPU.WantIRQ & IRQ_DEBUG) ? _T("DBG") : _T("   "));
 								TextOut(Debugger.RegDC,0, 6*Debugger.FontHeight,tps,(int)_tcslen(tps));
 
-			_stprintf(tps,_T("SLnum: %i%s"),PPU.SLnum,((PPU.SLnum >= 0) && (PPU.SLnum < 240)) ? _T(" (VBlank)") : _T(""));
+			_stprintf(tps,_T("SLnum: %i%s"),PPU.SLnum,((PPU.SLnum >= 0) && (PPU.SLnum < 240)) ? _T("") : _T(" (VBlank)"));
 								TextOut(Debugger.RegDC,0, 7*Debugger.FontHeight,tps,(int)_tcslen(tps));
 
 			_stprintf(tps,_T("CPU Ticks: %i/%.3f"),PPU.Clockticks,PPU.Clockticks / (PPU.IsPAL ? 3.2 : 3.0));
