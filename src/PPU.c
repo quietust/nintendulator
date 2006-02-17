@@ -645,7 +645,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 					SprDat = PPU.SprData[y >> 2][SprPixel];
 					if (SprDat & 0x3)
 					{
-						if ((PPU.Spr0InLine) && (y == 0) && (TC & 0x3))
+						if ((PPU.Spr0InLine) && (y == 0) && (TC & 0x3) && (PPU.Clockticks < 255))
 						{
 							PPU.Reg2002 |= 0x40;	/* Sprite 0 hit */
 							PPU.Spr0InLine = FALSE;
@@ -927,8 +927,8 @@ __inline static	void	RunSkip (int NumTicks)
 		}
 		if (!(PPU.Clockticks & 1))
 			PPU_PPUCycle(PPU.IOAddr,PPU.SLnum,PPU.Clockticks,PPU.IsRendering);
-		if ((PPU.Clockticks < 256) && (PPU.OnScreen) && (PPU.Reg2001 & 0x10) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x04)))
-		{
+		if ((PPU.Clockticks < 255) && (PPU.OnScreen) && (PPU.Reg2001 & 0x10) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x04)))
+		{	/* Yes, this is 255, not 256 - sprite 0 hit does not trigger in the far right column */
 			register int SprPixel = PPU.Clockticks - PPU.SprBuff[3];
 			if (!(SprPixel & ~7) && (PPU.SprData[0][SprPixel] & 0x3) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x02)) && (PPU.TileData[PPU.Clockticks + PPU.IntX] & 0x3))
 				PPU.Reg2002 |= 0x40;	/* Sprite 0 hit */
