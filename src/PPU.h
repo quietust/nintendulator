@@ -77,7 +77,6 @@ int	PPU_Load (FILE *);
 int	_MAPINT	PPU_IntRead (int,int);
 void	_MAPINT	PPU_IntWrite (int,int,int);
 void	PPU_Run (void);
-void	PPU_SetMirroring (unsigned char M1, unsigned char M2, unsigned char M3, unsigned char M4);
 void	PPU_GetGFXPtr (void);
 
 int	_MAPINT	PPU_BusRead (int,int);

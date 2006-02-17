@@ -207,18 +207,6 @@ void	PPU_GetHandlers (void)
 		PPU_PPUCycle = MI->PPUCycle;
 	else	PPU_PPUCycle = PPU_NoPPUCycle;
 }
-void	PPU_SetMirroring (unsigned char M1, unsigned char M2, unsigned char M3, unsigned char M4)
-{
-	PPU.CHRPointer[0x8] = PPU.CHRPointer[0xC] = PPU_VRAM[M1];
-	PPU.CHRPointer[0x9] = PPU.CHRPointer[0xD] = PPU_VRAM[M2];
-	PPU.CHRPointer[0xA] = PPU.CHRPointer[0xE] = PPU_VRAM[M3];
-	PPU.CHRPointer[0xB] = PPU.CHRPointer[0xF] = PPU_VRAM[M4];
-	PPU.Writable[0x8] = PPU.Writable[0x9] = PPU.Writable[0xA] = PPU.Writable[0xB] = 
-	PPU.Writable[0xC] = PPU.Writable[0xD] = PPU.Writable[0xE] = PPU.Writable[0xF] = TRUE;
-#ifdef ENABLE_DEBUGGER
-	Debugger.NTabChanged = TRUE;
-#endif	/* ENABLE_DEBUGGER */
-}
 __inline static	void	DiscoverSprites (void)
 {
 	int SprHeight = (PPU.Reg2000 & 0x20) ? 16 : 8;
