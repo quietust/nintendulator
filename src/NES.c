@@ -26,6 +26,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "PPU.h"
 #include "APU.h"
 #include "GFX.h"
+#include "AVI.h"
 #include "Debugger.h"
 #include "States.h"
 #include "Controllers.h"
@@ -175,6 +176,10 @@ void	NES_CloseFile (void)
 		PPU.WriteHandler[i] = PPU_BusWriteCHR;
 		PPU.Writable[i] = FALSE;
 	}
+	if (aviout)
+		AVI_End();
+	if (Controllers.MovieMode)
+		Controllers_StopMovie();
 }
 
 #define MKID(a) ((unsigned long) \
