@@ -45,9 +45,11 @@ extern	HINSTANCE	hInst;	/* current instance */
 extern	HWND		mWnd;	/* main window */
 extern	HACCEL		hAccelTable;	/* accelerators */
 extern	BOOL		MaskKeyboard;	/* mask keyboard accelerators (for when Family Basic Keyboard is active) */
+extern	HWND		hDebug;		/* Debug Info window */
+extern	BOOL		dbgVisible;	/* whether or not the Debug window is open */
 extern	int		SizeMult;	/* window size multiplier */
 extern	char		ProgPath[MAX_PATH];	/* program path */
 extern void	SetWindowClientArea (HWND hWnd, int w, int h);
-extern void	ProcessMessages	(void);
+extern BOOL	ProcessMessages	(void);
 
 #endif /* __NINTENDULATOR_H__ */
