@@ -847,7 +847,7 @@ static	int	__fastcall	Read2 (void)
 
 static	int	__fastcall	Read4 (void)
 {
-	return PPU.ppuLatch = PPU.Sprite[PPU.SprAddr++];
+	return PPU.ppuLatch = PPU.Sprite[PPU.SprAddr];
 }
 
 static	int	__fastcall	Read7 (void)
