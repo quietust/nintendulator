@@ -760,6 +760,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 	fwrite(&len,4,1,movie);	// movie data length
 
 	ReRecords = 0;
+	MovieLen = 0;
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
@@ -805,6 +806,8 @@ void	Controllers_StopMovie (void)
 		}
 		fread(tps,4,1,movie);			len -= 4;	// read movie data len
 		fseek(movie,-4,SEEK_CUR);		// rewind
+		if (len != MovieLen)
+			EI.DbgOut("Error - movie length mismatch!");
 		fwrite(&len,4,1,movie);			// 3: terminate the movie data
 		// fseek(movie,len,SEEK_CUR);
 		// TODO - truncate the file to this point
@@ -918,13 +921,16 @@ void	Controllers_UpdateInput (void)
 	if (Controllers.MovieMode & MOV_RECORD)
 	{
 		if (Controllers.Port1.MovLen)
-			fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
+			fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);	MovieLen += Controllers.Port1.MovLen;
 		if (Controllers.Port2.MovLen)
-			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);	MovieLen += Controllers.Port2.MovLen;
 		if (Controllers.ExpPort.MovLen)
-			fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
+			fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);	MovieLen += Controllers.ExpPort.MovLen;
 		if ((MI) && (MI->Config))
+		{
 			fwrite(&Cmd,1,1,movie);
+			MovieLen++;
+		}
 	}
 }
 

@@ -175,8 +175,8 @@ int	States_SaveData (FILE *out)
 	}
 	if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
 	{
-		int moviepos = ftell(movie);
-		int mlen, mpos;
+		extern int MovieLen;
+		int mlen;
 		char tps[4];
 		unsigned char tpc;
 		unsigned long tpl;
@@ -191,13 +191,11 @@ int	States_SaveData (FILE *out)
 		fseek(movie,16,SEEK_SET);
 		fread(tps,4,1,movie);
 		fread(&mlen,4,1,movie);
-		mpos = ftell(movie);
 		while (memcmp(tps,"NMOV",4))
-		{	/* find the NMOV block in the movie */
+		{	/* find the NMOV block in the movie file */
 			fseek(movie,mlen,SEEK_CUR);
 			fread(tps,4,1,movie);
 			fread(&mlen,4,1,movie);
-			mpos = ftell(movie);
 		}
 
 		fread(&tpc,1,1,movie);	fwrite(&tpc,1,1,out);	clen++;
@@ -216,10 +214,9 @@ int	States_SaveData (FILE *out)
 		}
 
 		fread(&tpl,4,1,movie);				clen += 4;	// the MLEN field, which is NOT yet accurate
-		tpl = (moviepos - mpos) - clen;
-		fwrite(&tpl,4,1,out);
+		fwrite(&MovieLen,4,1,out);
 		
-		tpi = tpl;					clen += tpi;
+		tpi = MovieLen;					clen += tpi;
 		while (tpi > 0)
 		{
 			fread(&tpc,1,1,movie);
@@ -227,7 +224,7 @@ int	States_SaveData (FILE *out)
 			tpi--;
 		}
 		rewind(movie);
-		fseek(movie,moviepos,SEEK_SET);
+		fseek(movie,clen+24,SEEK_SET);		// seek the movie to where it left off
 
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
@@ -343,6 +340,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 		{
 			if (Controllers.MovieMode & MOV_RECORD)
 			{	// are we recording?
+				extern int MovieLen;
 				extern char MovieName[256];
 				extern int ReRecords;
 				char tps[5];
@@ -350,13 +348,14 @@ BOOL	States_LoadData (FILE *in, int flen)
 				int tpi;
 				unsigned long tpl;
 				unsigned char tpc;
+				unsigned char Cmd;
 
 				rewind(movie);
 				fseek(movie,16,SEEK_SET);
 				fread(tps,4,1,movie);
 				fread(&mlen,4,1,movie);
 				while (memcmp(tps,"NMOV",4))
-				{	/* find the NMOV block in the movie */
+				{	/* find the NMOV block in the movie file */
 					fseek(movie,mlen,SEEK_CUR);
 					fread(tps,4,1,movie);
 					fread(&mlen,4,1,movie);
@@ -375,8 +374,8 @@ BOOL	States_LoadData (FILE *in, int flen)
 					fwrite(&tpc,1,1,movie);
 					tpi--;
 				}
-				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// MLEN
-				tpi = tpl;					clen -= tpi;	// MDAT
+				fread(&MovieLen,4,1,in);	fwrite(&MovieLen,4,1,movie);	clen -= 4;	// MLEN
+				tpi = MovieLen;					clen -= tpi;	// MDAT
 				while (tpi > 0)
 				{
 					if (Controllers.Port1.MovLen)
@@ -397,13 +396,18 @@ BOOL	States_LoadData (FILE *in, int flen)
 						fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
 						tpi -= Controllers.ExpPort.MovLen;
 					}
+					if ((MI) && (MI->Config))
+					{
+						fread(&Cmd,1,1,in);
+						fwrite(&Cmd,1,1,movie);
+						tpi--;
+					}
 				}
 				Controllers.Port1.Frame(&Controllers.Port1,MOV_PLAY);
 				Controllers.Port2.Frame(&Controllers.Port2,MOV_PLAY);
 				Controllers.ExpPort.Frame(&Controllers.ExpPort,MOV_PLAY);
-				tpi = ftell(movie);
-				rewind(movie);
-				fseek(movie,tpi,SEEK_SET);
+				if ((Cmd) && (MI) && (MI->Config))
+					MI->Config(CFG_CMD,Cmd);
 			}
 			else
 			{	// nope, skip it
