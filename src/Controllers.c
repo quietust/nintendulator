@@ -472,6 +472,12 @@ char MovieName[256];
 int MovieLen;
 int MovieFrameLen;
 
+void	Controllers_ShowFrame (void)
+{
+	if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
+		EI.StatusOut("Frame %i",MovieLen / MovieFrameLen);
+}
+
 void	Controllers_PlayMovie (BOOL Review)
 {
 	unsigned char buf[5];

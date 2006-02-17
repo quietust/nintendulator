@@ -266,6 +266,7 @@ void	States_SaveState (void)
 	fclose(out);
 
 	GFX_ShowText("State saved: %i", States.SelSlot);
+	Controllers_ShowFrame();
 }
 
 BOOL	States_LoadData (FILE *in, int flen)
@@ -508,11 +509,8 @@ void	States_LoadState (void)
 	CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
 	if (States_LoadData(in, flen))
-	{
-		if (Controllers.MovieMode & MOV_RECORD)
-			GFX_ShowText("State loaded: %i", States.SelSlot);
-		else	GFX_ShowText("State loaded: %i (frame %i)", States.SelSlot, MovieLen / MovieFrameLen);
-	}
+		GFX_ShowText("State loaded: %i", States.SelSlot);
 	else	GFX_ShowText("State loaded with errors: %i", States.SelSlot);
+	Controllers_ShowFrame();
 	fclose(in);
 }

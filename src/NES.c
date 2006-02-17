@@ -920,6 +920,7 @@ rerun:
 				if (NES.FrameStep)	// and if we need to stop, do it here
 				{	// so if we save, it won't advance the CPU/PPU at all
 					NES.GotStep = FALSE;
+					Controllers_ShowFrame();
 					while (NES.FrameStep && !NES.GotStep && !NES.Stop)
 						ProcessMessages();
 				}
