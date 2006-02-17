@@ -417,7 +417,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			States.NeedSave = TRUE;
 			if (NES.Stopped)
 			{
-				do
+				while (PPU.SLnum < 240)
 				{
 					do
 					{
@@ -428,7 +428,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif	/* ENABLE_DEBUGGER */
 					} while (!NES.Scanline);
 					NES.Scanline = FALSE;
-				} while (PPU.SLnum <= 240);
+				}
 #ifdef ENABLE_DEBUGGER
 				if (Debugger.Enabled)
 					Debugger_Update();
