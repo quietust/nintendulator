@@ -570,7 +570,7 @@ const char *	NES_OpenFileNSF (char *filename)
 	if (RI.NSF_PALSpeed == 20000)
 	{
 		EI.DbgOut("Adjusting NSF playback speed for PAL...");
-		RI.NSF_NTSCSpeed = 19997;
+		RI.NSF_PALSpeed = 19997;
 	}
 
 	NES.PRGMask = MAX_PRGROM_MASK;
