@@ -675,7 +675,7 @@ void	APU_Init (void)
 	APU.Cycles		= 0;
 	APU.BufPos		= 0;
 #ifndef	NSFPLAYER
-	APU.last_pos		= 0;
+	APU.next_pos		= 0;
 #endif
 }
 
@@ -828,7 +828,7 @@ void	APU_SoundON (void)
 	APU_Try(IDirectSoundBuffer_Unlock(APU.Buffer,bufPtr,bufBytes,NULL,0),"Error unlocking sound buffer (Clear)")
 	APU.isEnabled = TRUE;
 	APU_Try(IDirectSoundBuffer_Play(APU.Buffer,0,0,DSBPLAY_LOOPING),"Unable to start playing buffer");
-	APU.last_pos = 0;
+	APU.next_pos = 0;
 #ifdef	SOUND_LOGGING
 	if (!soundlog)
 		soundlog = fopen("c:\\nes.pcm","wb");
@@ -875,17 +875,20 @@ void	APU_Run (void)
 		{
 			LPVOID bufPtr;
 			DWORD bufBytes;
-			unsigned long play_pos, write_pos;
+			unsigned long rpos, wpos;
 			do
 			{
 				Sleep(1);
-				APU_Try(IDirectSoundBuffer_GetCurrentPosition(APU.Buffer,&play_pos,NULL),"Error getting audio position")
-				write_pos = ((play_pos / APU.LockSize + FRAMEBUF - 1) % FRAMEBUF) * APU.LockSize;
-			} while (write_pos != ((APU.last_pos + APU.LockSize) % (APU.LockSize * FRAMEBUF)));
-			APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,write_pos,APU.LockSize,&bufPtr,&bufBytes,NULL,0,0),"Error locking sound buffer")
+				APU_Try(IDirectSoundBuffer_GetCurrentPosition(APU.Buffer,&rpos,&wpos),"Error getting audio position")
+				rpos /= APU.LockSize;
+				wpos /= APU.LockSize;
+				if (wpos < rpos)
+					wpos += FRAMEBUF;
+			} while ((rpos <= APU.next_pos) && (APU.next_pos <= wpos));
+			APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,APU.next_pos * APU.LockSize,APU.LockSize,&bufPtr,&bufBytes,NULL,0,0),"Error locking sound buffer")
 			memcpy(bufPtr,APU.buffer,bufBytes);
 			APU_Try(IDirectSoundBuffer_Unlock(APU.Buffer,bufPtr,bufBytes,NULL,0),"Error unlocking sound buffer")
-			APU.last_pos = write_pos;
+			APU.next_pos = (APU.next_pos + 1) % FRAMEBUF;
 		}
 		APU.Cycles = NewBufPos = 0;
 	}

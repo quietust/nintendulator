@@ -36,7 +36,7 @@ struct	tAPU
 	int			Cycles;
 	int			BufPos;
 #ifndef NSFPLAYER
-	unsigned long		last_pos;
+	unsigned long		next_pos;
 	BOOL			isEnabled;
 
 	LPDIRECTSOUND		DirectSound;
