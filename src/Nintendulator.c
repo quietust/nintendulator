@@ -76,6 +76,8 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 	hAccelTable = LoadAccelerators(hInstance,(LPCTSTR)IDC_NINTENDULATOR);
 
+	timeBeginPeriod(1);
+
 	if (lpCmdLine[0])
 	{
 		char *cmdline = strdup(lpCmdLine);
@@ -87,7 +89,6 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 		free(cmdline);
 	}
 
-	timeBeginPeriod(1);
 	// Main message loop:
 	while (GetMessage(&msg,NULL,0,0))
 	{
@@ -791,15 +792,17 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 	return FALSE;
 }
 
-void	ProcessMessages (void)
+BOOL	ProcessMessages (void)
 {
 	MSG msg;
+	BOOL gotMessage = PeekMessage(&msg,NULL,0,0,PM_NOREMOVE);
 	while (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
 		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+	return gotMessage;
 }
 
 void	SetWindowClientArea (HWND hWnd, int w, int h)
