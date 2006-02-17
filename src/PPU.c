@@ -1065,7 +1065,8 @@ static	void	__fastcall	Write6 (int What)
 		PPU.IntReg &= 0x7F00;
 		PPU.IntReg |= What;
 		PPU.VRAMAddr = PPU.IntReg;
-		PPU.IOAddr = PPU.VRAMAddr & 0x3FFF;
+		if (!PPU.IOMode)
+			PPU.IOAddr = PPU.VRAMAddr & 0x3FFF;
 	}
 	PPU.HVTog = !PPU.HVTog;
 }
