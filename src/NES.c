@@ -730,6 +730,11 @@ void	NES_Reset (int ResetType)
 		EI.DbgOut("Performing soft reset...");
 		if ((MI) && (MI->Shutdown))
 			MI->Shutdown();
+		if (MI2)
+		{
+			MI = MI2;
+			MI2 = NULL;
+		}
 		EI.SetCHR_RAM8(0,0);
 		EI.Mirror_4();
 		if (NES.GameGenie)
