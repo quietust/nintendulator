@@ -459,7 +459,7 @@ const char *	NES_OpenFileFDS (char *filename)
 
 	RI.FDS_NumSides = numSides;
 
-	NES.PRGMask = (((0x10000 * RI.FDS_NumSides) << 4) - 1) & MAX_PRGROM_MASK;
+	NES.PRGMask = ((RI.FDS_NumSides << 4) - 1) & MAX_PRGROM_MASK;
 
 	if (!MapperInterface_LoadMapper(&RI))
 		return "Famicom Disk System support not found!";
