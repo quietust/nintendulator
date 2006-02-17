@@ -240,7 +240,7 @@ int	_MAPINT	CPU_ReadPRG (int Bank, int Addy)
 {
 	if (CPU.Readable[Bank])
 		return CPU.PRGPointer[Bank][Addy];
-	else	return CPU.LastRead;
+	else	return -1;
 }
 
 void	_MAPINT	CPU_WritePRG (int Bank, int Addy, int Val)
