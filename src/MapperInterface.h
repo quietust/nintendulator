@@ -1,5 +1,5 @@
 /*
- * Nintendulator Mapper Interface v3.0
+ * Nintendulator Mapper Interface v3.2
  */
 
 /* So this file only gets included once */
@@ -9,9 +9,9 @@
 
 /* Standard header files, used by all mappers */
 
-/* Mapper Interface version (3.1) */
+/* Mapper Interface version (3.2) */
 
-#define	CurrentMapperInterface 0x00030001
+#define	CurrentMapperInterface 0x00030002
 
 /* Function types */
 
@@ -91,47 +91,38 @@ typedef	struct	EmulatorInterface
 }	TEmulatorInterface, *PEmulatorInterface;
 typedef	const	TEmulatorInterface	CTEmulatorInterface, *CPEmulatorInterface;
 
-#define	COMPAT_NONE	0
-#define	COMPAT_PARTIAL	1
-#define	COMPAT_NEARLY	2
-#define	COMPAT_FULL	3
+typedef enum	{ COMPAT_FULL, COMPAT_NEARLY, COMPAT_PARTIAL, COMPAT_NONE } COMPAT_TYPE;
 
 /* Mapper Information structure - Contains pointers to mapper functions, sent to emulator on load mapper  */
+
+typedef	enum	{ STATE_SAVE, STATE_LOAD, STATE_SIZE } SAVELOAD_TYPE;
 
 typedef	struct	MapperInfo
 {
 	/* Mapper Information */
 		void *		MapperId;
 		char *		Description;
-		int		Compatibility;
+		COMPAT_TYPE	Compatibility;
 
 	/* Mapper Functions */
 		void		(_MAPINT *Reset)	(int);
 		void		(_MAPINT *Shutdown)	(void);
 		void		(_MAPINT *CPUCycle)	(void);
 		void		(_MAPINT *PPUCycle)	(int,int,int,int);
-		int		(_MAPINT *SaveLoad)	(int,int,char *);
+		int		(_MAPINT *SaveLoad)	(SAVELOAD_TYPE,int,char *);
 		int		(_MAPINT *GenSound)	(int);
 		void		(_MAPINT *Config)	(void);
 }	TMapperInfo, *PMapperInfo;
 typedef	const	TMapperInfo	CTMapperInfo, *CPMapperInfo;
 
-#define	STATE_SAVE	0
-#define	STATE_LOAD	1
-#define	STATE_SIZE	2
-
 /* DLL Information Structure:- Contains general information about the mapper DLL */
 
-#define	ROM_UNDEFINED	0
-#define	ROM_INES	1
-#define	ROM_UNIF	2
-#define	ROM_FDS		3
-#define	ROM_NSF		4
+typedef	enum	{ ROM_INES, ROM_UNIF, ROM_FDS, ROM_NSF, ROM_UNDEFINED } ROM_TYPE;
 
 typedef	struct	ROMInfo
 {
-	char *	Filename;
-	int	ROMType;
+	char *		Filename;
+	ROM_TYPE	ROMType;
 	union
 	{
 		struct
