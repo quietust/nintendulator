@@ -12,6 +12,7 @@
 
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
+#pragma warning(disable:4761)
 
 // Windows Header Files:
 #include <windows.h>

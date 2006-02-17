@@ -33,9 +33,6 @@ struct tGFX
 	unsigned long Palette32[512];
 	char Depth;
 
-	char TextDisp[256];
-	int ShowTextCounter;
-
 	LARGE_INTEGER ClockFreq;
 	LARGE_INTEGER LastClockVal;
 	int FPSnum, FPSCnt, FSkip;
@@ -71,8 +68,6 @@ void	GFX_Update (void);
 void	GFX_Repaint (void);
 void	GFX_LoadPalette (int);
 void	GFX_SetFrameskip (void);
-void	__cdecl	GFX_ShowText (char *, ...);
-void	GFX_UpdateTitlebar (void);
 void	GFX_PaletteConfig (void);
 
 #endif /* GFX_H */

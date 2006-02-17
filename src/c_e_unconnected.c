@@ -20,7 +20,7 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#include "Nintendulator.h"
+#include "stdafx.h"
 #include "Controllers.h"
 
 static	void	Frame (struct tExpPort *Cont, unsigned char mode)

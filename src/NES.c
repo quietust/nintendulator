@@ -20,7 +20,9 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
+#include "stdafx.h"
 #include "Nintendulator.h"
+#include "resource.h"
 #include "NES.h"
 #include "CPU.h"
 #include "PPU.h"
@@ -64,7 +66,7 @@ void	NES_Init (void)
 	NES.ROMLoaded = FALSE;
 	memset(&RI,0,sizeof(RI));
 
-	GFX_UpdateTitlebar();
+	UpdateTitlebar();
 }
 
 void	NES_Release (void)
@@ -990,7 +992,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 	Movie_ShowFrame();
 
 #endif	/* CPU_BENCHMARK */
-	GFX_UpdateTitlebar();
+	UpdateTitlebar();
 	NES.Running = FALSE;
 	return 0;
 }

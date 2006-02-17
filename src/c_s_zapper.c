@@ -20,7 +20,9 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
+#include "stdafx.h"
 #include "Nintendulator.h"
+#include "resource.h"
 #include "Movie.h"
 #include "Controllers.h"
 #include "PPU.h"

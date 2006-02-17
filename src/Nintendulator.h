@@ -23,21 +23,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #ifndef NINTENDULATOR_H
 #define NINTENDULATOR_H
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-#if _MSC_VER > 1000
-#pragma once
-#endif /* _MSC_VER > 1000 */
-
-#pragma warning(disable:4761)
-
-#include <windows.h>
-#include "resource.h"
-#include <stdio.h>
-#include <stdlib.h>
-
 #define	ENABLE_DEBUGGER
 /*#define	CPU_BENCHMARK */
 
@@ -57,7 +42,13 @@ extern	char		Path_NMV[MAX_PATH];
 extern	char		Path_AVI[MAX_PATH];
 extern	char		Path_PAL[MAX_PATH];
 
-extern void	SetWindowClientArea (HWND hWnd, int w, int h);
-extern BOOL	ProcessMessages	(void);
+extern	void		SetWindowClientArea (HWND hWnd, int w, int h);
+extern	BOOL		ProcessMessages	(void);
+
+extern	char		TitlebarBuffer[256];
+extern	int		TitlebarDelay;
+extern	void		UpdateTitlebar (void);
+extern	void	__cdecl	PrintTitlebar (char *Text, ...);
+
 
 #endif /* NINTENDULATOR_H */

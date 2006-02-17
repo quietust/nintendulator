@@ -264,6 +264,10 @@ SOURCE=..\src\PPU.h
 
 SOURCE=..\src\States.h
 # End Source File
+# Begin Source File
+
+SOURCE=..\src\StdAfx.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 

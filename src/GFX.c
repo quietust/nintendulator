@@ -20,13 +20,13 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
+#include "stdafx.h"
 #include "Nintendulator.h"
+#include "resource.h"
 #include "NES.h"
 #include "GFX.h"
 #include "PPU.h"
 #include "AVI.h"
-#include <math.h>
-#include <commdlg.h>
 #include <commctrl.h>
 
 struct tGFX GFX;
@@ -53,7 +53,6 @@ void	GFX_Init (void)
 	ZeroMemory(GFX.Palette15,sizeof(GFX.Palette15));
 	ZeroMemory(GFX.Palette16,sizeof(GFX.Palette16));
 	ZeroMemory(GFX.Palette32,sizeof(GFX.Palette32));
-	ZeroMemory(GFX.TextDisp,sizeof(GFX.TextDisp));
 	GFX.DirectDraw = NULL;
 	GFX.PrimarySurf = NULL;
 	GFX.SecondarySurf = NULL;
@@ -66,7 +65,6 @@ void	GFX_Init (void)
 	GFX.aFPSnum = 0;
 	GFX.FSkip = 0;
 	GFX.aFSkip = TRUE;
-	GFX.ShowTextCounter = 0;
 	GFX.Depth = 0;
 	GFX.ClockFreq.QuadPart = 0;
 	GFX.LastClockVal.QuadPart = 0;
@@ -233,7 +231,7 @@ void	GFX_DrawScreen (void)
 	}
 	if (!TitleDelay--)
 	{
-		GFX_UpdateTitlebar();
+		UpdateTitlebar();
 		TitleDelay = 10;
 	}
 }
@@ -491,31 +489,6 @@ void	GFX_LoadPalette (int PalNum)
 		GFX.Palette16[i] = ((RV << 8) & 0xF800) | ((GV << 3) & 0x07E0) | (BV >> 3);
 		GFX.Palette32[i] = (RV << 16) | (GV << 8) | BV;
 	}
-}
-
-void	__cdecl	GFX_ShowText (char *Text, ...)
-{
-	va_list marker;
-	va_start(marker,Text);
-	vsprintf(GFX.TextDisp,Text,marker);
-	va_end(marker);
-	GFX.ShowTextCounter = 15;
-	GFX_UpdateTitlebar();
-}
-
-void	GFX_UpdateTitlebar (void)
-{
-	char titlebar[256];
-	if (NES.Running)
-		sprintf(titlebar,"Nintendulator - %i FPS (%i %sFSkip)",GFX.FPSnum,GFX.FSkip,GFX.aFSkip?"Auto":"");
-	else	strcpy(titlebar,"Nintendulator - Stopped");
-	if (GFX.ShowTextCounter > 0)
-	{
-		GFX.ShowTextCounter--;
-		strcat(titlebar," - ");
-		strcat(titlebar,GFX.TextDisp);
-	}
-	SetWindowText(mWnd,titlebar);
 }
 
 void	UpdatePalette (HWND hDlg, int pal)

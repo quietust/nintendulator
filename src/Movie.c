@@ -20,11 +20,13 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
+#include "stdafx.h"
 #include "Nintendulator.h"
+#include "resource.h"
 #include "Movie.h"
 #include "Controllers.h"
 #include "States.h"
-#include "GFX.h"
+//#include "GFX.h"
 #include "NES.h"
 #include "PPU.h"
 #include <commdlg.h>
@@ -420,8 +422,8 @@ unsigned char	Movie_LoadInput (void)
 	if (Movie.Pos >= Movie.Len)
 	{
 		if (Movie.Pos == Movie.Len)
-			GFX_ShowText("Movie stopped.");
-		else	GFX_ShowText("Unexpected EOF in movie!");
+			PrintTitlebar("Movie stopped.");
+		else	PrintTitlebar("Unexpected EOF in movie!");
 		EndMovie();
 	}
 	if (NES.HasMenu)

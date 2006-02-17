@@ -20,7 +20,9 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
+#include "stdafx.h"
 #include "Nintendulator.h"
+#include "resource.h"
 #include "NES.h"
 #include "CPU.h"
 #include "PPU.h"
@@ -31,7 +33,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Movie.h"
 #include "Controllers.h"
 #include "States.h"
-#include <commdlg.h>
 #include <shellapi.h>
 #define MAX_LOADSTRING 100
 
@@ -60,6 +61,9 @@ LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	DebugWnd(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	InesHeader(HWND, UINT, WPARAM, LPARAM);
 void	ShowDebug (void);
+
+char	TitlebarBuffer[256];
+int	TitlebarDelay;
 
 int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -807,4 +811,28 @@ void	SetWindowClientArea (HWND hWnd, int w, int h)
 	SetWindowPos(hWnd,hWnd,0,0,w,h,SWP_NOMOVE | SWP_NOZORDER);
 	GetClientRect(hWnd,&client);
 	SetWindowPos(hWnd,hWnd,0,0,2 * w - client.right,2 * h - client.bottom,SWP_NOMOVE | SWP_NOZORDER);
+}
+
+void	UpdateTitlebar (void)
+{
+	char titlebar[256];
+	if (NES.Running)
+		sprintf(titlebar,"Nintendulator - %i FPS (%i %sFSkip)",GFX.FPSnum,GFX.FSkip,GFX.aFSkip?"Auto":"");
+	else	strcpy(titlebar,"Nintendulator - Stopped");
+	if (TitlebarDelay > 0)
+	{
+		TitlebarDelay--;
+		strcat(titlebar," - ");
+		strcat(titlebar,TitlebarBuffer);
+	}
+	SetWindowText(mWnd,titlebar);
+}
+void	__cdecl	PrintTitlebar (char *Text, ...)
+{
+	va_list marker;
+	va_start(marker,Text);
+	vsprintf(TitlebarBuffer,Text,marker);
+	va_end(marker);
+	TitlebarDelay = 15;
+	UpdateTitlebar();
 }

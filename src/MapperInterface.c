@@ -25,14 +25,13 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 # include "MapperInterface.h"
 # include "CPU.h"
 #else
+# include "stdafx.h"
 # include "Nintendulator.h"
 # include "NES.h"
 # include "CPU.h"
 # include "PPU.h"
 # include "GFX.h"
 # include "Debugger.h"
-# include "States.h"
-# include "Controllers.h"
 #endif
 
 TEmulatorInterface	EI;
@@ -464,7 +463,7 @@ static	void	_MAPINT	StatusOut (char *text, ...)
 	va_start(marker,text);
 	vsprintf(txt,text,marker);
 	va_end(marker);
-	GFX_ShowText(txt);
+	PrintTitlebar(txt);
 #endif
 }
 

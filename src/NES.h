@@ -23,10 +23,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #ifndef NES_H
 #define NES_H
 
-#include "MapperInterface.h"
-#include "resource.h"
-#include <windows.h>
-
 struct tNES
 {
 	int SRAM_Size;

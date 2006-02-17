@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 # include "APU.h"
 # include "CPU.h"
 #else
+# include "stdafx.h"
 # include "Nintendulator.h"
 # include "NES.h"
 # include "APU.h"

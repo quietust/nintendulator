@@ -25,12 +25,12 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 # include "CPU.h"
 # include "APU.h"
 #else
+# include "stdafx.h"
 # include "Nintendulator.h"
 # include "NES.h"
 # include "CPU.h"
 # include "PPU.h"
 # include "APU.h"
-# include "GFX.h"
 # include "Controllers.h"
 #endif
 

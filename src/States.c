@@ -20,7 +20,9 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
+#include "stdafx.h"
 #include "Nintendulator.h"
+#include "resource.h"
 #include "NES.h"
 #include "States.h"
 #include "CPU.h"
@@ -70,9 +72,9 @@ void	States_SetSlot (int Slot)
 	if (tmp = fopen(tpchr,"rb"))
 	{
 		fclose(tmp);
-		GFX_ShowText("State Selected: %i (occupied)", Slot);
+		PrintTitlebar("State Selected: %i (occupied)", Slot);
 	}
-	else	GFX_ShowText("State Selected: %i (empty)", Slot);
+	else	PrintTitlebar("State Selected: %i (empty)", Slot);
 }
 
 int	States_SaveData (FILE *out)
@@ -205,7 +207,7 @@ void	States_SaveState (void)
 
 	if (Genie.CodeStat & 0x80)
 	{
-		GFX_ShowText("Cannot save state at the Game Genie code entry screen!");
+		PrintTitlebar("Cannot save state at the Game Genie code entry screen!");
 		return;
 	}
 
@@ -227,7 +229,7 @@ void	States_SaveState (void)
 	fwrite(&flen,1,4,out);
 	fclose(out);
 
-	GFX_ShowText("State saved: %i", States.SelSlot);
+	PrintTitlebar("State saved: %i", States.SelSlot);
 	Movie_ShowFrame();
 }
 
@@ -332,7 +334,7 @@ void	States_LoadState (void)
 	in = fopen(tpchr,"rb");
 	if (!in)
 	{
-		GFX_ShowText("No such save state: %i", States.SelSlot);
+		PrintTitlebar("No such save state: %i", States.SelSlot);
 		return;
 	}
 
@@ -340,7 +342,7 @@ void	States_LoadState (void)
 	if (memcmp(tpchr,"NSS\x1a",4))
 	{
 		fclose(in);
-		GFX_ShowText("Not a valid savestate file: %i", States.SelSlot);
+		PrintTitlebar("Not a valid savestate file: %i", States.SelSlot);
 		return;
 	}
 	fread(tpchr,1,4,in);
@@ -348,7 +350,7 @@ void	States_LoadState (void)
 	{
 		fclose(in);
 		tpchr[4] = 0;
-		GFX_ShowText("Incorrect savestate version (%s): %i", tpchr, States.SelSlot);
+		PrintTitlebar("Incorrect savestate version (%s): %i", tpchr, States.SelSlot);
 		return;
 	}
 	fread(&flen,4,1,in);
@@ -357,7 +359,7 @@ void	States_LoadState (void)
 	if (!memcmp(tpchr,"NMOV",4))
 	{
 		fclose(in);
-		GFX_ShowText("Selected savestate (%i) is a movie file - cannot load!", States.SelSlot);
+		PrintTitlebar("Selected savestate (%i) is a movie file - cannot load!", States.SelSlot);
 		return;
 	}
 	else if (!memcmp(tpchr,"NREC",4))
@@ -370,7 +372,7 @@ void	States_LoadState (void)
 		if (Movie.Mode)
 		{
 			fclose(in);
-			GFX_ShowText("Selected savestate (%i) does not contain movie data!", States.SelSlot);
+			PrintTitlebar("Selected savestate (%i) does not contain movie data!", States.SelSlot);
 			return;
 		}
 	}
@@ -378,7 +380,7 @@ void	States_LoadState (void)
 	{
 		fclose(in);
 		tpchr[4] = 0;
-		GFX_ShowText("Selected savestate (%i) has unknown type! (%s)", States.SelSlot, tpchr);
+		PrintTitlebar("Selected savestate (%i) has unknown type! (%s)", States.SelSlot, tpchr);
 		return;
 	}
 
@@ -392,8 +394,8 @@ void	States_LoadState (void)
 	CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
 	if (States_LoadData(in, flen))
-		GFX_ShowText("State loaded: %i", States.SelSlot);
-	else	GFX_ShowText("State loaded with errors: %i", States.SelSlot);
+		PrintTitlebar("State loaded: %i", States.SelSlot);
+	else	PrintTitlebar("State loaded with errors: %i", States.SelSlot);
 	Movie_ShowFrame();
 	fclose(in);
 }
