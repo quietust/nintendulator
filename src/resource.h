@@ -42,6 +42,7 @@
 #define IDC_STOP_LOGGING                1003
 #define IDC_IRQBUTTON                   1004
 #define IDC_CONT_SPORT1                 1005
+#define IDC_DUMP_CPU_MEM                1005
 #define IDC_CONT_SPORT2                 1006
 #define IDC_CONT_SPORT3                 1007
 #define IDC_CONT_SPORT4                 1008
@@ -227,7 +228,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        151
 #define _APS_NEXT_COMMAND_VALUE         32819
-#define _APS_NEXT_CONTROL_VALUE         1086
+#define _APS_NEXT_CONTROL_VALUE         1087
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

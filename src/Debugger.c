@@ -117,18 +117,30 @@ void	Debugger_Init (void)
 	Debugger.PaletteDC = CreateCompatibleDC(TpHDC);
 	Debugger.PaletteBMP = CreateCompatibleBitmap(TpHDC,D_PAL_W,D_PAL_H);
 	SelectObject(Debugger.PaletteDC,Debugger.PaletteBMP);
+	BitBlt(Debugger.PaletteDC,0,0,D_PAL_W,D_PAL_H,NULL,0,0,BLACKNESS);
+	ZeroMemory(Debugger.PaletteArray,sizeof(Debugger.PaletteArray));
+
 	Debugger.PatternDC = CreateCompatibleDC(TpHDC);
 	Debugger.PatternBMP = CreateCompatibleBitmap(TpHDC,D_PAT_W,D_PAT_H);
 	SelectObject(Debugger.PatternDC,Debugger.PatternBMP);
+	BitBlt(Debugger.PatternDC,0,0,D_PAT_W,D_PAT_H,NULL,0,0,BLACKNESS);
+	ZeroMemory(Debugger.PatternArray,sizeof(Debugger.PatternArray));
+
 	Debugger.NameDC = CreateCompatibleDC(TpHDC);
 	Debugger.NameBMP = CreateCompatibleBitmap(TpHDC,D_NAM_W,D_NAM_H);
 	SelectObject(Debugger.NameDC,Debugger.NameBMP);
+	BitBlt(Debugger.NameDC,0,0,D_NAM_W,D_NAM_H,NULL,0,0,BLACKNESS);
+	ZeroMemory(Debugger.NameArray,sizeof(Debugger.NameArray));
+
 	Debugger.TraceDC = CreateCompatibleDC(TpHDC);
 	Debugger.TraceBMP = CreateCompatibleBitmap(TpHDC,D_TRC_W,D_TRC_H);
 	SelectObject(Debugger.TraceDC,Debugger.TraceBMP);
+	BitBlt(Debugger.TraceDC,0,0,D_TRC_W,D_TRC_H,NULL,0,0,BLACKNESS);
+
 	Debugger.RegDC = CreateCompatibleDC(TpHDC);
 	Debugger.RegBMP = CreateCompatibleBitmap(TpHDC,D_REG_W,D_REG_H);
 	SelectObject(Debugger.RegDC,Debugger.RegBMP);
+	BitBlt(Debugger.RegDC,0,0,D_REG_W,D_REG_H,NULL,0,0,BLACKNESS);
 
 	nHeight = -MulDiv(Debugger.FontHeight, GetDeviceCaps(TpHDC, LOGPIXELSY), 72);
 	tpf = CreateFont(nHeight, Debugger.FontWidth, 0, 0, 0, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DRAFT_QUALITY, FF_MODERN, "Courier New");
@@ -169,6 +181,7 @@ void	Debugger_SetMode (int NewMode)
 		SetWindowClientArea(mWnd,512,480);
 	}
 
+	CPU.WantIRQ &= ~IRQ_DEBUG;
 	if (Debugger.DumpWnd)
 	{
 		DestroyWindow(Debugger.DumpWnd);
@@ -365,7 +378,7 @@ void	Debugger_Update (void)
 			sprintf(tpc,"SP: %02X",CPU.SP);	TextOut(Debugger.RegDC,0, 4*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			CPU_JoinFlags();
 			sprintf(tpc,"P: %02X",CPU.P);	TextOut(Debugger.RegDC,0, 5*Debugger.FontHeight,tpc,(int)strlen(tpc));
-			sprintf(tpc,"->%s%s  %s%s%s%s  %s %s %s",CPU.FN?"N":" ",CPU.FV?"V":" ",CPU.FI?"I":" ",CPU.FD?"D":" ",CPU.FZ?"Z":" ",CPU.FC?"C":" ",(CPU.WantIRQ&IRQ_DPCM)?"DMC":"   ",(CPU.WantIRQ&IRQ_FRAME)?"FRM":"   ",(CPU.WantIRQ&IRQ_EXTERNAL)?"IRQ":"   ");
+			sprintf(tpc,"->%s%s%s%s%s%s  IRQ:%s %s %s %s",CPU.FN?"N":" ",CPU.FV?"V":" ",CPU.FI?"I":" ",CPU.FD?"D":" ",CPU.FZ?"Z":" ",CPU.FC?"C":" ",(CPU.WantIRQ&IRQ_DPCM)?"DMC":"   ",(CPU.WantIRQ&IRQ_FRAME)?"FRM":"   ",(CPU.WantIRQ&IRQ_EXTERNAL)?"EXT":"   ",(CPU.WantIRQ&IRQ_DEBUG)?"DBG":"   ");
 							TextOut(Debugger.RegDC,0, 6*Debugger.FontHeight,tpc,(int)strlen(tpc));
 
 			if ((PPU.SLnum >= 0) && (PPU.SLnum < 240))
@@ -635,6 +648,16 @@ LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 		wmEvent = HIWORD(wParam); 
 		switch (wmId)
 		{
+		case IDC_DUMP_CPU_MEM:
+		{
+			FILE *CPUMemOut = fopen("CPU.Mem","wb");
+			int i;
+			fwrite(CPU_RAM,1,0x800,CPUMemOut);
+			for (i = 4; i < 16; i++)
+				if (CPU.PRGPointer[i])
+					fwrite(CPU.PRGPointer[i],1,0x1000,CPUMemOut);
+			fclose(CPUMemOut);
+		}	break;
 		case IDC_DUMP_PPU_MEM:
 		{
 			FILE *PPUMemOut = fopen("PPU.Mem","wb");
@@ -650,9 +673,11 @@ LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 		case IDC_STOP_LOGGING:
 			Debugger_StopLogging();
 			break;
-/*		case IDC_IRQBUTTON:
-			CPU.WantIRQ = TRUE;
-			break;*/
+		case IDC_IRQBUTTON:
+			CPU.WantIRQ &= ~IRQ_DEBUG;
+			if (IsDlgButtonChecked(hwndDlg,IDC_IRQBUTTON))
+				CPU.WantIRQ |= IRQ_DEBUG;
+			break;
 		}
 		break;
 	}

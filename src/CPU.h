@@ -30,6 +30,7 @@ union SplitReg { unsigned long Full; unsigned char Segment[4]; };
 #define	IRQ_FRAME	0x01
 #define	IRQ_DPCM	0x02
 #define	IRQ_EXTERNAL	0x04
+#define	IRQ_DEBUG	0x08
 
 struct tCPU
 {
