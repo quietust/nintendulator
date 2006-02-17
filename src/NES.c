@@ -879,18 +879,19 @@ void	_MAPINT	GenieWrite (int Bank, int Addy, int Val)
 void	NES_Reset (int ResetType)
 {
 	int i;
-	CPU.ReadHandler[0] = CPU_ReadRAM;	CPU.WriteHandler[0] = CPU_WriteRAM;
-	CPU.ReadHandler[1] = CPU_ReadRAM;	CPU.WriteHandler[1] = CPU_WriteRAM;
-	CPU.ReadHandler[2] = PPU_IntRead;	CPU.WriteHandler[2] = PPU_IntWrite;
-	CPU.ReadHandler[3] = PPU_IntRead;	CPU.WriteHandler[3] = PPU_IntWrite;
-	CPU.ReadHandler[4] = CPU_Read4k;	CPU.WriteHandler[4] = CPU_Write4k;
-	for (i = 0x5; i < 0x10; i++)
+	for (i = 0x0; i < 0x10; i++)
 	{
 		CPU.ReadHandler[i] = CPU_ReadPRG;
 		CPU.WriteHandler[i] = CPU_WritePRG;
 		CPU.Readable[i] = FALSE;
 		CPU.Writable[i] = FALSE;
+		CPU.PRGPointer[i] = NULL;
 	}
+	CPU.ReadHandler[0] = CPU_ReadRAM;	CPU.WriteHandler[0] = CPU_WriteRAM;
+	CPU.ReadHandler[1] = CPU_ReadRAM;	CPU.WriteHandler[1] = CPU_WriteRAM;
+	CPU.ReadHandler[2] = PPU_IntRead;	CPU.WriteHandler[2] = PPU_IntWrite;
+	CPU.ReadHandler[3] = PPU_IntRead;	CPU.WriteHandler[3] = PPU_IntWrite;
+	CPU.ReadHandler[4] = CPU_Read4k;	CPU.WriteHandler[4] = CPU_Write4k;
 	for (i = 0x0; i < 0x8; i++)
 	{
 		PPU.ReadHandler[i] = PPU_BusRead;
