@@ -162,6 +162,13 @@ static	__forceinline void	DoIRQ (void)
 	CPU.PCH = CPU_MemGet(0xFFFF);
 }
 
+void	CPU_GetHandlers (void)
+{
+	if ((MI) && (MI->CPUCycle))
+		CPU_CPUCycle = MI->CPUCycle;
+	else	CPU_CPUCycle = CPU_NoCPUCycle;
+}
+
 void	CPU_PowerOn (void)
 {
 	ZeroMemory(CPU_RAM,sizeof(CPU_RAM));
@@ -174,9 +181,7 @@ void	CPU_PowerOn (void)
 	CPU.SP = 0xFF;
 	CPU.P = 0x20;
 	CPU_SplitFlags();
-	if ((MI) && (MI->CPUCycle))
-		CPU_CPUCycle = MI->CPUCycle;
-	else	CPU_CPUCycle = CPU_NoCPUCycle;
+	CPU_GetHandlers();
 }
 
 void	CPU_Reset (void)

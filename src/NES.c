@@ -842,6 +842,7 @@ void	_MAPINT	GenieWrite (int Bank, int Addy, int Val)
 			}
 			MI = MI2;
 			PPU_GetHandlers();
+			CPU_GetHandlers();
 			if ((MI) && (MI->Reset))
 				MI->Reset(0);
 		}
@@ -947,6 +948,7 @@ void	NES_Reset (int ResetType)
 			MI2 = MI;
 			MI = NULL;
 			PPU_GetHandlers();
+			CPU_GetHandlers();
 			break;
 		}
 		EI.SetCHR_RAM8(0,0);

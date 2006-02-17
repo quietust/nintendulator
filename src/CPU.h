@@ -61,6 +61,7 @@ void	__fastcall	CPU_MemSet (unsigned int,unsigned char);
 void	CPU_JoinFlags (void);
 void	CPU_SplitFlags (void);
 
+void	CPU_GetHandlers (void);
 void	CPU_Reset (void);
 void	CPU_PowerOn (void);
 void	CPU_ExecOp (void);
