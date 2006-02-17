@@ -752,7 +752,7 @@ void	Controllers_StopMovie (void)
 		fwrite(&len,4,1,movie);			// 2: set the NMOV block length
 		fseek(movie,4,SEEK_CUR);		len -= 4;	// skip controller data
 		fwrite(&ReRecords,4,1,movie);		len -= 4;	// write the final re-record count
-		fflush(movie);
+		fseek(movie,0,SEEK_CUR);
 		fread(&mlen,4,1,movie);			len -= 4;	// read description len
 		if (mlen)
 		{

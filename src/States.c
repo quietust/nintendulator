@@ -331,6 +331,8 @@ BOOL	States_LoadData (FILE *in, int flen)
 					fread(tps,4,1,movie);
 					fread(&mlen,4,1,movie);
 				}
+				fseek(movie,0,SEEK_CUR);
+				EI.DbgOut("Found NMOV block (%i)",ferror(movie));
 				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// CTRL0, CTRL1, CTEXT, EXTR
 				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// RREC
 				if (ReRecords < (int)tpl)
@@ -344,8 +346,11 @@ BOOL	States_LoadData (FILE *in, int flen)
 					fwrite(&tpc,1,1,movie);
 					tpi--;
 				}
+				EI.DbgOut("Copied initial data (%i)",ferror(movie));
 				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// MLEN
+				EI.DbgOut("Movie len is %i (%i)",tpl,ferror(movie));
 				tpi = tpl;					clen -= tpi;	// MDAT
+				EI.DbgOut("Copying %i movie bytes (%i)",tpi,ferror(movie));
 				while (tpi > 0)
 				{
 					if (Controllers.Port1.MovLen)
@@ -370,9 +375,11 @@ BOOL	States_LoadData (FILE *in, int flen)
 				Controllers.Port1.Frame(&Controllers.Port1,MOV_PLAY);
 				Controllers.Port2.Frame(&Controllers.Port2,MOV_PLAY);
 				Controllers.ExpPort.Frame(&Controllers.ExpPort,MOV_PLAY);
+				EI.DbgOut("Done copying movie data (%i)",ferror(movie));
 				tpi = ftell(movie);
 				rewind(movie);
 				fseek(movie,tpi,SEEK_SET);
+				EI.DbgOut("Re-seeking movie to position (%i)",ferror(movie));
 			}
 			else
 			{	// nope, skip it
