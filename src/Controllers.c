@@ -27,6 +27,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "NES.h"
 #include <commdlg.h>
 
+static	HWND key;
 char *KeyLookup[256] =
 {
 	"", "Escape", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "- (Keyboard)", "=", "Backspace", "Tab",
@@ -952,7 +953,7 @@ int	Controllers_GetConfigMouse (HWND hWnd)
 		}
 		if (Key != -1)	/* if we got a button, don't check for an axis */
 			break;
-		for (i = 0x08; i < (0x08 | Controllers.NumAxes[1]); i++)
+		for (i = 0x08; i < (0x08 | (Controllers.NumAxes[1] << 1)); i++)
 		{
 			if (Controllers_IsPressed((1 << 16) | i))
 			{
@@ -967,7 +968,7 @@ waitrelease:
 		for (i = 0; i < Controllers.NumButtons[1]; i++)
 			if (Controllers_IsPressed((1 << 16) | i))
 				goto waitrelease;
-		for (i = 0x08; i < (0x08 | Controllers.NumAxes[1]); i++)
+		for (i = 0x08; i < (0x08 | (Controllers.NumAxes[1] << 1)); i++)
 			if (Controllers_IsPressed((1 << 16) | i))
 				goto waitrelease;
 	}
@@ -1083,7 +1084,7 @@ void	Controllers_ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 	*Button &= 0xFFFF;
 	if (getKey)	/* this way, we can just re-label the button */
 	{
-		HWND key = CreateDialog(hInst,(LPCTSTR)IDD_KEYCONFIG,hDlg,NULL);
+		key = CreateDialog(hInst,(LPCTSTR)IDD_KEYCONFIG,hDlg,NULL);
 		ShowWindow(key,TRUE);	/* FIXME - center this window properly */
 		ProcessMessages();	/* let the "Press a key..." dialog display itself */
 		if (Device == 0)
@@ -1093,6 +1094,7 @@ void	Controllers_ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 		else	*Button = Controllers_GetConfigJoy(key,Device-2);
 		ProcessMessages();	/* flush all keypresses - don't want them going back to the parent dialog */
 		DestroyWindow(key);	/* close the little window */
+		key = NULL;
 	}
 	SetWindowText(hDlg,(LPCTSTR)Controllers_GetButtonLabel(Device,*Button));
 	*Button |= Device << 16;	/* add the device ID */
@@ -1119,15 +1121,16 @@ BOOL	Controllers_IsPressed (int Button)
 	{
 		if (Button & 0x8)	/* axis selected */
 		{
-			LockCursorPos(128,120);	/* if we're detecting mouse movement, lock the cursor in place */
+			if (!key)
+				LockCursorPos(128,120);	/* if we're detecting mouse movement, lock the cursor in place */
 			switch (Button & 0x7)
 			{
-			case 0x0:	return (Controllers.MouseState.lX < 0) ? TRUE : FALSE;	break;
-			case 0x1:	return (Controllers.MouseState.lX > 0) ? TRUE : FALSE;	break;
-			case 0x2:	return (Controllers.MouseState.lY < 0) ? TRUE : FALSE;	break;
-			case 0x3:	return (Controllers.MouseState.lY > 0) ? TRUE : FALSE;	break;
-			case 0x4:	return (Controllers.MouseState.lZ < 0) ? TRUE : FALSE;	break;
-			case 0x5:	return (Controllers.MouseState.lZ > 0) ? TRUE : FALSE;	break;
+			case 0x0:	return (Controllers.MouseState.lX < -1) ? TRUE : FALSE;	break;
+			case 0x1:	return (Controllers.MouseState.lX > +1) ? TRUE : FALSE;	break;
+			case 0x2:	return (Controllers.MouseState.lY < -1) ? TRUE : FALSE;	break;
+			case 0x3:	return (Controllers.MouseState.lY > +1) ? TRUE : FALSE;	break;
+			case 0x4:	return (Controllers.MouseState.lZ < -1) ? TRUE : FALSE;	break;
+			case 0x5:	return (Controllers.MouseState.lZ > +1) ? TRUE : FALSE;	break;
 			default:	return FALSE;
 			}
 		}
@@ -1166,6 +1169,8 @@ void	Controllers_ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, 
 	int wmId = LOWORD(wParam);
 	int wmEvent = HIWORD(wParam);
 	int i;
+	if (key)
+		return;
 	if (uMsg == WM_INITDIALOG)
 	{
 		for (i = 0; i < numItems; i++)
