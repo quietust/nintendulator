@@ -477,7 +477,7 @@ int MovieFrameLen;
 
 void	Controllers_ShowFrame (void)
 {
-	if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
+	if (Controllers.MovieMode)
 		EI.StatusOut("Frame %i",MovieLen / MovieFrameLen);
 }
 
