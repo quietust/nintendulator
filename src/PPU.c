@@ -248,6 +248,7 @@ void	PPU_PowerOn()
 	PPU.Reg2000 = 0;
 	PPU.Reg2001 = 0;
 	PPU.ColorEmphasis = 0;
+	PPU.GrayScale = 0x3F;
 	PPU.VRAMAddr = PPU.IntReg = 0;
 	PPU.SLnum = 0;
 	PPU.IntX = 0;
@@ -581,8 +582,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			if (TC & 0x3)
 				PalIndex = PPU.Palette[TC & 0x1F];
 			else	PalIndex = PPU.Palette[0];
-			if (PPU.Reg2001 & 0x01)
-				PalIndex &= 0x30;
+			PalIndex &= PPU.GrayScale;
 			PalIndex |= PPU.ColorEmphasis;
 			if (GFX.Depth == 16)
 				((unsigned short *)PPU.GfxData)[PPU.Clockticks] = (unsigned short)GFX.FixedPalette[PalIndex];
@@ -940,6 +940,7 @@ static	void	__fastcall	Write1 (int What)
 		PPU.IsRendering = TRUE;
 	else	PPU.IsRendering = FALSE;
 	PPU.ColorEmphasis = (What & 0xE0) << 1;
+	PPU.GrayScale = (What & 0x01) ? 0x30 : 0x3F;
 }
 
 static	void	__fastcall	Write2 (int What)

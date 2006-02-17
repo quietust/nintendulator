@@ -326,6 +326,7 @@ void	States_LoadState (void)
 
 			PPU.IsRendering = PPU.OnScreen = FALSE;
 			PPU.ColorEmphasis = (PPU.Reg2001 & 0xE0) << 1;
+			PPU.GrayScale = (PPU.Reg2001 & 0x01) ? 0x30 : 0x3F;
 			NES_SetCPUMode(PPU.IsPAL);
 		}
 		else if (!strncmp(csig,"APUS",4))

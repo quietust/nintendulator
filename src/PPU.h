@@ -50,7 +50,8 @@ struct	tPPU
 	unsigned char IntX;
 	unsigned char TileData[272];
 
-	unsigned long ColorEmphasis;	/* upper 8 bits of $2001 shifted left 1 bit */
+	unsigned long GrayScale;	/* ANDed with palette index (0x30 if grayscale, 0x3F if not) */
+	unsigned long ColorEmphasis;	/* ORed with palette index (upper 8 bits of $2001 shifted left 1 bit) */
 
 	unsigned long IOAddr;
 	unsigned char IOVal;
