@@ -34,6 +34,8 @@ struct	tStates	States;
 
 #define	STATES_VERSION	"0910"
 
+extern FILE *movie;
+
 void	States_Init (void)
 {
 	States.SelSlot = 0;
@@ -188,6 +190,19 @@ void	States_SaveState (void)
 			free(tpmi);
 		}
 	}
+	if (Controllers.MovieMode & MOV_RECORD)
+	{
+		fwrite("NMOV",1,4,out);	flen += 4;
+		clen = ftell(movie);
+		fwrite(&clen,1,4,out);	flen += 4;
+		fseek(movie,0,SEEK_SET);
+		for (; clen >= 0; clen--)
+		{
+			char tpc;
+			fread(&tpc,1,1,movie);
+			fwrite(&tpc,1,1,out);	flen++;
+		}
+	}
 
 	// Write final filesize
 	fseek(out,8,SEEK_SET);
@@ -207,6 +222,7 @@ void	States_LoadState (void)
 	BOOL SSOK = TRUE;
 
 	States.NeedLoad = FALSE;
+
 	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
 	in = fopen(tpchr,"rb");
 	if (!in)
@@ -327,6 +343,29 @@ void	States_LoadState (void)
 			{
 				clen = 0;	// need to handle this HERE and not below
 				SSOK = FALSE;	// since we didn't read past the end of the chunk
+			}
+		}
+		else if (!strncmp(csig,"NMOV",4))
+		{
+			if (Controllers.MovieMode & MOV_RECORD)
+			{	// are we recording?
+				extern char MovieName[256];
+				extern int ReRecords;
+				ReRecords++;
+				fclose(movie);
+				movie = fopen(MovieName,"wb");
+				rewind(movie);
+				for (; clen >= 0; clen--)
+				{
+					char tpc;
+					fread(&tpc,1,1,in);
+					fwrite(&tpc,1,1,movie);
+				}
+			}
+			else
+			{	// nope, skip it
+				fseek(in,clen,SEEK_CUR);
+				clen = 0;
 			}
 		}
 		if (clen != 0)

@@ -402,10 +402,11 @@ void	Controllers_UnAcquire (void)
 
 FILE *movie;
 int MOV_ControllerTypes[5];
+int	ReRecords;
+char MovieName[256];
 
 void	Controllers_PlayMovie (void)
 {
-	char FileName[256] = {0};
 	unsigned char buf[5];
 	OPENFILENAME ofn;
 	unsigned char x;
@@ -423,7 +424,7 @@ void	Controllers_PlayMovie (void)
 	ofn.lpstrFilter = "Nintendulator Movie (*.NMV)\0" "*.NMV\0" "Famtasia Movie (*.FMV)\0" "*.FMV\0" "\0";
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nFilterIndex = 1;
-	ofn.lpstrFile = FileName;
+	ofn.lpstrFile = MovieName;
 	ofn.nMaxFile = 256;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
@@ -437,7 +438,7 @@ void	Controllers_PlayMovie (void)
 	if (!GetOpenFileName(&ofn))
 		return;
 
-	movie = fopen(FileName,"rb");
+	movie = fopen(MovieName,"rb");
 	fread(buf,1,4,movie);
 	if (!memcmp(buf,"FMV\x1A",4))
 	{
@@ -475,7 +476,7 @@ void	Controllers_PlayMovie (void)
 		fseek(movie,0x90,SEEK_SET);
 
 		NES_Reset(RESET_HARD);
-		NES.Scanline = FALSE;	// read them 1 frame in advance
+		NES.Scanline = FALSE;
 		return;
 	}
 	if (!memcmp(buf,"NMV\x1A",4))
@@ -529,7 +530,6 @@ void	Controllers_PlayMovie (void)
 
 void	Controllers_RecordMovie (void)
 {
-	char FileName[256] = {0};
 	OPENFILENAME ofn;
 	unsigned char x;
 
@@ -546,7 +546,7 @@ void	Controllers_RecordMovie (void)
 	ofn.lpstrFilter = "Nintendulator Movie (*.NMV)\0" "*.NMV\0" "\0";
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nFilterIndex = 1;
-	ofn.lpstrFile = FileName;
+	ofn.lpstrFile = MovieName;
 	ofn.nMaxFile = 256;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
@@ -562,7 +562,7 @@ void	Controllers_RecordMovie (void)
 
 	Controllers.MovieMode = MOV_RECORD;
 
-	movie = fopen(FileName,"wb");
+	movie = fopen(MovieName,"wb");
 	fwrite("NMV\x1A",1,4,movie);
 	x = 0;
 	if (1)	// record from reset
@@ -591,7 +591,14 @@ void	Controllers_RecordMovie (void)
 		MOV_ControllerTypes[4] = Controllers.ExpPort.Type;
 	}
 	fwrite(MOV_ControllerTypes,1,5,movie);
+	x = 0;
+	fwrite(&x,1,1,movie);
+	fwrite(&x,1,1,movie);
+	fwrite(&x,1,1,movie);
+	fwrite(&x,1,1,movie);
 	NES_Reset(RESET_HARD);
+	NES.Scanline = FALSE;
+	ReRecords = 0;
 }
 
 void	Controllers_StopMovie (void)
@@ -600,6 +607,11 @@ void	Controllers_StopMovie (void)
 	{
 		MessageBox(mWnd,"No movie is currently active!","Nintendulator",MB_OK);
 		return;
+	}
+	if (Controllers.MovieMode & MOV_RECORD)
+	{
+		fseek(movie,10,SEEK_SET);
+		fwrite(&ReRecords,4,1,movie);
 	}
 	fclose(movie);
 	Controllers.MovieMode = 0;
