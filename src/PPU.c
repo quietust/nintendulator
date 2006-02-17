@@ -932,10 +932,10 @@ __inline static	void	RunSkip (int NumTicks)
 		}
 		if (!PPU.IsRendering && !PPU.IOMode)
 			PPU_PPUCycle(PPU.VRAMAddr,PPU.SLnum,PPU.Clockticks,0);
-		if ((PPU.Clockticks < 255) && (PPU.OnScreen) && (PPU.Spr0InLine) && (PPU.Reg2001 & 0x10) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x04)))
+		if ((PPU.Spr0InLine) && (PPU.Clockticks < 255) && (PPU.OnScreen) && ((PPU.Reg2001 & 0x18) == 0x18) && ((PPU.Clockticks >= 8) || ((PPU.Reg2001 & 0x06) == 0x06)))
 		{
 			register int SprPixel = PPU.Clockticks - PPU.SprBuff[3];
-			if (!(SprPixel & ~7) && (PPU.SprData[0][SprPixel] & 0x3) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x02)) && (PPU.TileData[PPU.Clockticks + PPU.IntX] & 0x3))
+			if (!(SprPixel & ~7) && (PPU.SprData[0][SprPixel] & 0x3) && (PPU.TileData[PPU.Clockticks + PPU.IntX] & 0x3))
 				PPU.Reg2002 |= 0x40;	/* Sprite 0 hit */
 		}
 	}
