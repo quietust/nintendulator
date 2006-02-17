@@ -41,6 +41,7 @@ static	char *CompatLevel[COMPAT_NONE] = {"Fully supported!","Mostly supported","
 
 void	NES_Init (void)
 {
+	MapperInterface_Init();
 	PPU_Init();
 	APU_Init();
 	GFX_Init();
@@ -49,7 +50,6 @@ void	NES_Init (void)
 #endif	/* ENABLE_DEBUGGER */
 	States_Init();
 	Controllers_Init();
-	MapperInterface_Init();
 #ifdef ENABLE_DEBUGGER
 	Debugger_SetMode(0);
 #endif	/* ENABLE_DEBUGGER */
