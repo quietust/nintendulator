@@ -40,50 +40,55 @@ static	BOOL	LockCursorPos (int x, int y)
 #define	BitPtr1	Data[2]
 #define	BitPtr2	Data[3]
 #define	Strobe	Data[4]
-static	void	Frame (struct tExpPort *Cont)
-{
-}
-
-static	void	UpdateCont1 (struct tExpPort *Cont)
+#define	NewBit1	Data[5]
+#define	NewBit2	Data[6]
+static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 {
 	int i;
-
-	Cont->Bits1 = 0;
-	for (i = 0; i < 8; i++)
+	if (mode & MOV_PLAY)
 	{
-		if (Controllers_IsPressed(Cont->Buttons[i]))
-			Cont->Bits1 |= 1 << i;
+		Cont->NewBit1 = Cont->MovData[0];
+		Cont->NewBit2 = Cont->MovData[1];
 	}
-
-	if ((Cont->Bits1 & 0xC0) == 0xC0)
-		Cont->Bits1 &= 0x3F;
-	if ((Cont->Bits1 & 0x30) == 0x30)
-		Cont->Bits1 &= 0xCF;
-	Cont->BitPtr1 = 0;
-}
-static	void	UpdateCont2 (struct tExpPort *Cont)
-{
-	int i;
-
-	Cont->Bits2 = 0;
-
-	for (i = 8; i < 16; i++)
+	else
 	{
-		if (Controllers_IsPressed(Cont->Buttons[i]))
-			Cont->Bits2 |= 1 << (i - 8);
-	}
+		Cont->NewBit1 = 0;
+		Cont->NewBit2 = 0;
+		for (i = 0; i < 8; i++)
+		{
+			if (Controllers_IsPressed(Cont->Buttons[i]))
+				Cont->NewBit1 |= 1 << i;
+			if (Controllers_IsPressed(Cont->Buttons[i+8]))
+				Cont->NewBit2 |= 1 << i;
+		}
+		if (!Controllers.MovieMode & MOV_RECORD)
+		{	/* prevent simultaneously pressing left+right or up+down, but not when recording a movie :) */
+			if ((Cont->NewBit1 & 0xC0) == 0xC0)
+				Cont->NewBit1 &= 0x3F;
+			if ((Cont->NewBit2 & 0xC0) == 0xC0)
+				Cont->NewBit2 &= 0x3F;
 
-	if ((Cont->Bits2 & 0xC0) == 0xC0)
-		Cont->Bits2 &= 0x3F;
-	if ((Cont->Bits2 & 0x30) == 0x30)
-		Cont->Bits2 &= 0xCF;
-	Cont->BitPtr2 = 0;
+			if ((Cont->NewBit1 & 0x30) == 0x30)
+				Cont->NewBit1 &= 0xCF;
+			if ((Cont->NewBit2 & 0x30) == 0x30)
+				Cont->NewBit2 &= 0xCF;
+		}
+	}
+	if (Controllers.MovieMode & MOV_RECORD)
+	{
+		Cont->MovData[0] = (unsigned char)Cont->NewBit1;
+		Cont->MovData[1] = (unsigned char)Cont->NewBit2;
+	}
 }
+
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
 	unsigned char result = 1;
 	if (Cont->Strobe)
-		UpdateCont1(Cont);
+	{
+		Cont->Bits1 = Cont->NewBit1;
+		Cont->BitPtr1 = 0;
+	}
 	if (Cont->BitPtr1 < 8)
 		result = (unsigned char)(Cont->Bits1 >> Cont->BitPtr1++) & 1;
 	return result << 1;
@@ -92,18 +97,22 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 {
 	unsigned char result = 1;
 	if (Cont->Strobe)
-		UpdateCont2(Cont);
+	{
+		Cont->Bits2 = Cont->NewBit2;
+		Cont->BitPtr2 = 0;
+	}
 	if (Cont->BitPtr2 < 8)
 		result = (unsigned char)(Cont->Bits2 >> Cont->BitPtr2++) & 1;
 	return result << 1;
 }
 static	void	Write (struct tExpPort *Cont, unsigned char Val)
 {
-	Cont->Strobe = Val & 1;
-	if (Cont->Strobe)
+	if (Cont->Strobe = Val & 1)
 	{
-		UpdateCont1(Cont);
-		UpdateCont2(Cont);
+		Cont->Bits1 = Cont->NewBit1;
+		Cont->Bits2 = Cont->NewBit2;
+		Cont->BitPtr1 = 0;
+		Cont->BitPtr2 = 0;
 	}
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -133,9 +142,9 @@ void	ExpPort_SetFami4Play (struct tExpPort *Cont)
 	Cont->Config = Config;
 	Cont->Unload = Unload;
 	Cont->NumButtons = 16;
-	Cont->DataLen = 6;
+	Cont->DataLen = 7;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
-	Cont->MovLen = 0;
+	Cont->MovLen = 2;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits1 = 0;
@@ -143,9 +152,13 @@ void	ExpPort_SetFami4Play (struct tExpPort *Cont)
 	Cont->BitPtr1 = 0;
 	Cont->BitPtr2 = 0;
 	Cont->Strobe = 0;
+	Cont->NewBit1 = 0;
+	Cont->NewBit2 = 0;
 }
-#undef	Bits1
-#undef	Bits2
-#undef	BitPtr1
-#undef	BitPtr2
+#undef	NewBit2
+#undef	NewBit1
 #undef	Strobe
+#undef	BitPtr2
+#undef	BitPtr1
+#undef	Bits2
+#undef	Bits1
