@@ -109,7 +109,12 @@ BEGIN
         MENUITEM "Level &3 (Nametables)\tCtrl+F3", ID_DEBUG_LEVEL3
         MENUITEM "Level &4 (Disassembly)\tCtrl+F4", ID_DEBUG_LEVEL4
     END
-    MENUITEM "Game",                        65535, GRAYED
+    MENUITEM "&Game",                       ID_GAME, GRAYED
+    POPUP "&AVI"
+    BEGIN
+        MENUITEM "S&tart Capture",              ID_AVI_STARTCAPTURE
+        MENUITEM "Sto&p Capture",               ID_AVI_STOPCAPTURE
+    END
     POPUP "&Help"
     BEGIN
         MENUITEM "&About ...",                  IDM_ABOUT
