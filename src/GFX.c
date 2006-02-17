@@ -74,6 +74,7 @@ void	GFX_Init (void)
 	GFX.NTSChue = 330;
 	GFX.NTSCsat = 50;
 	GFX_Create();
+	GFX.Semaphore = CreateSemaphore(NULL,1,1,NULL);
 }
 
 void	GFX_Create (void)
@@ -253,6 +254,7 @@ void	GFX_SetFrameskip (void)
 void	GFX_Update (void)
 {
 	register unsigned short *src = DrawArray;
+	WaitForSingleObject(GFX.Semaphore,INFINITE);
 	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),"Failed to lock secondary surface")
 	if (GFX.Depth == 32)
 	{
@@ -288,6 +290,7 @@ void	GFX_Update (void)
 		}
 	}
 	GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),"Failed to unlock secondary surface")
+	ReleaseSemaphore(GFX.Semaphore,1,NULL);
 	GFX_Repaint();
 }
 
@@ -305,7 +308,9 @@ void	GFX_Repaint (void)
 		rect.right += pt.x;
 		rect.top += pt.y;
 		rect.bottom += pt.y;
+		WaitForSingleObject(GFX.Semaphore,INFINITE);
 		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),"Failed to blit to primary surface")
+		ReleaseSemaphore(GFX.Semaphore,1,NULL);
 	}
 }
 
@@ -496,7 +501,7 @@ void	__cdecl	GFX_ShowText (char *Text, ...)
 void	GFX_UpdateTitlebar (void)
 {
 	char titlebar[256];
-	if (NES.Stopped)
+	if (NES.Stop)
 		strcpy(titlebar,"Nintendulator - Stopped");
 	else	sprintf(titlebar,"Nintendulator - %i FPS (%i %sFSkip)",GFX.FPSnum,GFX.FSkip,GFX.aFSkip?"Auto":"");
 	if (GFX.ShowTextCounter > 0)

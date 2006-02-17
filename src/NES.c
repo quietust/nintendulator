@@ -57,9 +57,8 @@ void	NES_Init (void)
 	NES_LoadSettings();
 	NES_CloseFile();
 
-	NES.Stopped = TRUE;
+	NES.Running = FALSE;
 	NES.Stop = FALSE;
-	NES.NeedQuit = FALSE;
 	NES.GameGenie = FALSE;
 	NES.ROMLoaded = FALSE;
 	memset(&RI,0,sizeof(RI));
@@ -163,18 +162,7 @@ void	NES_OpenFile (char *filename)
 
 	NES_Reset(RESET_FULL);
 	if ((NES.AutoRun) || (RI.ROMType == ROM_NSF))
-	{
-		if (NES.Stopped)
-		{
-			NES.Stop = FALSE;
-			NES_Run();
-		}
-		else
-		{
-			NES.Stop = TRUE;
-			NES.NeedReset = RESET_SOFT;
-		}
-	}
+		NES_Start(FALSE);
 }
 
 int	NES_FDSSave (FILE *out)
@@ -823,7 +811,7 @@ void	NES_SetCPUMode (int NewMode)
 	}
 }
 
-void	NES_Reset (int ResetType)
+void	NES_Reset (RESET_TYPE ResetType)
 {
 	int i;
 	for (i = 0x0; i < 0x10; i++)
@@ -918,8 +906,9 @@ void	NES_Reset (int ResetType)
 	EI.DbgOut("Reset complete.");
 }
 
-void	NES_Run (void)
+DWORD	WINAPI	NES_Thread (void *param)
 {
+	NES.Running = TRUE;
 #ifdef	CPU_BENCHMARK
 	/* Run with cyctest.nes */
 	int i;
@@ -944,8 +933,6 @@ void	NES_Run (void)
 
 	EI.DbgOut("10 seconds emulated in %lu milliseconds",(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
 #else
-rerun:
-	NES.Stopped = FALSE;
 
 #ifdef ENABLE_DEBUGGER
 	Debugger.TraceOffset = -1;
@@ -953,10 +940,18 @@ rerun:
 
 	Controllers_Acquire();
 	if ((!NES.Stop) && (NES.SoundEnabled))
-		APU_SoundON();
+		APU_SoundON();	// don't turn on sound if we're only stepping 1 instruction
 
-	NES.NeedReset = 0;
-	do
+	if ((PPU.SLnum == 240) && (NES.FrameStep))
+	{	// if we save or load while paused, we want to end up here
+		// so we don't end up advancing another frame
+		NES.GotStep = FALSE;
+		Controllers_ShowFrame();
+		while (NES.FrameStep && !NES.GotStep && !NES.Stop)
+			Sleep(1);
+	}
+	
+	while (!NES.Stop)
 	{
 #ifdef ENABLE_DEBUGGER
 		if (Debugger.Enabled)
@@ -969,66 +964,54 @@ rerun:
 #endif	/* ENABLE_DEBUGGER */
 		if (NES.Scanline)
 		{
-			int SLnum = PPU.SLnum;
 			NES.Scanline = FALSE;
-			ProcessMessages();
-			if (States.NeedLoad)	// load state anywhere
-			{
-				States_LoadState();
-				continue;
-			}
-			else if (SLnum == 240)
+			if (PPU.SLnum == 240)
 			{
 #ifdef ENABLE_DEBUGGER
 				if (Debugger.Enabled)
 					Debugger_UpdateGraphics();
 #endif	/* ENABLE_DEBUGGER */
-				if (States.NeedSave)	// but only save on scanline 240
-					States_SaveState();
-				if (NES.FrameStep)	// and if we need to stop, do it here
-				{	// so if we save, it won't advance the CPU/PPU at all
+				if (NES.FrameStep)	// if we pause during emulation
+				{	// it'll get caught down here at scanline 240
 					NES.GotStep = FALSE;
 					Controllers_ShowFrame();
 					while (NES.FrameStep && !NES.GotStep && !NES.Stop)
-						ProcessMessages();
+						Sleep(1);
 				}
 			}
-			else if (SLnum == 241)
+			else if (PPU.SLnum == 241)
 				Controllers_UpdateInput();
 		}
-	}	while (!NES.Stop);
+	}
 
 	APU_SoundOFF();
 	Controllers_UnAcquire();
-
-	NES.Stopped = TRUE;
-	GFX_UpdateTitlebar();
-
-	if (!NES.ROMLoaded)
-	{
-		NES.ROMLoaded = TRUE;	/* so CloseFile() flushes the mapper */
-		NES_CloseFile();
-		return;
-	}
-	if (NES.NeedQuit)
-	{
-		NES_Release();
-		return;
-	}
-	if (NES.NeedReset == RESET_HARD)
-	{
-		NES.NeedReset = 0;
-		NES_Reset(RESET_HARD);
-	}
-	else if (NES.NeedReset == RESET_SOFT)
-	{
-		NES.NeedReset = 0;
-		NES_Reset(RESET_SOFT);
-		NES.Stop = FALSE;
-		goto rerun;
-	}
 	Controllers_ShowFrame();
+
 #endif	/* CPU_BENCHMARK */
+	GFX_UpdateTitlebar();
+	NES.Running = FALSE;
+	return 0;
+}
+void	NES_Start (BOOL step)
+{
+	DWORD ThreadID;
+	if (NES.Running)
+		return;
+	Debugger.Step = step;
+	NES.Stop = FALSE;
+	CloseHandle(CreateThread(NULL,0,NES_Thread,NULL,0,&ThreadID));
+}
+void	NES_Stop (void)
+{
+	if (!NES.Running)
+		return;
+	NES.Stop = TRUE;
+	while (NES.Running)
+	{
+		ProcessMessages();
+		Sleep(1);
+	}
 }
 
 void	NES_MapperConfig (void)

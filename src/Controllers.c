@@ -414,9 +414,6 @@ void	Controllers_SetDeviceUsed (void)
 {
 	int i;
 
-	if (!NES.Stopped)
-		Controllers_UnAcquire();
-
 	for (i = 0; i < Controllers.NumDevices; i++)
 		Controllers.DeviceUsed[i] = FALSE;
 
@@ -443,9 +440,6 @@ void	Controllers_SetDeviceUsed (void)
 		if (i < Controllers.ExpPort.NumButtons)
 			Controllers.DeviceUsed[Controllers.ExpPort.Buttons[i] >> 16] = TRUE;
 	}
-
-	if (!NES.Stopped)
-		Controllers_Acquire();
 }
 
 void	Controllers_Acquire (void)
@@ -493,6 +487,8 @@ void	Controllers_PlayMovie (BOOL Review)
 		MessageBox(mWnd,"A movie is already open!","Nintendulator",MB_OK);
 		return;
 	}
+
+	NES_Stop();
 
 	ZeroMemory(&ofn,sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
@@ -646,6 +642,7 @@ void	Controllers_PlayMovie (BOOL Review)
 		memset(Controllers.Port2.MovData,0,Controllers.Port2.MovLen);
 	if (Controllers.ExpPort.MovLen)
 		memset(Controllers.ExpPort.MovData,0,Controllers.ExpPort.MovLen);
+	NES_Start(FALSE);
 }
 
 void	Controllers_RecordMovie (BOOL fromState)
@@ -659,6 +656,8 @@ void	Controllers_RecordMovie (BOOL fromState)
 		MessageBox(mWnd,"A movie is already open!","Nintendulator",MB_OK);
 		return;
 	}
+
+	NES_Stop();
 
 	if ((MI) && (MI->Config) && (!NES.HasMenu))
 	{
@@ -747,7 +746,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
 }
 
-void	Controllers_StopMovie (void)
+void	Controllers_EndMovie (void)
 {
 	if (!(Controllers.MovieMode))
 	{
@@ -826,6 +825,15 @@ void	Controllers_StopMovie (void)
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_ENABLED);
 }
 
+void	Controllers_StopMovie (void)
+{
+	BOOL running = NES.Running;
+	NES_Stop();
+	Controllers_EndMovie();
+	if (running)
+		NES_Start(FALSE);
+}
+
 void	Controllers_UpdateInput (void)
 {
 	HRESULT hr;
@@ -877,7 +885,7 @@ void	Controllers_UpdateInput (void)
 			if (MoviePos == MovieLen)
 				GFX_ShowText("Movie stopped.");
 			else	GFX_ShowText("Unexpected EOF in movie!");
-			Controllers_StopMovie();
+			Controllers_EndMovie();
 		}
 		if (NES.HasMenu)
 		{

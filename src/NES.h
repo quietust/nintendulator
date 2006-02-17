@@ -34,7 +34,7 @@ struct tNES
 	int PRGMask, CHRMask;
 
 	BOOL ROMLoaded;
-	BOOL Stop, Stopped, NeedReset, NeedQuit, Scanline;
+	BOOL Stop, Running, Scanline;
 	BOOL GameGenie;
 	BOOL SoundEnabled;
 	BOOL AutoRun;
@@ -65,8 +65,11 @@ const char *	NES_OpenFileUNIF (char *);
 const char *	NES_OpenFileFDS (char *);
 const char *	NES_OpenFileNSF (char *);
 void	NES_SetCPUMode (int);
-void	NES_Reset (int);
-void	NES_Run (void);
+void	NES_Reset (RESET_TYPE);
+
+void	NES_Start (BOOL);
+void	NES_Stop (void);
+
 void	NES_UpdateInterface (void);
 void	NES_LoadSettings (void);
 void	NES_SaveSettings (void);

@@ -149,6 +149,7 @@ void	Debugger_Init (void)
 	SetBkMode(Debugger.TraceDC,TRANSPARENT);
 
 	ReleaseDC(mWnd,TpHDC);
+	Debugger.Step = FALSE;
 }
 
 void	Debugger_Release (void)
@@ -341,7 +342,7 @@ void	Debugger_Update (void)
 {
 	if (Debugger.Mode >= 3)
 	{
-		if (Debugger.BreakP[CPU.PC])
+		if (Debugger.BreakP[CPU.PC] || Debugger.Step)
 			NES.Stop = TRUE;
 		if (NES.Stop)
 		{

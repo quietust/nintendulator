@@ -32,7 +32,7 @@ struct tDebugger
 
 	BOOL	NTabChanged, PalChanged, PatChanged;
 
-	BOOL	Logging;
+	BOOL	Logging, Step;
 
 	int	FontWidth, FontHeight;
 

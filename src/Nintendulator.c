@@ -40,7 +40,7 @@ HWND		mWnd;		// main window
 HACCEL		hAccelTable;	// accelerators
 int		SizeMult;	// size multiplier
 char		ProgPath[MAX_PATH];	// program path
-BOOL		MaskKeyboard;		// mask keyboard accelerators (for when Family Basic Keyboard is active)
+BOOL		MaskKeyboard = FALSE;	// mask keyboard accelerators (for when Family Basic Keyboard is active)
 HWND		hDebug;		// Debug Info window
 BOOL		dbgVisible;	// whether or not the Debug window is open
 
@@ -92,7 +92,7 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	// Main message loop:
 	while (GetMessage(&msg,NULL,0,0))
 	{
-		if (!TranslateAccelerator(msg.hwnd,hAccelTable,&msg)) 
+		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg)) 
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -181,6 +181,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	char FileName[256];
 	OPENFILENAME ofn;
+	BOOL running = NES.Running;
 
 	switch (message) 
 	{
@@ -198,9 +199,6 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SendMessage(hWnd,WM_CLOSE,0,0);
 			break;
 		case ID_FILE_OPEN:
-			if ((!NES.Stopped) && (NES.SoundEnabled))
-				APU_SoundOFF();
-
 			FileName[0] = 0;
 			ZeroMemory(&ofn,sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
@@ -232,19 +230,13 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lpTemplateName = NULL;
 			if (GetOpenFileName(&ofn))
 			{
-				NES.Stop = TRUE;
+				NES_Stop();
 				NES_OpenFile(FileName);
 			}
-			else if ((!NES.Stopped) && (NES.SoundEnabled))
-				APU_SoundON();
 			break;
 		case ID_FILE_CLOSE:
-			if (!NES.Stopped)
-			{
-				NES.Stop = TRUE;
-				NES.ROMLoaded = FALSE;
-			}
-			else	NES_CloseFile();
+			NES_Stop();
+			NES_CloseFile();
 			break;
 		case ID_FILE_HEADER:
 			FileName[0] = 0;
@@ -270,41 +262,26 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				DialogBoxParam(hInst,(LPCTSTR)IDD_INESHEADER,hWnd,InesHeader,(LPARAM)FileName);
 			break;
 		case ID_CPU_RUN:
-			if (NES.Stopped)
-			{
-				NES.Stop = FALSE;
-				NES_Run();
-			}
+			NES_Start(FALSE);
 			break;
 		case ID_CPU_STEP:
-			NES.Stop = TRUE;
-			if (NES.Stopped)
-				NES_Run();
+			NES_Stop();		// need to stop first
+			NES_Start(TRUE);	// so the 'start' makes it through
 			break;
 		case ID_CPU_STOP:
-			NES.Stop = TRUE;
+			NES_Stop();
 			break;
 		case ID_CPU_SOFTRESET:
+			NES_Stop();
 			if (Controllers.MovieMode)
 				Controllers_StopMovie();
-			if (NES.Stopped)
-				NES_Reset(RESET_SOFT);
-			else
-			{
-				NES.Stop = TRUE;
-				NES.NeedReset = RESET_SOFT;
-			}
+			NES_Reset(RESET_SOFT);
 			break;
 		case ID_CPU_HARDRESET:
+			NES_Stop();
 			if (Controllers.MovieMode)
 				Controllers_StopMovie();
-			if (NES.Stopped)
-				NES_Reset(RESET_HARD);
-			else
-			{
-				NES.Stop = TRUE;
-				NES.NeedReset = RESET_HARD;
-			}
+			NES_Reset(RESET_HARD);
 			break;
 		case ID_CPU_GAMEGENIE:
 			NES.GameGenie = !NES.GameGenie;
@@ -405,34 +382,32 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 #endif	/* ENABLE_DEBUGGER */
 		case ID_CPU_SAVESTATE:
-			States.NeedSave = TRUE;
-			if ((NES.Stopped) || (NES.FrameStep && !NES.GotStep))
-			{	// if waiting, SLnum should already be 240
-				while (PPU.SLnum != 240)
+			NES_Stop();
+			while (PPU.SLnum != 240)
+			{
+				if (NES.FrameStep && !NES.GotStep)
+					MessageBox(mWnd,"Impossible: savestate is advancing to scanline 240 in framestep mode!","Nintendulator",MB_OK | MB_ICONERROR);
+				do
 				{
-					if (NES.FrameStep && !NES.GotStep)
-						MessageBox(mWnd,"Impossible: savestate is advancing to scanline 240 in framestep mode!","Nintendulator",MB_OK | MB_ICONERROR);
-					do
-					{
 #ifdef ENABLE_DEBUGGER
-						if (Debugger.Enabled)
-							Debugger_AddInst();
+					if (Debugger.Enabled)
+						Debugger_AddInst();
 #endif	/* ENABLE_DEBUGGER */
-						CPU_ExecOp();
-					} while (!NES.Scanline);
-					NES.Scanline = FALSE;
-				}
-#ifdef ENABLE_DEBUGGER
-				if (Debugger.Enabled)
-					Debugger_Update();
-#endif	/* ENABLE_DEBUGGER */
-				States_SaveState();
+					CPU_ExecOp();
+				} while (!NES.Scanline);
+				NES.Scanline = FALSE;
 			}
+#ifdef ENABLE_DEBUGGER
+			if (Debugger.Enabled)
+				Debugger_Update();
+#endif	/* ENABLE_DEBUGGER */
+			States_SaveState();
+			if (running)	NES_Start(FALSE);
 			break;
 		case ID_CPU_LOADSTATE:
-			States.NeedLoad = TRUE;
-			if ((NES.Stopped) || (NES.FrameStep && !NES.GotStep))
-				States_LoadState();
+			NES_Stop();
+			States_LoadState();
+			if (running)	NES_Start(FALSE);
 			break;
 		case ID_CPU_PREVSTATE:
 			States.SelSlot += 9;
@@ -447,30 +422,34 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_SOUND_ENABLED:
 			if (NES.SoundEnabled = !NES.SoundEnabled)
 			{
-				if (!NES.Stopped)
-					APU_SoundON();
+				if (running)	APU_SoundON();
 				CheckMenuItem(MyMenu,ID_SOUND_ENABLED,MF_CHECKED);
 			}
 			else
 			{
-				if (!NES.Stopped)
-					APU_SoundOFF();
+				if (running)	APU_SoundOFF();
 				CheckMenuItem(MyMenu,ID_SOUND_ENABLED,MF_UNCHECKED);
 			}
 			break;
 		case ID_PPU_MODE_NTSC:
+			NES_Stop();
 			NES_SetCPUMode(0);
 			CheckMenuRadioItem(MyMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
+			if (running)	NES_Start(FALSE);
 			break;
 		case ID_PPU_MODE_PAL:
+			NES_Stop();
 			NES_SetCPUMode(1);
 			CheckMenuRadioItem(MyMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
+			if (running)	NES_Start(FALSE);
 			break;
 		case ID_PPU_PALETTE:
 			GFX_PaletteConfig();
 			break;
 		case ID_INPUT_SETUP:
+			NES_Stop();
 			Controllers_OpenConfig();
+			if (running)	NES_Start(FALSE);
 			break;
 		case ID_GAME:
 			NES_MapperConfig();
@@ -542,7 +521,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DROPFILES:
 		DragQueryFile((HDROP)wParam,0,FileName,256);
 		DragFinish((HDROP)wParam);
-		NES.Stop = TRUE;
+		NES_Stop();
 		NES_OpenFile(FileName);
 		break;
 	case WM_PAINT:
@@ -550,24 +529,9 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		NES_Repaint();
 		EndPaint(hWnd,&ps);
 		break;
-	case WM_ENTERMENULOOP:
-	case WM_ENTERSIZEMOVE:
-		if ((!NES.Stopped) && (NES.SoundEnabled))
-			APU_SoundOFF();
-		break;
-	case WM_EXITMENULOOP:
-	case WM_EXITSIZEMOVE:
-		if ((!NES.Stopped) && (NES.SoundEnabled))
-			APU_SoundON();
-		break;
 	case WM_CLOSE:
-		if (NES.Stopped)
-			NES_Release();
-		else
-		{
-			NES.Stop = TRUE;
-			NES.NeedQuit = TRUE;
-		}
+		NES_Stop();
+		NES_Release();
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -816,11 +780,13 @@ BOOL	ProcessMessages (void)
 	MSG msg;
 	BOOL gotMessage = PeekMessage(&msg,NULL,0,0,PM_NOREMOVE);
 	while (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
+	{
 		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+	}
 	return gotMessage;
 }
 
