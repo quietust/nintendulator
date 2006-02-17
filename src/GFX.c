@@ -35,12 +35,13 @@ struct tGFX GFX;
 {\
 	if (FAILED(action))\
 	{\
+		MessageBox(mWnd,errormsg ", retrying","Nintendulator",MB_OK | MB_ICONWARNING);\
 		GFX_Release();\
 		GFX_Create();\
 		PPU_GetGFXPtr();\
 		if (FAILED(action))\
 		{\
-			MessageBox(mWnd,errormsg,"Nintendulator",MB_OK | MB_ICONERROR);\
+			MessageBox(mWnd,"Error: " errormsg,"Nintendulator",MB_OK | MB_ICONERROR);\
 			failaction;\
 			return;\
 		}\
