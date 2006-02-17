@@ -377,7 +377,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			}
 			if (PPU.SLnum == -1)
 			{
-				if ((PPU.ShortSL) && (!PPU.IsPAL))
+				if ((PPU.ShortSL) && (PPU.IsRendering) && (!PPU.IsPAL))
 					EndSLTicks = 340;
 				else	EndSLTicks = 341;
 			}
