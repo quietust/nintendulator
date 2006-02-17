@@ -390,6 +390,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				PPU.IsRendering = PPU.OnScreen = FALSE;
 			else if (PPU.SLnum == 241)
 			{
+				GFX_DrawScreen();
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
 					CPU.WantNMI = TRUE;
@@ -401,7 +402,6 @@ __inline static	void	RunNoSkip (int NumTicks)
 				PPU.Reg2002 = 0;
 				if (PPU.Reg2001 & 0x18)
 					PPU.IsRendering = TRUE;
-				GFX_DrawScreen();
 			}
 		}
 		if (PPU.IsRendering)

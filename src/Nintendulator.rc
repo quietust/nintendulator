@@ -60,12 +60,18 @@ BEGIN
         MENUITEM "So&ft Reset\tF4",             ID_CPU_SOFTRESET
         MENUITEM "H&ard Reset\tShift+F4",       ID_CPU_HARDRESET
         MENUITEM SEPARATOR
-        MENUITEM "&Save State\tF5",             ID_CPU_SAVESTATE
+        MENUITEM "Sa&ve State\tF5",             ID_CPU_SAVESTATE
         MENUITEM "&Load State\tF8",             ID_CPU_LOADSTATE
         MENUITEM "&Prev State\tF6",             ID_CPU_PREVSTATE
         MENUITEM "&Next State\tF7",             ID_CPU_NEXTSTATE
         MENUITEM SEPARATOR
         MENUITEM "&Game Genie\tCtrl+G",         ID_CPU_GAMEGENIE
+        MENUITEM SEPARATOR
+        POPUP "&Frame Step"
+        BEGIN
+            MENUITEM "Enabled\tCtrl+F",             ID_CPU_FRAMESTEP_ENABLED
+            MENUITEM "Step\tSpace",                 ID_CPU_FRAMESTEP_STEP
+        END
     END
     POPUP "&PPU"
     BEGIN
@@ -97,6 +103,17 @@ BEGIN
             MENUITEM "&PAL",                        ID_PPU_MODE_PAL
         END
         MENUITEM "P&alette...",                 ID_PPU_PALETTE
+        POPUP "Sl&owdown"
+        BEGIN
+            MENUITEM "&Enabled\tTab",               ID_PPU_SLOWDOWN_ENABLED
+            MENUITEM SEPARATOR
+            MENUITEM "1/&2 (50%)",                  ID_PPU_SLOWDOWN_2
+            MENUITEM "1/&3 (33%)",                  ID_PPU_SLOWDOWN_3
+            MENUITEM "1/&4 (25%)",                  ID_PPU_SLOWDOWN_4
+            MENUITEM "1/&5 (20%)",                  ID_PPU_SLOWDOWN_5
+            MENUITEM "1/&10 (10%)",                 ID_PPU_SLOWDOWN_10
+            MENUITEM "1/2&0 (5%)",                  ID_PPU_SLOWDOWN_20
+        END
     END
     POPUP "&Sound"
     BEGIN
@@ -142,8 +159,7 @@ END
 
 IDC_NINTENDULATOR ACCELERATORS MOVEABLE PURE 
 BEGIN
-    "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
-    "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    "F",            ID_CPU_FRAMESTEP_ENABLED, VIRTKEY, CONTROL, NOINVERT
     "G",            ID_CPU_GAMEGENIE,       VIRTKEY, CONTROL, NOINVERT
     "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
     "S",            ID_SOUND_ENABLED,       VIRTKEY, CONTROL, NOINVERT
@@ -160,6 +176,8 @@ BEGIN
     VK_F6,          ID_CPU_PREVSTATE,       VIRTKEY, NOINVERT
     VK_F7,          ID_CPU_NEXTSTATE,       VIRTKEY, NOINVERT
     VK_F8,          ID_CPU_LOADSTATE,       VIRTKEY, NOINVERT
+    VK_SPACE,       ID_CPU_FRAMESTEP_STEP,  VIRTKEY, NOINVERT
+    VK_TAB,         ID_PPU_SLOWDOWN_ENABLED, VIRTKEY, NOINVERT
 END
 
 

@@ -218,6 +218,8 @@ void	GFX_DrawScreen (void)
 	if (aviout)
 		AVI_AddVideo();
 	GFX.FPSCnt++;
+	if (GFX.SlowDown)
+		Sleep(GFX.SlowRate * 1000 / GFX.WantFPS);
 	if (GFX.FPSCnt > GFX.FSkip)
 	{
 		LARGE_INTEGER TmpClockVal;

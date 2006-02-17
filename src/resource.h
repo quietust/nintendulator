@@ -219,6 +219,15 @@
 #define ID_MISC_RECORDSTATE             32816
 #define ID_MISC_RESUMEMOVIE             32817
 #define ID_PPU_PALETTE                  32818
+#define ID_PPU_SLOWDOWN_2               32830
+#define ID_PPU_SLOWDOWN_3               32831
+#define ID_PPU_SLOWDOWN_4               32832
+#define ID_PPU_SLOWDOWN_5               32833
+#define ID_PPU_SLOWDOWN_10              32834
+#define ID_PPU_SLOWDOWN_20              32835
+#define ID_CPU_FRAMESTEP_ENABLED        32839
+#define ID_CPU_FRAMESTEP_STEP           32840
+#define ID_PPU_SLOWDOWN_ENABLED         32842
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -227,7 +236,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        151
-#define _APS_NEXT_COMMAND_VALUE         32819
+#define _APS_NEXT_COMMAND_VALUE         32843
 #define _APS_NEXT_CONTROL_VALUE         1087
 #define _APS_NEXT_SYMED_VALUE           109
 #endif

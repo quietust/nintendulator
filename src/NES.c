@@ -884,7 +884,15 @@ rerun:
 				Debugger_UpdateGraphics();
 #endif	/* ENABLE_DEBUGGER */
 			if (SLnum == 241)
+			{
+				if (NES.FrameStep)
+				{
+					NES.GotStep = FALSE;
+					while (NES.FrameStep && !NES.GotStep && !NES.Stop)
+						ProcessMessages();
+				}
 				Controllers_UpdateInput();
+			}
 		}
 	}	while (!NES.Stop);
 
@@ -957,6 +965,13 @@ void	NES_LoadSettings (void)
 	ZeroMemory(Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
 	Controllers.ExpPort.Type = 0;
 	ZeroMemory(Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
+
+	GFX.SlowDown = FALSE;
+	GFX.SlowRate = 2;
+	CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_2,MF_BYCOMMAND);
+
+	NES.FrameStep = FALSE;
+	
 	/* End Defaults */
 
 	RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Nintendulator\\", 0, KEY_ALL_ACCESS, &SettingsBase);

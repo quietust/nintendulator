@@ -473,8 +473,6 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Controllers_OpenConfig();
 			break;
 		case ID_GAME:
-			if (Controllers.MovieMode)
-				break;	// This will get removed later
 			NES_MapperConfig();
 			break;
 		case ID_MISC_STARTAVICAPTURE:
@@ -497,6 +495,45 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_MISC_STOPMOVIE:
 			Controllers_StopMovie();
+			break;
+		case ID_CPU_FRAMESTEP_ENABLED:
+			NES.FrameStep = !NES.FrameStep;
+			if (NES.FrameStep)
+				CheckMenuItem(MyMenu,ID_CPU_FRAMESTEP_ENABLED,MF_CHECKED);
+			else	CheckMenuItem(MyMenu,ID_CPU_FRAMESTEP_ENABLED,MF_UNCHECKED);
+			break;
+		case ID_CPU_FRAMESTEP_STEP:
+			NES.GotStep = TRUE;
+			break;
+		case ID_PPU_SLOWDOWN_ENABLED:
+			GFX.SlowDown = !GFX.SlowDown;
+			if (GFX.SlowDown)
+				CheckMenuItem(MyMenu,ID_PPU_SLOWDOWN_ENABLED,MF_CHECKED);
+			else	CheckMenuItem(MyMenu,ID_PPU_SLOWDOWN_ENABLED,MF_UNCHECKED);
+			break;
+		case ID_PPU_SLOWDOWN_2:
+			GFX.SlowRate = 2;
+			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_2,MF_BYCOMMAND);
+			break;
+		case ID_PPU_SLOWDOWN_3:
+			GFX.SlowRate = 3;
+			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_3,MF_BYCOMMAND);
+			break;
+		case ID_PPU_SLOWDOWN_4:
+			GFX.SlowRate = 4;
+			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_4,MF_BYCOMMAND);
+			break;
+		case ID_PPU_SLOWDOWN_5:
+			GFX.SlowRate = 5;
+			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_5,MF_BYCOMMAND);
+			break;
+		case ID_PPU_SLOWDOWN_10:
+			GFX.SlowRate = 10;
+			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_10,MF_BYCOMMAND);
+			break;
+		case ID_PPU_SLOWDOWN_20:
+			GFX.SlowRate = 20;
+			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_20,MF_BYCOMMAND);
 			break;
 		default:return DefWindowProc(hWnd,message,wParam,lParam);
 			break;

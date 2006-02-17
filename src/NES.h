@@ -41,6 +41,7 @@ struct tNES
 	BOOL GameGenie;
 	BOOL SoundEnabled;
 	BOOL AutoRun;
+	BOOL FrameStep, GotStep;
 };
 extern	struct tNES NES;
 

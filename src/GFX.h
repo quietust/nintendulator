@@ -45,6 +45,9 @@ struct tGFX
 	int WantFPS;
 	int aFPScnt, aFPSnum;
 
+	BOOL SlowDown;
+	int SlowRate;
+
 	int PaletteNTSC, PalettePAL;
 	int NTSChue, NTSCsat;
 	char CustPaletteNTSC[256], CustPalettePAL[256];
