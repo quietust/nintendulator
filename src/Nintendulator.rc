@@ -186,15 +186,15 @@ END
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG  22, 17, 230, 73
+IDD_ABOUTBOX DIALOGEX 22, 17, 240, 37
 STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    ICON            IDI_NINTENDULATOR,IDC_MYICON,11,23,20,20
-    LTEXT           "Nintendulator Version 0.955\nCopyright © 2002-2005 Quietust\nDebugger written by David de Regt",
-                    IDC_STATIC,42,20,119,31
-    DEFPUSHBUTTON   "OK",IDOK,172,25,48,16,WS_GROUP
+    ICON            IDI_NINTENDULATOR,IDC_MYICON,8,8,21,20
+    LTEXT           "Nintendulator Version 0.960\nCopyright © 2002-2006 QMT Productions\nDebugger written by David 'Akilla' de Regt",
+                    IDC_STATIC,32,4,144,28
+    DEFPUSHBUTTON   "OK",IDOK,180,8,56,20,WS_GROUP
 END
 
 IDD_CONTROLLERS DIALOGEX 0, 0, 224, 84
@@ -904,9 +904,17 @@ GUIDELINES DESIGNINFO
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
-        RIGHTMARGIN, 226
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 236
+        VERTGUIDE, 8
+        VERTGUIDE, 29
+        VERTGUIDE, 32
+        VERTGUIDE, 176
+        VERTGUIDE, 180
         TOPMARGIN, 4
-        BOTTOMMARGIN, 69
+        BOTTOMMARGIN, 33
+        HORZGUIDE, 8
+        HORZGUIDE, 28
     END
 
     IDD_CONTROLLERS, DIALOG
@@ -1415,8 +1423,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,9,5,5
- PRODUCTVERSION 0,9,5,5
+ FILEVERSION 0,9,6,0
+ PRODUCTVERSION 0,9,6,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1432,12 +1440,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Nintendulator"
-            VALUE "FileVersion", "0, 9, 5, 5"
+            VALUE "FileVersion", "0, 9, 6, 0"
             VALUE "InternalName", "Nintendulator"
-            VALUE "LegalCopyright", "Copyright © 2002-2005"
+            VALUE "LegalCopyright", "Copyright © 2002-2006"
             VALUE "OriginalFilename", "Nintendulator.exe"
             VALUE "ProductName", "Nintendulator"
-            VALUE "ProductVersion", "0, 9, 5, 5"
+            VALUE "ProductVersion", "0, 9, 6, 0"
         END
     END
     BLOCK "VarFileInfo"

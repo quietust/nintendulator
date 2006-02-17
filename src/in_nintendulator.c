@@ -1,7 +1,7 @@
 /*
 Nintendulator - A Win32 NES emulator written in C.
 Designed for maximum emulation accuracy.
-Copyright (c) 2002  Quietust
+Copyright (c) 2002-2006  QMT Productions
 
 Based on NinthStar, a portable Win32 NES Emulator written in C++
 Copyright (C) 2000  David de Regt
@@ -325,7 +325,7 @@ DWORD	WINAPI	PlayThread (void *param)
 In_Module mod = 
 {
 	IN_VER,
-	"Nintendulator NSF Player v0.950",
+	"Nintendulator NSF Player v0.960",
 	0,	// hMainWindow
 	0,	// hDllInstance
 	"NSF\0Nintendo Sound File (*.NSF)\0"

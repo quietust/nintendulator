@@ -1,7 +1,7 @@
 /*
 Nintendulator - A Win32 NES emulator written in C.
 Designed for maximum emulation accuracy.
-Copyright (c) 2002  Quietust
+Copyright (c) 2002-2006  QMT Productions
 
 Based on NinthStar, a portable Win32 NES Emulator written in C++
 Copyright (C) 2000  David de Regt
@@ -314,7 +314,7 @@ void	States_LoadState (void)
 		return;
 	}
 	fread(tpc,1,4,in);
-	if ((memcmp(tpc,STATES_VERSION,4)) && (memcmp(tpc,STATES_COMPAT,4)))
+	if ((memcmp(tpc,STATES_VERSION,4)) && (memcmp(tpc,STATES_BETA,4)) && (memcmp(tpc,STATES_PREV,4)))
 	{
 		fclose(in);
 		tpc[4] = 0;
