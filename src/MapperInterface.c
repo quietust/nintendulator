@@ -443,26 +443,25 @@ static	void	_MAPINT	SetIRQ (int IRQstate)
 	else	CPU.WantIRQ |= IRQ_EXTERNAL;
 }
 
-static	void	_MAPINT	DbgOut (char *text, ...)
+static	void	_MAPINT	DbgOut (TCHAR *text, ...)
 {
 #ifndef NSFPLAYER
-	extern void AddDebug (char *txt);
-	static char txt[1024];
+	static TCHAR txt[1024];
 	va_list marker;
 	va_start(marker,text);
-	vsprintf(txt,text,marker);
+	_vstprintf(txt,text,marker);
 	va_end(marker);
 	AddDebug(txt);
 #endif
 }
 
-static	void	_MAPINT	StatusOut (char *text, ...)
+static	void	_MAPINT	StatusOut (TCHAR *text, ...)
 {
 #ifndef NSFPLAYER
-	static char txt[1024];
+	static TCHAR txt[1024];
 	va_list marker;
 	va_start(marker,text);
-	vsprintf(txt,text,marker);
+	_vstprintf(txt,text,marker);
 	va_end(marker);
 	PrintTitlebar(txt);
 #endif
@@ -476,18 +475,18 @@ void	MapperInterface_Init (void)
 	WIN32_FIND_DATA Data;
 	HANDLE Handle;
 	struct tMapperDLL *ThisDLL;
-	char Filename[MAX_PATH], Path[MAX_PATH];
-	strcpy(Path,ProgPath);
-	strcat(Path,"Mappers\\");
-	sprintf(Filename,"%s%s",Path,"*.dll");
+	TCHAR Filename[MAX_PATH], Path[MAX_PATH];
+	_tcscpy(Path,ProgPath);
+	_tcscat(Path,_T("Mappers\\"));
+	_stprintf(Filename,_T("%s%s"),Path,_T("*.dll"));
 	Handle = FindFirstFile(Filename,&Data);
 	ThisDLL = malloc(sizeof(struct tMapperDLL));
 	if (Handle != INVALID_HANDLE_VALUE)
 	{
 		do
 		{
-			char Tmp[MAX_PATH];
-			sprintf(Tmp,"%s%s",Path,Data.cFileName);
+			TCHAR Tmp[MAX_PATH];
+			_stprintf(Tmp,_T("%s%s"),Path,Data.cFileName);
 			ThisDLL->dInst = LoadLibrary(Tmp);
 			ThisDLL->LoadDLL = (PLoadMapperDLL)GetProcAddress(ThisDLL->dInst,"LoadMapperDLL");
 			ThisDLL->UnloadDLL = (PUnloadMapperDLL)GetProcAddress(ThisDLL->dInst,"UnloadMapperDLL");
@@ -508,7 +507,7 @@ void	MapperInterface_Init (void)
 	}
 	free(ThisDLL);
 	if (MapperDLLs == NULL)
-		MessageBox(mWnd,"Fatal error: unable to locate any mapper DLLs!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Fatal error: unable to locate any mapper DLLs!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 #else
 	dInst = LoadLibrary("Plugins\\nsf.dll");
 	LoadDLL = (PLoadMapperDLL)GetProcAddress(dInst,"LoadMapperDLL");

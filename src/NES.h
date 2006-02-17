@@ -50,16 +50,16 @@ extern	unsigned char CHR_RAM[MAX_CHRRAM_MASK+1][0x400];	/*   32 KB */
 
 void	NES_Init (void);
 void	NES_Release (void);
-void	NES_OpenFile (char *);
+void	NES_OpenFile (TCHAR *);
 void	NES_CloseFile (void);
 int	NES_FDSSave (FILE *);
 int	NES_FDSLoad (FILE *);
 void	NES_SaveSRAM (void);
 void	NES_LoadSRAM (void);
-const char *	NES_OpenFileiNES (char *);
-const char *	NES_OpenFileUNIF (char *);
-const char *	NES_OpenFileFDS (char *);
-const char *	NES_OpenFileNSF (char *);
+const TCHAR *	NES_OpenFileiNES (TCHAR *);
+const TCHAR *	NES_OpenFileUNIF (TCHAR *);
+const TCHAR *	NES_OpenFileFDS (TCHAR *);
+const TCHAR *	NES_OpenFileNSF (TCHAR *);
 void	NES_SetCPUMode (int);
 void	NES_Reset (RESET_TYPE);
 

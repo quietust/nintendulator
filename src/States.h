@@ -27,7 +27,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct tStates
 {
-	char BaseFilename[256];
+	TCHAR BaseFilename[MAX_PATH];
 	BOOL NeedSave, NeedLoad;
 	int SelSlot;
 };
@@ -35,7 +35,7 @@ struct tStates
 extern	struct	tStates	States;
 
 void	States_Init (void);
-void	States_SetFilename (char *);
+void	States_SetFilename (TCHAR *);
 void	States_SetSlot (int Slot);
 int	States_SaveData (FILE *);
 BOOL	States_LoadData (FILE *, int);

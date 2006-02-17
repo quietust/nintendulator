@@ -29,24 +29,24 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include <commdlg.h>
 
 static	HWND key;
-char *KeyLookup[256] =
+TCHAR *KeyLookup[256] =
 {
-	"", "Escape", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "- (Keyboard)", "=", "Backspace", "Tab",
-	"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "Return", "Left Control", "A", "S",
-	"D", "F", "G", "H", "J", "K", "L", ";", "'", "???", "Left Shift", "\\", "Z", "X", "C", "V",
-	"B", "N", "M", ",", ". (Keyboard)", "/ (Keyboard)", "Right Shift", "* (keypad)", "Left Alt", "Space", "Caps Lock", "F1", "F2", "F3", "F4", "F5",
-	"F6", "F7", "F8", "F9", "F10", "Num Lock", "Scroll Lock", "Numpad 7", "Numpad 8", "Numpad 9", "- (Numpad)", "Numpad 4", "Numpad 5", "Numpad 6", "+ (Numpad)", "Numpad 1",
-	"Numpad 2", "Numpad 3", "Numpad 0", ". (Numpad)", "???", "???", "???", "F11", "F12", "???", "???", "???", "???", "???", "???", "???",
-	"???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", 
-	"???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", 
-	"???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", 
-	"Previous Track", "???", "???", "???", "???", "???", "???", "???", "???", "Next Track", "???", "???", "Numpad Enter", "Right Control", "???", "???",
-	"Mute", "Calculator", "Play/Pause", "???", "Media Stop", "???", "???", "???", "???", "???", "???", "???", "???", "???", "Volume Down", "???",
-	"Volume Up", "???", "Web Home", "???", "???", "/ (Numpad)", "???", "SysRq", "Right Alt", "???", "???", "???", "???", "???", "???", "???",
-	"???", "???", "???", "???", "???", "Pause", "???", "Home", "Up Arrow", "PgUp", "???", "Left Arrow", "???", "Right Arrow", "???", "End", 
-	"Down Arrow", "PgDn", "Insert", "Delete", "???", "???", "???", "???", "???", "???", "???", "Left Win Key", "Right Win Key", "App Menu Key", "Power Button", "Sleep Button",
-	"???", "???", "???", "Wake Key", "???", "Web Search", "Web Favorites", "Web Refresh", "Web Stop", "Web Forward", "Web Back", "My Computer", "Mail", "Media Select","???","???",
-	"???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???"
+	_T(""), _T("Escape"), _T("1"), _T("2"), _T("3"), _T("4"), _T("5"), _T("6"), _T("7"), _T("8"), _T("9"), _T("0"), _T("- (Keyboard)"), _T("="), _T("Backspace"), _T("Tab"),
+	_T("Q"), _T("W"), _T("E"), _T("R"), _T("T"), _T("Y"), _T("U"), _T("I"), _T("O"), _T("P"), _T("["), _T("]"), _T("Return"), _T("Left Control"), _T("A"), _T("S"),
+	_T("D"), _T("F"), _T("G"), _T("H"), _T("J"), _T("K"), _T("L"), _T(";"), _T("'"), _T("???"), _T("Left Shift"), _T("\\"), _T("Z"), _T("X"), _T("C"), _T("V"),
+	_T("B"), _T("N"), _T("M"), _T(","), _T(". (Keyboard)"), _T("/ (Keyboard)"), _T("Right Shift"), _T("* (keypad)"), _T("Left Alt"), _T("Space"), _T("Caps Lock"), _T("F1"), _T("F2"), _T("F3"), _T("F4"), _T("F5"),
+	_T("F6"), _T("F7"), _T("F8"), _T("F9"), _T("F10"), _T("Num Lock"), _T("Scroll Lock"), _T("Numpad 7"), _T("Numpad 8"), _T("Numpad 9"), _T("- (Numpad)"), _T("Numpad 4"), _T("Numpad 5"), _T("Numpad 6"), _T("+ (Numpad)"), _T("Numpad 1"),
+	_T("Numpad 2"), _T("Numpad 3"), _T("Numpad 0"), _T(". (Numpad)"), _T("???"), _T("???"), _T("???"), _T("F11"), _T("F12"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"),
+	_T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), 
+	_T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), 
+	_T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), 
+	_T("Previous Track"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("Next Track"), _T("???"), _T("???"), _T("Numpad Enter"), _T("Right Control"), _T("???"), _T("???"),
+	_T("Mute"), _T("Calculator"), _T("Play/Pause"), _T("???"), _T("Media Stop"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("Volume Down"), _T("???"),
+	_T("Volume Up"), _T("???"), _T("Web Home"), _T("???"), _T("???"), _T("/ (Numpad)"), _T("???"), _T("SysRq"), _T("Right Alt"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"),
+	_T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("Pause"), _T("???"), _T("Home"), _T("Up Arrow"), _T("PgUp"), _T("???"), _T("Left Arrow"), _T("???"), _T("Right Arrow"), _T("???"), _T("End"), 
+	_T("Down Arrow"), _T("PgDn"), _T("Insert"), _T("Delete"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("Left Win Key"), _T("Right Win Key"), _T("App Menu Key"), _T("Power Button"), _T("Sleep Button"),
+	_T("???"), _T("???"), _T("???"), _T("Wake Key"), _T("???"), _T("Web Search"), _T("Web Favorites"), _T("Web Refresh"), _T("Web Stop"), _T("Web Forward"), _T("Web Back"), _T("My Computer"), _T("Mail"), _T("Media Select"),_T("???"),_T("???"),
+	_T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???"), _T("???")
 };
 
 struct	tControllers	Controllers;
@@ -71,19 +71,19 @@ void	StdPort_SetControllerType (struct tStdPort *Cont, int Type)
 	case STD_POWERPAD:		StdPort_SetPowerPad(Cont);		break;
 	case STD_FOURSCORE:		StdPort_SetFourScore(Cont);		break;
 	case STD_SNESCONTROLLER:	StdPort_SetSnesController(Cont);	break;
-	default:MessageBox(mWnd,"Error: selected invalid controller type for standard port!","Nintendulator",MB_OK | MB_ICONERROR);	break;
+	default:MessageBox(mWnd,_T("Error: selected invalid controller type for standard port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
 	}
 }
-char	*StdPort_Mappings[STD_MAX];
+TCHAR	*StdPort_Mappings[STD_MAX];
 void	StdPort_SetMappings (void)
 {
-	StdPort_Mappings[STD_UNCONNECTED] = "Unconnected";
-	StdPort_Mappings[STD_STDCONTROLLER] = "Standard Controller";
-	StdPort_Mappings[STD_ZAPPER] = "Zapper";
-	StdPort_Mappings[STD_ARKANOIDPADDLE] = "Arkanoid Paddle";
-	StdPort_Mappings[STD_POWERPAD] = "Power Pad";
-	StdPort_Mappings[STD_FOURSCORE] = "Four Score";
-	StdPort_Mappings[STD_SNESCONTROLLER] = "SNES Controller";
+	StdPort_Mappings[STD_UNCONNECTED] = _T("Unconnected");
+	StdPort_Mappings[STD_STDCONTROLLER] = _T("Standard Controller");
+	StdPort_Mappings[STD_ZAPPER] = _T("Zapper");
+	StdPort_Mappings[STD_ARKANOIDPADDLE] = _T("Arkanoid Paddle");
+	StdPort_Mappings[STD_POWERPAD] = _T("Power Pad");
+	StdPort_Mappings[STD_FOURSCORE] = _T("Four Score");
+	StdPort_Mappings[STD_SNESCONTROLLER] = _T("SNES Controller");
 }
 
 void	ExpPort_SetUnconnected		(struct tExpPort *);
@@ -106,19 +106,19 @@ void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
 	case EXP_ALTKEYBOARD:		ExpPort_SetAltKeyboard(Cont);		break;
 	case EXP_FAMTRAINER:		ExpPort_SetFamTrainer(Cont);		break;
 	case EXP_TABLET:		ExpPort_SetTablet(Cont);		break;
-	default:MessageBox(mWnd,"Error: selected invalid controller type for expansion port!","Nintendulator",MB_OK | MB_ICONERROR);	break;
+	default:MessageBox(mWnd,_T("Error: selected invalid controller type for expansion port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
 	}
 }
-char	*ExpPort_Mappings[EXP_MAX];
+TCHAR	*ExpPort_Mappings[EXP_MAX];
 void	ExpPort_SetMappings (void)
 {
-	ExpPort_Mappings[EXP_UNCONNECTED] = "Unconnected";
-	ExpPort_Mappings[EXP_FAMI4PLAY] = "Famicom 4-Player Adapter";
-	ExpPort_Mappings[EXP_ARKANOIDPADDLE] = "Famicom Arkanoid Paddle";
-	ExpPort_Mappings[EXP_FAMILYBASICKEYBOARD] = "Family Basic Keyboard";
-	ExpPort_Mappings[EXP_ALTKEYBOARD] = "Alternate Keyboard";
-	ExpPort_Mappings[EXP_FAMTRAINER] = "Family Trainer";
-	ExpPort_Mappings[EXP_TABLET] = "Oeka Kids Tablet";
+	ExpPort_Mappings[EXP_UNCONNECTED] = _T("Unconnected");
+	ExpPort_Mappings[EXP_FAMI4PLAY] = _T("Famicom 4-Player Adapter");
+	ExpPort_Mappings[EXP_ARKANOIDPADDLE] = _T("Famicom Arkanoid Paddle");
+	ExpPort_Mappings[EXP_FAMILYBASICKEYBOARD] = _T("Family Basic Keyboard");
+	ExpPort_Mappings[EXP_ALTKEYBOARD] = _T("Alternate Keyboard");
+	ExpPort_Mappings[EXP_FAMTRAINER] = _T("Family Trainer");
+	ExpPort_Mappings[EXP_TABLET] = _T("Oeka Kids Tablet");
 }
 
 LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -257,7 +257,7 @@ BOOL CALLBACK	EnumJoysticksCallback (const DIDEVICEINSTANCE* pdidInstance, VOID*
 			return hr;
 		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[DevNum-2],mWnd,DISCL_BACKGROUND | DISCL_NONEXCLUSIVE)))
 			return hr;
-		strcpy(Controllers.DeviceName[DevNum],pdidInstance->tszProductName);
+		_tcscpy(Controllers.DeviceName[DevNum],pdidInstance->tszProductName);
 		tpc.dwSize = sizeof(DIDEVCAPS);
 		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(Controllers.DIJoystick[DevNum-2],&tpc)))
 			return hr;
@@ -328,51 +328,51 @@ void	Controllers_Init (void)
 	
 	if (FAILED(DirectInputCreateEx(hInst,DIRECTINPUT_VERSION,&IID_IDirectInput7,(LPVOID *)&Controllers.DirectInput,NULL)))
 	{
-		MessageBox(mWnd,"Unable to initialize DirectInput!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to initialize DirectInput!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&GUID_SysKeyboard,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIKeyboard,NULL)))
 	{
 		IDirectInput7_Release(Controllers.DirectInput);
-		MessageBox(mWnd,"Unable to initialize keyboard input device!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to initialize keyboard input device!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIKeyboard,&c_dfDIKeyboard)))
 	{
 		IDirectInputDevice7_Release(Controllers.DIKeyboard);
 		IDirectInput7_Release(Controllers.DirectInput);
-		MessageBox(mWnd,"Unable to set keyboard input data format!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to set keyboard input data format!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIKeyboard,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
 		IDirectInputDevice7_Release(Controllers.DIKeyboard);
 		IDirectInput7_Release(Controllers.DirectInput);
-		MessageBox(mWnd,"Unable to set keyboard input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to set keyboard input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	Controllers.NumButtons[0] = 256;
 	Controllers.NumAxes[0] = 0;
-	strcpy(Controllers.DeviceName[0],"Keyboard");
+	_tcscpy(Controllers.DeviceName[0],_T("Keyboard"));
 
 	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&GUID_SysMouse,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIMouse,NULL)))
 	{
 		IDirectInput7_Release(Controllers.DirectInput);
-		MessageBox(mWnd,"Unable to initialize mouse input device!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to initialize mouse input device!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIMouse,&c_dfDIMouse2)))
 	{
 		IDirectInputDevice7_Release(Controllers.DIMouse);
 		IDirectInput7_Release(Controllers.DirectInput);
-		MessageBox(mWnd,"Unable to set mouse input data format!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to set mouse input data format!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIMouse,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
 		IDirectInputDevice7_Release(Controllers.DIMouse);
 		IDirectInput7_Release(Controllers.DirectInput);
-		MessageBox(mWnd,"Unable to set mouse input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to set mouse input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	tpc.dwSize = sizeof(DIDEVCAPS);
@@ -380,13 +380,13 @@ void	Controllers_Init (void)
 	{
 		IDirectInputDevice7_Release(Controllers.DIMouse);
 		IDirectInput7_Release(Controllers.DirectInput);
-		MessageBox(mWnd,"Unable to get mouse input capabilities!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to get mouse input capabilities!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	Controllers.NumButtons[1] = tpc.dwButtons;
 	Controllers.NumAxes[1] = tpc.dwAxes;
 	
-	strcpy(Controllers.DeviceName[1],"Mouse");
+	_tcscpy(Controllers.DeviceName[1],_T("Mouse"));
 	
 	Controllers.NumDevices = 2;
 	IDirectInput7_EnumDevices(Controllers.DirectInput,DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
@@ -540,7 +540,7 @@ int	Controllers_GetConfigKey (HWND hWnd)
 
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIKeyboard,hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,"Unable to modify keyboard input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to modify keyboard input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
@@ -567,7 +567,7 @@ waitrelease:
 	IDirectInputDevice7_Unacquire(Controllers.DIKeyboard);
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIKeyboard,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,"Unable to restore keyboard input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to restore keyboard input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
@@ -583,7 +583,7 @@ int	Controllers_GetConfigMouse (HWND hWnd)
 
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIMouse,hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,"Unable to modify mouse input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to modify mouse input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
@@ -623,7 +623,7 @@ waitrelease:
 	IDirectInputDevice7_Unacquire(Controllers.DIMouse);
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIMouse,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,"Unable to restore mouse input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to restore mouse input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
@@ -638,7 +638,7 @@ int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
 
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Dev],hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,"Unable to modify joystick input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to modify joystick input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
@@ -680,17 +680,17 @@ waitrelease:
 	IDirectInputDevice7_Unacquire(Controllers.DIJoystick[Dev]);
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Dev],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,"Unable to restore joystick input cooperative level!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Unable to restore joystick input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
 	return Key;
 }
 
-char *	Controllers_GetButtonLabel (int DevNum, int Button)
+TCHAR *	Controllers_GetButtonLabel (int DevNum, int Button)
 {
-	static char str[256];
-	char *axes[16] = {"X-Axis","Y-Axis","Z-Axis","rX-Axis","rY-Axis","rZ-Axis","Slider 1","Slider 2"};
+	static TCHAR str[256];
+	TCHAR *axes[16] = {_T("X-Axis"),_T("Y-Axis"),_T("Z-Axis"),_T("rX-Axis"),_T("rY-Axis"),_T("rZ-Axis"),_T("Slider 1"),_T("Slider 2")};
 	if (DevNum == 0)
 		return KeyLookup[Button];
 	else if (DevNum == 1)
@@ -699,13 +699,13 @@ char *	Controllers_GetButtonLabel (int DevNum, int Button)
 		{
 			Button &= 0x07;
 			if (Button & 1)
-				sprintf(str,"%s (+)",axes[Button >> 1]);
-			else	sprintf(str,"%s (-)",axes[Button >> 1]);
+				_stprintf(str,_T("%s (+)"),axes[Button >> 1]);
+			else	_stprintf(str,_T("%s (-)"),axes[Button >> 1]);
 			return str;
 		}
 		else
 		{
-			sprintf(str,"Button %i",Button + 1);
+			_stprintf(str,_T("Button %i"),Button + 1);
 			return str;
 		}
 	}
@@ -715,13 +715,13 @@ char *	Controllers_GetButtonLabel (int DevNum, int Button)
 		{
 			Button &= 0x7F;
 			if (Button & 1)
-				sprintf(str,"%s (+)",axes[Button >> 1]);
-			else	sprintf(str,"%s (-)",axes[Button >> 1]);
+				_stprintf(str,_T("%s (+)"),axes[Button >> 1]);
+			else	_stprintf(str,_T("%s (-)"),axes[Button >> 1]);
 			return str;
 		}
 		else
 		{
-			sprintf(str,"Button %i",Button + 1);
+			_stprintf(str,_T("Button %i"),Button + 1);
 			return str;
 		}
 	}

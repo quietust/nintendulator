@@ -37,12 +37,12 @@ struct tGFX GFX;
 	if (FAILED(action))\
 	{\
 		GFX_Release();\
-		MessageBox(mWnd,errormsg ", retrying","Nintendulator",MB_OK | MB_ICONWARNING);\
+		MessageBox(mWnd,errormsg _T(", retrying"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);\
 		GFX_Create();\
 		PPU_GetGFXPtr();\
 		if (FAILED(action))\
 		{\
-			MessageBox(mWnd,"Error: " errormsg,"Nintendulator",MB_OK | MB_ICONERROR);\
+			MessageBox(mWnd,_T("Error: ") errormsg,_T("Nintendulator"),MB_OK | MB_ICONERROR);\
 			failaction;\
 			return;\
 		}\
@@ -81,14 +81,14 @@ void	GFX_Create (void)
 {
 	if (!QueryPerformanceFrequency(&GFX.ClockFreq))
 	{
-		MessageBox(mWnd,"Failed to determine performance counter frequency!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to determine performance counter frequency!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
 	if (FAILED(DirectDrawCreateEx(NULL,(LPVOID *)&GFX.DirectDraw,&IID_IDirectDraw7,NULL)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,"Failed to initialize DirectDraw 7","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to initialize DirectDraw 7"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -96,7 +96,7 @@ void	GFX_Create (void)
 	{
 
 		GFX_Release();
-		MessageBox(mWnd,"Failed to set DirectDraw cooperative level","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to set DirectDraw cooperative level"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -108,28 +108,28 @@ void	GFX_Create (void)
 	if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.PrimarySurf,NULL)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,"Failed to create primary surface","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
 	if (FAILED(IDirectDraw7_CreateClipper(GFX.DirectDraw,0,&GFX.Clipper,NULL)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,"Failed to create clipper","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to create clipper"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
 	if (FAILED(IDirectDrawClipper_SetHWnd(GFX.Clipper,0,mWnd)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,"Failed to set clipper window","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to set clipper window"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
 	if (FAILED(IDirectDrawSurface7_SetClipper(GFX.PrimarySurf,GFX.Clipper)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,"Failed to assign clipper to primary surface","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to assign clipper to primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -143,7 +143,7 @@ void	GFX_Create (void)
 	if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.SecondarySurf,NULL)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,"Failed to create secondary surface","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to create secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -153,7 +153,7 @@ void	GFX_Create (void)
 	if (FAILED(IDirectDrawSurface7_GetSurfaceDesc(GFX.SecondarySurf,&GFX.SurfDesc)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,"Failed to retrieve surface description","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to retrieve surface description"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -165,7 +165,7 @@ void	GFX_Create (void)
 			GFX.Depth = 16;
 		else	GFX.Depth = 15;	break;
 	case 32:GFX.Depth = 32;		break;
-	default:MessageBox(mWnd,"Invalid bit depth detected!","Nintendulator",MB_OK | MB_ICONERROR);
+	default:MessageBox(mWnd,_T("Invalid bit depth detected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;			break;
 	}
 
@@ -173,7 +173,7 @@ void	GFX_Create (void)
 	if (FAILED(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK,0)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,"Failed to lock secondary surface (init)","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to lock secondary surface (init)"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	GFX.Pitch = GFX.SurfDesc.lPitch;
@@ -181,7 +181,7 @@ void	GFX_Create (void)
 	if (FAILED(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,"Failed to unlock secondary surface (init)","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to unlock secondary surface (init)"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 	if (WaitForSingleObject(GFX.Semaphore,0) == WAIT_OBJECT_0)
@@ -259,7 +259,7 @@ void	GFX_Update (void)
 {
 	register unsigned short *src = DrawArray;
 	WaitForSingleObject(GFX.Semaphore,INFINITE);
-	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),"Failed to lock secondary surface",ReleaseSemaphore(GFX.Semaphore,1,NULL))
+	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),_T("Failed to lock secondary surface"),ReleaseSemaphore(GFX.Semaphore,1,NULL))
 	if (GFX.Depth == 32)
 	{
 		int x, y;
@@ -293,7 +293,7 @@ void	GFX_Update (void)
 			src += x;
 		}
 	}
-	GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),"Failed to unlock secondary surface",ReleaseSemaphore(GFX.Semaphore,1,NULL))
+	GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),_T("Failed to unlock secondary surface"),ReleaseSemaphore(GFX.Semaphore,1,NULL))
 	ReleaseSemaphore(GFX.Semaphore,1,NULL);
 	GFX_Repaint();
 }
@@ -313,7 +313,7 @@ void	GFX_Repaint (void)
 		rect.top += pt.y;
 		rect.bottom += pt.y;
 		WaitForSingleObject(GFX.Semaphore,INFINITE);
-		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),"Failed to blit to primary surface",ReleaseSemaphore(GFX.Semaphore,1,NULL))
+		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),_T("Failed to blit to primary surface"),ReleaseSemaphore(GFX.Semaphore,1,NULL))
 		ReleaseSemaphore(GFX.Semaphore,1,NULL);
 	}
 }
@@ -417,11 +417,11 @@ void	GFX_GenerateNTSC (int hue, int sat, BOOL config)
 	}
 }
 
-BOOL	GFX_ImportPalette (char *filename, BOOL config)
+BOOL	GFX_ImportPalette (TCHAR *filename, BOOL config)
 {
 	int p = config ? 4 : 3;
 	int i;
-	FILE *pal = fopen(filename,"rb");
+	FILE *pal = _tfopen(filename,_T("rb"));
 	if (!pal)
 		return FALSE;
 	fseek(pal,0xC0,SEEK_SET);
@@ -462,7 +462,7 @@ void	GFX_LoadPalette (int PalNum)
 	{
 		if (!GFX_ImportPalette(PPU.IsPAL ? GFX.CustPalettePAL : GFX.CustPaletteNTSC,FALSE))
 		{
-			MessageBox(mWnd,"Unable to load the specified palette! Reverting to default!","Nintendulator",MB_OK | MB_ICONERROR);
+			MessageBox(mWnd,_T("Unable to load the specified palette! Reverting to default!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			if (PPU.IsPAL)
 				GFX.PalettePAL = PalNum = 1;
 			else	GFX.PaletteNTSC = PalNum = 0;
@@ -514,7 +514,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	};
 
 	int wmId, wmEvent;
-	char filename[256];
+	TCHAR filename[256];
 	OPENFILENAME ofn;
 	PAINTSTRUCT ps;
 	HDC hdc;
@@ -577,7 +577,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = hDlg;
 			ofn.hInstance = hInst;
-			ofn.lpstrFilter = "Palette file (*.PAL)\0" "*.PAL\0" "\0";
+			ofn.lpstrFilter = _T("Palette file (*.PAL)\0") _T("*.PAL\0") _T("\0");
 			ofn.lpstrCustomFilter = NULL;
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = filename;
@@ -592,7 +592,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			ofn.lpTemplateName = NULL;
 			if (GetOpenFileName(&ofn))
 			{
-				strcpy(Path_PAL,filename);
+				_tcscpy(Path_PAL,filename);
 				Path_PAL[ofn.nFileOffset-1] = 0;
 				if (GFX_ImportPalette(filename,TRUE))
 				{
@@ -600,7 +600,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					SetDlgItemText(hDlg,IDC_PAL_CUSTFILE,filename);
 					UpdatePalette(hDlg,pal);
 				}
-				else	MessageBox(hDlg,"Selected file is not a valid palette!","Nintendulator",MB_OK | MB_ICONERROR);
+				else	MessageBox(hDlg,_T("Selected file is not a valid palette!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			}
 			break;
 		case IDOK:

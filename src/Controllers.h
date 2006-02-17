@@ -75,7 +75,7 @@ struct tControllers
 
 	int	NumDevices;
 	BOOL	DeviceUsed[MAX_CONTROLLERS];
-	char	DeviceName[MAX_CONTROLLERS][64];
+	TCHAR	DeviceName[MAX_CONTROLLERS][64];
 	int	NumButtons[MAX_CONTROLLERS], NumAxes[MAX_CONTROLLERS];
 
 	BYTE		KeyState[256];

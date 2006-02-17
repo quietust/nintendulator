@@ -46,6 +46,7 @@ struct tCPU
 	unsigned char A, X, Y, SP, P;
 	unsigned char FC, FZ, FI, FD, FV, FN;
 	unsigned char LastRead;
+#undef _PC
 	union SplitReg _PC;
 };
 extern	struct tCPU CPU;

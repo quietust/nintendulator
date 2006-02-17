@@ -37,11 +37,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #endif
 
 #define	SOUND_FILTERING
-/* #define	SOUND_LOGGING /* */
-
-#ifdef	NSFPLAYER
-#undef	SOUND_LOGGING
-#endif
 
 struct tAPU APU;
 
@@ -608,7 +603,7 @@ void	APU_WriteReg (int Addr, unsigned char Val)
 						break;
 	case 0x017:	Frame_Write(Val);	break;
 #ifndef	NSFPLAYER
-	default:	MessageBox(mWnd,"WTF? Invalid sound write!","Nintendulator",MB_OK);
+	default:	MessageBox(mWnd,_T("WTF? Invalid sound write!"),_T("Nintendulator"),MB_OK);
 #else
 	default:	MessageBox(mod.hMainWindow,"WTF? Invalid sound write!","Nintendulator",MB_OK);
 #endif
@@ -639,7 +634,7 @@ unsigned char	APU_Read4015 (void)
 		if (FAILED(action))\
 		{\
 			APU_SoundOFF();\
-			MessageBox(mWnd,errormsg,"Nintendulator",MB_OK | MB_ICONERROR);\
+			MessageBox(mWnd,errormsg,_T("Nintendulator"),MB_OK | MB_ICONERROR);\
 			return;\
 		}\
 	}\
@@ -664,7 +659,7 @@ void	APU_SetFPSVars (int FPS)
 	else
 	{
 #ifndef	NSFPLAYER
-		MessageBox(mWnd,"Attempted to set indeterminate sound framerate!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Attempted to set indeterminate sound framerate!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 #else
 		MessageBox(mod.hMainWindow,"Attempted to set indeterminate sound framerate!","Nintendulator",MB_OK | MB_ICONERROR);
 #endif
@@ -731,14 +726,14 @@ void	APU_Create (void)
 	if (FAILED(DirectSoundCreate(NULL,&APU.DirectSound,NULL)))
 	{
 		APU_Release();
-		MessageBox(mWnd,"Failed to create DirectSound interface!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("Failed to create DirectSound interface!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
 	if (FAILED(IDirectSound_SetCooperativeLevel(APU.DirectSound,mWnd,DSSCL_PRIORITY)))
 	{
 		APU_Release();
-		MessageBox(mWnd,"Failed to set cooperative level!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -750,7 +745,7 @@ void	APU_Create (void)
 	if (FAILED(IDirectSound_CreateSoundBuffer(APU.DirectSound,&DSBD,&APU.PrimaryBuffer,NULL)))
 	{
 		APU_Release();
-		MessageBox(mWnd,"Failed to create primary buffer!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("Failed to create primary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -764,13 +759,13 @@ void	APU_Create (void)
 	if (FAILED(IDirectSoundBuffer_SetFormat(APU.PrimaryBuffer,&WFX)))
 	{
 		APU_Release();
-		MessageBox(mWnd,"Failed to set output format!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("Failed to set output format!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	if (FAILED(IDirectSoundBuffer_Play(APU.PrimaryBuffer,0,0,DSBPLAY_LOOPING)))
 	{
 		APU_Release();
-		MessageBox(mWnd,"Failed to start playing primary buffer!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("Failed to start playing primary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -781,7 +776,7 @@ void	APU_Create (void)
 	if (FAILED(IDirectSound_CreateSoundBuffer(APU.DirectSound,&DSBD,&APU.Buffer,NULL)))
 	{
 		APU_Release();
-		MessageBox(mWnd,"Failed to create secondary buffer!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("Failed to create secondary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 #endif
@@ -831,9 +826,6 @@ void	APU_Reset  (void)
 	Frame.Bits = 0x40;	// some games will behave BADLY if we don't do this
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 }
-#ifdef	SOUND_LOGGING
-FILE *soundlog = NULL;
-#endif
 
 #ifndef	NSFPLAYER
 void	APU_SoundOFF (void)
@@ -841,13 +833,6 @@ void	APU_SoundOFF (void)
 	APU.isEnabled = FALSE;
 	if (APU.Buffer)
 		IDirectSoundBuffer_Stop(APU.Buffer);
-#ifdef	SOUND_LOGGING
-	if (soundlog)
-	{
-		fclose(soundlog);
-		soundlog = NULL;
-	}
-#endif
 }
 
 void	APU_SoundON (void)
@@ -861,16 +846,12 @@ void	APU_SoundON (void)
 		if (!APU.Buffer)
 			return;
 	}
-	APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,0,0,&bufPtr,&bufBytes,NULL,0,DSBLOCK_ENTIREBUFFER),"Error locking sound buffer (Clear)")
+	APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,0,0,&bufPtr,&bufBytes,NULL,0,DSBLOCK_ENTIREBUFFER),_T("Error locking sound buffer (Clear)"))
 	ZeroMemory(bufPtr,bufBytes);
-	APU_Try(IDirectSoundBuffer_Unlock(APU.Buffer,bufPtr,bufBytes,NULL,0),"Error unlocking sound buffer (Clear)")
+	APU_Try(IDirectSoundBuffer_Unlock(APU.Buffer,bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer (Clear)"))
 	APU.isEnabled = TRUE;
-	APU_Try(IDirectSoundBuffer_Play(APU.Buffer,0,0,DSBPLAY_LOOPING),"Unable to start playing buffer");
+	APU_Try(IDirectSoundBuffer_Play(APU.Buffer,0,0,DSBPLAY_LOOPING),_T("Unable to start playing buffer"))
 	APU.next_pos = 0;
-#ifdef	SOUND_LOGGING
-	if (!soundlog)
-		soundlog = fopen("c:\\nes.pcm","wb");
-#endif
 }
 
 void	APU_Config (HWND hWnd)
@@ -1060,7 +1041,7 @@ void	APU_Run (void)
 			Sleep(1);
 			if (!APU.isEnabled)
 				break;
-			APU_Try(IDirectSoundBuffer_GetCurrentPosition(APU.Buffer,&rpos,&wpos),"Error getting audio position")
+			APU_Try(IDirectSoundBuffer_GetCurrentPosition(APU.Buffer,&rpos,&wpos),_T("Error getting audio position"))
 			rpos /= APU.LockSize;
 			wpos /= APU.LockSize;
 			if (wpos < rpos)
@@ -1068,9 +1049,9 @@ void	APU_Run (void)
 		} while ((rpos <= APU.next_pos) && (APU.next_pos <= wpos));
 		if (APU.isEnabled)
 		{
-			APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,APU.next_pos * APU.LockSize,APU.LockSize,&bufPtr,&bufBytes,NULL,0,0),"Error locking sound buffer")
+			APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,APU.next_pos * APU.LockSize,APU.LockSize,&bufPtr,&bufBytes,NULL,0,0),_T("Error locking sound buffer"))
 			memcpy(bufPtr,APU.buffer,bufBytes);
-			APU_Try(IDirectSoundBuffer_Unlock(APU.Buffer,bufPtr,bufBytes,NULL,0),"Error unlocking sound buffer")
+			APU_Try(IDirectSoundBuffer_Unlock(APU.Buffer,bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer"))
 			APU.next_pos = (APU.next_pos + 1) % FRAMEBUF;
 		}
 	}
@@ -1112,9 +1093,5 @@ void	APU_Run (void)
 		sample_ok = TRUE;
 #endif
 		samppos = sampcycles = 0;
-#ifdef	SOUND_LOGGING
-		if (soundlog)
-			fwrite(&APU.buffer[APU.BufPos],2,1,soundlog);
-#endif
 	}
 }

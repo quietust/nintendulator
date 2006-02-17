@@ -42,7 +42,7 @@ unsigned char CHR_ROM[0x1000][0x400];	/* 4096 KB */
 unsigned char PRG_RAM[0x10][0x1000];	/*   64 KB */
 unsigned char CHR_RAM[0x20][0x400];	/*   32 KB */
 
-static	char *CompatLevel[COMPAT_NONE] = {"Fully supported!","Mostly supported","Partially supported"};
+static	TCHAR *CompatLevel[COMPAT_NONE] = {_T("Fully supported!"),_T("Mostly supported"),_T("Partially supported")};
 
 void	NES_Init (void)
 {
@@ -85,34 +85,34 @@ void	NES_Release (void)
 	DestroyWindow(mWnd);
 }
 
-void	NES_OpenFile (char *filename)
+void	NES_OpenFile (TCHAR *filename)
 {
-	size_t len = strlen(filename);
-	const char *LoadRet = NULL;
+	size_t len = _tcslen(filename);
+	const TCHAR *LoadRet = NULL;
 	if (NES.ROMLoaded)
 		NES_CloseFile();
 
-	EI.DbgOut("Loading file '%s'...",filename);
-	if (!stricmp(filename + len - 4, ".NES"))
+	EI.DbgOut(_T("Loading file '%s'..."),filename);
+	if (!_tcsicmp(filename + len - 4, _T(".NES")))
 		LoadRet = NES_OpenFileiNES(filename);
-	else if (!stricmp(filename + len - 4, ".NSF"))
+	else if (!_tcsicmp(filename + len - 4, _T(".NSF")))
 		LoadRet = NES_OpenFileNSF(filename);
-	else if (!stricmp(filename + len - 4, ".UNF"))
+	else if (!_tcsicmp(filename + len - 4, _T(".UNF")))
 		LoadRet = NES_OpenFileUNIF(filename);
-	else if (!stricmp(filename + len - 5, ".UNIF"))
+	else if (!_tcsicmp(filename + len - 5, _T(".UNIF")))
 		LoadRet = NES_OpenFileUNIF(filename);
-	else if (!stricmp(filename + len - 4, ".FDS"))
+	else if (!_tcsicmp(filename + len - 4, _T(".FDS")))
 		LoadRet = NES_OpenFileFDS(filename);
-	else	LoadRet = "File type not recognized!";
+	else	LoadRet = _T("File type not recognized!");
 
 	if (LoadRet)
 	{
-		MessageBox(mWnd,LoadRet,"Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,LoadRet,_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		NES_CloseFile();
 		return;
 	}
 	NES.ROMLoaded = TRUE;
-	EI.DbgOut("Loaded successfully!");
+	EI.DbgOut(_T("Loaded successfully!"));
 	States_SetFilename(filename);
 
 	if (MI->Load)
@@ -212,37 +212,37 @@ int	NES_FDSLoad (FILE *in)
 
 void	NES_SaveSRAM (void)
 {
-	char Filename[MAX_PATH];
+	TCHAR Filename[MAX_PATH];
 	FILE *SRAMFile;
 	if (!NES.SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
-		sprintf(Filename,"%s.fsv",States.BaseFilename);
-	else	sprintf(Filename,"%s.sav",States.BaseFilename);
-	SRAMFile = fopen(Filename,"wb");
+		_stprintf(Filename,_T("%s.fsv"),States.BaseFilename);
+	else	_stprintf(Filename,_T("%s.sav"),States.BaseFilename);
+	SRAMFile = _tfopen(Filename,_T("wb"));
 	if (RI.ROMType == ROM_FDS)
 	{
 		NES_FDSSave(SRAMFile);
-		EI.DbgOut("Saved disk changes");
+		EI.DbgOut(_T("Saved disk changes"));
 	}
 	else
 	{
 		fwrite(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
-		EI.DbgOut("Saved SRAM.");
+		EI.DbgOut(_T("Saved SRAM."));
 	}
 	fclose(SRAMFile);
 }
 void	NES_LoadSRAM (void)
 {
-	char Filename[MAX_PATH];
+	TCHAR Filename[MAX_PATH];
 	FILE *SRAMFile;
 	int len;
 	if (!NES.SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
-		sprintf(Filename,"%s.fsv",States.BaseFilename);
-	else	sprintf(Filename,"%s.sav",States.BaseFilename);
-	SRAMFile = fopen(Filename,"rb");
+		_stprintf(Filename,_T("%s.fsv"),States.BaseFilename);
+	else	_stprintf(Filename,_T("%s.sav"),States.BaseFilename);
+	SRAMFile = _tfopen(Filename,_T("rb"));
 	if (!SRAMFile)
 		return;
 	fseek(SRAMFile,0,SEEK_END);
@@ -251,16 +251,16 @@ void	NES_LoadSRAM (void)
 	if (RI.ROMType == ROM_FDS)
 	{
 		if (len == NES_FDSLoad(SRAMFile))
-			EI.DbgOut("Loaded disk changes");
-		else	EI.DbgOut("File length mismatch while loading disk data!");
+			EI.DbgOut(_T("Loaded disk changes"));
+		else	EI.DbgOut(_T("File length mismatch while loading disk data!"));
 	}
 	else
 	{
 		ZeroMemory(PRG_RAM,NES.SRAM_Size);
 		fread(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
 		if (len == NES.SRAM_Size)
-			EI.DbgOut("Loaded SRAM (%i bytes).",NES.SRAM_Size);
-		else	EI.DbgOut("File length mismatch while loading SRAM!");
+			EI.DbgOut(_T("Loaded SRAM (%i bytes)."),NES.SRAM_Size);
+		else	EI.DbgOut(_T("File length mismatch while loading SRAM!"));
 	}
 	fclose(SRAMFile);
 }
@@ -273,7 +273,7 @@ void	NES_CloseFile (void)
 	{
 		MapperInterface_UnloadMapper();
 		NES.ROMLoaded = FALSE;
-		EI.DbgOut("ROM unloaded.");
+		EI.DbgOut(_T("ROM unloaded."));
 	}
 
 	if (RI.ROMType)
@@ -336,21 +336,21 @@ void	NES_CloseFile (void)
 		(((a) <<  8) & 0x00FF0000) | \
 		(((a) << 24) & 0xFF000000))
 
-const char *	NES_OpenFileiNES (char *filename)
+const TCHAR *	NES_OpenFileiNES (TCHAR *filename)
 {
 	FILE *in;
 	unsigned char Header[4];
 	unsigned long tmp;
 	BOOL p2Found;
 
-	in = fopen(filename,"rb");
+	in = _tfopen(filename,_T("rb"));
 	fread(&tmp,4,1,in);
 	if (tmp != MKID('NES\x1A'))
 	{
 		fclose(in);
-		return "iNES header signature not found!";
+		return _T("iNES header signature not found!");
 	}
-	RI.Filename = strdup(filename);
+	RI.Filename = _tcsdup(filename);
 	RI.ROMType = ROM_INES;
 	fread(Header,1,4,in);
 	for (tmp = 8; tmp < 0x10; tmp++)
@@ -360,7 +360,7 @@ const char *	NES_OpenFileiNES (char *filename)
 		if (x)
 		{
 			fclose(in);
-			return "Invalid data found in header!";
+			return _T("Invalid data found in header!");
 		}
 	}
 	
@@ -372,7 +372,7 @@ const char *	NES_OpenFileiNES (char *filename)
 	if (RI.INES_Flags & 0x04)
 	{
 		fclose(in);
-		return "Trained ROMs are unsupported!";
+		return _T("Trained ROMs are unsupported!");
 	}
 
 	fread(PRG_ROM,1,RI.INES_PRGSize * 0x4000,in);
@@ -399,17 +399,17 @@ const char *	NES_OpenFileiNES (char *filename)
 	
 	if (!MapperInterface_LoadMapper(&RI))
 	{
-		static char err[256];
-		sprintf(err,"Mapper %i not supported!",RI.INES_MapperNum);
+		static TCHAR err[256];
+		_stprintf(err,_T("Mapper %i not supported!"),RI.INES_MapperNum);
 		return err;
 	}
-	EI.DbgOut("iNES ROM image loaded: mapper %i (%s) - %s",RI.INES_MapperNum,MI->Description,CompatLevel[MI->Compatibility]);
-	EI.DbgOut("PRG: %iKB; CHR: %iKB",RI.INES_PRGSize << 4,RI.INES_CHRSize << 3);
-	EI.DbgOut("Flags: %s%s",RI.INES_Flags & 0x02 ? "Battery-backed SRAM, " : "", RI.INES_Flags & 0x08 ? "Four-screen VRAM" : (RI.INES_Flags & 0x01 ? "Vertical mirroring" : "Horizontal mirroring"));
+	EI.DbgOut(_T("iNES ROM image loaded: mapper %i (%s) - %s"),RI.INES_MapperNum,MI->Description,CompatLevel[MI->Compatibility]);
+	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"),RI.INES_PRGSize << 4,RI.INES_CHRSize << 3);
+	EI.DbgOut(_T("Flags: %s%s"),RI.INES_Flags & 0x02 ? _T("Battery-backed SRAM, ") : _T(""), RI.INES_Flags & 0x08 ? _T("Four-screen VRAM") : (RI.INES_Flags & 0x01 ? _T("Vertical mirroring") : _T("Horizontal mirroring")));
 	return NULL;
 }
 
-const char *	NES_OpenFileUNIF (char *filename)
+const TCHAR *	NES_OpenFileUNIF (TCHAR *filename)
 {
 	unsigned long Signature, BlockLen;
 	unsigned char *tPRG[0x10], *tCHR[0x10];
@@ -420,19 +420,19 @@ const char *	NES_OpenFileUNIF (char *filename)
 	BOOL p2Found;
 	DWORD p2;
 
-	FILE *in = fopen(filename,"rb");
+	FILE *in = _tfopen(filename,_T("rb"));
 	if (!in)
 		return FALSE;
 	fread(&Signature,4,1,in);
 	if (Signature != MKID('UNIF'))
 	{
 		fclose(in);
-		return "UNIF header signature not found!";
+		return _T("UNIF header signature not found!");
 	}
 
 	fseek(in,28,SEEK_CUR);	/* skip "expansion area" */
 
-	RI.Filename = strdup(filename);
+	RI.Filename = _tcsdup(filename);
 	RI.ROMType = ROM_UNIF;
 
 	for (i = 0; i < 0x10; i++)
@@ -557,41 +557,41 @@ const char *	NES_OpenFileUNIF (char *filename)
 
 	if (!MapperInterface_LoadMapper(&RI))
 	{
-		static char err[256];
-		sprintf(err,"UNIF boardset \"%s\" not supported!",RI.UNIF_BoardName);
+		static TCHAR err[256];
+		_stprintf(err,_T("UNIF boardset \"") PRINTF_CHAR8 _T("\" not supported!"),RI.UNIF_BoardName);
 		return err;
 	}
-	EI.DbgOut("UNIF file loaded: %s (%s) - %s",RI.UNIF_BoardName,MI->Description,CompatLevel[MI->Compatibility]);
-	EI.DbgOut("PRG: %iKB; CHR: %iKB",PRGsize >> 10,CHRsize >> 10);
-	EI.DbgOut("Battery status: %s",RI.UNIF_Battery ? "present" : "not present");
+	EI.DbgOut(_T("UNIF file loaded: ") PRINTF_CHAR8 _T(" (%s) - %s"),RI.UNIF_BoardName,MI->Description,CompatLevel[MI->Compatibility]);
+	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"),PRGsize >> 10,CHRsize >> 10);
+	EI.DbgOut(_T("Battery status: %s"),RI.UNIF_Battery ? _T("present") : _T("not present"));
 	{
-		const char *mir[6] = {"Horizontal","Vertical","Single-screen L","Single-screen H","Four-screen","Dynamic"};
-		EI.DbgOut("Mirroring mode: %i (%s)",RI.UNIF_Mirroring,mir[RI.UNIF_Mirroring]);
+		const TCHAR *mir[6] = {_T("Horizontal"),_T("Vertical"),_T("Single-screen L"),_T("Single-screen H"),_T("Four-screen"),_T("Dynamic")};
+		EI.DbgOut(_T("Mirroring mode: %i (%s)"),RI.UNIF_Mirroring,mir[RI.UNIF_Mirroring]);
 	}
 	{
-		const char *ntscpal[3] = {"NTSC","PAL","Dual"};
-		EI.DbgOut("Television standard: %s",ntscpal[RI.UNIF_NTSCPAL]);
+		const TCHAR *ntscpal[3] = {_T("NTSC"),_T("PAL"),_T("Dual")};
+		EI.DbgOut(_T("Television standard: %s"),ntscpal[RI.UNIF_NTSCPAL]);
 	}
 	return NULL;
 }
 
-const char *	NES_OpenFileFDS (char *filename)
+const TCHAR *	NES_OpenFileFDS (TCHAR *filename)
 {
 	FILE *in;
 	unsigned long Header;
 	unsigned char numSides;
 	int i;
 
-	in = fopen(filename,"rb");
+	in = _tfopen(filename,_T("rb"));
 	fread(&Header,4,1,in);
 	if (Header != MKID('FDS\x1a'))
 	{
 		fclose(in);
-		return "FDS header signature not found!";
+		return _T("FDS header signature not found!");
 	}
 	fread(&numSides,1,1,in);
 	fseek(in,11,SEEK_CUR);
-	RI.Filename = strdup(filename);
+	RI.Filename = _tcsdup(filename);
 	RI.ROMType = ROM_FDS;
 
 	for (i = 0; i < numSides; i++)
@@ -605,21 +605,21 @@ const char *	NES_OpenFileFDS (char *filename)
 	NES.PRGMask = ((RI.FDS_NumSides << 4) - 1) & MAX_PRGROM_MASK;
 
 	if (!MapperInterface_LoadMapper(&RI))
-		return "Famicom Disk System support not found!";
+		return _T("Famicom Disk System support not found!");
 
-	EI.DbgOut("FDS file loaded: %s - %s",MI->Description,CompatLevel[MI->Compatibility]);
-	EI.DbgOut("Data length: %i disk side(s)",RI.FDS_NumSides);
+	EI.DbgOut(_T("FDS file loaded: %s - %s"),MI->Description,CompatLevel[MI->Compatibility]);
+	EI.DbgOut(_T("Data length: %i disk side(s)"),RI.FDS_NumSides);
 	NES.SRAM_Size = 1;	// special, so FDS always saves changes
 	return NULL;
 }
 
-const char *	NES_OpenFileNSF (char *filename)
+const TCHAR *	NES_OpenFileNSF (TCHAR *filename)
 {
 	FILE *in;
 	unsigned char Header[128];	/* Header Bytes */
 	int ROMlen;
 
-	in = fopen(filename,"rb");
+	in = _tfopen(filename,_T("rb"));
 	fseek(in,0,SEEK_END);
 	ROMlen = ftell(in) - 128;
 	fseek(in,0,SEEK_SET);
@@ -627,15 +627,15 @@ const char *	NES_OpenFileNSF (char *filename)
 	if (memcmp(Header,"NESM\x1a",5))
 	{
 		fclose(in);
-		return "NSF header signature not found!";
+		return _T("NSF header signature not found!");
 	}
 	if (Header[5] != 1)
 	{
 		fclose(in);
-		return "This NSF version is not supported!";
+		return _T("This NSF version is not supported!");
 	}
 
-	RI.Filename = strdup(filename);
+	RI.Filename = _tcsdup(filename);
 	RI.ROMType = ROM_NSF;
 	RI.NSF_DataSize = ROMlen;
 	RI.NSF_NumSongs = Header[0x06];
@@ -664,21 +664,21 @@ const char *	NES_OpenFileNSF (char *filename)
 
 	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
 	{
-		EI.DbgOut("Adjusting NSF playback speed for NTSC...");
+		EI.DbgOut(_T("Adjusting NSF playback speed for NTSC..."));
 		RI.NSF_NTSCSpeed = 16639;
 	}
 	if (RI.NSF_PALSpeed == 20000)
 	{
-		EI.DbgOut("Adjusting NSF playback speed for PAL...");
+		EI.DbgOut(_T("Adjusting NSF playback speed for PAL..."));
 		RI.NSF_PALSpeed = 19997;
 	}
 
 	NES.PRGMask = MAX_PRGROM_MASK;
 
 	if (!MapperInterface_LoadMapper(&RI))
-		return "NSF support not found!";
-	EI.DbgOut("NSF loaded: %s - %s",MI->Description,CompatLevel[MI->Compatibility]);
-	EI.DbgOut("Data length: %iKB",RI.NSF_DataSize >> 10);
+		return _T("NSF support not found!");
+	EI.DbgOut(_T("NSF loaded: %s - %s"),MI->Description,CompatLevel[MI->Compatibility]);
+	EI.DbgOut(_T("Data length: %iKB"),RI.NSF_DataSize >> 10);
 	return NULL;
 }
 /*
@@ -807,7 +807,7 @@ void	NES_SetCPUMode (int NewMode)
 		GFX_LoadPalette(GFX.PaletteNTSC);
 		APU_SetFPS(60);
 		PPU.IsPAL = FALSE;
-		EI.DbgOut("Emulation switched to NTSC");
+		EI.DbgOut(_T("Emulation switched to NTSC"));
 	}
 	else
 	{
@@ -817,7 +817,7 @@ void	NES_SetCPUMode (int NewMode)
 		GFX_LoadPalette(GFX.PalettePAL);
 		APU_SetFPS(50);
 		PPU.IsPAL = TRUE;
-		EI.DbgOut("Emulation switched to PAL");
+		EI.DbgOut(_T("Emulation switched to PAL"));
 	}
 }
 
@@ -858,14 +858,14 @@ void	NES_Reset (RESET_TYPE ResetType)
 	case RESET_FULL:
 		ZeroMemory((unsigned char *)PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
-		EI.DbgOut("Performing initial hard reset...");
+		EI.DbgOut(_T("Performing initial hard reset..."));
 		PPU_PowerOn();
 		CPU_PowerOn();
 		if ((MI) && (MI->Reset))
 			MI->Reset(RESET_HARD);
 		break;
 	case RESET_HARD:
-		EI.DbgOut("Performing hard reset...");
+		EI.DbgOut(_T("Performing hard reset..."));
 		ZeroMemory((unsigned char *)PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		CPU_PowerOn();
@@ -881,7 +881,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 			MI->Reset(RESET_HARD);
 		break;
 	case RESET_SOFT:
-		EI.DbgOut("Performing soft reset...");
+		EI.DbgOut(_T("Performing soft reset..."));
 		if (MI2)
 		{
 			MI = MI2;
@@ -909,7 +909,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 		Debugger_Update();
 #endif	/* ENABLE_DEBUGGER */
 	NES.Scanline = FALSE;
-	EI.DbgOut("Reset complete.");
+	EI.DbgOut(_T("Reset complete."));
 }
 
 DWORD	WINAPI	NES_Thread (void *param)
@@ -937,7 +937,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 	}
 	QueryPerformanceCounter(&ClockVal2);
 
-	EI.DbgOut("10 seconds emulated in %lu milliseconds",(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
+	EI.DbgOut(_T("10 seconds emulated in %lu milliseconds"),(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
 #else
 
 #ifdef ENABLE_DEBUGGER
@@ -1065,38 +1065,38 @@ void	NES_LoadSettings (void)
 	
 	/* End Defaults */
 
-	RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Nintendulator\\", 0, KEY_ALL_ACCESS, &SettingsBase);
+	RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase);
 	Size = 4;
-	RegQueryValueEx(SettingsBase,"SoundEnabled",0,&Type,(unsigned char *)&NES.SoundEnabled,&Size);
-	RegQueryValueEx(SettingsBase,"SizeMult"    ,0,&Type,(unsigned char *)&SizeMult   ,&Size);
-	RegQueryValueEx(SettingsBase,"FSkip"       ,0,&Type,(unsigned char *)&GFX.FSkip  ,&Size);
-	RegQueryValueEx(SettingsBase,"aFSkip"      ,0,&Type,(unsigned char *)&GFX.aFSkip ,&Size);
-	RegQueryValueEx(SettingsBase,"PPUMode"     ,0,&Type,(unsigned char *)&PPU.IsPAL  ,&Size);
-	RegQueryValueEx(SettingsBase,"AutoRun"     ,0,&Type,(unsigned char *)&NES.AutoRun,&Size);
-	RegQueryValueEx(SettingsBase,"PosX"        ,0,&Type,(unsigned char *)&PosX       ,&Size);
-	RegQueryValueEx(SettingsBase,"PosY"        ,0,&Type,(unsigned char *)&PosY       ,&Size);
+	RegQueryValueEx(SettingsBase,_T("SoundEnabled"),0,&Type,(unsigned char *)&NES.SoundEnabled,&Size);
+	RegQueryValueEx(SettingsBase,_T("SizeMult")    ,0,&Type,(unsigned char *)&SizeMult   ,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSkip")       ,0,&Type,(unsigned char *)&GFX.FSkip  ,&Size);
+	RegQueryValueEx(SettingsBase,_T("aFSkip")      ,0,&Type,(unsigned char *)&GFX.aFSkip ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PPUMode")     ,0,&Type,(unsigned char *)&PPU.IsPAL  ,&Size);
+	RegQueryValueEx(SettingsBase,_T("AutoRun")     ,0,&Type,(unsigned char *)&NES.AutoRun,&Size);
+	RegQueryValueEx(SettingsBase,_T("PosX")        ,0,&Type,(unsigned char *)&PosX       ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PosY")        ,0,&Type,(unsigned char *)&PosY       ,&Size);
 
-	RegQueryValueEx(SettingsBase,"PaletteNTSC" ,0,&Type,(unsigned char *)&GFX.PaletteNTSC,&Size);
-	RegQueryValueEx(SettingsBase,"PalettePAL"  ,0,&Type,(unsigned char *)&GFX.PalettePAL ,&Size);
-	RegQueryValueEx(SettingsBase,"NTSChue"     ,0,&Type,(unsigned char *)&GFX.NTSChue    ,&Size);
-	RegQueryValueEx(SettingsBase,"NTSCsat"     ,0,&Type,(unsigned char *)&GFX.NTSCsat    ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PaletteNTSC") ,0,&Type,(unsigned char *)&GFX.PaletteNTSC,&Size);
+	RegQueryValueEx(SettingsBase,_T("PalettePAL")  ,0,&Type,(unsigned char *)&GFX.PalettePAL ,&Size);
+	RegQueryValueEx(SettingsBase,_T("NTSChue")     ,0,&Type,(unsigned char *)&GFX.NTSChue    ,&Size);
+	RegQueryValueEx(SettingsBase,_T("NTSCsat")     ,0,&Type,(unsigned char *)&GFX.NTSCsat    ,&Size);
 
-	Size = MAX_PATH;
-	RegQueryValueEx(SettingsBase,"CustPaletteNTSC",0,&Type,(unsigned char *)&GFX.CustPaletteNTSC,&Size);
-	RegQueryValueEx(SettingsBase,"CustPalettePAL" ,0,&Type,(unsigned char *)&GFX.CustPalettePAL ,&Size);
-	RegQueryValueEx(SettingsBase,"Path_ROM",0,&Type,(unsigned char *)&Path_ROM,&Size);
-	RegQueryValueEx(SettingsBase,"Path_NMV",0,&Type,(unsigned char *)&Path_NMV,&Size);
-	RegQueryValueEx(SettingsBase,"Path_AVI",0,&Type,(unsigned char *)&Path_AVI,&Size);
-	RegQueryValueEx(SettingsBase,"Path_PAL",0,&Type,(unsigned char *)&Path_PAL,&Size);
+	Size = MAX_PATH * sizeof(TCHAR);
+	RegQueryValueEx(SettingsBase,_T("CustPaletteNTSC"),0,&Type,(unsigned char *)&GFX.CustPaletteNTSC,&Size);
+	RegQueryValueEx(SettingsBase,_T("CustPalettePAL") ,0,&Type,(unsigned char *)&GFX.CustPalettePAL ,&Size);
+	RegQueryValueEx(SettingsBase,_T("Path_ROM"),0,&Type,(unsigned char *)&Path_ROM,&Size);
+	RegQueryValueEx(SettingsBase,_T("Path_NMV"),0,&Type,(unsigned char *)&Path_NMV,&Size);
+	RegQueryValueEx(SettingsBase,_T("Path_AVI"),0,&Type,(unsigned char *)&Path_AVI,&Size);
+	RegQueryValueEx(SettingsBase,_T("Path_PAL"),0,&Type,(unsigned char *)&Path_PAL,&Size);
 
 	Size = 4;
-	RegQueryValueEx(SettingsBase,"Port1T"  ,0,&Type,(unsigned char *)&Port1T  ,&Size);
-	RegQueryValueEx(SettingsBase,"Port2T"  ,0,&Type,(unsigned char *)&Port2T  ,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort1T",0,&Type,(unsigned char *)&FSPort1T,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort2T",0,&Type,(unsigned char *)&FSPort2T,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort3T",0,&Type,(unsigned char *)&FSPort3T,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort4T",0,&Type,(unsigned char *)&FSPort4T,&Size);
-	RegQueryValueEx(SettingsBase,"ExpPortT",0,&Type,(unsigned char *)&ExpPortT,&Size);
+	RegQueryValueEx(SettingsBase,_T("Port1T")  ,0,&Type,(unsigned char *)&Port1T  ,&Size);
+	RegQueryValueEx(SettingsBase,_T("Port2T")  ,0,&Type,(unsigned char *)&Port2T  ,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSPort1T"),0,&Type,(unsigned char *)&FSPort1T,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSPort2T"),0,&Type,(unsigned char *)&FSPort2T,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSPort3T"),0,&Type,(unsigned char *)&FSPort3T,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSPort4T"),0,&Type,(unsigned char *)&FSPort4T,&Size);
+	RegQueryValueEx(SettingsBase,_T("ExpPortT"),0,&Type,(unsigned char *)&ExpPortT,&Size);
 
 	if ((Port1T == STD_POWERPAD) || (Port2T == STD_POWERPAD))
 		StdPort_SetControllerType(&Controllers.Port1,STD_POWERPAD);
@@ -1112,14 +1112,14 @@ void	NES_LoadSettings (void)
 	ExpPort_SetControllerType(&Controllers.ExpPort,ExpPortT);
 
 	Size = sizeof(Controllers.Port1.Buttons);
-	RegQueryValueEx(SettingsBase,"Port1D"  ,0,&Type,(unsigned char *)Controllers.Port1.Buttons  ,&Size);
-	RegQueryValueEx(SettingsBase,"Port2D"  ,0,&Type,(unsigned char *)Controllers.Port2.Buttons  ,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort1D",0,&Type,(unsigned char *)Controllers.FSPort1.Buttons,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort2D",0,&Type,(unsigned char *)Controllers.FSPort2.Buttons,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort3D",0,&Type,(unsigned char *)Controllers.FSPort3.Buttons,&Size);
-	RegQueryValueEx(SettingsBase,"FSPort4D",0,&Type,(unsigned char *)Controllers.FSPort4.Buttons,&Size);
+	RegQueryValueEx(SettingsBase,_T("Port1D")  ,0,&Type,(unsigned char *)Controllers.Port1.Buttons  ,&Size);
+	RegQueryValueEx(SettingsBase,_T("Port2D")  ,0,&Type,(unsigned char *)Controllers.Port2.Buttons  ,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSPort1D"),0,&Type,(unsigned char *)Controllers.FSPort1.Buttons,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSPort2D"),0,&Type,(unsigned char *)Controllers.FSPort2.Buttons,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSPort3D"),0,&Type,(unsigned char *)Controllers.FSPort3.Buttons,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSPort4D"),0,&Type,(unsigned char *)Controllers.FSPort4.Buttons,&Size);
 	Size = sizeof(Controllers.ExpPort.Buttons);
-	RegQueryValueEx(SettingsBase,"ExpPortD",0,&Type,(unsigned char *)Controllers.ExpPort.Buttons,&Size);
+	RegQueryValueEx(SettingsBase,_T("ExpPortD"),0,&Type,(unsigned char *)Controllers.ExpPort.Buttons,&Size);
 	Controllers_SetDeviceUsed();
 
 	RegCloseKey(SettingsBase);
@@ -1160,44 +1160,44 @@ void	NES_SaveSettings (void)
 	HKEY SettingsBase;
 	RECT wRect;
 	GetWindowRect(mWnd,&wRect);
-	if (RegOpenKeyEx(HKEY_CURRENT_USER,"SOFTWARE\\Nintendulator\\",0,KEY_ALL_ACCESS,&SettingsBase))
-		RegCreateKeyEx(HKEY_CURRENT_USER,"SOFTWARE\\Nintendulator\\",0,"NintendulatorClass",REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&SettingsBase,NULL);
-	RegSetValueEx(SettingsBase,"SoundEnabled",0,REG_DWORD,(unsigned char *)&NES.SoundEnabled,4);
-	RegSetValueEx(SettingsBase,"SizeMult"    ,0,REG_DWORD,(unsigned char *)&SizeMult        ,4);
-	RegSetValueEx(SettingsBase,"FSkip"       ,0,REG_DWORD,(unsigned char *)&GFX.FSkip       ,4);
-	RegSetValueEx(SettingsBase,"aFSkip"      ,0,REG_DWORD,(unsigned char *)&GFX.aFSkip      ,4);
-	RegSetValueEx(SettingsBase,"PPUMode"     ,0,REG_DWORD,(unsigned char *)&PPU.IsPAL       ,4);
-	RegSetValueEx(SettingsBase,"AutoRun"     ,0,REG_DWORD,(unsigned char *)&NES.AutoRun     ,4);
-	RegSetValueEx(SettingsBase,"PosX"        ,0,REG_DWORD,(unsigned char *)&wRect.left      ,4);
-	RegSetValueEx(SettingsBase,"PosY"        ,0,REG_DWORD,(unsigned char *)&wRect.top       ,4);
+	if (RegOpenKeyEx(HKEY_CURRENT_USER,_T("SOFTWARE\\Nintendulator\\"),0,KEY_ALL_ACCESS,&SettingsBase))
+		RegCreateKeyEx(HKEY_CURRENT_USER,_T("SOFTWARE\\Nintendulator\\"),0,_T("NintendulatorClass"),REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&SettingsBase,NULL);
+	RegSetValueEx(SettingsBase,_T("SoundEnabled"),0,REG_DWORD,(unsigned char *)&NES.SoundEnabled,4);
+	RegSetValueEx(SettingsBase,_T("SizeMult")    ,0,REG_DWORD,(unsigned char *)&SizeMult        ,4);
+	RegSetValueEx(SettingsBase,_T("FSkip")       ,0,REG_DWORD,(unsigned char *)&GFX.FSkip       ,4);
+	RegSetValueEx(SettingsBase,_T("aFSkip")      ,0,REG_DWORD,(unsigned char *)&GFX.aFSkip      ,4);
+	RegSetValueEx(SettingsBase,_T("PPUMode")     ,0,REG_DWORD,(unsigned char *)&PPU.IsPAL       ,4);
+	RegSetValueEx(SettingsBase,_T("AutoRun")     ,0,REG_DWORD,(unsigned char *)&NES.AutoRun     ,4);
+	RegSetValueEx(SettingsBase,_T("PosX")        ,0,REG_DWORD,(unsigned char *)&wRect.left      ,4);
+	RegSetValueEx(SettingsBase,_T("PosY")        ,0,REG_DWORD,(unsigned char *)&wRect.top       ,4);
 
-	RegSetValueEx(SettingsBase,"PaletteNTSC" ,0,REG_DWORD,(unsigned char *)&GFX.PaletteNTSC ,4);
-	RegSetValueEx(SettingsBase,"PalettePAL"  ,0,REG_DWORD,(unsigned char *)&GFX.PalettePAL  ,4);
-	RegSetValueEx(SettingsBase,"NTSChue"     ,0,REG_DWORD,(unsigned char *)&GFX.NTSChue     ,4);
-	RegSetValueEx(SettingsBase,"NTSCsat"     ,0,REG_DWORD,(unsigned char *)&GFX.NTSCsat     ,4);
+	RegSetValueEx(SettingsBase,_T("PaletteNTSC") ,0,REG_DWORD,(unsigned char *)&GFX.PaletteNTSC ,4);
+	RegSetValueEx(SettingsBase,_T("PalettePAL")  ,0,REG_DWORD,(unsigned char *)&GFX.PalettePAL  ,4);
+	RegSetValueEx(SettingsBase,_T("NTSChue")     ,0,REG_DWORD,(unsigned char *)&GFX.NTSChue     ,4);
+	RegSetValueEx(SettingsBase,_T("NTSCsat")     ,0,REG_DWORD,(unsigned char *)&GFX.NTSCsat     ,4);
 
-	RegSetValueEx(SettingsBase,"CustPaletteNTSC",0,REG_SZ,(unsigned char *)GFX.CustPaletteNTSC,MAX_PATH);
-	RegSetValueEx(SettingsBase,"CustPalettePAL" ,0,REG_SZ,(unsigned char *)GFX.CustPalettePAL ,MAX_PATH);
-	RegSetValueEx(SettingsBase,"Path_ROM",0,REG_SZ,(unsigned char *)Path_ROM,MAX_PATH);
-	RegSetValueEx(SettingsBase,"Path_NMV",0,REG_SZ,(unsigned char *)Path_NMV,MAX_PATH);
-	RegSetValueEx(SettingsBase,"Path_AVI",0,REG_SZ,(unsigned char *)Path_AVI,MAX_PATH);
-	RegSetValueEx(SettingsBase,"Path_PAL",0,REG_SZ,(unsigned char *)Path_PAL,MAX_PATH);
+	RegSetValueEx(SettingsBase,_T("CustPaletteNTSC"),0,REG_SZ,(unsigned char *)GFX.CustPaletteNTSC,MAX_PATH * sizeof(TCHAR));
+	RegSetValueEx(SettingsBase,_T("CustPalettePAL") ,0,REG_SZ,(unsigned char *)GFX.CustPalettePAL ,MAX_PATH * sizeof(TCHAR));
+	RegSetValueEx(SettingsBase,_T("Path_ROM"),0,REG_SZ,(unsigned char *)Path_ROM,MAX_PATH * sizeof(TCHAR));
+	RegSetValueEx(SettingsBase,_T("Path_NMV"),0,REG_SZ,(unsigned char *)Path_NMV,MAX_PATH * sizeof(TCHAR));
+	RegSetValueEx(SettingsBase,_T("Path_AVI"),0,REG_SZ,(unsigned char *)Path_AVI,MAX_PATH * sizeof(TCHAR));
+	RegSetValueEx(SettingsBase,_T("Path_PAL"),0,REG_SZ,(unsigned char *)Path_PAL,MAX_PATH * sizeof(TCHAR));
 
-	RegSetValueEx(SettingsBase,"Port1T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port1.Type  ,sizeof(Controllers.Port1.Type));
-	RegSetValueEx(SettingsBase,"Port2T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port2.Type  ,sizeof(Controllers.Port2.Type));
-	RegSetValueEx(SettingsBase,"FSPort1T",0,REG_DWORD,(unsigned char *)&Controllers.FSPort1.Type,sizeof(Controllers.FSPort1.Type));
-	RegSetValueEx(SettingsBase,"FSPort2T",0,REG_DWORD,(unsigned char *)&Controllers.FSPort2.Type,sizeof(Controllers.FSPort2.Type));
-	RegSetValueEx(SettingsBase,"FSPort3T",0,REG_DWORD,(unsigned char *)&Controllers.FSPort3.Type,sizeof(Controllers.FSPort3.Type));
-	RegSetValueEx(SettingsBase,"FSPort4T",0,REG_DWORD,(unsigned char *)&Controllers.FSPort4.Type,sizeof(Controllers.FSPort4.Type));
-	RegSetValueEx(SettingsBase,"ExpPortT",0,REG_DWORD,(unsigned char *)&Controllers.ExpPort.Type,sizeof(Controllers.ExpPort.Type));
+	RegSetValueEx(SettingsBase,_T("Port1T")  ,0,REG_DWORD,(unsigned char *)&Controllers.Port1.Type  ,sizeof(Controllers.Port1.Type));
+	RegSetValueEx(SettingsBase,_T("Port2T")  ,0,REG_DWORD,(unsigned char *)&Controllers.Port2.Type  ,sizeof(Controllers.Port2.Type));
+	RegSetValueEx(SettingsBase,_T("FSPort1T"),0,REG_DWORD,(unsigned char *)&Controllers.FSPort1.Type,sizeof(Controllers.FSPort1.Type));
+	RegSetValueEx(SettingsBase,_T("FSPort2T"),0,REG_DWORD,(unsigned char *)&Controllers.FSPort2.Type,sizeof(Controllers.FSPort2.Type));
+	RegSetValueEx(SettingsBase,_T("FSPort3T"),0,REG_DWORD,(unsigned char *)&Controllers.FSPort3.Type,sizeof(Controllers.FSPort3.Type));
+	RegSetValueEx(SettingsBase,_T("FSPort4T"),0,REG_DWORD,(unsigned char *)&Controllers.FSPort4.Type,sizeof(Controllers.FSPort4.Type));
+	RegSetValueEx(SettingsBase,_T("ExpPortT"),0,REG_DWORD,(unsigned char *)&Controllers.ExpPort.Type,sizeof(Controllers.ExpPort.Type));
 	
-	RegSetValueEx(SettingsBase,"Port1D"  ,0,REG_BINARY,(unsigned char *)Controllers.Port1.Buttons  ,sizeof(Controllers.Port1.Buttons));
-	RegSetValueEx(SettingsBase,"Port2D"  ,0,REG_BINARY,(unsigned char *)Controllers.Port2.Buttons  ,sizeof(Controllers.Port2.Buttons));
-	RegSetValueEx(SettingsBase,"FSPort1D",0,REG_BINARY,(unsigned char *)Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));
-	RegSetValueEx(SettingsBase,"FSPort2D",0,REG_BINARY,(unsigned char *)Controllers.FSPort2.Buttons,sizeof(Controllers.FSPort2.Buttons));
-	RegSetValueEx(SettingsBase,"FSPort3D",0,REG_BINARY,(unsigned char *)Controllers.FSPort3.Buttons,sizeof(Controllers.FSPort3.Buttons));
-	RegSetValueEx(SettingsBase,"FSPort4D",0,REG_BINARY,(unsigned char *)Controllers.FSPort4.Buttons,sizeof(Controllers.FSPort4.Buttons));
-	RegSetValueEx(SettingsBase,"ExpPortD",0,REG_BINARY,(unsigned char *)Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
+	RegSetValueEx(SettingsBase,_T("Port1D")  ,0,REG_BINARY,(unsigned char *)Controllers.Port1.Buttons  ,sizeof(Controllers.Port1.Buttons));
+	RegSetValueEx(SettingsBase,_T("Port2D")  ,0,REG_BINARY,(unsigned char *)Controllers.Port2.Buttons  ,sizeof(Controllers.Port2.Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort1D"),0,REG_BINARY,(unsigned char *)Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort2D"),0,REG_BINARY,(unsigned char *)Controllers.FSPort2.Buttons,sizeof(Controllers.FSPort2.Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort3D"),0,REG_BINARY,(unsigned char *)Controllers.FSPort3.Buttons,sizeof(Controllers.FSPort3.Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort4D"),0,REG_BINARY,(unsigned char *)Controllers.FSPort4.Buttons,sizeof(Controllers.FSPort4.Buttons));
+	RegSetValueEx(SettingsBase,_T("ExpPortD"),0,REG_BINARY,(unsigned char *)Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
 
 	RegCloseKey(SettingsBase);
 }

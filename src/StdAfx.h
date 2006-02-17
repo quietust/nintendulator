@@ -14,6 +14,12 @@
 
 #pragma warning(disable:4761)
 
+#ifdef UNICODE
+#define	PRINTF_CHAR8	L"%S"
+#else
+#define	PRINTF_CHAR8	"%s"
+#endif
+
 // Windows Header Files:
 #include <windows.h>
 

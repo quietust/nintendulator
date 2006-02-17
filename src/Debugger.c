@@ -79,7 +79,6 @@ char TraceArr[256][5] =
 	" BEQ"," SBC","*HLT","*ISB","*NOP"," SBC"," INC","*ISB"," SED"," SBC","*NOP","*ISB","*NOP"," SBC"," INC","*ISB"
 };
 
-
 unsigned char VMemory (unsigned long Addy) { return PPU.CHRPointer[(Addy & 0x1C00) >> 10][Addy & 0x03FF]; }
 
 enum {
@@ -145,7 +144,7 @@ void	Debugger_Init (void)
 	BitBlt(Debugger.RegDC,0,0,D_REG_W,D_REG_H,NULL,0,0,BLACKNESS);
 
 	nHeight = -MulDiv(Debugger.FontHeight, GetDeviceCaps(TpHDC, LOGPIXELSY), 72);
-	tpf = CreateFont(nHeight, Debugger.FontWidth, 0, 0, 0, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DRAFT_QUALITY, FF_MODERN, "Courier New");
+	tpf = CreateFont(nHeight, Debugger.FontWidth, 0, 0, 0, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DRAFT_QUALITY, FF_MODERN, _T("Courier New"));
 	SelectObject(Debugger.RegDC, tpf);
 	SelectObject(Debugger.TraceDC, tpf);
 	DeleteObject(tpf);
@@ -269,7 +268,7 @@ void	Debugger_StopLogging (void)
 	Debugger.Logging = FALSE;
 }
 
-unsigned char TraceMem (unsigned long Addr)
+unsigned char TraceMem (unsigned short Addr)
 {
 	int Bank = (Addr >> 12) & 0xF;
 	FCPURead Read = CPU.ReadHandler[Bank];
@@ -284,47 +283,48 @@ void	DecodeInstruction (unsigned short Addy, char *str)
 	unsigned short Operand = 0, MidAddy = 0, EffectiveAddy = 0;
 	switch (TraceAddyMode[OpData[0]])
 	{
-	case IND:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = TraceMem(Operand) | (TraceMem(Operand+1) << 8);		break;
-	case ADR:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);										break;
-	case ABS:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);										break;
-	case ABX:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = Operand + CPU.X;					break;
-	case ABY:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = Operand + CPU.Y;					break;
-	case IMM:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];																break;
-	case ZPG:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];																break;
-	case ZPX:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	EffectiveAddy = (Operand + CPU.X) & 0xFF;										break;
-	case ZPY:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	EffectiveAddy = (Operand + CPU.Y) & 0xFF;										break;
-	case INX:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	MidAddy = (Operand + CPU.X) & 0xFF;	EffectiveAddy = TraceMem(MidAddy) | (TraceMem((MidAddy+1) & 0xFF) << 8);	break;
-	case INY:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	MidAddy = TraceMem(Operand) | (TraceMem((Operand+1) & 0xFF) << 8);	EffectiveAddy = MidAddy + CPU.Y;		break;
-	case IMP:																							break;
-	case ACC:																							break;
-	case ERR:																							break;
-	case REL:	OpData[1] = TraceMem(Addy+1);	Operand = Addy+2+(signed char)OpData[1];													break;
+	case IND:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = TraceMem(Operand) | (TraceMem(Operand+1) << 8);	break;
+	case ADR:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);									break;
+	case ABS:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);									break;
+	case ABX:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = Operand + CPU.X;				break;
+	case ABY:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = Operand + CPU.Y;				break;
+	case IMM:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];															break;
+	case ZPG:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];															break;
+	case ZPX:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	EffectiveAddy = (Operand + CPU.X) & 0xFF;									break;
+	case ZPY:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	EffectiveAddy = (Operand + CPU.Y) & 0xFF;									break;
+	case INX:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	MidAddy = (Operand + CPU.X) & 0xFF;	EffectiveAddy = TraceMem(MidAddy) | (TraceMem((MidAddy+1) & 0xFF) << 8);break;
+	case INY:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	MidAddy = TraceMem(Operand) | (TraceMem((Operand+1) & 0xFF) << 8);	EffectiveAddy = MidAddy + CPU.Y;	break;
+	case IMP:																						break;
+	case ACC:																						break;
+	case ERR:																						break;
+	case REL:	OpData[1] = TraceMem(Addy+1);	Operand = Addy+2+(signed char)OpData[1];												break;
 	}
 
 	switch (TraceAddyMode[TraceMem(Addy)])
 	{
 	case IMP:
-	case ERR:sprintf(str,"%04X  %02X       %s                           ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
-	case ACC:sprintf(str,"%04X  %02X       %s A                         ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
-	case IMM:sprintf(str,"%04X  %02X %02X    %s #$%02X                      ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
-	case REL:sprintf(str,"%04X  %02X %02X    %s $%04X                     ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
-	case ZPG:sprintf(str,"%04X  %02X %02X    %s $%02X = %02X                  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
-	case ZPX:sprintf(str,"%04X  %02X %02X    %s $%02X,X @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	case ZPY:sprintf(str,"%04X  %02X %02X    %s $%02X,Y @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	case INX:sprintf(str,"%04X  %02X %02X    %s ($%02X,X) @ %02X = %04X = %02X  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
-	case INY:sprintf(str,"%04X  %02X %02X    %s ($%02X),Y = %04X @ %04X = %02X",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
-	case ADR:sprintf(str,"%04X  %02X %02X %02X %s $%04X                     ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand);							break;
-	case ABS:sprintf(str,"%04X  %02X %02X %02X %s $%04X = %02X                ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
-	case IND:sprintf(str,"%04X  %02X %02X %02X %s ($%04X) = %04X            ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy);					break;
-	case ABX:sprintf(str,"%04X  %02X %02X %02X %s $%04X,X @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	case ABY:sprintf(str,"%04X  %02X %02X %02X %s $%04X,Y @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	default : strcpy(str,"                                             ");																	break;
+	case ERR:	sprintf(str,"%04X  %02X       %s                           ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
+	case ACC:	sprintf(str,"%04X  %02X       %s A                         ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
+	case IMM:	sprintf(str,"%04X  %02X %02X    %s #$%02X                      ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
+	case REL:	sprintf(str,"%04X  %02X %02X    %s $%04X                     ",		Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
+	case ZPG:	sprintf(str,"%04X  %02X %02X    %s $%02X = %02X                  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
+	case ZPX:	sprintf(str,"%04X  %02X %02X    %s $%02X,X @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case ZPY:	sprintf(str,"%04X  %02X %02X    %s $%02X,Y @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case INX:	sprintf(str,"%04X  %02X %02X    %s ($%02X,X) @ %02X = %04X = %02X  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
+	case INY:	sprintf(str,"%04X  %02X %02X    %s ($%02X),Y = %04X @ %04X = %02X",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
+	case ADR:	sprintf(str,"%04X  %02X %02X %02X %s $%04X                     ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand);							break;
+	case ABS:	sprintf(str,"%04X  %02X %02X %02X %s $%04X = %02X                ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
+	case IND:	sprintf(str,"%04X  %02X %02X %02X %s ($%04X) = %04X            ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy);					break;
+	case ABX:	sprintf(str,"%04X  %02X %02X %02X %s $%04X,X @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case ABY:	sprintf(str,"%04X  %02X %02X %02X %s $%04X,Y @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	default :	strcpy(str,"                                             ");																	break;
 	}
 }
 
 void	Debugger_DrawTraceLine (unsigned short Addy, short y)
 {
 	char tpc[64];
+	TCHAR tps[64];
 	Debugger.AddyLine[y/Debugger.FontHeight] = Addy;
 	
 	DecodeInstruction(Addy,tpc);
@@ -339,8 +339,12 @@ void	Debugger_DrawTraceLine (unsigned short Addy, short y)
 		FillRect(Debugger.TraceDC, &trect, RBrush);
 		DeleteObject(RBrush);
 	}
-
-	TextOut(Debugger.TraceDC, 1, y-3, tpc, (int)strlen(tpc));
+#ifdef	UNICODE
+	mbstowcs(tps,tpc,64);
+#else
+	strcpy(tps,tpc);
+#endif
+	TextOut(Debugger.TraceDC, 1, y-3, tps, (int)_tcslen(tps));
 }
 
 void	Debugger_Update (void)
@@ -355,7 +359,7 @@ void	Debugger_Update (void)
 		{
 			HBRUSH WBrush = CreateSolidBrush(0xFFFFFF);
 			RECT trect;
-			char tpc[40];
+			TCHAR tps[64];
 			int i, TpVal, CurrY;
 			unsigned short StartAddy;
 			unsigned short CurrAddy;
@@ -377,47 +381,55 @@ void	Debugger_Update (void)
 			FillRect(Debugger.TraceDC, &trect, WBrush);
 			DeleteObject(WBrush);
 
-			sprintf(tpc,"PC: %04X",CPU.PC);	TextOut(Debugger.RegDC,0, 0*Debugger.FontHeight,tpc,(int)strlen(tpc));
-			sprintf(tpc,"A: %02X",CPU.A);	TextOut(Debugger.RegDC,0, 1*Debugger.FontHeight,tpc,(int)strlen(tpc));
-			sprintf(tpc,"X: %02X",CPU.X);	TextOut(Debugger.RegDC,0, 2*Debugger.FontHeight,tpc,(int)strlen(tpc));
-			sprintf(tpc,"Y: %02X",CPU.Y);	TextOut(Debugger.RegDC,0, 3*Debugger.FontHeight,tpc,(int)strlen(tpc));
-			sprintf(tpc,"SP: %02X",CPU.SP);	TextOut(Debugger.RegDC,0, 4*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			_stprintf(tps,_T("PC: %04X"),CPU.PC);	TextOut(Debugger.RegDC,0, 0*Debugger.FontHeight,tps,(int)_tcslen(tps));
+			_stprintf(tps,_T("A: %02X"),CPU.A);	TextOut(Debugger.RegDC,0, 1*Debugger.FontHeight,tps,(int)_tcslen(tps));
+			_stprintf(tps,_T("X: %02X"),CPU.X);	TextOut(Debugger.RegDC,0, 2*Debugger.FontHeight,tps,(int)_tcslen(tps));
+			_stprintf(tps,_T("Y: %02X"),CPU.Y);	TextOut(Debugger.RegDC,0, 3*Debugger.FontHeight,tps,(int)_tcslen(tps));
+			_stprintf(tps,_T("SP: %02X"),CPU.SP);	TextOut(Debugger.RegDC,0, 4*Debugger.FontHeight,tps,(int)_tcslen(tps));
 			CPU_JoinFlags();
-			sprintf(tpc,"P: %02X",CPU.P);	TextOut(Debugger.RegDC,0, 5*Debugger.FontHeight,tpc,(int)strlen(tpc));
-			sprintf(tpc,"->%s%s%s%s%s%s  IRQ:%s %s %s %s",CPU.FN?"N":" ",CPU.FV?"V":" ",CPU.FI?"I":" ",CPU.FD?"D":" ",CPU.FZ?"Z":" ",CPU.FC?"C":" ",(CPU.WantIRQ&IRQ_DPCM)?"DMC":"   ",(CPU.WantIRQ&IRQ_FRAME)?"FRM":"   ",(CPU.WantIRQ&IRQ_EXTERNAL)?"EXT":"   ",(CPU.WantIRQ&IRQ_DEBUG)?"DBG":"   ");
-							TextOut(Debugger.RegDC,0, 6*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			_stprintf(tps,_T("P: %02X"),CPU.P);	TextOut(Debugger.RegDC,0, 5*Debugger.FontHeight,tps,(int)_tcslen(tps));
+			_stprintf(tps,_T("->%s%s%s%s%s%s  IRQ:%s %s %s %s"),
+				CPU.FN ? _T("N") : _T(" "),
+				CPU.FV ? _T("V") : _T(" "),
+				CPU.FI ? _T("I") : _T(" "),
+				CPU.FD ? _T("D") : _T(" "),
+				CPU.FZ ? _T("Z") : _T(" "),
+				CPU.FC ? _T("C") : _T(" "),
+				(CPU.WantIRQ & IRQ_DPCM) ? _T("DMC") : _T("   "),
+				(CPU.WantIRQ & IRQ_FRAME) ? _T("FRM") : _T("   "),
+				(CPU.WantIRQ & IRQ_EXTERNAL) ? _T("EXT") : _T("   "),
+				(CPU.WantIRQ & IRQ_DEBUG) ? _T("DBG") : _T("   "));
+								TextOut(Debugger.RegDC,0, 6*Debugger.FontHeight,tps,(int)_tcslen(tps));
 
-			if ((PPU.SLnum >= 0) && (PPU.SLnum < 240))
-				sprintf(tpc,"SLnum: %i",PPU.SLnum);
-			else	sprintf(tpc,"SLnum: %i (VBlank)",PPU.SLnum);
-							TextOut(Debugger.RegDC,0, 7*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			_stprintf(tps,_T("SLnum: %i%s"),PPU.SLnum,((PPU.SLnum >= 0) && (PPU.SLnum < 240)) ? _T(" (VBlank)") : _T(""));
+								TextOut(Debugger.RegDC,0, 7*Debugger.FontHeight,tps,(int)_tcslen(tps));
 
-			sprintf(tpc,"CPU Ticks: %i/%.3f",PPU.Clockticks,PPU.Clockticks / (PPU.IsPAL ? 3.2 : 3.0));
-							TextOut(Debugger.RegDC,0, 8*Debugger.FontHeight,tpc,(int)strlen(tpc));
-			sprintf(tpc,"VRAMAddy: %04X",PPU.VRAMAddr);
-							TextOut(Debugger.RegDC,0, 9*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			_stprintf(tps,_T("CPU Ticks: %i/%.3f"),PPU.Clockticks,PPU.Clockticks / (PPU.IsPAL ? 3.2 : 3.0));
+								TextOut(Debugger.RegDC,0, 8*Debugger.FontHeight,tps,(int)_tcslen(tps));
+			_stprintf(tps,_T("VRAMAddy: %04X"),PPU.VRAMAddr);
+								TextOut(Debugger.RegDC,0, 9*Debugger.FontHeight,tps,(int)_tcslen(tps));
 
-			sprintf(tpc,"CPU Pages:");	TextOut(Debugger.RegDC,0,11*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			_stprintf(tps,_T("CPU Pages:"));	TextOut(Debugger.RegDC,0,11*Debugger.FontHeight,tps,(int)_tcslen(tps));
 			for (i = 0; i < 16; i++)
 			{
 				if (EI.GetPRG_ROM4(i) >= 0)
-					sprintf(tpc,"%03X",EI.GetPRG_ROM4(i));
+					_stprintf(tps,_T("%03X"),EI.GetPRG_ROM4(i));
 				else if (EI.GetPRG_RAM4(i) >= 0)
-					sprintf(tpc,"A%02X",EI.GetPRG_RAM4(i));
-				else	sprintf(tpc,"???");
-							TextOut(Debugger.RegDC,(i&7)*4*Debugger.FontWidth,(12 + (i >> 3))*Debugger.FontHeight,tpc,(int)strlen(tpc));
+					_stprintf(tps,_T("A%02X"),EI.GetPRG_RAM4(i));
+				else	_stprintf(tps,_T("???"));
+								TextOut(Debugger.RegDC,(i&7)*4*Debugger.FontWidth,(12 + (i >> 3))*Debugger.FontHeight,tps,(int)_tcslen(tps));
 			}
-			sprintf(tpc,"PPU Pages:");	TextOut(Debugger.RegDC,0,15*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			_stprintf(tps,_T("PPU Pages:"));	TextOut(Debugger.RegDC,0,15*Debugger.FontHeight,tps,(int)_tcslen(tps));
 			for (i = 0; i < 12; i++)
 			{
 				if (EI.GetCHR_ROM1(i) >= 0)
-					sprintf(tpc,"%03X",EI.GetCHR_ROM1(i));
+					_stprintf(tps,_T("%03X"),EI.GetCHR_ROM1(i));
 				else if (EI.GetCHR_RAM1(i) >= 0)
-					sprintf(tpc,"A%02X",EI.GetCHR_RAM1(i));
+					_stprintf(tps,_T("A%02X"),EI.GetCHR_RAM1(i));
 				else if (EI.GetCHR_NT1(i) >= 0)
-					sprintf(tpc,"N%02X",EI.GetCHR_NT1(i));
-				else	sprintf(tpc,"???");
-							TextOut(Debugger.RegDC,(i&7)*4*Debugger.FontWidth,(16 + (i >> 3))*Debugger.FontHeight,tpc,(int)strlen(tpc));
+					_stprintf(tps,_T("N%02X"),EI.GetCHR_NT1(i));
+				else	_stprintf(tps,_T("???"));
+								TextOut(Debugger.RegDC,(i&7)*4*Debugger.FontWidth,(16 + (i >> 3))*Debugger.FontHeight,tps,(int)_tcslen(tps));
 			}
 			RedrawWindow(Debugger.RegWnd,NULL,NULL,RDW_INVALIDATE);
 
@@ -470,12 +482,12 @@ void	Debugger_AddInst (void)
 	if (Debugger.Logging)
 	{
 		unsigned short Addy = (unsigned short)CPU.PC;
-		char tpc[64];
-		DecodeInstruction(Addy,tpc);
-		DPrint(tpc);
+		char tps[64];
+		DecodeInstruction(Addy,tps);
+		DPrint(tps);
 		CPU_JoinFlags();
-		sprintf(tpc,"  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n",CPU.A,CPU.X,CPU.Y,CPU.P,CPU.SP,PPU.Clockticks,PPU.SLnum);
-		DPrint(tpc);
+		sprintf(tps,"  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n",CPU.A,CPU.X,CPU.Y,CPU.P,CPU.SP,PPU.Clockticks,PPU.SLnum);
+		DPrint(tps);
 	}
 }
 

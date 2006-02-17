@@ -79,7 +79,7 @@ typedef struct
 } TAviUtil;
 
 
-HAVI CreateAvi(const char *fn, int frameperiod, const WAVEFORMATEX *wfx)
+HAVI CreateAvi(const TCHAR *fn, int frameperiod, const WAVEFORMATEX *wfx)
 {
 	IAVIFile *pfile;
 	HRESULT hr;
@@ -245,38 +245,38 @@ HRESULT AddAviAudio(HAVI avi, void *dat, unsigned long numbytes)
 	au->nsamp+=numsamps; return S_OK;
 }
 
-unsigned int FormatAviMessage(HRESULT code, char *buf,unsigned int len)
+unsigned int FormatAviMessage(HRESULT code, TCHAR *buf,unsigned int len)
 {
 	unsigned int mlen, n;
-	const char *msg="unknown avi result code";
+	const TCHAR *msg = _T("unknown avi result code");
 	switch (code)
 	{
-	case S_OK: msg="Success"; break;
-	case AVIERR_BADFORMAT: msg="AVIERR_BADFORMAT: corrupt file or unrecognized format"; break;
-	case AVIERR_MEMORY: msg="AVIERR_MEMORY: insufficient memory"; break;
-	case AVIERR_FILEREAD: msg="AVIERR_FILEREAD: disk error while reading file"; break;
-	case AVIERR_FILEOPEN: msg="AVIERR_FILEOPEN: disk error while opening file"; break;
-	case REGDB_E_CLASSNOTREG: msg="REGDB_E_CLASSNOTREG: file type not recognised"; break;
-	case AVIERR_READONLY: msg="AVIERR_READONLY: file is read-only"; break;
-	case AVIERR_NOCOMPRESSOR: msg="AVIERR_NOCOMPRESSOR: a suitable compressor could not be found"; break;
-	case AVIERR_UNSUPPORTED: msg="AVIERR_UNSUPPORTED: compression is not supported for this type of data"; break;
-	case AVIERR_INTERNAL: msg="AVIERR_INTERNAL: internal error"; break;
-	case AVIERR_BADFLAGS: msg="AVIERR_BADFLAGS"; break;
-	case AVIERR_BADPARAM: msg="AVIERR_BADPARAM"; break;
-	case AVIERR_BADSIZE: msg="AVIERR_BADSIZE"; break;
-	case AVIERR_BADHANDLE: msg="AVIERR_BADHANDLE"; break;
-	case AVIERR_FILEWRITE: msg="AVIERR_FILEWRITE: disk error while writing file"; break;
-	case AVIERR_COMPRESSOR: msg="AVIERR_COMPRESSOR"; break;
-	case AVIERR_NODATA: msg="AVIERR_READONLY"; break;
-	case AVIERR_BUFFERTOOSMALL: msg="AVIERR_BUFFERTOOSMALL"; break;
-	case AVIERR_CANTCOMPRESS: msg="AVIERR_CANTCOMPRESS"; break;
-	case AVIERR_USERABORT: msg="AVIERR_USERABORT"; break;
-	case AVIERR_ERROR: msg="AVIERR_ERROR"; break;
+	case S_OK:			msg = _T("Success");									break;
+	case AVIERR_BADFORMAT:		msg = _T("AVIERR_BADFORMAT: corrupt file or unrecognized format");			break;
+	case AVIERR_MEMORY:		msg = _T("AVIERR_MEMORY: insufficient memory");						break;
+	case AVIERR_FILEREAD:		msg = _T("AVIERR_FILEREAD: disk error while reading file");				break;
+	case AVIERR_FILEOPEN:		msg = _T("AVIERR_FILEOPEN: disk error while opening file");				break;
+	case REGDB_E_CLASSNOTREG:	msg = _T("REGDB_E_CLASSNOTREG: file type not recognised");				break;
+	case AVIERR_READONLY:		msg = _T("AVIERR_READONLY: file is read-only");						break;
+	case AVIERR_NOCOMPRESSOR:	msg = _T("AVIERR_NOCOMPRESSOR: a suitable compressor could not be found");		break;
+	case AVIERR_UNSUPPORTED:	msg = _T("AVIERR_UNSUPPORTED: compression is not supported for this type of data");	break;
+	case AVIERR_INTERNAL:		msg = _T("AVIERR_INTERNAL: internal error");						break;
+	case AVIERR_BADFLAGS:		msg = _T("AVIERR_BADFLAGS");								break;
+	case AVIERR_BADPARAM:		msg = _T("AVIERR_BADPARAM");								break;
+	case AVIERR_BADSIZE:		msg = _T("AVIERR_BADSIZE");								break;
+	case AVIERR_BADHANDLE:		msg = _T("AVIERR_BADHANDLE");								break;
+	case AVIERR_FILEWRITE:		msg = _T("AVIERR_FILEWRITE: disk error while writing file");				break;
+	case AVIERR_COMPRESSOR:		msg = _T("AVIERR_COMPRESSOR");								break;
+	case AVIERR_NODATA:		msg = _T("AVIERR_READONLY");								break;
+	case AVIERR_BUFFERTOOSMALL:	msg = _T("AVIERR_BUFFERTOOSMALL");							break;
+	case AVIERR_CANTCOMPRESS:	msg = _T("AVIERR_CANTCOMPRESS");							break;
+	case AVIERR_USERABORT:		msg = _T("AVIERR_USERABORT");								break;
+	case AVIERR_ERROR:		msg = _T("AVIERR_ERROR");								break;
 	}
-	mlen=(unsigned int)strlen(msg);
+	mlen=(unsigned int)_tcslen(msg);
 	if (buf==0 || len==0) return mlen;
 	n=mlen; if (n+1>len) n=len-1;
-	strncpy(buf,msg,n); buf[n]=0;
+	_tcsncpy(buf,msg,n); buf[n]=0;
 	return mlen;
 }
 
@@ -285,7 +285,7 @@ void	AVI_End (void)
 {
 	if (!aviout)
 	{
-		MessageBox(mWnd,"No AVI capture is currently in progress!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("No AVI capture is currently in progress!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	CloseAvi(aviout);
@@ -303,12 +303,12 @@ void	AVI_Start (void)
 	HRESULT hr;
 	AVICOMPRESSOPTIONS opts;
 
-	char FileName[256] = {0};
+	TCHAR FileName[256] = {0};
 	OPENFILENAME ofn;
 
 	if (aviout)
 	{
-		MessageBox(mWnd,"An AVI capture is already in progress!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("An AVI capture is already in progress!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -316,7 +316,7 @@ void	AVI_Start (void)
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = mWnd;
 	ofn.hInstance = hInst;
-	ofn.lpstrFilter = "AVI File (*.AVI)\0" "*.AVI\0" "\0";
+	ofn.lpstrFilter = _T("AVI File (*.AVI)\0") _T("*.AVI\0") _T("\0");
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = FileName;
@@ -325,7 +325,7 @@ void	AVI_Start (void)
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = Path_AVI;
 	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-	ofn.lpstrDefExt = "AVI";
+	ofn.lpstrDefExt = _T("AVI");
 	ofn.lCustData = 0;
 	ofn.lpfnHook = NULL;
 	ofn.lpTemplateName = NULL;
@@ -333,7 +333,7 @@ void	AVI_Start (void)
 	if (!GetSaveFileName(&ofn))
 		return;
 
-	strcpy(Path_AVI,FileName);
+	_tcscpy(Path_AVI,FileName);
 	Path_AVI[ofn.nFileOffset-1] = 0;
 
 	wfx.wFormatTag = WAVE_FORMAT_PCM;
@@ -365,9 +365,9 @@ void	AVI_Start (void)
 	ZeroMemory(&opts,sizeof(opts));
 	if (hr = SetAviVideoCompression(aviout,hbm,&opts,TRUE,mWnd))
 	{
-		char msg[256];
+		TCHAR msg[256];
 		FormatAviMessage(hr,msg,256);
-		MessageBox(mWnd,msg,"Nintendulator",MB_OK);
+		MessageBox(mWnd,msg,_T("Nintendulator"),MB_OK);
 		AVI_End();
 		return;
 	}
@@ -385,7 +385,7 @@ void	AVI_AddVideo (void)
 
 	if (!aviout)
 	{
-		MessageBox(mWnd,"Error! AVI frame capture attempted while not recording!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("Error! AVI frame capture attempted while not recording!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	bmih.biSize = sizeof(BITMAPINFOHEADER);
@@ -416,9 +416,9 @@ void	AVI_AddVideo (void)
 	
 	if (hr = AddAviFrame(aviout,hbm))
 	{
-		char msg[256];
+		TCHAR msg[256];
 		FormatAviMessage(hr,msg,256);
-		MessageBox(mWnd,msg,"Nintendulator",MB_OK);
+		MessageBox(mWnd,msg,_T("Nintendulator"),MB_OK);
 	}
 	DeleteObject(hbm);
 }
@@ -428,13 +428,13 @@ void	AVI_AddAudio (void)
 	HRESULT hr;
 	if (!aviout)
 	{
-		MessageBox(mWnd,"Error! AVI audio capture attempted while not recording!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("Error! AVI audio capture attempted while not recording!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	if (hr = AddAviAudio(aviout,APU.buffer,735*2))
 	{
-		char msg[256];
+		TCHAR msg[256];
 		FormatAviMessage(hr,msg,256);
-		MessageBox(mWnd,msg,"Nintendulator",MB_OK);
+		MessageBox(mWnd,msg,_T("Nintendulator"),MB_OK);
 	}
 }

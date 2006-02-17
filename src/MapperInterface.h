@@ -11,7 +11,11 @@
 
 /* Mapper Interface version (3.6) */
 
+#ifdef UNICODE
+#define	CurrentMapperInterface 0x80030006
+#else
 #define	CurrentMapperInterface 0x00030006
+#endif
 
 /* Function types */
 
@@ -89,8 +93,8 @@ typedef	struct	EmulatorInterface
 	void		(_MAPINT *Set_SRAMSize)		(int);		/* Sets the size of the SRAM (in bytes) */
 
 /* Misc Callbacks */
-	void		(_MAPINT *DbgOut)		(char *,...);	/* Echo text to debug window */
-	void		(_MAPINT *StatusOut)		(char *,...);	/* Echo text on status bar */
+	void		(_MAPINT *DbgOut)		(TCHAR *,...);	/* Echo text to debug window */
+	void		(_MAPINT *StatusOut)		(TCHAR *,...);	/* Echo text on status bar */
 /* Data fields */
 	unsigned char *	OpenBus;			/* pointer to last value on the CPU data bus */
 	
@@ -111,7 +115,7 @@ typedef	struct	MapperInfo
 {
 /* Mapper Information */
 	void *		MapperId;
-	char *		Description;
+	TCHAR *		Description;
 	COMPAT_TYPE	Compatibility;
 
 /* Mapper Functions */
@@ -132,7 +136,7 @@ typedef	enum	{ ROM_INES, ROM_UNIF, ROM_FDS, ROM_NSF, ROM_UNDEFINED } ROM_TYPE;
 
 typedef	struct	ROMInfo
 {
-	char *		Filename;
+	TCHAR *		Filename;
 	ROM_TYPE	ROMType;
 	union
 	{
@@ -186,7 +190,7 @@ typedef	const	TROMInfo	CTROMInfo, *CPROMInfo;
 
 typedef	struct	DLLInfo
 {
-	char *		Author;
+	TCHAR *		Author;
 	int		Date;
 	int		Version;
 	CPMapperInfo	(_MAPINT *LoadMapper)	(CPROMInfo);

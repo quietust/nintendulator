@@ -36,7 +36,7 @@ struct	tMovie	Movie;
 void	Movie_ShowFrame (void)
 {
 	if (Movie.Mode)
-		EI.StatusOut("Frame %i",Movie.Pos / Movie.FrameLen);
+		EI.StatusOut(_T("Frame %i"),Movie.Pos / Movie.FrameLen);
 }
 
 void	Movie_Play (BOOL Review)
@@ -47,7 +47,7 @@ void	Movie_Play (BOOL Review)
 
 	if (Movie.Mode)
 	{
-		MessageBox(mWnd,"A movie is already open!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("A movie is already open!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -57,7 +57,7 @@ void	Movie_Play (BOOL Review)
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = mWnd;
 	ofn.hInstance = hInst;
-	ofn.lpstrFilter = "Nintendulator Movie (*.NMV)\0" "*.NMV\0" "\0";
+	ofn.lpstrFilter = _T("Nintendulator Movie (*.NMV)\0") _T("*.NMV\0") _T("\0");
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = Movie.Filename;
@@ -74,16 +74,16 @@ void	Movie_Play (BOOL Review)
 	if (!GetOpenFileName(&ofn))
 		return;
 
-	strcpy(Path_NMV,Movie.Filename);
+	_tcscpy(Path_NMV,Movie.Filename);
 	Path_NMV[ofn.nFileOffset-1] = 0;
 
 	if (Review)
-		Movie.Data = fopen(Movie.Filename,"r+b");
-	else	Movie.Data = fopen(Movie.Filename,"rb");
+		Movie.Data = _tfopen(Movie.Filename,_T("r+b"));
+	else	Movie.Data = _tfopen(Movie.Filename,_T("rb"));
 	fread(buf,1,4,Movie.Data);
 	if (memcmp(buf,"NSS\x1a",4))
 	{
-		MessageBox(mWnd,"Invalid movie file selected!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("Invalid movie file selected!"),_T("Nintendulator"),MB_OK);
 		fclose(Movie.Data);
 		return;
 	}
@@ -91,7 +91,7 @@ void	Movie_Play (BOOL Review)
 	fread(buf,1,4,Movie.Data);
 	if (memcmp(buf,STATES_VERSION,4))
 	{
-		MessageBox(mWnd,"Incorrect movie version!", "Nintendulator", MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Incorrect movie version!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
@@ -100,7 +100,7 @@ void	Movie_Play (BOOL Review)
 
 	if (memcmp(buf,"NMOV",4))
 	{
-		MessageBox(mWnd,"This is not a valid Nintendulator movie recording!", "Nintendulator", MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("This is not a valid Nintendulator movie recording!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
@@ -131,7 +131,7 @@ void	Movie_Play (BOOL Review)
 	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
 	if (!States_LoadData(Movie.Data,len))
 	{
-		MessageBox(mWnd,"Failed to load movie!", "Nintendulator", MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,_T("Failed to load movie!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
@@ -185,7 +185,7 @@ void	Movie_Play (BOOL Review)
 	if (NES.HasMenu)
 		Movie.FrameLen++;
 	if (Movie.FrameLen != (buf[3] & 0x7F))
-		MessageBox(mWnd,"The frame size specified in this movie is incorrect! This movie may not play properly!","Nintendulator",MB_OK | MB_ICONWARNING);
+		MessageBox(mWnd,_T("The frame size specified in this movie is incorrect! This movie may not play properly!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 
 	fread(&Movie.ReRecords,4,1,Movie.Data);
 	fread(&len,4,1,Movie.Data);
@@ -193,10 +193,10 @@ void	Movie_Play (BOOL Review)
 	{
 		char *desc = malloc(len);
 		fread(desc,len,1,Movie.Data);
-		EI.DbgOut("Description: \"%s\"",desc);
+		EI.DbgOut(_T("Description: \"") PRINTF_CHAR8 _T("\""),desc);
 		free(desc);
 	}
-	EI.DbgOut("Re-record count: %i",Movie.ReRecords);
+	EI.DbgOut(_T("Re-record count: %i"),Movie.ReRecords);
 	Movie.Pos = 0;
 	fread(&Movie.Len,4,1,Movie.Data);
 
@@ -224,14 +224,14 @@ void	Movie_Record (BOOL fromState)
 
 	if (Movie.Mode)
 	{
-		MessageBox(mWnd,"A movie is already open!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("A movie is already open!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
 	NES_Stop();
 	if ((MI) && (MI->Config) && (!NES.HasMenu))
 	{
-		MessageBox(mWnd,"This game does not support using the 'Game' menu while recording!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("This game does not support using the 'Game' menu while recording!"),_T("Nintendulator"),MB_OK);
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
 	}
 
@@ -239,7 +239,7 @@ void	Movie_Record (BOOL fromState)
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = mWnd;
 	ofn.hInstance = hInst;
-	ofn.lpstrFilter = "Nintendulator Movie (*.NMV)\0" "*.NMV\0" "\0";
+	ofn.lpstrFilter = _T("Nintendulator Movie (*.NMV)\0") _T("*.NMV\0") _T("\0");
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = Movie.Filename;
@@ -248,7 +248,7 @@ void	Movie_Record (BOOL fromState)
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = Path_NMV;
 	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-	ofn.lpstrDefExt = "NMV";
+	ofn.lpstrDefExt = _T("NMV");
 	ofn.lCustData = 0;
 	ofn.lpfnHook = NULL;
 	ofn.lpTemplateName = NULL;
@@ -256,13 +256,13 @@ void	Movie_Record (BOOL fromState)
 	if (!GetSaveFileName(&ofn))
 		return;
 
-	strcpy(Path_NMV,Movie.Filename);
+	_tcscpy(Path_NMV,Movie.Filename);
 	Path_NMV[ofn.nFileOffset-1] = 0;
 
 	Controllers_OpenConfig();	// Allow user to choose the desired controllers
 	Movie.Mode = MOV_RECORD;	// ...and lock it out until the movie ends
 
-	Movie.Data = fopen(Movie.Filename,"w+b");
+	Movie.Data = _tfopen(Movie.Filename,_T("w+b"));
 	len = 0;
 	Movie.ReRecords = 0;
 	Movie.Pos = Movie.Len = 0;
@@ -326,7 +326,7 @@ static	void	EndMovie (void)
 {
 	if (!(Movie.Mode))
 	{
-		MessageBox(mWnd,"No movie is currently active!","Nintendulator",MB_OK);
+		MessageBox(mWnd,_T("No movie is currently active!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	if (Movie.Mode & MOV_RECORD)
@@ -359,7 +359,7 @@ static	void	EndMovie (void)
 		fread(tps,4,1,Movie.Data);		len -= 4;	// read movie data len
 		fseek(Movie.Data,-4,SEEK_CUR);		// rewind
 		if (len != Movie.Pos)
-			EI.DbgOut("Error - movie length mismatch!");
+			EI.DbgOut(_T("Error - movie length mismatch!"));
 		fwrite(&len,4,1,Movie.Data);		// 3: terminate the movie data
 		// fseek(Movie.Data,len,SEEK_CUR);
 		// TODO - truncate the file to this point
@@ -422,8 +422,8 @@ unsigned char	Movie_LoadInput (void)
 	if (Movie.Pos >= Movie.Len)
 	{
 		if (Movie.Pos == Movie.Len)
-			PrintTitlebar("Movie stopped.");
-		else	PrintTitlebar("Unexpected EOF in movie!");
+			PrintTitlebar(_T("Movie stopped."));
+		else	PrintTitlebar(_T("Unexpected EOF in movie!"));
 		EndMovie();
 	}
 	if (NES.HasMenu)

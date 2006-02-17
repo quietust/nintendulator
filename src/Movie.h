@@ -33,7 +33,7 @@ struct tMovie
 	FILE *		Data;
 	unsigned char	ControllerTypes[4];
 	int		ReRecords;
-	char		Filename[MAX_PATH];
+	TCHAR		Filename[MAX_PATH];
 	int		Len;
 	int		Pos;
 	int		FrameLen;

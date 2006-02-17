@@ -995,29 +995,29 @@ static	__forceinline void	IN_TYA (void)
 
 static	__forceinline void	IV_UNK (void)
 {
-	EI.DbgOut("Invalid opcode $%02X (???) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (???) encountered at $%04X"),Opcode,OpAddr);
 }
 
 static	__forceinline void	IV_HLT (void)
 {
-	EI.DbgOut("Invalid opcode $%02X (HLT) encountered at $%04X; CPU locked",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (HLT) encountered at $%04X; CPU locked"),Opcode,OpAddr);
 #ifndef NSFPLAYER
-	MessageBox(mWnd, "Bad opcode, CPU locked", "Nintendulator", MB_OK);
+	MessageBox(mWnd, _T("Bad opcode, CPU locked"), _T("Nintendulator"), MB_OK);
 	NES.Stop = TRUE;
 #endif
 }
 static	__forceinline void	IV_NOP (void)
 {
-	EI.DbgOut("Invalid opcode $%02X (NOP) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"),Opcode,OpAddr);
 	CPU_MemGet(CalcAddr);
 }
 static	__forceinline void	IV_NOP2 (void)
 {
-	EI.DbgOut("Invalid opcode $%02X (NOP) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"),Opcode,OpAddr);
 }
 static	__forceinline void	IV_SLO (void)
 {	/* ASL + ORA */
-	EI.DbgOut("Invalid opcode $%02X (SLO) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (SLO) encountered at $%04X"),Opcode,OpAddr);
 	TmpData = CPU_MemGet(CalcAddr);
 	CPU_MemSet(CalcAddr,TmpData);
 	__asm
@@ -1033,7 +1033,7 @@ static	__forceinline void	IV_SLO (void)
 }
 static	__forceinline void	IV_RLA (void)
 {	/* ROL + AND */
-	EI.DbgOut("Invalid opcode $%02X (RLA) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (RLA) encountered at $%04X"),Opcode,OpAddr);
 	TmpData = CPU_MemGet(CalcAddr);
 	CPU_MemSet(CalcAddr,TmpData);
 	__asm
@@ -1051,7 +1051,7 @@ static	__forceinline void	IV_RLA (void)
 }
 static	__forceinline void	IV_SRE (void)
 {	/* LSR + EOR */
-	EI.DbgOut("Invalid opcode $%02X (SRE) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (SRE) encountered at $%04X"),Opcode,OpAddr);
 	TmpData = CPU_MemGet(CalcAddr);
 	CPU_MemSet(CalcAddr,TmpData);
 	__asm
@@ -1067,7 +1067,7 @@ static	__forceinline void	IV_SRE (void)
 }
 static	__forceinline void	IV_RRA (void)
 {	/* ROR + ADC */
-	EI.DbgOut("Invalid opcode $%02X (RRA) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (RRA) encountered at $%04X"),Opcode,OpAddr);
 	TmpData = CPU_MemGet(CalcAddr);
 	CPU_MemSet(CalcAddr,TmpData);
 	__asm
@@ -1086,12 +1086,12 @@ static	__forceinline void	IV_RRA (void)
 }
 static	__forceinline void	IV_SAX (void)
 {	/* STA + STX */
-	EI.DbgOut("Invalid opcode $%02X (SAX) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (SAX) encountered at $%04X"),Opcode,OpAddr);
 	CPU_MemSet(CalcAddr,CPU.A & CPU.X);
 }
 static	__forceinline void	IV_LAX (void)
 {	/* LDA + LDX */
-	EI.DbgOut("Invalid opcode $%02X (LAX) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (LAX) encountered at $%04X"),Opcode,OpAddr);
 	CPU.X = CPU.A = CPU_MemGet(CalcAddr);
 	__asm
 	{
@@ -1102,7 +1102,7 @@ static	__forceinline void	IV_LAX (void)
 }
 static	__forceinline void	IV_DCP (void)
 {	/* DEC + CMP */
-	EI.DbgOut("Invalid opcode $%02X (DCP) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (DCP) encountered at $%04X"),Opcode,OpAddr);
 	TmpData = CPU_MemGet(CalcAddr);
 	CPU_MemSet(CalcAddr,TmpData);
 	__asm
@@ -1118,7 +1118,7 @@ static	__forceinline void	IV_DCP (void)
 }
 static	__forceinline void	IV_ISB (void)
 {	/* INC + SBC */
-	EI.DbgOut("Invalid opcode $%02X (ISB) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (ISB) encountered at $%04X"),Opcode,OpAddr);
 	TmpData = CPU_MemGet(CalcAddr);
 	CPU_MemSet(CalcAddr,TmpData);
 	__asm
@@ -1137,7 +1137,7 @@ static	__forceinline void	IV_ISB (void)
 }
 static	__forceinline void	IV_SBC (void)
 {	/* NOP + SBC */
-	EI.DbgOut("Invalid opcode $%02X (SBC) encountered at $%04X",Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (SBC) encountered at $%04X"),Opcode,OpAddr);
 	CPU_MemGet(CalcAddr);
 	__asm
 	{

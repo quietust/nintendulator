@@ -69,7 +69,6 @@ struct tDebugger
 
 	HWND	DumpWnd;
 	FILE	*LogFile;
-	char	Out1[50], Out2[50];
 };
 
 extern struct tDebugger Debugger;
@@ -80,12 +79,6 @@ void	Debugger_SetMode(int NewMode);
 void	Debugger_Update (void);
 void	Debugger_UpdateGraphics (void);
 void	Debugger_AddInst (void);
-
-void	Debugger_DPrint (char * A, int B);
-void	Debugger_StartLogging (void);
-void	Debugger_StopLogging (void);
-void	Debugger_DrawTraceLine (unsigned short Addy, short y);
-unsigned char	Debugger_TraceMem (unsigned short Addy);
 
 #endif	/* ENABLE_DEBUGGER */
 

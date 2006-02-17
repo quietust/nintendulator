@@ -40,41 +40,41 @@ extern FILE *movie;
 
 void	States_Init (void)
 {
-	char tmp[MAX_PATH];
-	sprintf(tmp,"%sSaves",ProgPath);
+	TCHAR tmp[MAX_PATH];
+	_stprintf(tmp,_T("%sSaves"),ProgPath);
 	States.SelSlot = 0;
 	States.NeedSave = FALSE;
 	States.NeedLoad = FALSE;
 	CreateDirectory(tmp,NULL);	// attempt to create Saves dir (if it exists, it fails silently)
 }
 
-void	States_SetFilename (char *Filename)
+void	States_SetFilename (TCHAR *Filename)
 {
-	char Tmp[MAX_PATH];
+	TCHAR Tmp[MAX_PATH];
 	size_t i;
-	for (i = strlen(Filename); Filename[i] != '\\'; i--);
-	strcpy(Tmp,&Filename[i+1]);
-	for (i = strlen(Tmp); i >= 0; i--)
+	for (i = _tcslen(Filename); Filename[i] != '\\'; i--);
+	_tcscpy(Tmp,&Filename[i+1]);
+	for (i = _tcslen(Tmp); i >= 0; i--)
 		if (Tmp[i] == '.')
 		{
 			Tmp[i] = 0;
 			break;
 		}
-	sprintf(States.BaseFilename,"%sSaves\\%s",ProgPath,Tmp);
+	_stprintf(States.BaseFilename,_T("%sSaves\\%s"),ProgPath,Tmp);
 }
 
 void	States_SetSlot (int Slot)
 {
-	char tpchr[256];
+	TCHAR tpchr[256];
 	FILE *tmp;
 	States.SelSlot = Slot;
-	sprintf(tpchr,"%s.ns%i",States.BaseFilename,Slot);
-	if (tmp = fopen(tpchr,"rb"))
+	_stprintf(tpchr,_T("%s.ns%i"),States.BaseFilename,Slot);
+	if (tmp = _tfopen(tpchr,_T("rb")))
 	{
 		fclose(tmp);
-		PrintTitlebar("State Selected: %i (occupied)", Slot);
+		PrintTitlebar(_T("State Selected: %i (occupied)"), Slot);
 	}
-	else	PrintTitlebar("State Selected: %i (empty)", Slot);
+	else	PrintTitlebar(_T("State Selected: %i (empty)"), Slot);
 }
 
 int	States_SaveData (FILE *out)
@@ -199,7 +199,7 @@ int	States_SaveData (FILE *out)
 
 void	States_SaveState (void)
 {
-	char tpchr[256];
+	TCHAR tps[256];
 	int flen;
 	FILE *out;
 
@@ -207,12 +207,12 @@ void	States_SaveState (void)
 
 	if (Genie.CodeStat & 0x80)
 	{
-		PrintTitlebar("Cannot save state at the Game Genie code entry screen!");
+		PrintTitlebar(_T("Cannot save state at the Game Genie code entry screen!"));
 		return;
 	}
 
-	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
-	out = fopen(tpchr,"w+b");
+	_stprintf(tps,_T("%s.ns%i"),States.BaseFilename,States.SelSlot);
+	out = _tfopen(tps,_T("w+b"));
 	flen = 0;
 
 	fwrite("NSS\x1A",1,4,out);
@@ -229,7 +229,7 @@ void	States_SaveState (void)
 	fwrite(&flen,1,4,out);
 	fclose(out);
 
-	PrintTitlebar("State saved: %i", States.SelSlot);
+	PrintTitlebar(_T("State saved: %i"), States.SelSlot);
 	Movie_ShowFrame();
 }
 
@@ -286,7 +286,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 		{
 			if (RI.ROMType == ROM_FDS)
 				clen -= NES_FDSLoad(in);
-			else	EI.DbgOut("Error - DISK save block found for non-FDS game!");
+			else	EI.DbgOut(_T("Error - DISK save block found for non-FDS game!"));
 		}
 		else if (!memcmp(csig,"MAPR",4))
 		{
@@ -324,63 +324,64 @@ BOOL	States_LoadData (FILE *in, int flen)
 
 void	States_LoadState (void)
 {
-	char tpchr[256];
+	TCHAR tps[256];
+	char tpc[5];
 	FILE *in;
 	int flen;
 
 	States.NeedLoad = FALSE;
 
-	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
-	in = fopen(tpchr,"rb");
+	_stprintf(tps,_T("%s.ns%i"),States.BaseFilename,States.SelSlot);
+	in = _tfopen(tps,_T("rb"));
 	if (!in)
 	{
-		PrintTitlebar("No such save state: %i", States.SelSlot);
+		PrintTitlebar(_T("No such save state: %i"), States.SelSlot);
 		return;
 	}
 
-	fread(tpchr,1,4,in);
-	if (memcmp(tpchr,"NSS\x1a",4))
+	fread(tpc,1,4,in);
+	if (memcmp(tpc,"NSS\x1a",4))
 	{
 		fclose(in);
-		PrintTitlebar("Not a valid savestate file: %i", States.SelSlot);
+		PrintTitlebar(_T("Not a valid savestate file: %i"), States.SelSlot);
 		return;
 	}
-	fread(tpchr,1,4,in);
-	if (memcmp(tpchr,STATES_VERSION,4))
+	fread(tpc,1,4,in);
+	if (memcmp(tpc,STATES_VERSION,4))
 	{
 		fclose(in);
-		tpchr[4] = 0;
-		PrintTitlebar("Incorrect savestate version (%s): %i", tpchr, States.SelSlot);
+		tpc[4] = 0;
+		PrintTitlebar(_T("Incorrect savestate version (") PRINTF_CHAR8 _T("): %i"), tpc, States.SelSlot);
 		return;
 	}
 	fread(&flen,4,1,in);
-	fread(tpchr,1,4,in);
+	fread(tpc,1,4,in);
 
-	if (!memcmp(tpchr,"NMOV",4))
+	if (!memcmp(tpc,"NMOV",4))
 	{
 		fclose(in);
-		PrintTitlebar("Selected savestate (%i) is a movie file - cannot load!", States.SelSlot);
+		PrintTitlebar(_T("Selected savestate (%i) is a movie file - cannot load!"), States.SelSlot);
 		return;
 	}
-	else if (!memcmp(tpchr,"NREC",4))
+	else if (!memcmp(tpc,"NREC",4))
 	{
 		/* Movie savestate, can always load these */
 	}
-	else if (!memcmp(tpchr,"NSAV",4))
+	else if (!memcmp(tpc,"NSAV",4))
 	{
 		/* Non-movie savestate, can NOT load these while a movie is open */
 		if (Movie.Mode)
 		{
 			fclose(in);
-			PrintTitlebar("Selected savestate (%i) does not contain movie data!", States.SelSlot);
+			PrintTitlebar(_T("Selected savestate (%i) does not contain movie data!"), States.SelSlot);
 			return;
 		}
 	}
 	else
 	{
 		fclose(in);
-		tpchr[4] = 0;
-		PrintTitlebar("Selected savestate (%i) has unknown type! (%s)", States.SelSlot, tpchr);
+		tpc[4] = 0;
+		PrintTitlebar(_T("Selected savestate (%i) has unknown type! (") PRINTF_CHAR8 _T(")"), States.SelSlot, tpc);
 		return;
 	}
 
@@ -394,8 +395,8 @@ void	States_LoadState (void)
 	CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
 	if (States_LoadData(in, flen))
-		PrintTitlebar("State loaded: %i", States.SelSlot);
-	else	PrintTitlebar("State loaded with errors: %i", States.SelSlot);
+		PrintTitlebar(_T("State loaded: %i"), States.SelSlot);
+	else	PrintTitlebar(_T("State loaded with errors: %i"), States.SelSlot);
 	Movie_ShowFrame();
 	fclose(in);
 }

@@ -42,17 +42,18 @@ HINSTANCE	hInst;		// current instance
 HWND		mWnd;		// main window
 HACCEL		hAccelTable;	// accelerators
 int		SizeMult;	// size multiplier
-char		ProgPath[MAX_PATH];	// program path
-char		Path_ROM[MAX_PATH];	// current ROM directory
-char		Path_NMV[MAX_PATH];	// current movie directory
-char		Path_AVI[MAX_PATH];	// current AVI directory
-char		Path_PAL[MAX_PATH];	// current palette directory
+wchar_t		ProgPath[MAX_PATH];	// program path
+wchar_t		Path_ROM[MAX_PATH];	// current ROM directory
+wchar_t		Path_NMV[MAX_PATH];	// current movie directory
+wchar_t		Path_AVI[MAX_PATH];	// current AVI directory
+wchar_t		Path_PAL[MAX_PATH];	// current palette directory
 BOOL		MaskKeyboard = FALSE;	// mask keyboard accelerators (for when Family Basic Keyboard is active)
 HWND		hDebug;		// Debug Info window
 BOOL		dbgVisible;	// whether or not the Debug window is open
 
 TCHAR	szTitle[MAX_LOADSTRING];	// The title bar text
 TCHAR	szWindowClass[MAX_LOADSTRING];	// The title bar text
+
 
 // Foward declarations of functions included in this code module:
 ATOM			MyRegisterClass(HINSTANCE hInstance);
@@ -63,7 +64,7 @@ LRESULT CALLBACK	DebugWnd(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK	InesHeader(HWND, UINT, WPARAM, LPARAM);
 void	ShowDebug (void);
 
-char	TitlebarBuffer[256];
+wchar_t	TitlebarBuffer[256];
 int	TitlebarDelay;
 
 int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -77,7 +78,7 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	MyRegisterClass(hInstance);
 
 	GetModuleFileName(NULL,ProgPath,MAX_PATH);
-	for (i = strlen(ProgPath); (i > 0) && (ProgPath[i] != '\\'); i--)
+	for (i = _tcslen(ProgPath); (i > 0) && (ProgPath[i] != _T('\\')); i--)
 		ProgPath[i] = 0;
 
 	// Perform application initialization:
@@ -90,11 +91,11 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 	if (lpCmdLine[0])
 	{
-		char *cmdline = strdup(lpCmdLine);
-		if (strchr(cmdline,'"'))
-			cmdline = strchr(cmdline,'"') + 1;
-		if (strchr(cmdline,'"'))
-			*strchr(cmdline,'"') = 0;
+		TCHAR *cmdline = _tcsdup(GetCommandLine());
+		if (_tcschr(cmdline,'"'))
+			cmdline = _tcschr(cmdline,'"') + 1;
+		if (_tcschr(cmdline,'"'))
+			*_tcschr(cmdline,'"') = 0;
 		NES_OpenFile(cmdline);
 		free(cmdline);
 	}
@@ -140,7 +141,7 @@ ATOM	MyRegisterClass (HINSTANCE hInstance)
 	wcex.hIcon		= LoadIcon(hInstance,(LPCTSTR)IDI_NINTENDULATOR);
 	wcex.hCursor		= LoadCursor(NULL,IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName	= (LPCSTR)IDC_NINTENDULATOR;
+	wcex.lpszMenuName	= (LPCTSTR)IDC_NINTENDULATOR;
 	wcex.lpszClassName	= szWindowClass;
 	wcex.hIconSm		= LoadIcon(wcex.hInstance,(LPCTSTR)IDI_SMALL);
 
@@ -189,7 +190,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	HDC hdc;
 	PAINTSTRUCT ps;
 	int wmId, wmEvent;
-	char FileName[256];
+	TCHAR FileName[256];
 	OPENFILENAME ofn;
 	BOOL running = NES.Running;
 
@@ -214,17 +215,17 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = mWnd;
 			ofn.hInstance = hInst;
-			ofn.lpstrFilter =	"All supported files (*.NES, *.UNIF, *.UNF, *.FDS, *.NSF)\0"
-							"*.NES;*.UNIF;*.UNF;*.FDS;*.NSF\0"
-						"iNES ROM Images (*.NES)\0"
-							"*.NES\0"
-						"Universal NES Interchange Format ROM files (*.UNIF, *.UNF)\0"
-							"*.UNF;*.UNIF\0"
-						"Famicom Disk System Disk Images (*.FDS)\0"
-							"*.FDS\0"
-						"NES Sound Files (*.NSF)\0"
-							"*.NSF\0"
-						"\0";
+			ofn.lpstrFilter =	_T("All supported files (*.NES, *.UNIF, *.UNF, *.FDS, *.NSF)\0")
+							_T("*.NES;*.UNIF;*.UNF;*.FDS;*.NSF\0")
+						_T("iNES ROM Images (*.NES)\0")
+							_T("*.NES\0")
+						_T("Universal NES Interchange Format ROM files (*.UNIF, *.UNF)\0")
+							_T("*.UNF;*.UNIF\0")
+						_T("Famicom Disk System Disk Images (*.FDS)\0")
+							_T("*.FDS\0")
+						_T("NES Sound Files (*.NSF)\0")
+							_T("*.NSF\0")
+						_T("\0");
 			ofn.lpstrCustomFilter = NULL;
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = FileName;
@@ -232,7 +233,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lpstrFileTitle = NULL;
 			ofn.nMaxFileTitle = 0;
 			ofn.lpstrInitialDir = Path_ROM;
-			ofn.lpstrTitle = "Load ROM";
+			ofn.lpstrTitle = _T("Load ROM");
 			ofn.Flags = OFN_FILEMUSTEXIST;
 			ofn.lpstrDefExt = NULL;
 			ofn.lCustData = 0;
@@ -240,7 +241,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lpTemplateName = NULL;
 			if (GetOpenFileName(&ofn))
 			{
-				strcpy(Path_ROM,FileName);
+				_tcscpy(Path_ROM,FileName);
 				Path_ROM[ofn.nFileOffset-1] = 0;
 				NES_Stop();
 				NES_OpenFile(FileName);
@@ -256,15 +257,15 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = mWnd;
 			ofn.hInstance = hInst;
-			ofn.lpstrFilter = "iNES ROM Images (*.NES)\0" "*.NES\0" "\0";
+			ofn.lpstrFilter = _T("iNES ROM Images (*.NES)\0") _T("*.NES\0") _T("\0");
 			ofn.lpstrCustomFilter = NULL;
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = FileName;
 			ofn.nMaxFile = 256;
 			ofn.lpstrFileTitle = NULL;
 			ofn.nMaxFileTitle = 0;
-			ofn.lpstrInitialDir = "";
-			ofn.lpstrTitle = "Edit Header";
+			ofn.lpstrInitialDir = _T("");
+			ofn.lpstrTitle = _T("Edit Header");
 			ofn.Flags = OFN_FILEMUSTEXIST;
 			ofn.lpstrDefExt = NULL;
 			ofn.lCustData = 0;
@@ -402,7 +403,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			while (PPU.SLnum != 240)
 			{
 				if (NES.FrameStep && !NES.GotStep)
-					MessageBox(mWnd,"Impossible: savestate is advancing to scanline 240 in framestep mode!","Nintendulator",MB_OK | MB_ICONERROR);
+					MessageBox(mWnd,_T("Impossible: savestate is advancing to scanline 240 in framestep mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 				do
 				{
 #ifdef ENABLE_DEBUGGER
@@ -576,7 +577,7 @@ LRESULT CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-static char *DebugText;
+static TCHAR *DebugText;
 static int DebugLen;
 LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -602,9 +603,9 @@ LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	}
 	return FALSE;
 }
-void	AddDebug (char *txt)
+void	AddDebug (TCHAR *txt)
 {
-	int i = strlen(txt), j = GetWindowTextLength(GetDlgItem(hDebug,IDC_DEBUGTEXT));
+	int i = _tcsclen(txt), j = GetWindowTextLength(GetDlgItem(hDebug,IDC_DEBUGTEXT));
 	if (!dbgVisible)
 		return;
 	if (i + j + 2 > DebugLen)
@@ -614,8 +615,8 @@ void	AddDebug (char *txt)
 		DebugText = realloc(DebugText,DebugLen);
 	}
 	GetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText,DebugLen);
-	strcat(DebugText,txt);
-	strcat(DebugText,"\r\n");
+	_tcscat(DebugText,txt);
+	_tcscat(DebugText,_T("\r\n"));
 	SetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText);
 	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SETSEL,i+j+2,-1);	/* select last char, move caret to end */
 	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SCROLLCARET,0,0);	/* scroll caret onto screen */
@@ -630,33 +631,33 @@ void	ShowDebug (void)
 
 LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	static char *filename;
+	static TCHAR *filename;
 	static char header[16];
 	int i;
 	FILE *rom;
-	char name[256];
+	TCHAR name[256];
 	switch (message)
 	{
 	case WM_INITDIALOG:
-		filename = (char *)lParam;
-		rom = fopen(filename,"rb");
+		filename = (TCHAR *)lParam;
+		rom = _tfopen(filename,_T("rb"));
 		if (!rom)
 		{
-			MessageBox(mWnd,"Unable to open ROM!","Nintendulator",MB_OK | MB_ICONERROR);
+			MessageBox(mWnd,_T("Unable to open ROM!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			EndDialog(hDlg,0);
 		}
 		fread(header,16,1,rom);
 		fclose(rom);
 		if (memcmp(header,"NES\x1A",4))
 		{
-			MessageBox(mWnd,"Selected file is not an iNES ROM image!","Nintendulator",MB_OK | MB_ICONERROR);
+			MessageBox(mWnd,_T("Selected file is not an iNES ROM image!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			EndDialog(hDlg,0);
 		}
-		i = strlen(filename)-1;
-		while ((i >= 0) && (filename[i] != '\\'))
+		i = _tcslen(filename)-1;
+		while ((i >= 0) && (filename[i] != _T('\\')))
 			i--;
-		strcpy(name,filename+i+1);
-		name[strlen(name)-4] = 0;
+		_tcscpy(name,filename+i+1);
+		name[_tcslen(name)-4] = 0;
 		SetDlgItemText(hDlg,IDC_INESNAME,name);
 		SetDlgItemInt(hDlg,IDC_INESPRG,header[4],FALSE);
 		SetDlgItemInt(hDlg,IDC_INESCHR,header[5],FALSE);
@@ -720,7 +721,7 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		case IDC_INESTRAIN:
 			if (IsDlgButtonChecked(hDlg,IDC_INESTRAIN))
 			{
-				MessageBox(hDlg,"Trained ROMs are not supported in Nintendulator!","Nintendulator",MB_OK | MB_ICONWARNING);
+				MessageBox(hDlg,_T("Trained ROMs are not supported in Nintendulator!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 				header[6] |= 0x04;
 			}
 			else	header[6] &= ~0x04;
@@ -773,15 +774,15 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			break;
 		case IDOK:
 			if (((header[8] || header[9] || header[10] || header[11] || header[12] || header[13] || header[14] || header[15])) && 
-				(MessageBox(hDlg,"Garbage data has been detected in this ROM's header! Do you wish to remove it?","Nintendulator",MB_YESNO | MB_ICONQUESTION) == IDYES))
+				(MessageBox(hDlg,_T("Garbage data has been detected in this ROM's header! Do you wish to remove it?"),_T("Nintendulator"),MB_YESNO | MB_ICONQUESTION) == IDYES))
 				memset(&header[8],0,8);
-			rom = fopen(filename,"r+b");
+			rom = _tfopen(filename,_T("r+b"));
 			if (rom)
 			{
 				fwrite(header,16,1,rom);
 				fclose(rom);
 			}
-			else	MessageBox(mWnd,"Failed to open ROM!","Nintendulator",MB_OK | MB_ICONERROR);
+			else	MessageBox(mWnd,_T("Failed to open ROM!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			// fall through
 		case IDCANCEL:
 			EndDialog(hDlg,0);
@@ -816,23 +817,23 @@ void	SetWindowClientArea (HWND hWnd, int w, int h)
 
 void	UpdateTitlebar (void)
 {
-	char titlebar[256];
+	TCHAR titlebar[256];
 	if (NES.Running)
-		sprintf(titlebar,"Nintendulator - %i FPS (%i %sFSkip)",GFX.FPSnum,GFX.FSkip,GFX.aFSkip?"Auto":"");
-	else	strcpy(titlebar,"Nintendulator - Stopped");
+		_stprintf(titlebar,_T("Nintendulator - %i FPS (%i %sFSkip)"),GFX.FPSnum,GFX.FSkip,GFX.aFSkip?_T("Auto"):_T(""));
+	else	_tcscpy(titlebar,_T("Nintendulator - Stopped"));
 	if (TitlebarDelay > 0)
 	{
 		TitlebarDelay--;
-		strcat(titlebar," - ");
-		strcat(titlebar,TitlebarBuffer);
+		_tcscat(titlebar,_T(" - "));
+		_tcscat(titlebar,TitlebarBuffer);
 	}
 	SetWindowText(mWnd,titlebar);
 }
-void	__cdecl	PrintTitlebar (char *Text, ...)
+void	__cdecl	PrintTitlebar (TCHAR *Text, ...)
 {
 	va_list marker;
 	va_start(marker,Text);
-	vsprintf(TitlebarBuffer,Text,marker);
+	_vstprintf(TitlebarBuffer,Text,marker);
 	va_end(marker);
 	TitlebarDelay = 15;
 	UpdateTitlebar();
