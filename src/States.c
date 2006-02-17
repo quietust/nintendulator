@@ -120,8 +120,8 @@ void	States_SaveState (void)
 		fwrite(&tps,2,1,out);		clen += 2;	//	RADD	uint16		VRAM Address
 		tps = (unsigned short)PPU.IntReg;
 		fwrite(&tps,2,1,out);		clen += 2;	//	TADD	uint16		VRAM Address Latch
-		fwrite(&PPU.ppuLatch,1,1,out);	clen++;		//	VBUF	uint8		VRAM Read Buffer
-		fwrite(&PPU.ppuLatch,1,1,out);	clen++;		//	PGEN	uint8		PPU "general" latch.  See Ki's document. ***CHECKME***
+		fwrite(&PPU.buf2007,1,1,out);	clen++;		//	VBUF	uint8		VRAM Read Buffer
+		fwrite(&PPU.ppuLatch,1,1,out);	clen++;		//	PGEN	uint8		PPU "general" latch
 
 		tps = (unsigned short)PPU.Clockticks;
 		fwrite(&tps,2,1,out);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340)
@@ -272,8 +272,8 @@ void	States_LoadState (void)
 			PPU.VRAMAddr = tps;
 			fread(&tps,2,1,in);		clen -= 2;	//	TADD	uint16		VRAM Address Latch
 			PPU.IntReg = tps;
-			fread(&PPU.ppuLatch,1,1,in);	clen--;		//	VBUF	uint8		VRAM Read Buffer
-			fread(&PPU.ppuLatch,1,1,in);	clen--;		//	PGEN	uint8		PPU "general" latch.  See Ki's document. ***CHECKME***
+			fread(&PPU.buf2007,1,1,in);	clen--;		//	VBUF	uint8		VRAM Read Buffer
+			fread(&PPU.ppuLatch,1,1,in);	clen--;		//	PGEN	uint8		PPU "general" latch.
 
 			fread(&tps,2,1,in);		clen -= 2;	//	TICKS	uint16		Clock Ticks (0..340)
 			PPU.Clockticks = tps;
