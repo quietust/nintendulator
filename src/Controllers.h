@@ -34,7 +34,7 @@ struct tStdPort
 	void		(*Write)	(struct tStdPort *,unsigned char);
 	void		(*Config)	(struct tStdPort *,HWND);
 	void		(*Unload)	(struct tStdPort *);
-	void		(*Frame)	(struct tStdPort *);
+	void		(*Frame)	(struct tStdPort *,unsigned char);
 	int		Type;
 	int		Buttons[CONTROLLERS_MAXBUTTONS];
 	int		NumButtons;
@@ -53,7 +53,7 @@ struct tExpPort
 	void		(*Write)	(struct tExpPort *,unsigned char);
 	void		(*Config)	(struct tExpPort *,HWND);
 	void		(*Unload)	(struct tExpPort *);
-	void		(*Frame)	(struct tExpPort *);
+	void		(*Frame)	(struct tExpPort *,unsigned char);
 	int		Type;
 	int		Buttons[CONTROLLERS_MAXBUTTONS];
 	int		NumButtons;

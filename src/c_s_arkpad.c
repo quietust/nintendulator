@@ -40,59 +40,48 @@ static	BOOL	LockCursorPos (int x, int y)
 #define	BitPtr	Data[2]
 #define	Strobe	Data[3]
 #define	Button	Data[4]
-#define	Framed	Data[5]
-static	void	Frame (struct tStdPort *Cont)
+#define	NewBits	Data[5]
+static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
-	Cont->Framed = 0;
-}
-static	void	UpdateCont (struct tStdPort *Cont)
-{
-	int x, y;
-	int i;
-	if (Controllers.MovieMode & MOV_PLAY)
+	int x, i;
+	if (mode & MOV_PLAY)
 	{
-		x = Cont->MovData[0] | (Cont->MovData[1] << 8);
-		y = Cont->MovData[2];
+		Cont->Pos = Cont->MovData[0] | (Cont->MovData[1] << 8);
+		Cont->Button = Cont->MovData[2];
 	}
 	else
 	{
 		LockCursorPos(128,220);
-		y = Controllers_IsPressed(Cont->Buttons[0]);
-		x = Cont->Pos;
-		if (!Cont->Framed)
-			x += Controllers.MouseState.lX;
-		if (x < 196)
-			x = 196;
-		if (x > 484)
-			x = 484;
+		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);
+		Cont->Pos += Controllers.MouseState.lX;
+		if (Cont->Pos < 196)
+			Cont->Pos = 196;
+		if (Cont->Pos > 484)
+			Cont->Pos = 484;
 	}
 	if (Controllers.MovieMode & MOV_RECORD)
 	{
-		Cont->MovData[0] = x & 0xFF;
-		Cont->MovData[1] = x >> 8;
-		Cont->MovData[2] = y;
-
+		Cont->MovData[0] = (unsigned char)(Cont->Pos & 0xFF);
+		Cont->MovData[1] = (unsigned char)(Cont->Pos >> 8);
+		Cont->MovData[2] = (unsigned char)Cont->Button;
 	}
-	Cont->Framed = 1;
-	if (y)
-		Cont->Button = 1;
-	else	Cont->Button = 0;
-	Cont->Pos = x;
-	Cont->Bits = 0;
-	x = ~x;
+	Cont->NewBits = 0;
+	x = ~Cont->Pos;
 	for (i = 0; i < 9; i++)
 	{
-		Cont->Bits <<= 1;
-		Cont->Bits |= x & 1;
+		Cont->NewBits <<= 1;
+		Cont->NewBits |= x & 1;
 		x >>= 1;
 	}
-	Cont->BitPtr = 0;
 }
 static	unsigned char	Read (struct tStdPort *Cont)
 {
 	unsigned char result;
 	if (Cont->Strobe)
-		UpdateCont(Cont);
+	{
+		Cont->Bits = Cont->NewBits;
+		Cont->BitPtr = 0;
+	}
 	result = (char)((Cont->Bits >> Cont->BitPtr++) & 1);
 	if (Cont->BitPtr == 9)
 		Cont->BitPtr--;
@@ -105,7 +94,10 @@ static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
 	Cont->Strobe = Val & 1;
 	if (Cont->Strobe)
-		UpdateCont(Cont);
+	{
+		Cont->Bits = Cont->NewBits;
+		Cont->BitPtr = 0;
+	}
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -144,10 +136,11 @@ void	StdPort_SetArkanoidPaddle (struct tStdPort *Cont)
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
 	Cont->Button = 0;
-	Cont->Framed = 0;
+	Cont->NewBits = 0;
 }
-#undef	Bits
-#undef	Pos
-#undef	BitPtr
-#undef	Strobe
+#undef	NewBits
 #undef	Button
+#undef	Strobe
+#undef	BitPtr
+#undef	Pos
+#undef	Bits
