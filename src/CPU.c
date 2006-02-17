@@ -49,6 +49,11 @@ signed char BranchOffset;
 #define TmpAddrL _TmpAddr.Segment[0]
 #define TmpAddrH _TmpAddr.Segment[1]
 
+static __forceinline void FixPC (void)
+{
+	CPU._PC.Segment[2] = 0;
+}
+
 unsigned char TmpData;
 
 unsigned char Opcode;
@@ -313,21 +318,27 @@ static	__forceinline void	AM_IMP (void)
 static	__forceinline void	AM_IMM (void)
 {
 	CalcAddr = CPU.PC++;
+	FixPC();
 }
 static	__forceinline void	AM_ABS (void)
 {
 	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 }
 
 static	__forceinline void	AM_REL (void)
 {
 	BranchOffset = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 }
 static	__forceinline void	AM_ABX (void)
 {
 	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	__asm
 	{
 		mov	al,CPU.X
@@ -342,7 +353,9 @@ noinc:
 static	__forceinline void	AM_ABXW (void)
 {
 	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	__asm
 	{
 		mov	al,CPU.X
@@ -360,7 +373,9 @@ end:
 static	__forceinline void	AM_ABY (void)
 {
 	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	__asm
 	{
 		mov	al,CPU.Y
@@ -375,7 +390,9 @@ noinc:
 static	__forceinline void	AM_ABYW (void)
 {
 	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	__asm
 	{
 		mov	al,CPU.Y
@@ -393,22 +410,26 @@ end:
 static	__forceinline void	AM_ZPG (void)
 {
 	CalcAddr = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 }
 static	__forceinline void	AM_ZPX (void)
 {
 	CalcAddr = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CPU_MemGet(CalcAddr);
 	CalcAddrL += CPU.X;
 }
 static	__forceinline void	AM_ZPY (void)
 {
 	CalcAddr = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CPU_MemGet(CalcAddr);
 	CalcAddrL += CPU.Y;
 }
 static	__forceinline void	AM_INX (void)
 {
 	TmpAddr = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CPU_MemGet(TmpAddr);
 	TmpAddrL += CPU.X;
 	CalcAddrL = CPU_MemGet(TmpAddr);
@@ -418,6 +439,7 @@ static	__forceinline void	AM_INX (void)
 static	__forceinline void	AM_INY (void)
 {
 	TmpAddr = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CalcAddrL = CPU_MemGet(TmpAddr);
 	TmpAddrL++;
 	CalcAddrH = CPU_MemGet(TmpAddr);
@@ -435,6 +457,7 @@ noinc:
 static	__forceinline void	AM_INYW (void)
 {
 	TmpAddr = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CalcAddrL = CPU_MemGet(TmpAddr);
 	TmpAddrL++;
 	CalcAddrH = CPU_MemGet(TmpAddr);
@@ -700,6 +723,7 @@ static	__forceinline void	IN_JMP_I (void)
 static	__forceinline void	IN_JSR (void)
 {
 	TmpAddrL = CPU_MemGetCode(CPU.PC++);
+	FixPC();
 	CPU_MemGet(0x100 | CPU.SP);
 	Push(CPU.PCH);
 	Push(CPU.PCL);
@@ -871,6 +895,7 @@ static	__forceinline void	IN_RTS (void)
 	CPU.PCL = Pull();
 	CPU.PCH = Pull();
 	CPU_MemGet(CPU.PC++);
+	FixPC();
 }
 static	__forceinline void	IN_SBC (void)
 {
@@ -1129,6 +1154,7 @@ extern	void	DPCM_Fetch (void);
 void	CPU_ExecOp (void)
 {
 	Opcode = CPU_MemGetCode(OpAddr = CPU.PC++);
+	FixPC();
 	switch (Opcode)
 	{
 case 0x00:AM_IMM();  IN_BRK();break;case 0x10:AM_REL();  IN_BPL();break;case 0x08:AM_IMP();  IN_PHP();break;case 0x18:AM_IMP();  IN_CLC();break;case 0x04:AM_ZPG();  IV_NOP();break;case 0x14:AM_ZPX();  IV_NOP();break;case 0x0C:AM_ABS();  IV_NOP();break;case 0x1C:AM_ABX();  IV_NOP();break;
