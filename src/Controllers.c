@@ -649,28 +649,6 @@ void	Controllers_UpdateInput (void)
 {
 	HRESULT hr;
 	int i;
-	if (Controllers.MovieMode & MOV_RECORD)
-	{
-		if (Controllers.Port1.MovLen)
-			fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
-		if (Controllers.Port2.MovLen)
-			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
-	}
-	if (Controllers.MovieMode & MOV_PLAY)
-	{
-		if (Controllers.Port1.MovLen)
-			fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
-		if (Controllers.Port2.MovLen)
-			fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
-		if (feof(movie))
-		{
-			GFX_ShowText("Movie stopped");
-			Controllers_StopMovie();
-		}
-	}
-	Controllers.Port1.Frame(&Controllers.Port1);
-	Controllers.Port2.Frame(&Controllers.Port2);
-
 	if (Controllers.DeviceUsed[0])
 	{
 		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIKeyboard,256,Controllers.KeyState);
@@ -703,6 +681,28 @@ void	Controllers_UpdateInput (void)
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 				ZeroMemory(&Controllers.JoyState[i-2],sizeof(DIJOYSTATE2));
 		}
+
+	if (Controllers.MovieMode & MOV_PLAY)
+	{
+		if (Controllers.Port1.MovLen)
+			fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
+		if (Controllers.Port2.MovLen)
+			fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+		if (feof(movie))
+		{
+			GFX_ShowText("Movie stopped");
+			Controllers_StopMovie();
+		}
+	}
+	Controllers.Port1.Frame(&Controllers.Port1,Controllers.MovieMode);
+	Controllers.Port2.Frame(&Controllers.Port2,Controllers.MovieMode);
+	if (Controllers.MovieMode & MOV_RECORD)
+	{
+		if (Controllers.Port1.MovLen)
+			fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
+		if (Controllers.Port2.MovLen)
+			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+	}
 }
 
 int	Controllers_GetConfigKey (HWND hWnd)
