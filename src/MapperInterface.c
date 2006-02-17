@@ -496,6 +496,7 @@ void	MapperInterface_Init (void)
 				ThisDLL->DI = ThisDLL->LoadDLL(mWnd,&EI,CurrentMapperInterface);
 				if (ThisDLL->DI)
 				{
+					DbgOut(_T("Added mapper pack %s: '%s' v%X.%X (%04X/%02X/%02X)"), Data.cFileName, ThisDLL->DI->Description, ThisDLL->DI->Version >> 16, ThisDLL->DI->Version & 0xFFFF, ThisDLL->DI->Date >> 16, (ThisDLL->DI->Date >> 8) & 0xFF, ThisDLL->DI->Date & 0xFF);
 					ThisDLL->Next = MapperDLLs;
 					MapperDLLs = ThisDLL;
 					ThisDLL = malloc(sizeof(struct tMapperDLL));
