@@ -196,15 +196,37 @@ int	_MAPINT	GenieRead (int Bank, int Addy)
 	int result = CPU_ReadPRG(Bank,Addy);
 	if (NES.GameGenie)
 	{
-		if ((Genie.CodeStat & 0x10) && (Addy == Genie.Code1A) && (Bank == Genie.Code1B) && ((Genie.CodeStat & 0x02) || (result == Genie.Code1O)))
+		if ((Genie.CodeStat & 0x10) && (Bank == Genie.Code1B) && (Addy == Genie.Code1A) && ((Genie.CodeStat & 0x02) || (result == Genie.Code1O)))
 			return Genie.Code1V;
-		if ((Genie.CodeStat & 0x20) && (Addy == Genie.Code2A) && (Bank == Genie.Code2B) && ((Genie.CodeStat & 0x04) || (result == Genie.Code2O)))
+		if ((Genie.CodeStat & 0x20) && (Bank == Genie.Code2B) && (Addy == Genie.Code2A) && ((Genie.CodeStat & 0x04) || (result == Genie.Code2O)))
 			return Genie.Code2V;
-		if ((Genie.CodeStat & 0x40) && (Addy == Genie.Code3A) && (Bank == Genie.Code3B) && ((Genie.CodeStat & 0x08) || (result == Genie.Code3O)))
+		if ((Genie.CodeStat & 0x40) && (Bank == Genie.Code3B) && (Addy == Genie.Code3A) && ((Genie.CodeStat & 0x08) || (result == Genie.Code3O)))
 			return Genie.Code3V;
 	}
 	return result;
 }
+int	_MAPINT	GenieRead1 (int Bank, int Addy)
+{
+	int result = CPU_ReadPRG(Bank,Addy);
+	if ((NES.GameGenie) && ((Addy == Genie.Code1A) && ((Genie.CodeStat & 0x02) || (result == Genie.Code1O))))
+		return Genie.Code1V;
+	else	return result;
+}
+int	_MAPINT	GenieRead2 (int Bank, int Addy)
+{
+	int result = CPU_ReadPRG(Bank,Addy);
+	if ((NES.GameGenie) && ((Addy == Genie.Code2A) && ((Genie.CodeStat & 0x04) || (result == Genie.Code2O))))
+		return Genie.Code2V;
+	else	return result;
+}
+int	_MAPINT	GenieRead3 (int Bank, int Addy)
+{
+	int result = CPU_ReadPRG(Bank,Addy);
+	if ((NES.GameGenie) && ((Addy == Genie.Code3A) && ((Genie.CodeStat & 0x08) || (result == Genie.Code3O))))
+		return Genie.Code3V;
+	else	return result;
+}
+
 
 void	_MAPINT	GenieWrite (int Bank, int Addy, int Val)
 {
@@ -291,9 +313,22 @@ void	Genie_Reset (void)
 
 void	Genie_Init (void)
 {
-	int i;
-	for (i = 0x8; i < 0x10; i++)
-		CPU.ReadHandler[i] = GenieRead;
+	int IsCode[8] = {0,0,0,0,0,0,0,0};
+	if (Genie.CodeStat & 0x10)
+		IsCode[Genie.Code1B - 8]++;
+	if (Genie.CodeStat & 0x20)
+		IsCode[Genie.Code2B - 8]++;
+	if (Genie.CodeStat & 0x40)
+		IsCode[Genie.Code3B - 8]++;
+	if (IsCode[Genie.Code1B - 8] == 1)
+		CPU.ReadHandler[Genie.Code1B] = GenieRead1;
+	else	CPU.ReadHandler[Genie.Code1B] = GenieRead;
+	if (IsCode[Genie.Code2B - 8] == 1)
+		CPU.ReadHandler[Genie.Code2B] = GenieRead2;
+	else	CPU.ReadHandler[Genie.Code2B] = GenieRead;
+	if (IsCode[Genie.Code3B - 8] == 1)
+		CPU.ReadHandler[Genie.Code3B] = GenieRead3;
+	else	CPU.ReadHandler[Genie.Code3B] = GenieRead;
 }
 
 int	Genie_Save (FILE *out)
