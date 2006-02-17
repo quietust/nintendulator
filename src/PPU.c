@@ -257,8 +257,8 @@ void	PPU_PowerOn()
 	PPU.HVTog = TRUE;
 	PPU.ShortSL = TRUE;
 	ZeroMemory(PPU_VRAM,sizeof(PPU_VRAM));
-	ZeroMemory(PPU.Palette,sizeof(PPU.Palette));
-	ZeroMemory(PPU.Sprite,sizeof(PPU.Sprite));
+	memset(PPU.Palette,0x3F,sizeof(PPU.Palette));
+	memset(PPU.Sprite,0xFF,sizeof(PPU.Sprite));
 	PPU_GetHandlers();
 }
 
