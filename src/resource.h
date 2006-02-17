@@ -36,6 +36,7 @@
 #define IDD_EXPPORT_FAMTRAIN            146
 #define IDD_DEBUG                       147
 #define IDD_INESHEADER                  148
+#define IDD_STDPORT_SNESCONTROLLER      149
 #define IDC_DUMP_PPU_MEM                1001
 #define IDC_START_LOGGING               1002
 #define IDC_STOP_LOGGING                1003
