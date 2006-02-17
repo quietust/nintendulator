@@ -286,7 +286,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 					PPU.IOVal = PPU.CHRPointer[PPU.IOAddr >> 10][PPU.IOAddr & 0x3FF];
 				else	PPU.IOVal = PPU.ReadHandler[PPU.IOAddr >> 10](PPU.IOAddr >> 10,PPU.IOAddr & 0x3FF);
 				if (PPU.IOMode == 2)
-					PPU.ppuLatch = PPU.IOVal;
+					PPU.buf2007 = PPU.IOVal;
 			}
 			PPU.IOMode = 0;
 		}
