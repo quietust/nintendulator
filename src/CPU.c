@@ -176,10 +176,10 @@ void	CPU_PowerOn (void)
 	CPU.X = 0;
 	CPU.Y = 0;
 	CPU.PC = 0;
+	CPU.SP = 0;
+	CPU.P = 0x20;
 	CalcAddr = 0;
 	TmpAddr = 0;
-	CPU.SP = 0xFF;
-	CPU.P = 0x20;
 	CPU_SplitFlags();
 	CPU_GetHandlers();
 }
