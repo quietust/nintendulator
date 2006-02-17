@@ -87,8 +87,9 @@ static	unsigned char	Read (struct tStdPort *Cont)
 }
 static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
-	if (Cont->Strobe = Val & 1)
+	if ((Cont->Strobe) || (Val & 1))
 	{
+		Cont->Strobe = Val & 1;
 		Cont->Bits = Cont->NewBits;
 		Cont->BitPtr = 0;
 	}

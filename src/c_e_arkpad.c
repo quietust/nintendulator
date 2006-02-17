@@ -81,25 +81,18 @@ static	unsigned char	Read1 (struct tExpPort *Cont)
 }
 static	unsigned char	Read2 (struct tExpPort *Cont)
 {
-	unsigned char result;
-	if (Cont->Strobe)
-	{
-		Cont->Bits = Cont->NewBits;
-		Cont->BitPtr = 0;
-	}
-	result = (unsigned char)(((Cont->Bits >> Cont->BitPtr++) & 1) << 1);
-	if (Cont->BitPtr == 9)
-		Cont->BitPtr--;
-	return result;
+	if (Cont->BitPtr < 8)
+		return (unsigned char)(((Cont->Bits >> Cont->BitPtr++) & 1) << 1);
+	else	return 0x02;
 }
 static	void	Write (struct tExpPort *Cont, unsigned char Val)
 {
-	Cont->Strobe = Val & 1;
-	if (Cont->Strobe = Val & 1)
+	if ((!Cont->Strobe) && (Val & 1))
 	{
 		Cont->Bits = Cont->NewBits;
 		Cont->BitPtr = 0;
 	}
+	Cont->Strobe = Val & 1;
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

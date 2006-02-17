@@ -76,27 +76,21 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 static	unsigned char	Read (struct tStdPort *Cont)
 {
 	unsigned char result;
-	if (Cont->Strobe)
-	{
-		Cont->Bits = Cont->NewBits;
-		Cont->BitPtr = 0;
-	}
-	result = (char)((Cont->Bits >> Cont->BitPtr++) & 1);
-	if (Cont->BitPtr == 9)
-		Cont->BitPtr--;
-	result <<= 4;
+	if (Cont->BitPtr < 8)
+		result = (char)((Cont->Bits >> Cont->BitPtr++) & 1) << 4;
+	else	result = 0x10;
 	if (Cont->Button)
 		result |= 0x08;
 	return result;
 }
 static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
-	Cont->Strobe = Val & 1;
-	if (Cont->Strobe)
+	if ((!Cont->Strobe) && (Val & 1))
 	{
 		Cont->Bits = Cont->NewBits;
 		Cont->BitPtr = 0;
 	}
+	Cont->Strobe = Val & 1;
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {

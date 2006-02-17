@@ -103,8 +103,9 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 }
 static	void	Write (struct tExpPort *Cont, unsigned char Val)
 {
-	if (Cont->Strobe = Val & 1)
+	if ((Cont->Strobe) || (Val & 1))
 	{
+		Cont->Strobe = Val & 1;
 		Cont->Bits1 = Cont->NewBit1;
 		Cont->Bits2 = Cont->NewBit2;
 		Cont->BitPtr1 = 0;
