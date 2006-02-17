@@ -701,11 +701,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 
 	if (fromState)
 		States_SaveData(movie);
-	else
-	{
-		NES_Reset(RESET_HARD);
-		NES.Scanline = FALSE;
-	}
+	else	NES_Reset(RESET_HARD);
 
 	fwrite("NMOV",1,4,movie);
 	fwrite(&len,1,4,movie);
