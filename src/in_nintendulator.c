@@ -239,7 +239,7 @@ void setpan(int pan) { mod.outMod->SetPan(pan); }
 int infoDlg(char *fn, HWND hwnd)
 {
 	if (RI.ROMType)
-		MI->Config();
+		MI->Config(CFG_WINDOW,0);
 	return 0;
 }
 
