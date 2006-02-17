@@ -110,7 +110,7 @@ void	NES_OpenFile (char *filename)
 	NES.ROMLoaded = TRUE;
 	if (MI->Config)
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_ENABLED);
-	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_DISABLED);
+	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_GRAYED);
 	DrawMenuBar(mWnd);
 
 	States_SetFilename(filename);
