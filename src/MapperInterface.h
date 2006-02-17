@@ -86,8 +86,8 @@ typedef	struct	EmulatorInterface
 		void		(_MAPINT *Load_SRAM)		(void);		/* Loads SRAM from disk */
 
 	/* Misc Callbacks */
-		void		(_MAPINT *DbgOut)		(char *);	/* Echo text to debug window */
-		void		(_MAPINT *StatusOut)		(char *);	/* Echo text on status bar */
+		void		(_MAPINT *DbgOut)		(char *,...);	/* Echo text to debug window */
+		void		(_MAPINT *StatusOut)		(char *,...);	/* Echo text on status bar */
 }	TEmulatorInterface, *PEmulatorInterface;
 typedef	const	TEmulatorInterface	CTEmulatorInterface, *CPEmulatorInterface;
 
