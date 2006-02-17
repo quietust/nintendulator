@@ -722,20 +722,6 @@ __inline static	void	RunSkip (int NumTicks)
 				GFX_DrawScreen();
 			}
 		}
-		if ((PPU.IOMode) && (PPU.Clockticks & 1))
-		{
-			if (PPU.IOMode == 3)
-				PPU.WriteHandler[PPU.IOAddr >> 10](PPU.IOAddr >> 10,PPU.IOAddr & 0x3FF,PPU.IOVal);
-			else
-			{
-				if (PPU.ReadHandler[PPU.IOAddr >> 10] == PPU_BusRead)
-					PPU.IOVal = PPU.CHRPointer[PPU.IOAddr >> 10][PPU.IOAddr & 0x3FF];
-				else	PPU.IOVal = PPU.ReadHandler[PPU.IOAddr >> 10](PPU.IOAddr >> 10,PPU.IOAddr & 0x3FF);
-				if (PPU.IOMode == 2)
-					PPU.buf2007 = PPU.IOVal;
-			}
-			PPU.IOMode = 0;
-		}
 		if (PPU.IsRendering)
 		{
 			if (PPU.Clockticks & 1)
