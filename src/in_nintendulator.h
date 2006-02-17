@@ -174,6 +174,8 @@ typedef struct
 	Out_Module *outMod; // filled in by winamp, optionally used :)
 } In_Module;
 
+#pragma warning(disable:4761)
+
 struct tNES
 {
 	int PRGMask;
