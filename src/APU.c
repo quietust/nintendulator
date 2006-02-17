@@ -222,7 +222,7 @@ static	struct
 	unsigned char linear, wavehold;
 	unsigned long freq;
 	unsigned char CurD;
-	int Timer, LinCtr, LinMode;
+	int Timer, LinCtr, LinReload;
 	BOOL Enabled, Active;
 	unsigned long Cycles;
 	signed long Pos;
@@ -231,7 +231,7 @@ const	signed char	TriDuty[32] = {-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,7,6,5,4
 __inline void	Triangle_CheckActive (void)
 {
 	if (Triangle.freq >= 4)
-		Triangle.Active = Triangle.Enabled && Triangle.Timer && Triangle.LinCtr;
+		Triangle.Active = Triangle.Enabled && Triangle.Timer && (Triangle.LinCtr || Triangle.LinReload);
 	else	Triangle.Active = FALSE;
 	if (!Triangle.Active)
 		Triangle.Pos = 0;
@@ -250,7 +250,7 @@ __inline void	Triangle_Write (int Reg, unsigned char Val)
 		Triangle.freq |= (Val & 0x7) << 8;
 		if (Triangle.Enabled)
 			Triangle.Timer = LengthCounts[(Val >> 3) & 0x1F];
-		Triangle.LinMode = 1;
+		Triangle.LinReload = 1;
 		break;
 	case 4:	if (!(Triangle.Enabled = Val ? TRUE : FALSE))
 			Triangle.Timer = 0;
@@ -272,12 +272,12 @@ __inline void	Triangle_QuarterFrame (void)
 {
 	if (Triangle.Enabled)
 	{
-		if (Triangle.LinMode)
+		if (Triangle.LinReload)
 			Triangle.LinCtr = Triangle.linear;
 		else	if (Triangle.LinCtr)
 			Triangle.LinCtr--;
 		if (!Triangle.wavehold)
-			Triangle.LinMode = 0;
+			Triangle.LinReload = 0;
 	}
 	Triangle_CheckActive();
 }
