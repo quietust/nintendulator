@@ -592,8 +592,8 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			break;
 		case IDC_PAL_CUSTOM:
 			GetDlgItemText(hDlg,IDC_PAL_CUSTFILE,filename,256);
-			if (GFX_ImportPalette(filename,TRUE))
-				pal = 3;
+			pal = 3;
+			GFX_ImportPalette(filename,TRUE);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_BROWSE:
