@@ -229,7 +229,7 @@ void	GFX_DrawScreen (void)
 		GFX_Update();
 
 		GFX.aFPScnt++;
-		if (GFX.aFPScnt == 3)
+		if (GFX.aFPScnt == 10)
 		{
 			GFX.FPSnum = GFX.aFPSnum / GFX.aFPScnt;
 			if (GFX.aFSkip)
