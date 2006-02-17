@@ -560,7 +560,7 @@ void	Controllers_RecordMovie (void)
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = "";
 	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-	ofn.lpstrDefExt = NULL;
+	ofn.lpstrDefExt = "NMV";
 	ofn.lCustData = 0;
 	ofn.lpfnHook = NULL;
 	ofn.lpTemplateName = NULL;
