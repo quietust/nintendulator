@@ -344,6 +344,6 @@ int	Genie_Load (FILE *in)
 		MI->Shutdown();	// shut down the mapper
 	Genie_Init();		// reset the I/O handlers
 	if ((MI) && (MI->Reset))
-		MI->Reset(1);	// and then start the mapper up again; we'll load its state momentarily
+		MI->Reset(0);	// and then start the mapper up again; we'll load its state momentarily
 	return clen;
 }
