@@ -528,8 +528,8 @@ void	Controllers_PlayMovie (void)
 		char *desc;
 
 		fread(buf,1,4,movie);
-		if (1 || memcmp(buf,STATES_VERSION,4))
-		{	/* For now, allow savestates with wrong version */
+		if (memcmp(buf,STATES_VERSION,4))
+		{
 			fclose(movie);
 			MessageBox(mWnd,"Incorrect movie version!", "Nintendulator", MB_OK | MB_ICONERROR);
 			return;
