@@ -431,6 +431,51 @@ void	Controllers_Write (unsigned char Val)
 	Controllers.ExpPort.Write(&Controllers.ExpPort,Val);
 }
 
+int	Controllers_Save (FILE *out)
+{
+	int clen = 0;
+	fwrite(&Controllers.FSPort1.Type,4,1,out);	clen += 4;
+	fwrite(&Controllers.FSPort2.Type,4,1,out);	clen += 4;
+	fwrite(&Controllers.FSPort3.Type,4,1,out);	clen += 4;
+	fwrite(&Controllers.FSPort4.Type,4,1,out);	clen += 4;
+	fwrite(&Controllers.Port1.Type,4,1,out);	clen += 4;
+	fwrite(&Controllers.Port2.Type,4,1,out);	clen += 4;
+	fwrite(&Controllers.ExpPort.Type,4,1,out);	clen += 4;
+	fwrite(Controllers.Port1.Data,Controllers.Port1.DataLen,1,out);		clen += Controllers.Port1.DataLen;
+	fwrite(Controllers.Port2.Data,Controllers.Port2.DataLen,1,out);		clen += Controllers.Port2.DataLen;
+	fwrite(Controllers.FSPort1.Data,Controllers.FSPort1.DataLen,1,out);	clen += Controllers.FSPort1.DataLen;
+	fwrite(Controllers.FSPort2.Data,Controllers.FSPort2.DataLen,1,out);	clen += Controllers.FSPort2.DataLen;
+	fwrite(Controllers.FSPort3.Data,Controllers.FSPort3.DataLen,1,out);	clen += Controllers.FSPort3.DataLen;
+	fwrite(Controllers.FSPort4.Data,Controllers.FSPort4.DataLen,1,out);	clen += Controllers.FSPort4.DataLen;
+	fwrite(Controllers.ExpPort.Data,Controllers.ExpPort.DataLen,1,out);	clen += Controllers.ExpPort.DataLen;
+	return clen;
+}
+
+int	Controllers_Load (FILE *in)
+{
+	int clen = 0;
+	int tpi;
+	Movie.ControllerTypes[3] = 1;	// denotes that controller state has been loaded
+					// if we're playing a movie, this means we should
+					// SKIP the controller info in the movie block
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort1,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort2,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort3,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort4,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.Port1,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.Port2,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	ExpPort_SetControllerType(&Controllers.ExpPort,tpi);	clen += 4;
+
+	fread(Controllers.Port1.Data,Controllers.Port1.DataLen,1,in);		clen += Controllers.Port1.DataLen;
+	fread(Controllers.Port2.Data,Controllers.Port2.DataLen,1,in);		clen += Controllers.Port2.DataLen;
+	fread(Controllers.FSPort1.Data,Controllers.FSPort1.DataLen,1,in);	clen += Controllers.FSPort1.DataLen;
+	fread(Controllers.FSPort2.Data,Controllers.FSPort2.DataLen,1,in);	clen += Controllers.FSPort2.DataLen;
+	fread(Controllers.FSPort3.Data,Controllers.FSPort3.DataLen,1,in);	clen += Controllers.FSPort3.DataLen;
+	fread(Controllers.FSPort4.Data,Controllers.FSPort4.DataLen,1,in);	clen += Controllers.FSPort4.DataLen;
+	fread(Controllers.ExpPort.Data,Controllers.ExpPort.DataLen,1,in);	clen += Controllers.ExpPort.DataLen;
+	return clen;
+}
+
 void	Controllers_SetDeviceUsed (void)
 {
 	int i;

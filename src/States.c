@@ -107,21 +107,7 @@ int	States_SaveData (FILE *out)
 	{
 		fwrite("CTRL",1,4,out);		flen += 4;
 		fwrite(&clen,1,4,out);		flen += 4;
-		clen = 0;
-		fwrite(&Controllers.FSPort1.Type,4,1,out);	clen += 4;
-		fwrite(&Controllers.FSPort2.Type,4,1,out);	clen += 4;
-		fwrite(&Controllers.FSPort3.Type,4,1,out);	clen += 4;
-		fwrite(&Controllers.FSPort4.Type,4,1,out);	clen += 4;
-		fwrite(&Controllers.Port1.Type,4,1,out);	clen += 4;
-		fwrite(&Controllers.Port2.Type,4,1,out);	clen += 4;
-		fwrite(&Controllers.ExpPort.Type,4,1,out);	clen += 4;
-		fwrite(Controllers.Port1.Data,Controllers.Port1.DataLen,1,out);		clen += Controllers.Port1.DataLen;
-		fwrite(Controllers.Port2.Data,Controllers.Port2.DataLen,1,out);		clen += Controllers.Port2.DataLen;
-		fwrite(Controllers.FSPort1.Data,Controllers.FSPort1.DataLen,1,out);	clen += Controllers.FSPort1.DataLen;
-		fwrite(Controllers.FSPort2.Data,Controllers.FSPort2.DataLen,1,out);	clen += Controllers.FSPort2.DataLen;
-		fwrite(Controllers.FSPort3.Data,Controllers.FSPort3.DataLen,1,out);	clen += Controllers.FSPort3.DataLen;
-		fwrite(Controllers.FSPort4.Data,Controllers.FSPort4.DataLen,1,out);	clen += Controllers.FSPort4.DataLen;
-		fwrite(Controllers.ExpPort.Data,Controllers.ExpPort.DataLen,1,out);	clen += Controllers.ExpPort.DataLen;
+		clen = Controllers_Save(out);
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
@@ -250,26 +236,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 		else if (!memcmp(csig,"APUS",4))
 			clen -= APU_Load(in);
 		else if (!memcmp(csig,"CTRL",4))
-		{
-			int tpi;
-			Movie.ControllerTypes[3] = 1;
-
-			fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort1,tpi);	clen -= 4;
-			fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort2,tpi);	clen -= 4;
-			fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort3,tpi);	clen -= 4;
-			fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort4,tpi);	clen -= 4;
-			fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.Port1,tpi);	clen -= 4;
-			fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.Port2,tpi);	clen -= 4;
-			fread(&tpi,4,1,in);	ExpPort_SetControllerType(&Controllers.ExpPort,tpi);	clen -= 4;
-
-			fread(Controllers.Port1.Data,Controllers.Port1.DataLen,1,in);		clen -= Controllers.Port1.DataLen;
-			fread(Controllers.Port2.Data,Controllers.Port2.DataLen,1,in);		clen -= Controllers.Port2.DataLen;
-			fread(Controllers.FSPort1.Data,Controllers.FSPort1.DataLen,1,in);	clen -= Controllers.FSPort1.DataLen;
-			fread(Controllers.FSPort2.Data,Controllers.FSPort2.DataLen,1,in);	clen -= Controllers.FSPort2.DataLen;
-			fread(Controllers.FSPort3.Data,Controllers.FSPort3.DataLen,1,in);	clen -= Controllers.FSPort3.DataLen;
-			fread(Controllers.FSPort4.Data,Controllers.FSPort4.DataLen,1,in);	clen -= Controllers.FSPort4.DataLen;
-			fread(Controllers.ExpPort.Data,Controllers.ExpPort.DataLen,1,in);	clen -= Controllers.ExpPort.DataLen;
-		}
+			clen -= Controllers_Load(in);
 		else if (!memcmp(csig,"GENI",4))
 			clen -= Genie_Load(in);
 		else if (!memcmp(csig,"NPRA",4))

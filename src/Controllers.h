@@ -94,6 +94,8 @@ void	Controllers_OpenConfig (void);
 void	Controllers_Init (void);
 void	Controllers_Release (void);
 void	Controllers_Write (unsigned char);
+int	Controllers_Save (FILE *);
+int	Controllers_Load (FILE *);
 void	Controllers_SetDeviceUsed (void);
 void	Controllers_Acquire (void);
 void	Controllers_UnAcquire (void);
