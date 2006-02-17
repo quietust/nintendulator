@@ -355,7 +355,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 
 void	States_LoadState (void)
 {
-	char tpchr[5];
+	char tpchr[256];
 	FILE *in;
 	int flen;
 
