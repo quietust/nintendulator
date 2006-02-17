@@ -14,7 +14,7 @@
 	<Configurations>
 		<Configuration
 			Name="Release (ANSI)|Win32"
-			OutputDirectory=".\..\ansi"
+			OutputDirectory=".\..\ansi\bin"
 			IntermediateDirectory=".\..\ansi\obj_emu"
 			ConfigurationType="1"
 			UseOfMFC="0"
@@ -87,7 +87,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug (ANSI)|Win32"
-			OutputDirectory=".\..\ansi"
+			OutputDirectory=".\..\ansi\bin"
 			IntermediateDirectory=".\..\ansi\obj_emu"
 			ConfigurationType="1"
 			UseOfMFC="0"
@@ -156,7 +156,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug (Unicode)|Win32"
-			OutputDirectory=".\.."
+			OutputDirectory=".\..\bin"
 			IntermediateDirectory=".\..\obj_emu"
 			ConfigurationType="1"
 			UseOfMFC="0"
@@ -225,7 +225,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release (Unicode)|Win32"
-			OutputDirectory=".\.."
+			OutputDirectory=".\..\bin"
 			IntermediateDirectory=".\..\obj_emu"
 			ConfigurationType="1"
 			UseOfMFC="0"

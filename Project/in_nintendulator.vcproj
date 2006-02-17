@@ -14,7 +14,7 @@
 	<Configurations>
 		<Configuration
 			Name="Release (ANSI)|Win32"
-			OutputDirectory=".\..\ansi"
+			OutputDirectory=".\..\ansi\bin"
 			IntermediateDirectory=".\..\ansi\obj_nsf"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -85,7 +85,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug (ANSI)|Win32"
-			OutputDirectory=".\..\ansi"
+			OutputDirectory=".\..\ansi\bin"
 			IntermediateDirectory=".\..\ansi\obj_nsf"
 			ConfigurationType="2"
 			UseOfMFC="0"
