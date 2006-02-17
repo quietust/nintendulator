@@ -70,11 +70,11 @@ int	CPU_Save (FILE *);
 int	CPU_Load (FILE *);
 #endif /* NSFPLAYER */
 void	CPU_ExecOp (void);
-int	_MAPINT	CPU_ReadRAM (int,int);
-void	_MAPINT	CPU_WriteRAM (int,int,int);
-int	_MAPINT	CPU_Read4k (int,int);
-void	_MAPINT	CPU_Write4k (int,int,int);
-int	_MAPINT	CPU_ReadPRG (int,int);
-void	_MAPINT	CPU_WritePRG (int,int,int);
+int	MAPINT	CPU_ReadRAM (int,int);
+void	MAPINT	CPU_WriteRAM (int,int,int);
+int	MAPINT	CPU_Read4k (int,int);
+void	MAPINT	CPU_Write4k (int,int,int);
+int	MAPINT	CPU_ReadPRG (int,int);
+void	MAPINT	CPU_WritePRG (int,int,int);
 
 #endif /* CPU_H */

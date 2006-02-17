@@ -33,10 +33,10 @@ struct tGenie
 };
 extern	struct tGenie Genie;
 
-int	_MAPINT	GenieRead (int,int);
-int	_MAPINT	GenieRead1 (int,int);
-int	_MAPINT	GenieRead2 (int,int);
-int	_MAPINT	GenieRead3 (int,int);
+int	MAPINT	GenieRead (int,int);
+int	MAPINT	GenieRead1 (int,int);
+int	MAPINT	GenieRead2 (int,int);
+int	MAPINT	GenieRead3 (int,int);
 
 void	Genie_Reset (void);
 void	Genie_Init (void);

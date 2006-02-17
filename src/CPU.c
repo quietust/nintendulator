@@ -61,8 +61,8 @@ unsigned char TmpData;
 unsigned char Opcode;
 unsigned long OpAddr;
 
-static	void	(_MAPINT *CPU_CPUCycle)		(void);
-void	_MAPINT	CPU_NoCPUCycle (void) { }
+static	void	(MAPINT *CPU_CPUCycle)		(void);
+void	MAPINT	CPU_NoCPUCycle (void) { }
 
 static	BOOL LastNMI;
 static	BOOL LastIRQ;
@@ -249,17 +249,17 @@ int	CPU_Load (FILE *in)
 }
 #endif
 
-int	_MAPINT	CPU_ReadRAM (int Bank, int Addr)
+int	MAPINT	CPU_ReadRAM (int Bank, int Addr)
 {
 	return CPU_RAM[Addr & 0x07FF];
 }
 
-void	_MAPINT	CPU_WriteRAM (int Bank, int Addr, int Val)
+void	MAPINT	CPU_WriteRAM (int Bank, int Addr, int Val)
 {
 	CPU_RAM[Addr & 0x07FF] = Val;
 }
 
-int	_MAPINT	CPU_Read4k (int Bank, int Addr)
+int	MAPINT	CPU_Read4k (int Bank, int Addr)
 {
 	switch (Addr)
 	{
@@ -279,7 +279,7 @@ int	_MAPINT	CPU_Read4k (int Bank, int Addr)
 	}
 }
 
-void	_MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
+void	MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
 {
 	int i;
 	switch (Addr)
@@ -300,14 +300,14 @@ void	_MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
 	}
 }
 
-int	_MAPINT	CPU_ReadPRG (int Bank, int Addr)
+int	MAPINT	CPU_ReadPRG (int Bank, int Addr)
 {
 	if (CPU.Readable[Bank])
 		return CPU.PRGPointer[Bank][Addr];
 	else	return -1;
 }
 
-void	_MAPINT	CPU_WritePRG (int Bank, int Addr, int Val)
+void	MAPINT	CPU_WritePRG (int Bank, int Addr, int Val)
 {
 	if (CPU.Writable[Bank])
 		CPU.PRGPointer[Bank][Addr] = Val;

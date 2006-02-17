@@ -75,13 +75,13 @@ void	PPU_PowerOn (void);
 void	PPU_Reset (void);
 int	PPU_Save (FILE *);
 int	PPU_Load (FILE *);
-int	_MAPINT	PPU_IntRead (int,int);
-void	_MAPINT	PPU_IntWrite (int,int,int);
+int	MAPINT	PPU_IntRead (int,int);
+void	MAPINT	PPU_IntWrite (int,int,int);
 void	PPU_Run (void);
 void	PPU_GetGFXPtr (void);
 
-int	_MAPINT	PPU_BusRead (int,int);
-void	_MAPINT	PPU_BusWriteCHR (int,int,int);
-void	_MAPINT	PPU_BusWriteNT (int,int,int);
+int	MAPINT	PPU_BusRead (int,int);
+void	MAPINT	PPU_BusWriteCHR (int,int,int);
+void	MAPINT	PPU_BusWriteNT (int,int,int);
 
 #endif /* PPU_H */

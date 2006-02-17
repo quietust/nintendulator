@@ -194,7 +194,7 @@ unsigned char GameGenieCHR[0x400] = {
 0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xF0,0xF0,0xF0,0xF0,0xFF,0xFF,0xFF,0xFF,0xF0,0xF0,0xF0,0xF0,
 0xFF,0xFF,0xFF,0xFF,0x0F,0x0F,0x0F,0x0F,0xFF,0xFF,0xFF,0xFF,0x0F,0x0F,0x0F,0x0F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
-int	_MAPINT	GenieRead (int Bank, int Addr)
+int	MAPINT	GenieRead (int Bank, int Addr)
 {
 	int result = CPU_ReadPRG(Bank,Addr);
 	if (NES.GameGenie)
@@ -208,21 +208,21 @@ int	_MAPINT	GenieRead (int Bank, int Addr)
 	}
 	return result;
 }
-int	_MAPINT	GenieRead1 (int Bank, int Addr)
+int	MAPINT	GenieRead1 (int Bank, int Addr)
 {
 	int result = CPU_ReadPRG(Bank,Addr);
 	if ((NES.GameGenie) && ((Addr == Genie.Code1A) && ((Genie.CodeStat & 0x02) || (result == Genie.Code1O))))
 		return Genie.Code1V;
 	else	return result;
 }
-int	_MAPINT	GenieRead2 (int Bank, int Addr)
+int	MAPINT	GenieRead2 (int Bank, int Addr)
 {
 	int result = CPU_ReadPRG(Bank,Addr);
 	if ((NES.GameGenie) && ((Addr == Genie.Code2A) && ((Genie.CodeStat & 0x04) || (result == Genie.Code2O))))
 		return Genie.Code2V;
 	else	return result;
 }
-int	_MAPINT	GenieRead3 (int Bank, int Addr)
+int	MAPINT	GenieRead3 (int Bank, int Addr)
 {
 	int result = CPU_ReadPRG(Bank,Addr);
 	if ((NES.GameGenie) && ((Addr == Genie.Code3A) && ((Genie.CodeStat & 0x08) || (result == Genie.Code3O))))
@@ -231,7 +231,7 @@ int	_MAPINT	GenieRead3 (int Bank, int Addr)
 }
 
 
-void	_MAPINT	GenieWrite (int Bank, int Addr, int Val)
+void	MAPINT	GenieWrite (int Bank, int Addr, int Val)
 {
 	int i;
 	switch (Addr)
