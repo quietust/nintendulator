@@ -361,7 +361,8 @@ __inline static	void	RunNoSkip (int NumTicks)
 		{
 			if (PPU.SLnum < 240)
 			{
-				DiscoverSprites();
+				if (PPU.IsRendering)
+					DiscoverSprites();
 				ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
 			if (PPU.SLnum == -1)
@@ -684,7 +685,8 @@ __inline static	void	RunSkip (int NumTicks)
 		{
 			if (PPU.SLnum < 240)
 			{
-				DiscoverSprites();
+				if (PPU.IsRendering)
+					DiscoverSprites();
 				if (PPU.Spr0InLine)
 					ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
