@@ -437,9 +437,13 @@ __inline void	DPCM_Run (void)
 
 void	DPCM_Fetch (void)
 {
+	unsigned char cycles = CPU.PCMCycles;
 	if (DPCM.buffull || !DPCM.LengthCtr)
 		return;
-	while (CPU.PCMCycles--)
+	CPU.PCMCycles = 0;
+	if (cycles > 4)		// handle read overflows
+		cycles = 4;
+	while (cycles--)
 		DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
 	DPCM.buffull = TRUE;
 	if (++DPCM.CurAddr == 0x10000)

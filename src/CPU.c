@@ -79,6 +79,8 @@ unsigned char __fastcall	CPU_MemGet (unsigned int Addy)
 {
 	static int buf;
 	RunCycle();
+	if (CPU.PCMCycles == 4)		// if the first thing it hit was a read, then flag it so we do the full 4 reads
+		CPU.PCMCycles = 8;	// otherwise, do nothing - this could've been an interrupt, which finishes with reads
 	if (CPU.ReadHandler[(Addy >> 12) & 0xF] == CPU_ReadPRG)
 	{
 		if (CPU.Readable[(Addy >> 12) & 0xF])
@@ -96,7 +98,8 @@ unsigned char __fastcall	CPU_MemGet (unsigned int Addy)
 void __fastcall	CPU_MemSet (unsigned int Addy, unsigned char Val)
 {
 	RunCycle();
-	CPU.PCMCycles--;
+	if (CPU.PCMCycles)
+		CPU.PCMCycles--;
 	CPU.WriteHandler[(Addy >> 12) & 0xF]((Addy >> 12) & 0xF,Addy & 0xFFF,Val);
 }
 static	__forceinline void	Push (unsigned char Val)
