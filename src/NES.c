@@ -1129,8 +1129,8 @@ void	NES_LoadSettings (void)
 	RegQueryValueEx(SettingsBase,"ExpPortT",0,&Type,(unsigned char *)&ExpPortT,&Size);
 
 
-	if ((Port1T == 5) || (Port2T == 5))
-		StdPort_SetControllerType(&Controllers.Port1,5);
+	if ((Port1T == STD_POWERPAD) || (Port2T == STD_POWERPAD))
+		StdPort_SetControllerType(&Controllers.Port1,STD_POWERPAD);
 	else
 	{
 		StdPort_SetControllerType(&Controllers.Port1,Port1T);
