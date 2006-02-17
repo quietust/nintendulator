@@ -842,12 +842,12 @@ static	int	__fastcall	Read2 (void)
 	tmp = PPU.Reg2002 | (PPU.ppuLatch & 0x1F);
 	if (tmp & 0x80)
 		PPU.Reg2002 &= 0x60;
-	return tmp;
+	return PPU.ppuLatch = tmp;
 }
 
 static	int	__fastcall	Read4 (void)
 {
-	return PPU.Sprite[PPU.SprAddr++];
+	return PPU.ppuLatch = PPU.Sprite[PPU.SprAddr++];
 }
 
 static	int	__fastcall	Read7 (void)
@@ -858,7 +858,7 @@ static	int	__fastcall	Read7 (void)
 		PPU.VRAMAddr += 32;
 	else	PPU.VRAMAddr++;
 	PPU.VRAMAddr &= 0x3FFF;
-	return PPU.buf2007;
+	return PPU.ppuLatch = PPU.buf2007;
 }
 
 int	_MAPINT	PPU_IntRead (int Bank, int Where)
