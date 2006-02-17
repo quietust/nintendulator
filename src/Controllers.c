@@ -671,7 +671,14 @@ void	Controllers_RecordMovie (BOOL fromState)
 	fwrite("NMOV",1,4,movie);
 
 	if (fromState)
+	{
 		States_SaveData(movie);
+	}
+	else
+	{
+		NES_Reset(RESET_HARD);
+		NES.Scanline = FALSE;
+	}
 
 	fwrite("NMOV",1,4,movie);
 	fwrite(&len,1,4,movie);
@@ -698,8 +705,6 @@ void	Controllers_RecordMovie (BOOL fromState)
 	// TODO - Actually store comment text
 	fwrite(&len,4,1,movie);	// movie data length
 
-	NES_Reset(RESET_HARD);
-	NES.Scanline = FALSE;
 	ReRecords = 0;
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_GRAYED);
