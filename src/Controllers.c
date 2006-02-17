@@ -483,7 +483,9 @@ void	Controllers_PlayMovie (BOOL Review)
 	if (!GetOpenFileName(&ofn))
 		return;
 
-	movie = fopen(MovieName,"r+b");
+	if (Review)
+		movie = fopen(MovieName,"r+b");
+	else	movie = fopen(MovieName,"rb");
 	fread(buf,1,4,movie);
 	if (!memcmp(buf,"FMV\x1a",4))
 	{
@@ -750,6 +752,7 @@ void	Controllers_StopMovie (void)
 		fwrite(&len,4,1,movie);			// 2: set the NMOV block length
 		fseek(movie,4,SEEK_CUR);		len -= 4;	// skip controller data
 		fwrite(&ReRecords,4,1,movie);		len -= 4;	// write the final re-record count
+		fflush(movie);
 		fread(&mlen,4,1,movie);			len -= 4;	// read description len
 		if (mlen)
 		{
