@@ -686,6 +686,7 @@ __inline static	void	RunSkip (int NumTicks)
 				PPU.IsRendering = PPU.OnScreen = FALSE;
 			else if (PPU.SLnum == 241)
 			{
+				PPU_GetGFXPtr();
 				GFX_DrawScreen();
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
