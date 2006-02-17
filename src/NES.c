@@ -140,6 +140,12 @@ void	NES_CloseFile (void)
 {
 	int i;
 
+	if (NES.ROMLoaded)
+	{
+		MapperInterface_UnloadMapper();
+		NES.ROMLoaded = FALSE;
+	}
+
 	if (RI.ROMType)
 	{
 		if (RI.ROMType == ROM_UNIF)
@@ -152,12 +158,6 @@ void	NES_CloseFile (void)
 		}
 		free(RI.Filename);
 		memset(&RI,0,sizeof(RI));
-	}
-	
-	if (NES.ROMLoaded)
-	{
-		MapperInterface_UnloadMapper();
-		NES.ROMLoaded = FALSE;
 	}
 
 	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_GRAYED);
