@@ -570,7 +570,7 @@ void	Controllers_RecordMovie (void)
 
 	Controllers.MovieMode = MOV_RECORD;
 
-	movie = fopen(MovieName,"wb");
+	movie = fopen(MovieName,"w+b");
 	fwrite("NMV\x1A",1,4,movie);
 	x = 0;
 	if (1)	// record from reset
