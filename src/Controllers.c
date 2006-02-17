@@ -465,6 +465,7 @@ FILE *movie;
 unsigned char MOV_ControllerTypes[4];
 int	ReRecords;
 char MovieName[256];
+int MovieLen;
 
 void	Controllers_PlayMovie (BOOL Review)
 {
@@ -498,6 +499,8 @@ void	Controllers_PlayMovie (BOOL Review)
 
 	if (!GetOpenFileName(&ofn))
 		return;
+
+	MovieLen = 0;
 
 	if (Review)
 		movie = fopen(MovieName,"r+b");
@@ -534,6 +537,8 @@ void	Controllers_PlayMovie (BOOL Review)
 		else	StdPort_SetControllerType(&Controllers.Port2,STD_UNCONNECTED);
 		ExpPort_SetControllerType(&Controllers.ExpPort,EXP_UNCONNECTED);
 
+		fseek(movie,0,SEEK_END);
+		MovieLen = ftell(movie) - 0x90;
 		fseek(movie,0x90,SEEK_SET);
 
 		NES_Reset(RESET_HARD);
@@ -636,7 +641,7 @@ void	Controllers_PlayMovie (BOOL Review)
 			free(desc);
 		}
 		EI.DbgOut("Re-record count: %i",ReRecords);
-		fread(&len,4,1,movie);
+		fread(&MovieLen,4,1,movie);
 	}
 	else
 	{
@@ -850,14 +855,16 @@ void	Controllers_UpdateInput (void)
 	if (Controllers.MovieMode & MOV_PLAY)
 	{
 		if (Controllers.Port1.MovLen)
-			fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
+			fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);	MovieLen -= Controllers.Port1.MovLen;
 		if (Controllers.Port2.MovLen)
-			fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
+			fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);	MovieLen -= Controllers.Port2.MovLen;
 		if (Controllers.ExpPort.MovLen)
-			fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
-		if (feof(movie))
+			fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);	MovieLen -= Controllers.ExpPort.MovLen;
+		if (MovieLen <= 0)
 		{
-			GFX_ShowText("Movie stopped");
+			if (!MovieLen)
+				GFX_ShowText("Movie stopped.");
+			else	GFX_ShowText("Unexpected EOF in movie!");
 			Controllers_StopMovie();
 		}
 	}
