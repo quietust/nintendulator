@@ -37,46 +37,46 @@ static	void	AllocMov (struct tStdPort *Cont)
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 }
 
-static	void	Frame (struct tStdPort *Cont)
+static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	int x = 0, y;
 	if (Cont->PortNum == 0)
 	{
-		Controllers.FSPort1.Frame(&Controllers.FSPort1);
-		Controllers.FSPort3.Frame(&Controllers.FSPort3);
-		if (Controllers.MovieMode & MOV_RECORD)
-		{
-			for (y = 0; x < Controllers.FSPort1.MovLen; x++, y++)
-				Controllers.FSPort1.MovData[y] = Cont->MovData[x];
-			for (y = 0; x < Controllers.FSPort3.MovLen; x++, y++)
-				Controllers.FSPort3.MovData[y] = Cont->MovData[x];
-		}
-		if (Controllers.MovieMode & MOV_PLAY)
+		if (mode & MOV_PLAY)
 		{
 			for (y = 0; x < Controllers.FSPort1.MovLen; x++, y++)
 				Cont->MovData[x] = Controllers.FSPort1.MovData[y];
 			for (y = 0; x < Controllers.FSPort3.MovLen; x++, y++)
 				Cont->MovData[x] = Controllers.FSPort3.MovData[y];
 		}
+		Controllers.FSPort1.Frame(&Controllers.FSPort1,mode);
+		Controllers.FSPort3.Frame(&Controllers.FSPort3,mode);
+		if (mode & MOV_RECORD)
+		{
+			for (y = 0; x < Controllers.FSPort1.MovLen; x++, y++)
+				Controllers.FSPort1.MovData[y] = Cont->MovData[x];
+			for (y = 0; x < Controllers.FSPort3.MovLen; x++, y++)
+				Controllers.FSPort3.MovData[y] = Cont->MovData[x];
+		}
 	}
 	if (Cont->PortNum == 1)
 	{
-		if (Controllers.MovieMode & MOV_RECORD)
-		{
-			for (y = 0; x < Controllers.FSPort2.MovLen; x++, y++)
-				Controllers.FSPort2.MovData[y] = Cont->MovData[x];
-			for (y = 0; x < Controllers.FSPort4.MovLen; x++, y++)
-				Controllers.FSPort4.MovData[y] = Cont->MovData[x];
-		}
-		if (Controllers.MovieMode & MOV_PLAY)
+		if (mode & MOV_PLAY)
 		{
 			for (y = 0; x < Controllers.FSPort2.MovLen; x++, y++)
 				Cont->MovData[x] = Controllers.FSPort2.MovData[y];
 			for (y = 0; x < Controllers.FSPort4.MovLen; x++, y++)
 				Cont->MovData[x] = Controllers.FSPort4.MovData[y];
 		}
-		Controllers.FSPort2.Frame(&Controllers.FSPort2);
-		Controllers.FSPort4.Frame(&Controllers.FSPort4);
+		Controllers.FSPort2.Frame(&Controllers.FSPort2,mode);
+		Controllers.FSPort4.Frame(&Controllers.FSPort4,mode);
+		if (mode & MOV_RECORD)
+		{
+			for (y = 0; x < Controllers.FSPort2.MovLen; x++, y++)
+				Controllers.FSPort2.MovData[y] = Cont->MovData[x];
+			for (y = 0; x < Controllers.FSPort4.MovLen; x++, y++)
+				Controllers.FSPort4.MovData[y] = Cont->MovData[x];
+		}
 	}
 }
 
