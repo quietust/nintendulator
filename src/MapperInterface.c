@@ -20,75 +20,107 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#include "Nintendulator.h"
-#include "NES.h"
-#include "CPU.h"
-#include "PPU.h"
-#include "GFX.h"
-#include "Debugger.h"
-#include "States.h"
+#ifdef NSFPLAYER
+# include "in_nintendulator.h"
+# include "MapperInterface.h"
+# include "CPU.h"
+#else
+# include "Nintendulator.h"
+# include "NES.h"
+# include "CPU.h"
+# include "PPU.h"
+# include "GFX.h"
+# include "Debugger.h"
+# include "States.h"
+#endif
 
-TMapperParam	MP;
-PMapperInfo	MI, MI2;
+TEmulatorInterface	EI;
+TROMInfo		RI;
 
+PDLLInfo		DI;
+CPMapperInfo		MI;
+#ifndef NSFPLAYER
+CPMapperInfo		MI2;
+#endif
+
+#ifdef NSFPLAYER
+HINSTANCE		dInst;
+PLoadMapperDLL		LoadDLL;
+PUnloadMapperDLL	UnloadDLL;
+#else
 struct	tMapperDLL
 {
 	HINSTANCE		dInst;
-	PLoad_DLL		LoadDLL;
+	PLoadMapperDLL		LoadDLL;
 	PDLLInfo		DI;
-	PUnload_DLL		UnloadDLL;
+	PUnloadMapperDLL	UnloadDLL;
 	struct	tMapperDLL *	Next;
 } *MapperDLLs = NULL;
-/*
-typedef	struct	tMenuItem
-{
-	HMENU			hMenu;
-	char *			Caption;
-	int			State;
-	int			Cmd;
-	int			Parm1;
-	int			Parm2;
-	int			Parm3;
-	struct tMenuItem *	Child;
-	struct tMenuItem *	Next;
-}	TMenuItem, *PMenuItem;
+#endif
 
-TMenuItem MenuRoot = {0,"Game",MENU_NOCHECK,-1,-1,-1,-1,NULL,NULL};
-*/
 //******************************************************************************
 
-static	void	__cdecl	SetWriteHandler (int Page, PWriteFunc New)
+static	void	_MAPINT	SetCPUWriteHandler (int Page, FCPUWrite New)
 {
 	CPU.WriteHandler[Page] = New;
 }
-static	void	__cdecl	SetReadHandler (int Page, PReadFunc New)
+static	void	_MAPINT	SetCPUReadHandler (int Page, FCPURead New)
 {
 	CPU.ReadHandler[Page] = New;
 }
-static	PWriteFunc	__cdecl	GetWriteHandler (int Page)
+static	FCPUWrite	_MAPINT	GetCPUWriteHandler (int Page)
 {
 	return CPU.WriteHandler[Page];
 }
-static	PReadFunc	__cdecl	GetReadHandler (int Page)
+static	FCPURead	_MAPINT	GetCPUReadHandler (int Page)
 {
 	return CPU.ReadHandler[Page];
 }
 
+static	void	_MAPINT	SetPPUWriteHandler (int Page, FPPUWrite New)
+{
+#ifndef NSFPLAYER
+	PPU.WriteHandler[Page] = New;
+#endif
+}
+static	void	_MAPINT	SetPPUReadHandler (int Page, FPPURead New)
+{
+#ifndef NSFPLAYER
+	PPU.ReadHandler[Page] = New;
+#endif
+}
+static	FPPUWrite	_MAPINT	GetPPUWriteHandler (int Page)
+{
+#ifndef NSFPLAYER
+	return PPU.WriteHandler[Page];
+#else
+	return NULL;
+#endif
+}
+static	FPPURead	_MAPINT	GetPPUReadHandler (int Page)
+{
+#ifndef NSFPLAYER
+	return PPU.ReadHandler[Page];
+#else
+	return NULL;
+#endif
+}
+
 //******************************************************************************
 
-static	__inline void	__cdecl	SetPRG_ROM4 (int Where, int What)
+static	__inline void	_MAPINT	SetPRG_ROM4 (int Where, int What)
 {
 	CPU.PRGPointer[Where] = PRG_ROM[What & NES.PRGMask];
 	CPU.Readable[Where] = TRUE;
 	CPU.Writable[Where] = FALSE;
 }
-static	void	__cdecl	SetPRG_ROM8 (int Where, int What)
+static	void	_MAPINT	SetPRG_ROM8 (int Where, int What)
 {
 	What <<= 1;
 	SetPRG_ROM4(Where+0,What+0);
 	SetPRG_ROM4(Where+1,What+1);
 }
-static	void	__cdecl	SetPRG_ROM16 (int Where, int What)
+static	void	_MAPINT	SetPRG_ROM16 (int Where, int What)
 {
 	What <<= 2;
 	SetPRG_ROM4(Where+0,What+0);
@@ -96,7 +128,7 @@ static	void	__cdecl	SetPRG_ROM16 (int Where, int What)
 	SetPRG_ROM4(Where+2,What+2);
 	SetPRG_ROM4(Where+3,What+3);
 }
-static	void	__cdecl	SetPRG_ROM32 (int Where, int What)
+static	void	_MAPINT	SetPRG_ROM32 (int Where, int What)
 {
 	What <<= 3;
 	SetPRG_ROM4(Where+0,What+0);
@@ -108,28 +140,28 @@ static	void	__cdecl	SetPRG_ROM32 (int Where, int What)
 	SetPRG_ROM4(Where+6,What+6);
 	SetPRG_ROM4(Where+7,What+7);
 }
-static	int	__cdecl	GetPRG_ROM4 (int Where)	/* -1 if no ROM mapped */
+static	int	_MAPINT	GetPRG_ROM4 (int Where)	/* -1 if no ROM mapped */
 {
-	int tpi = (CPU.PRGPointer[Where] - PRG_ROM[0]) >> 12;
-	if ((tpi < 0) || (tpi >= (MP.PRG_ROM_Size >> 12))) return -1;
+	int tpi = (int)((CPU.PRGPointer[Where] - PRG_ROM[0]) >> 12);
+	if ((tpi < 0) || (tpi > NES.PRGMask)) return -1;
 	else return tpi;
 }
 
 //******************************************************************************
 
-static	__inline void	__cdecl	SetPRG_RAM4 (int Where, int What)
+static	__inline void	_MAPINT	SetPRG_RAM4 (int Where, int What)
 {
 	CPU.PRGPointer[Where] = PRG_RAM[What & 0xF];
 	CPU.Readable[Where] = TRUE;
 	CPU.Writable[Where] = TRUE;
 }
-static	void	__cdecl	SetPRG_RAM8 (int Where, int What)
+static	void	_MAPINT	SetPRG_RAM8 (int Where, int What)
 {
 	What <<= 1;
 	SetPRG_RAM4(Where+0,What+0);
 	SetPRG_RAM4(Where+1,What+1);
 }
-static	void	__cdecl	SetPRG_RAM16 (int Where, int What)
+static	void	_MAPINT	SetPRG_RAM16 (int Where, int What)
 {
 	What <<= 2;
 	SetPRG_RAM4(Where+0,What+0);
@@ -137,7 +169,7 @@ static	void	__cdecl	SetPRG_RAM16 (int Where, int What)
 	SetPRG_RAM4(Where+2,What+2);
 	SetPRG_RAM4(Where+3,What+3);
 }
-static	void	__cdecl	SetPRG_RAM32 (int Where, int What)
+static	void	_MAPINT	SetPRG_RAM32 (int Where, int What)
 {
 	What <<= 3;
 	SetPRG_RAM4(Where+0,What+0);
@@ -149,42 +181,47 @@ static	void	__cdecl	SetPRG_RAM32 (int Where, int What)
 	SetPRG_RAM4(Where+6,What+6);
 	SetPRG_RAM4(Where+7,What+7);
 }
-static	int	__cdecl	GetPRG_RAM4 (int Where)	/* -1 if no RAM mapped */
+static	int	_MAPINT	GetPRG_RAM4 (int Where)	/* -1 if no RAM mapped */
 {
-	int tpi = (CPU.PRGPointer[Where] - PRG_RAM[0]) >> 12;
-	if ((tpi < 0) || (tpi > 0xF)) return -1;
+	int tpi = (int)((CPU.PRGPointer[Where] - PRG_RAM[0]) >> 12);
+	if ((tpi < 0) || (tpi > MAX_PRGRAM_MASK)) return -1;
 	else return tpi;
 }
 
 //******************************************************************************
 
-static	unsigned char *	__cdecl	GetPRG_Ptr4 (int Where)
+static	unsigned char *	_MAPINT	GetPRG_Ptr4 (int Where)
 {
 	return CPU.PRGPointer[Where];
 }
-static	void	__cdecl	SetPRG_OB4 (int Where)	/* Open bus */
+static	void	_MAPINT	SetPRG_OB4 (int Where)	/* Open bus */
 {
 	CPU.Readable[Where] = FALSE;
+	CPU.Writable[Where] = FALSE;
 }
 
 //******************************************************************************
 
-static	__inline void	__cdecl	SetCHR_ROM1 (int Where, int What)
+static	__inline void	_MAPINT	SetCHR_ROM1 (int Where, int What)
 {
-	if (!MP.CHR_ROM_Size)
+#ifndef NSFPLAYER
+	if (!NES.CHRMask)
 		return;
 	PPU.CHRPointer[Where] = CHR_ROM[What & NES.CHRMask];
 	PPU.Writable[Where] = FALSE;
+#ifdef ENABLE_DEBUGGER
 	Debugger.PatChanged = TRUE;
 	Debugger.NTabChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
+#endif
 }
-static	void	__cdecl	SetCHR_ROM2 (int Where, int What)
+static	void	_MAPINT	SetCHR_ROM2 (int Where, int What)
 {
 	What <<= 1;
 	SetCHR_ROM1(Where+0,What+0);
 	SetCHR_ROM1(Where+1,What+1);
 }
-static	void	__cdecl	SetCHR_ROM4 (int Where, int What)
+static	void	_MAPINT	SetCHR_ROM4 (int Where, int What)
 {
 	What <<= 2;
 	SetCHR_ROM1(Where+0,What+0);
@@ -192,7 +229,7 @@ static	void	__cdecl	SetCHR_ROM4 (int Where, int What)
 	SetCHR_ROM1(Where+2,What+2);
 	SetCHR_ROM1(Where+3,What+3);
 }
-static	void	__cdecl	SetCHR_ROM8 (int Where, int What)
+static	void	_MAPINT	SetCHR_ROM8 (int Where, int What)
 {
 	What <<= 3;
 	SetCHR_ROM1(Where+0,What+0);
@@ -204,29 +241,37 @@ static	void	__cdecl	SetCHR_ROM8 (int Where, int What)
 	SetCHR_ROM1(Where+6,What+6);
 	SetCHR_ROM1(Where+7,What+7);
 }
-static	int	__cdecl	GetCHR_ROM1 (int Where)	/* -1 if no ROM mapped */
+static	int	_MAPINT	GetCHR_ROM1 (int Where)	/* -1 if no ROM mapped */
 {
-	int tpi = (PPU.CHRPointer[Where] - CHR_ROM[0]) >> 10;
-	if ((tpi < 0) || (tpi >= (MP.CHR_ROM_Size >> 10))) return -1;
+#ifndef NSFPLAYER
+	int tpi = (int)((PPU.CHRPointer[Where] - CHR_ROM[0]) >> 10);
+	if ((tpi < 0) || (tpi > NES.CHRMask)) return -1;
 	else return tpi;
+#else
+	return -1;
+#endif
 }
 
 //******************************************************************************
 
-static	__inline void	__cdecl	SetCHR_RAM1 (int Where, int What)
+static	__inline void	_MAPINT	SetCHR_RAM1 (int Where, int What)
 {
+#ifndef NSFPLAYER
 	PPU.CHRPointer[Where] = CHR_RAM[What & 0x1F];
 	PPU.Writable[Where] = TRUE;
+#ifdef ENABLE_DEBUGGER
 	Debugger.PatChanged = TRUE;
 	Debugger.NTabChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
+#endif
 }
-static	void	__cdecl	SetCHR_RAM2 (int Where, int What)
+static	void	_MAPINT	SetCHR_RAM2 (int Where, int What)
 {
 	What <<= 1;
 	SetCHR_RAM1(Where+0,What+0);
 	SetCHR_RAM1(Where+1,What+1);
 }
-static	void	__cdecl	SetCHR_RAM4 (int Where, int What)
+static	void	_MAPINT	SetCHR_RAM4 (int Where, int What)
 {
 	What <<= 2;
 	SetCHR_RAM1(Where+0,What+0);
@@ -234,7 +279,7 @@ static	void	__cdecl	SetCHR_RAM4 (int Where, int What)
 	SetCHR_RAM1(Where+2,What+2);
 	SetCHR_RAM1(Where+3,What+3);
 }
-static	void	__cdecl	SetCHR_RAM8 (int Where, int What)
+static	void	_MAPINT	SetCHR_RAM8 (int Where, int What)
 {
 	What <<= 3;
 	SetCHR_RAM1(Where+0,What+0);
@@ -246,65 +291,95 @@ static	void	__cdecl	SetCHR_RAM8 (int Where, int What)
 	SetCHR_RAM1(Where+6,What+6);
 	SetCHR_RAM1(Where+7,What+7);
 }
-static	int	__cdecl	GetCHR_RAM1 (int Where)	/* -1 if no ROM mapped */
+static	int	_MAPINT	GetCHR_RAM1 (int Where)	/* -1 if no ROM mapped */
 {
-	int tpi = (PPU.CHRPointer[Where] - CHR_RAM[0]) >> 10;
-	if ((tpi < 0) || (tpi > 0x1F)) return -1;
+#ifndef NSFPLAYER
+	int tpi = (int)((PPU.CHRPointer[Where] - CHR_RAM[0]) >> 10);
+	if ((tpi < 0) || (tpi > MAX_CHRRAM_MASK)) return -1;
 	else return tpi;
+#else
+	return -1;
+#endif
 }
 
 //******************************************************************************
 
-static	unsigned char *	__cdecl	GetCHR_Ptr1 (int Where)
+static	unsigned char *	_MAPINT	GetCHR_Ptr1 (int Where)
 {
+#ifndef NSFPLAYER
 	return PPU.CHRPointer[Where];
+#else
+	return NULL;
+#endif
+}
+
+static	void	_MAPINT	SetCHR_OB1 (int Where)
+{
+	/* not handling PPU open bus yet */
 }
 
 //******************************************************************************
 
-static	void	__cdecl	Mirror_H (void)
+static	void	_MAPINT	Mirror_H (void)
 {
+#ifndef NSFPLAYER
 	PPU_SetMirroring(0,0,1,1);
+#endif
 }
-static	void	__cdecl	Mirror_V (void)
+static	void	_MAPINT	Mirror_V (void)
 {
+#ifndef NSFPLAYER
 	PPU_SetMirroring(0,1,0,1);
+#endif
 }
-static	void	__cdecl	Mirror_4 (void)
+static	void	_MAPINT	Mirror_4 (void)
 {
+#ifndef NSFPLAYER
 	PPU_SetMirroring(0,1,2,3);
+#endif
 }
-static	void	__cdecl	Mirror_S0 (void)
+static	void	_MAPINT	Mirror_S0 (void)
 {
+#ifndef NSFPLAYER
 	PPU_SetMirroring(0,0,0,0);
+#endif
 }
-static	void	__cdecl	Mirror_S1 (void)
+static	void	_MAPINT	Mirror_S1 (void)
 {
+#ifndef NSFPLAYER
 	PPU_SetMirroring(1,1,1,1);
+#endif
 }
-static	void	__cdecl	Mirror_Custom (int M1, int M2, int M3, int M4)
+static	void	_MAPINT	Mirror_Custom (int M1, int M2, int M3, int M4)
 {
+#ifndef NSFPLAYER
 	PPU_SetMirroring(M1,M2,M3,M4);
+#endif
 }
 
 //******************************************************************************
 
-static	void	__cdecl	Set_SRAMSize (int Size)	/* Sets the size of the SRAM (in bytes) and clears PRG_RAM */
+static	void	_MAPINT	Set_SRAMSize (int Size)	/* Sets the size of the SRAM (in bytes) and clears PRG_RAM */
 {
+#ifndef NSFPLAYER
 	NES.SRAM_Size = Size;
 	memset(PRG_RAM,0,sizeof(PRG_RAM));
+#endif
 }
-static	void	__cdecl	Save_SRAM (void)	/* Saves SRAM to disk */
+static	void	_MAPINT	Save_SRAM (void)	/* Saves SRAM to disk */
 {
+#ifndef NSFPLAYER
 	char Filename[MAX_PATH];
 	FILE *SRAMFile;
 	sprintf(Filename,"%s.sav",States.BaseFilename);
 	SRAMFile = fopen(Filename,"wb");
 	fwrite(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
 	fclose(SRAMFile);
+#endif
 }
-static	void	__cdecl	Load_SRAM (void)	/* Loads SRAM from disk */
+static	void	_MAPINT	Load_SRAM (void)	/* Loads SRAM from disk */
 {
+#ifndef NSFPLAYER
 	char Filename[MAX_PATH];
 	FILE *SRAMFile;
 	sprintf(Filename,"%s.sav",States.BaseFilename);
@@ -312,77 +387,44 @@ static	void	__cdecl	Load_SRAM (void)	/* Loads SRAM from disk */
 	if (!SRAMFile)
 		return;
 	fseek(SRAMFile,0,SEEK_END);
-	if (ftell(SRAMFile) >= NES.SRAM_Size)
+	if (ftell(SRAMFile) == NES.SRAM_Size)
 	{
 		fseek(SRAMFile,0,SEEK_SET);
 		fread(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
 	}
+	else	MessageBox(mWnd,"File length mismatch while loading SRAM!","Nintendulator",MB_OK | MB_ICONERROR);
 	fclose(SRAMFile);
+#endif
 }
 
 //******************************************************************************
 
-static	void	__cdecl	IRQ (void)
+static	void	_MAPINT	SetIRQ (int IRQstate)
 {
-	CPU.WantIRQ = TRUE;
+	if (IRQstate)
+		CPU.WantIRQ &= ~IRQ_EXTERNAL;
+	else	CPU.WantIRQ |= IRQ_EXTERNAL;
 }
 
-static	void	__cdecl	DbgOut (char *ToSay)
+static	void	_MAPINT	DbgOut (char *ToSay)
 {
+#ifndef NSFPLAYER
+	//MessageBox(mWnd,ToSay,"Nintendulator",MB_OK);
+#endif
 }
 
-static	void	__cdecl	StatusOut (char *ToSay)
+static	void	_MAPINT	StatusOut (char *ToSay)
 {
+#ifndef NSFPLAYER
 	GFX_ShowText(ToSay);
-}
-
-static	int	__cdecl	GetMenuRoot (void)
-{
-	return (int)NULL;
-}
-
-static	int	__cdecl	AddMenuItem (int root, char *text, int cmd, int parm1, int parm2, int parm3, int mode)
-{
-/*	if (MenuRoot.hMenu == 0)
-	{
-		MenuRoot.hMenu = CreateMenu
-		InsertMenu(NULL,5,MF_BYPOSITION | MF_STRING | MF_POPUP,(HMENU)MenuRoot.hMenu,MenuRoot.Caption);
-	}*/
-	return (int)NULL;
-}
-/*
-static	void	ClearMenuItem (PMenuItem Menu, PMenuItem MenuTop)
-{
-	if (Menu == NULL)
-		return;
-	ClearMenuItem(Menu->Child,MenuTop);
-	Menu->Child = NULL;
-	ClearMenuItem(Menu->Next,MenuTop);
-	Menu->Next = NULL;
-	if (Menu != MenuTop)
-	{
-		RemoveMenu(Menu->hMenu
-		//remove menu from window
-		free(Menu);
-	}
-}
-
-static	void	ClearMenu ()
-{
-	ClearMenuItem(&MenuRoot,&MenuRoot);
-}*/
-
-//******************************************************************************
-
-static	void	__cdecl MMC5_UpdateAttributeCache (void)
-{
-	/* Nothing to do here; there is no attribute cache */
+#endif
 }
 
 //******************************************************************************
 
 void	MapperInterface_Init (void)
 {
+#ifndef NSFPLAYER
 	WIN32_FIND_DATA Data;
 	HANDLE Handle;
 	struct tMapperDLL *ThisDLL;
@@ -397,11 +439,11 @@ void	MapperInterface_Init (void)
 		char Tmp[MAX_PATH];
 		sprintf(Tmp,"%s%s",Path,Data.cFileName);
 		ThisDLL->dInst = LoadLibrary(Tmp);
-		ThisDLL->LoadDLL = (PLoad_DLL)GetProcAddress(ThisDLL->dInst,"Load_DLL");
-		ThisDLL->UnloadDLL = (PUnload_DLL)GetProcAddress(ThisDLL->dInst,"Unload_DLL");
+		ThisDLL->LoadDLL = (PLoadMapperDLL)GetProcAddress(ThisDLL->dInst,"LoadMapperDLL");
+		ThisDLL->UnloadDLL = (PUnloadMapperDLL)GetProcAddress(ThisDLL->dInst,"UnloadMapperDLL");
 		if ((ThisDLL->LoadDLL) && (ThisDLL->UnloadDLL))
 		{
-			ThisDLL->DI = ThisDLL->LoadDLL(CurrentMapperInterface);
+			ThisDLL->DI = ThisDLL->LoadDLL(mWnd,&EI,CurrentMapperInterface);
 			if (ThisDLL->DI)
 			{
 				ThisDLL->Next = MapperDLLs;
@@ -416,81 +458,106 @@ void	MapperInterface_Init (void)
 	FindClose(Handle);
 	if (MapperDLLs == NULL)
 		MessageBox(mWnd,"Fatal error: unable to locate any mapper DLLs!","Nintendulator",MB_OK | MB_ICONERROR);
-	MP.SetWriteHandler = SetWriteHandler;
-	MP.SetReadHandler = SetReadHandler;
-	MP.GetWriteHandler = GetWriteHandler;
-	MP.GetReadHandler = GetReadHandler;
-	MP.SetPRG_ROM4 = SetPRG_ROM4;
-	MP.SetPRG_ROM8 = SetPRG_ROM8;
-	MP.SetPRG_ROM16 = SetPRG_ROM16;
-	MP.SetPRG_ROM32 = SetPRG_ROM32;
-	MP.GetPRG_ROM4 = GetPRG_ROM4;
-	MP.SetPRG_RAM4 = SetPRG_RAM4;
-	MP.SetPRG_RAM8 = SetPRG_RAM8;
-	MP.SetPRG_RAM16 = SetPRG_RAM16;
-	MP.SetPRG_RAM32 = SetPRG_RAM32;
-	MP.GetPRG_RAM4 = GetPRG_RAM4;
-	MP.GetPRG_Ptr4 = GetPRG_Ptr4;
-	MP.SetPRG_OB4 = SetPRG_OB4;
-	MP.SetCHR_ROM1 = SetCHR_ROM1;
-	MP.SetCHR_ROM2 = SetCHR_ROM2;
-	MP.SetCHR_ROM4 = SetCHR_ROM4;
-	MP.SetCHR_ROM8 = SetCHR_ROM8;
-	MP.GetCHR_ROM1 = GetCHR_ROM1;
-	MP.SetCHR_RAM1 = SetCHR_RAM1;
-	MP.SetCHR_RAM2 = SetCHR_RAM2;
-	MP.SetCHR_RAM4 = SetCHR_RAM4;
-	MP.SetCHR_RAM8 = SetCHR_RAM8;
-	MP.GetCHR_RAM1 = GetCHR_RAM1;
-	MP.GetCHR_Ptr1 = GetCHR_Ptr1;
-	MP.Mirror_H = Mirror_H;
-	MP.Mirror_V = Mirror_V;
-	MP.Mirror_4 = Mirror_4;
-	MP.Mirror_S0 = Mirror_S0;
-	MP.Mirror_S1 = Mirror_S1;
-	MP.Mirror_Custom = Mirror_Custom;
-	MP.IRQ = IRQ;
-	MP.Set_SRAMSize = Set_SRAMSize;
-	MP.Save_SRAM = Save_SRAM;
-	MP.Load_SRAM = Load_SRAM;
-	MP.DbgOut = DbgOut;
-	MP.StatusOut = StatusOut;
-	MP.AddMenuItem = AddMenuItem;
-	MP.GetMenuRoot = GetMenuRoot;
-	MP.MMC5_UpdateAttributeCache = MMC5_UpdateAttributeCache;
-	MI = MI2 = NULL;
+#else
+	dInst = LoadLibrary("Plugins\\nsf.dll");
+	LoadDLL = (PLoadMapperDLL)GetProcAddress(dInst,"LoadMapperDLL");
+	UnloadDLL = (PUnloadMapperDLL)GetProcAddress(dInst,"UnloadMapperDLL");
+	if ((!LoadDLL) || (!UnloadDLL) || (!(DI = LoadDLL(mod.hMainWindow,&EI,CurrentMapperInterface))))
+		MessageBox(mod.hMainWindow,"Fatal error: unable to locate any mapper DLLs!","Nintendulator",MB_OK | MB_ICONERROR);
+#endif
+	memset(&EI,0,sizeof(EI));
+	memset(&RI,0,sizeof(RI));
+	EI.SetCPUWriteHandler = SetCPUWriteHandler;
+	EI.SetCPUReadHandler = SetCPUReadHandler;
+	EI.GetCPUWriteHandler = GetCPUWriteHandler;
+	EI.GetCPUReadHandler = GetCPUReadHandler;
+	EI.SetPPUWriteHandler = SetPPUWriteHandler;
+	EI.SetPPUReadHandler = SetPPUReadHandler;
+	EI.GetPPUWriteHandler = GetPPUWriteHandler;
+	EI.GetPPUReadHandler = GetPPUReadHandler;
+	EI.SetPRG_ROM4 = SetPRG_ROM4;
+	EI.SetPRG_ROM8 = SetPRG_ROM8;
+	EI.SetPRG_ROM16 = SetPRG_ROM16;
+	EI.SetPRG_ROM32 = SetPRG_ROM32;
+	EI.GetPRG_ROM4 = GetPRG_ROM4;
+	EI.SetPRG_RAM4 = SetPRG_RAM4;
+	EI.SetPRG_RAM8 = SetPRG_RAM8;
+	EI.SetPRG_RAM16 = SetPRG_RAM16;
+	EI.SetPRG_RAM32 = SetPRG_RAM32;
+	EI.GetPRG_RAM4 = GetPRG_RAM4;
+	EI.GetPRG_Ptr4 = GetPRG_Ptr4;
+	EI.SetPRG_OB4 = SetPRG_OB4;
+	EI.SetCHR_ROM1 = SetCHR_ROM1;
+	EI.SetCHR_ROM2 = SetCHR_ROM2;
+	EI.SetCHR_ROM4 = SetCHR_ROM4;
+	EI.SetCHR_ROM8 = SetCHR_ROM8;
+	EI.GetCHR_ROM1 = GetCHR_ROM1;
+	EI.SetCHR_RAM1 = SetCHR_RAM1;
+	EI.SetCHR_RAM2 = SetCHR_RAM2;
+	EI.SetCHR_RAM4 = SetCHR_RAM4;
+	EI.SetCHR_RAM8 = SetCHR_RAM8;
+	EI.GetCHR_RAM1 = GetCHR_RAM1;
+	EI.GetCHR_Ptr1 = GetCHR_Ptr1;
+	EI.SetCHR_OB1 = SetCHR_OB1;
+	EI.Mirror_H = Mirror_H;
+	EI.Mirror_V = Mirror_V;
+	EI.Mirror_4 = Mirror_4;
+	EI.Mirror_S0 = Mirror_S0;
+	EI.Mirror_S1 = Mirror_S1;
+	EI.Mirror_Custom = Mirror_Custom;
+	EI.SetIRQ = SetIRQ;
+	EI.Set_SRAMSize = Set_SRAMSize;
+	EI.Save_SRAM = Save_SRAM;
+	EI.Load_SRAM = Load_SRAM;
+	EI.DbgOut = DbgOut;
+	EI.StatusOut = StatusOut;
+	MI = NULL;
+#ifndef NSFPLAYER
+	MI2 = NULL;
+#endif
 }
 
-BOOL	MapperInterface_LoadByNum (int MapperNum)
+BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
 {
+#ifndef NSFPLAYER
 	struct tMapperDLL *ThisDLL = MapperDLLs;
-//	ClearMenu();
 	while (ThisDLL)
 	{
-		if (MI = ThisDLL->DI->LoadMapper(MapperNum))
+		DI = ThisDLL->DI;
+		if (MI = DI->LoadMapper(ROM))
 			return TRUE;
 		ThisDLL = ThisDLL->Next;
 	}
+	DI = NULL;
+#else
+	if (!DI)
+		return FALSE;
+	if (MI = DI->LoadMapper(ROM))
+		return TRUE;
+#endif
 	return FALSE;
 }
 
-BOOL	MapperInterface_LoadByBoard (char *Board)
+void	MapperInterface_UnloadMapper (void)
 {
-	struct tMapperDLL *ThisDLL = MapperDLLs;
-//	ClearMenu();
-	while (ThisDLL)
+	if (MI)
 	{
-		if (MI = ThisDLL->DI->LoadBoard(Board))
-			return TRUE;
-		ThisDLL = ThisDLL->Next;
+		if (MI->Shutdown)
+			MI->Shutdown();
+		MI = NULL;
 	}
-	return FALSE;
+	if (DI)
+	{
+		if (DI->UnloadMapper)
+			DI->UnloadMapper();
+		DI = NULL;
+	}
 }
 
 void	MapperInterface_Release (void)
 {
+#ifndef NSFPLAYER
 	struct tMapperDLL *ThisDLL = MapperDLLs;
-//	ClearMenu();
 	while (ThisDLL)
 	{
 		MapperDLLs = ThisDLL->Next;
@@ -499,4 +566,11 @@ void	MapperInterface_Release (void)
 		free(ThisDLL);
 		ThisDLL = MapperDLLs;
 	}
+#else
+	if (!MI)
+		return;
+	MapperInterface_UnloadMapper();
+	UnloadDLL();
+	FreeLibrary(dInst);
+#endif
 }

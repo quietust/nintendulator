@@ -24,15 +24,18 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define __APU_H__
 
 #include <windows.h>
+#ifndef NSFPLAYER
 #include <mmsystem.h>
 
 #define DIRECTSOUND_VERSION 0x0700
 #include <dsound.h>
+#endif
 
 struct	tAPU
 {
 	int			Cycles;
 	int			BufPos;
+#ifndef NSFPLAYER
 	unsigned long		last_pos;
 	BOOL			isEnabled;
 
@@ -42,26 +45,38 @@ struct	tAPU
 
 	short			*buffer;
 	BYTE			Regs[0x17];
+#endif
 
 	unsigned char		WantFPS;
 	unsigned long		MHz;
 	unsigned long		QuarterFrameLen;
+#ifndef NSFPLAYER
 	unsigned long		LockSize;
+#endif
 };
 extern struct tAPU APU;
 
 void	APU_Init		(void);
 void	APU_Create		(void);
 void	APU_Release		(void);
+#ifndef NSFPLAYER
 void	APU_GetSoundRegisters	(unsigned char *);
 void	APU_SetSoundRegisters	(unsigned char *);
 void	APU_SoundOFF		(void);
 void	APU_SoundON		(void);
+#endif
 void	APU_Reset		(void);
+#ifndef NSFPLAYER
 void	APU_Config		(HWND);
+#endif
 void	APU_Run			(void);
 void	APU_SetFPS		(int);
 void	APU_WriteReg		(int,unsigned char);
 unsigned char	APU_Read4015	(void);
+
+#ifdef NSFPLAYER
+extern	short	sample_pos;
+extern	BOOL	sample_ok;
+#endif
 
 #endif

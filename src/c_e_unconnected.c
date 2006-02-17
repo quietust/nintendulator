@@ -36,7 +36,7 @@ static	void	Write (struct tExpPort *Cont, unsigned char Val)
 }
 static	void	Config (struct tExpPort *Cont, HWND hWnd)
 {
-	MessageBox(hWnd,"No configuration necessary!","Nintendulator",MB_OK | MB_ICONINFORMATION);
+	MessageBox(hWnd,"No configuration necessary!","Nintendulator",MB_OK);
 }
 static	void	Unload (struct tExpPort *Cont)
 {

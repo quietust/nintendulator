@@ -36,7 +36,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 HINSTANCE	hInst;		// current instance
 HWND		mWnd;		// main window
 HACCEL		hAccelTable;	// accelerators
-int		Width, Height;	// window size
 int		SizeMult;	// size multiplier
 char		ProgPath[MAX_PATH];	// program path
 
@@ -51,7 +50,7 @@ LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	int i;
+	size_t i;
 	MSG msg;
 
 	// Initialize global strings
@@ -69,6 +68,17 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 	hAccelTable = LoadAccelerators(hInstance,(LPCTSTR)IDC_NINTENDULATOR);
 
+	if (lpCmdLine[0])
+	{
+		char *cmdline = strdup(lpCmdLine);
+		if (strchr(cmdline,'"'))
+			cmdline = strchr(cmdline,'"') + 1;
+		if (strchr(cmdline,'"'))
+			*strchr(cmdline,'"') = 0;
+		NES_OpenFile(cmdline);
+		free(cmdline);
+	}
+
 	timeBeginPeriod(1);
 	// Main message loop:
 	while (GetMessage(&msg,NULL,0,0))
@@ -81,7 +91,7 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	}
 	timeEndPeriod(1);
 
-	return msg.wParam;
+	return (int)msg.wParam;
 }
 
 //
@@ -175,12 +185,16 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			char FileName[256] = {0};
 			OPENFILENAME ofn;
+
+			if ((!NES.Stopped) && (NES.SoundEnabled))
+				APU_SoundOFF();
+
 			ZeroMemory(&ofn,sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = mWnd;
 			ofn.hInstance = hInst;
-			ofn.lpstrFilter =	"All supported files (*.NES, *.UNIF, *.UNF, *.FDS, *.NSF)\0"
-							"*.NES;*.UNIF;*.UNF;*.FDS;*.NSF\0"
+			ofn.lpstrFilter =	"All supported files (*.NES, *.UNIF, *.UNF, *.FDS, *.NSF, *.ZIP)\0"
+							"*.NES;*.UNIF;*.UNF;*.FDS;*.NSF;*.ZIP\0"
 						"iNES ROM Images (*.NES)\0"
 							"*.NES\0"
 						"Universal NES Interchange Format ROM files (*.UNIF, *.UNF)\0"
@@ -189,11 +203,13 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							"*.FDS\0"
 						"NES Sound Files (*.NSF)\0"
 							"*.NSF\0"
+						"Compressed ROM Image (*.ZIP)\0"
+							"*.ZIP\0"
 						"\0";
 			ofn.lpstrCustomFilter = NULL;
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = FileName;
-			ofn.nMaxFile = 100;
+			ofn.nMaxFile = 256;
 			ofn.lpstrFileTitle = NULL;
 			ofn.nMaxFileTitle = 0;
 			ofn.lpstrInitialDir = "";
@@ -208,6 +224,8 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				NES.Stop = TRUE;
 				NES_OpenFile(FileName);
 			}
+			else if ((!NES.Stopped) && (NES.SoundEnabled))
+				APU_SoundON();
 		}	break;
 		case ID_FILE_CLOSE:
 			if (!NES.ROMLoaded)
@@ -267,6 +285,12 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (NES.GameGenie)
 				CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
 			else	CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
+			break;
+		case ID_CPU_AUTORUN:
+			NES.AutoRun = !NES.AutoRun;
+			if (NES.AutoRun)
+				CheckMenuItem(MyMenu,ID_CPU_AUTORUN,MF_CHECKED);
+			else	CheckMenuItem(MyMenu,ID_CPU_AUTORUN,MF_UNCHECKED);
 			break;
 		case ID_PPU_SIZE_1X:
 			SizeMult = 1;
@@ -333,12 +357,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			GFX.FSkip = 9;
 			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_9,MF_BYCOMMAND);
 			break;
-/*		case ID_OPTIONS_DECREASEFRAMESKIP:
-			if (--GFX.FSkip < 0) GFX.FSkip = 0;
-			break;
-		case ID_OPTIONS_INCREASEFRAMESKIP:
-			if (++GFX.FSkip > 9) GFX.FSkip = 9;
-			break;*/
+#ifdef ENABLE_DEBUGGER
 		case ID_DEBUG_LEVEL1:
 			Debugger_SetMode(0);
 			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
@@ -355,6 +374,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Debugger_SetMode(3);
 			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL4,MF_BYCOMMAND);
 			break;
+#endif	/* ENABLE_DEBUGGER */
 		case ID_CPU_SAVESTATE:
 			if (!NES.ROMLoaded)
 				break;
@@ -366,13 +386,17 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					do
 					{
 						CPU_ExecOp();
+#ifdef ENABLE_DEBUGGER
 						if (Debugger.Enabled)
 							Debugger_AddInst();
+#endif	/* ENABLE_DEBUGGER */
 					} while (!NES.Scanline);
 					NES.Scanline = FALSE;
-				} while (PPU.SLnum);
+				} while (PPU.SLnum <= 240);
+#ifdef ENABLE_DEBUGGER
 				if (Debugger.Enabled)
 					Debugger_Update();
+#endif	/* ENABLE_DEBUGGER */
 				States_SaveState();
 			}
 			break;
@@ -393,9 +417,6 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			States.SelSlot %= 10;
 			States_SetSlot(States.SelSlot);
 			break;
-/*		case ID_OPTIONS_CLEARALLBREAKPOINTS:
-			ZeroMemory(&Debugger->BreakP,sizeof(Debugger->BreakP));
-			break;*/
 		case ID_SOUND_ENABLED:
 			if (NES.SoundEnabled = !NES.SoundEnabled)
 			{
@@ -421,18 +442,27 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_INPUT_SETUP:
 			Controllers_OpenConfig();
 			break;
+		case ID_GAME:
+			NES_MapperConfig();
+			break;
 		default:return DefWindowProc(hWnd,message,wParam,lParam);
 			break;
 		}
-		break;
-	case WM_SIZE:
-		Width = LOWORD(lParam);
-		Height = HIWORD(lParam);
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd,&ps);
 		NES_Repaint();
 		EndPaint(hWnd,&ps);
+		break;
+	case WM_ENTERMENULOOP:
+	case WM_ENTERSIZEMOVE:
+		if ((!NES.Stopped) && (NES.SoundEnabled))
+			APU_SoundOFF();
+		break;
+	case WM_EXITMENULOOP:
+	case WM_EXITSIZEMOVE:
+		if ((!NES.Stopped) && (NES.SoundEnabled))
+			APU_SoundON();
 		break;
 	case WM_CLOSE:
 		if (NES.Stopped)
@@ -480,4 +510,12 @@ void	ProcessMessages (void)
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+}
+
+void	SetWindowClientArea (HWND hWnd, int w, int h)
+{
+	RECT client;
+	SetWindowPos(hWnd,hWnd,0,0,w,h,SWP_NOMOVE | SWP_NOZORDER);
+	GetClientRect(hWnd,&client);
+	SetWindowPos(hWnd,hWnd,0,0,2 * w - client.right,2 * h - client.bottom,SWP_NOMOVE | SWP_NOZORDER);
 }

@@ -27,10 +27,9 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define	LastPix	Data[0]
 static	unsigned char	Read (struct tStdPort *Cont)
 {
-	int DevNum;
 	int x, y;
 	long CurPix = 0;
-	int Delta;
+//	int Delta;
 	POINT pos;
 	unsigned char Bits = 0x00;
 
@@ -39,12 +38,9 @@ static	unsigned char	Read (struct tStdPort *Cont)
 	x = pos.x / SizeMult;
 	y = pos.y / SizeMult;
 	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
-		return Bits;
+		return Bits | 0x08;
 
-	DevNum = Cont->Buttons[0] >> 16;
-	if (((DevNum == 0) && (Controllers.KeyState[Cont->Buttons[0] & 0xFF] & 0x80)) ||
-	    ((DevNum == 1) && (Controllers.MouseState.rgbButtons[Cont->Buttons[0] & 0x7] & 0x80)) ||
-	    ((DevNum >= 2) && (Controllers.JoyState[DevNum-2].rgbButtons[Cont->Buttons[0] & 0x7F] & 0x80)))
+	if (Controllers_IsPressed(Cont->Buttons[0]))
 		Bits |= 0x10;
 
 	switch (GFX.Depth)
@@ -58,11 +54,10 @@ static	unsigned char	Read (struct tStdPort *Cont)
 /*	Delta = (int)((((signed)(CurPix & 0xFF) - (signed)(Cont->LastPix & 0xFF)) / 3.36) +
 		(((signed)((CurPix >> 8) & 0xFF) - (signed)((Cont->LastPix >> 8) & 0xFF)) / 1.7) +
 		(((signed)((CurPix >> 16) & 0xFF) - (signed)((Cont->LastPix >> 16) & 0xFF)) / 9.1));*/
-	Delta = (int)(((signed)(CurPix & 0xFF) / 3.36) +
+/*	Delta = (int)(((signed)(CurPix & 0xFF) / 3.36) +
 		(((signed)(CurPix >> 8) & 0xFF) / 1.7) +
-		(((signed)(CurPix >> 16) & 0xFF) / 9.1));
-/*	if (Delta < 0xF0)*/
-	if (CurPix != 0xFFFFFF)
+		(((signed)(CurPix >> 16) & 0xFF) / 9.1));*/
+	if ((CurPix != 0xFFFFFF) && (CurPix != 0xC0C0C0))
 		Bits |= 0x08;
 	Cont->LastPix = CurPix;
 	return Bits;
@@ -70,66 +65,14 @@ static	unsigned char	Read (struct tStdPort *Cont)
 static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
 }
-static	void	UpdateConfigKeys (HWND hDlg, struct tStdPort *Cont)
+static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	char tps[64];
-	int bn;
-	int DevNum = SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_GETCURSEL,0,0);
-
-	SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_RESETCONTENT,0,0);
-	if (DevNum == 0)
-	{
-		for (bn = 0; bn < 256; bn++)
-			SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_ADDSTRING,0,(LPARAM)KeyLookup[bn]);
-		SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_SETCURSEL,Cont->Buttons[0] & 0xFF,0);
-	}
-	else
-	{
-		for (bn = 0; bn < Controllers.NumButtons[DevNum]; bn++)
-		{
-			sprintf(tps,"Button %i",bn+1);
-			SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_ADDSTRING,0,(LPARAM)tps);
-		}
-		SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_SETCURSEL,Cont->Buttons[0] & 0xFFFF,0);
-	}
-}
-static	void	UpdateConfigDevices (HWND hDlg, struct tStdPort *Cont)
-{
-	int i;
-	
-	SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_RESETCONTENT,0,0);
-
-	for (i = 0; i < Controllers.NumDevices; i++)
-		SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_ADDSTRING,0,(LPARAM)Controllers.DeviceName[i]);
-	SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_SETCURSEL,Cont->Buttons[0] >> 16,0);
-	
-	UpdateConfigKeys(hDlg,Cont);
-}
-static	BOOL CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	static struct tStdPort *Cont;
-	int wmId, wmEvent;
-	switch (uMsg)
-	{
-	case WM_INITDIALOG:
+	int dlgLists[1] = {IDC_CONT_D0};
+	int dlgButtons[1] = {IDC_CONT_K0};
+	static struct tStdPort *Cont = NULL;
+	if (uMsg == WM_INITDIALOG)
 		Cont = (struct tStdPort *)lParam;
-		UpdateConfigDevices(hDlg,Cont);
-		break;
-	case WM_COMMAND:
-		wmId    = LOWORD(wParam); 
-		wmEvent = HIWORD(wParam); 
-		// Parse the menu selections:
-		switch (wmId)
-		{
-		case IDOK:
-			EndDialog(hDlg,1);
-			break;
-		case IDC_CONT_D0:	if (wmEvent == CBN_SELCHANGE) { Cont->Buttons[0] = SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_GETCURSEL,0,0) << 16; UpdateConfigKeys(hDlg,Cont); }	break;
-		case IDC_CONT_K0:	if (wmEvent == CBN_SELCHANGE) { Cont->Buttons[0] = SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_GETCURSEL,0,0) | (SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_GETCURSEL,0,0) << 16); }	break;
-//		case IDC_CONT_K0:	Controllers_ConfigButton(&Cont->Buttons[0],SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_GETCURSEL,0,0),hDlg,IDC_CONT_K0);	break;
-		};
-		break;
-	}
+	Controllers_ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
 	return FALSE;
 }
 static	void	Config (struct tStdPort *Cont, HWND hWnd)

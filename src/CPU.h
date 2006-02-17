@@ -27,16 +27,24 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 union SplitReg { unsigned long Full; unsigned char Segment[4]; };
 
+#define	IRQ_FRAME	0x01
+#define	IRQ_DPCM	0x02
+#define	IRQ_EXTERNAL	0x04
+
 struct tCPU
 {
-	PReadFunc	ReadHandler[0x10];
-	PWriteFunc	WriteHandler[0x10];
+	FCPURead	ReadHandler[0x10];
+	FCPUWrite	WriteHandler[0x10];
 	unsigned char *	PRGPointer[0x10];
 	BOOL	Readable[0x10], Writable[0x10];
 
-	BOOL WantNMI, WantReset, WantIRQ;
+#ifndef NSFPLAYER
+	unsigned char WantNMI;
+#endif
+	unsigned char WantIRQ;
+
 	unsigned char A, X, Y, SP, P;
-	unsigned char FC, FZ, FI, FD, FB, FV, FN;
+	unsigned char FC, FZ, FI, FD, FV, FN;
 	unsigned char LastRead;
 	union SplitReg _PC;
 };
@@ -56,12 +64,12 @@ void	CPU_SplitFlags (void);
 void	CPU_Reset (void);
 void	CPU_PowerOn (void);
 void	CPU_ExecOp (void);
-int	__cdecl	CPU_ReadRAM (int,int);
-void	__cdecl	CPU_WriteRAM (int,int,int);
-int	__cdecl	CPU_Read4k (int,int);
-void	__cdecl	CPU_Write4k (int,int,int);
-int	__cdecl	CPU_ReadPRG (int,int);
-void	__cdecl	CPU_WritePRG (int,int,int);
+int	_MAPINT	CPU_ReadRAM (int,int);
+void	_MAPINT	CPU_WriteRAM (int,int,int);
+int	_MAPINT	CPU_Read4k (int,int);
+void	_MAPINT	CPU_Write4k (int,int,int);
+int	_MAPINT	CPU_ReadPRG (int,int);
+void	_MAPINT	CPU_WritePRG (int,int,int);
 
 #endif
 

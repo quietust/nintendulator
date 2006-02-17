@@ -66,9 +66,8 @@ struct tControllers
 
 	int	NumDevices;
 	BOOL	DeviceUsed[32];
-	int	DeviceType[32];
 	char	DeviceName[32][64];
-	int	NumButtons[32];
+	int	NumButtons[32], NumAxes[32];
 
 	BYTE		KeyState[256];
 	DIMOUSESTATE2	MouseState;
@@ -89,8 +88,9 @@ void	Controllers_SetDeviceUsed (void);
 void	Controllers_Acquire (void);
 void	Controllers_UnAcquire (void);
 void	Controllers_UpdateInput (void);
-void	Controllers_ConfigButton (int *,long,HWND,int);
+void	Controllers_ConfigButton (int *,int,HWND,BOOL);
 
-extern	char *KeyLookup[256];
+BOOL	Controllers_IsPressed (int);
+void	Controllers_ParseConfigMessages (HWND,int,int *,int *,int *,UINT,WPARAM,LPARAM);
 
 #endif

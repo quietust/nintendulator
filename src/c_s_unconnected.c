@@ -32,7 +32,7 @@ static	void	Write (struct tStdPort *Cont, unsigned char Val)
 }
 static	void	Config (struct tStdPort *Cont, HWND hWnd)
 {
-	MessageBox(hWnd,"No configuration necessary!","Nintendulator",MB_OK | MB_ICONINFORMATION);
+	MessageBox(hWnd,"No configuration necessary!","Nintendulator",MB_OK);
 }
 static	void	Unload (struct tStdPort *Cont)
 {

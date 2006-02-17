@@ -40,6 +40,31 @@ static	BOOL	LockCursorPos (int x, int y)
 #define	BitPtr	Data[2]
 #define	Strobe	Data[3]
 #define	Button	Data[4]
+static	void	UpdateCont (struct tExpPort *Cont)
+{
+	unsigned long x;
+	int i;
+	LockCursorPos(128,220);
+	if (Controllers_IsPressed(Cont->Buttons[0]))
+		Cont->Button = 1;
+	else	Cont->Button = 0;
+	x = Cont->Pos;
+	x += Controllers.MouseState.lX;
+	if (x < 196)
+		x = 196;
+	if (x > 484)
+		x = 484;
+	Cont->Pos = x;
+	Cont->Bits = 0;
+	x = ~x;
+	for (i = 0; i < 9; i++)
+	{
+		Cont->Bits <<= 1;
+		Cont->Bits |= x & 1;
+		x >>= 1;
+	}
+	Cont->BitPtr = 0;
+}
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
 	if (Cont->Button)
@@ -49,7 +74,10 @@ static	unsigned char	Read1 (struct tExpPort *Cont)
 
 static	unsigned char	Read2 (struct tExpPort *Cont)
 {
-	unsigned char result = (char)(((Cont->Bits >> Cont->BitPtr++) & 1) << 1);
+	unsigned char result;
+	if (Cont->Strobe)
+		UpdateCont(Cont);
+	result = (char)(((Cont->Bits >> Cont->BitPtr++) & 1) << 1);
 	if (Cont->BitPtr == 9)
 		Cont->BitPtr--;
 	return result;
@@ -57,96 +85,18 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 
 static	void	Write (struct tExpPort *Cont, unsigned char Val)
 {
-	if ((Cont->Strobe == 1) && (!(Val & 1)))
-	{
-		int DevNum;
-		unsigned long x;
-		int i;
-		LockCursorPos(128,220);
-		DevNum = Cont->Buttons[0] >> 16;
-		if (((DevNum == 0) && (Controllers.KeyState[Cont->Buttons[0] & 0xFF] & 0x80)) ||
-		    ((DevNum == 1) && (Controllers.MouseState.rgbButtons[Cont->Buttons[0] & 0x7] & 0x80)) ||
-		    ((DevNum >= 2) && (Controllers.JoyState[DevNum-2].rgbButtons[Cont->Buttons[0] & 0x7F] & 0x80)))
-			Cont->Button = 1;
-		else	Cont->Button = 0;
-		x = Cont->Pos;
-		x += Controllers.MouseState.lX;
-		if (x < 196)
-			x = 196;
-		if (x > 484)
-			x = 484;
-		Cont->Pos = x;
-		Cont->Bits = 0;
-		x = ~x;
-		for (i = 0; i < 9; i++)
-		{
-			Cont->Bits <<= 1;
-			Cont->Bits |= x & 1;
-			x >>= 1;
-		}
-		Cont->BitPtr = 0;
-	}
 	Cont->Strobe = Val & 1;
+	if (Cont->Strobe)
+		UpdateCont(Cont);
 }
-static	void	UpdateConfigKeys (HWND hDlg, struct tExpPort *Cont)
+static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	char tps[64];
-	int bn;
-	int DevNum = SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_GETCURSEL,0,0);
-
-	SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_RESETCONTENT,0,0);
-	if (DevNum == 0)
-	{
-		for (bn = 0; bn < 256; bn++)
-			SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_ADDSTRING,0,(LPARAM)KeyLookup[bn]);
-		SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_SETCURSEL,Cont->Buttons[0] & 0xFF,0);
-	}
-	else
-	{
-		for (bn = 0; bn < Controllers.NumButtons[DevNum]; bn++)
-		{
-			sprintf(tps,"Button %i",bn+1);
-			SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_ADDSTRING,0,(LPARAM)tps);
-		}
-		SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_SETCURSEL,Cont->Buttons[0] & 0xFFFF,0);
-	}
-}
-static	void	UpdateConfigDevices (HWND hDlg, struct tExpPort *Cont)
-{
-	int i;
-	
-	SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_RESETCONTENT,0,0);
-
-	for (i = 0; i < Controllers.NumDevices; i++)
-		SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_ADDSTRING,0,(LPARAM)Controllers.DeviceName[i]);
-	SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_SETCURSEL,Cont->Buttons[0] >> 16,0);
-	
-	UpdateConfigKeys(hDlg,Cont);
-}
-static	BOOL CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	static struct tExpPort *Cont;
-	int wmId, wmEvent;
-	switch (uMsg)
-	{
-	case WM_INITDIALOG:
+	int dlgLists[1] = {IDC_CONT_D0};
+	int dlgButtons[1] = {IDC_CONT_K0};
+	static struct tExpPort *Cont = NULL;
+	if (uMsg == WM_INITDIALOG)
 		Cont = (struct tExpPort *)lParam;
-		UpdateConfigDevices(hDlg,Cont);
-		break;
-	case WM_COMMAND:
-		wmId    = LOWORD(wParam); 
-		wmEvent = HIWORD(wParam); 
-		// Parse the menu selections:
-		switch (wmId)
-		{
-		case IDOK:
-			EndDialog(hDlg,1);
-			break;
-		case IDC_CONT_D0:	if (wmEvent == CBN_SELCHANGE) { Cont->Buttons[0] = SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_GETCURSEL,0,0) << 16; UpdateConfigKeys(hDlg,Cont); }	break;
-		case IDC_CONT_K0:	if (wmEvent == CBN_SELCHANGE) { Cont->Buttons[0] = SendDlgItemMessage(hDlg,IDC_CONT_K0,CB_GETCURSEL,0,0) | (SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_GETCURSEL,0,0) << 16); }	break;
-		};
-		break;
-	}
+	Controllers_ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
 	return FALSE;
 }
 static	void	Config (struct tExpPort *Cont, HWND hWnd)

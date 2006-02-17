@@ -72,6 +72,8 @@ void	ExpPort_SetUnconnected		(struct tExpPort *);
 void	ExpPort_SetFami4Play		(struct tExpPort *);
 void	ExpPort_SetArkanoidPaddle	(struct tExpPort *);
 void	ExpPort_SetFamilyBasicKeyboard	(struct tExpPort *);
+void	ExpPort_SetAltKeyboard		(struct tExpPort *);
+void	ExpPort_SetFamTrainer		(struct tExpPort *);
 
 void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
 {
@@ -82,11 +84,13 @@ void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
 	case 1:	ExpPort_SetFami4Play(Cont);		break;
 	case 2:	ExpPort_SetArkanoidPaddle(Cont);	break;
 	case 3:	ExpPort_SetFamilyBasicKeyboard(Cont);	break;
+	case 4:	ExpPort_SetAltKeyboard(Cont);		break;
+	case 5:	ExpPort_SetFamTrainer(Cont);		break;
 	default:MessageBox(mWnd,"Error: selected invalid controller type for expansion port!","Nintendulator",MB_OK | MB_ICONERROR);	break;
 	}
 }
 
-BOOL CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	switch (uMsg)
@@ -114,6 +118,8 @@ BOOL CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)"Famicom 4-Player Adapter");
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)"Famicom Arkanoid Paddle");
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)"Family Basic Keyboard");
+		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)"Alternate Keyboard");
+		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)"Family Trainer");
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_SETCURSEL,Controllers.ExpPort.Type,0);
 		break;
 	case WM_COMMAND:
@@ -127,7 +133,7 @@ BOOL CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 			break;
 		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE)
 					{
-						int Type = SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0);
+						int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0);
 						if (Type == 5)
 						{
 							StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type);
@@ -150,7 +156,7 @@ BOOL CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 					break;
 		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE)
 					{
-						int Type = SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0);
+						int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0);
 						if (Type == 5)
 						{
 							StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type);
@@ -171,7 +177,7 @@ BOOL CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 						else	StdPort_SetControllerType(&Controllers.Port2,Type);
 					}
 					break;
-		case IDC_CONT_SEXPPORT:	if (wmEvent == CBN_SELCHANGE) { ExpPort_SetControllerType(&Controllers.ExpPort,SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_GETCURSEL,0,0)); }	break;
+		case IDC_CONT_SEXPPORT:	if (wmEvent == CBN_SELCHANGE) { ExpPort_SetControllerType(&Controllers.ExpPort,(int)SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_GETCURSEL,0,0)); }	break;
 
 		case IDC_CONT_CPORT1:	Controllers.Port1.Config(&Controllers.Port1,hDlg);	break;
 		case IDC_CONT_CPORT2:	Controllers.Port2.Config(&Controllers.Port2,hDlg);	break;
@@ -203,6 +209,7 @@ BOOL CALLBACK	EnumJoysticksCallback (const DIDEVICEINSTANCE* pdidInstance, VOID*
 		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(Controllers.DIJoystick[Controllers.NumDevices-2],&tpc)))
 			return hr;
 		Controllers.NumButtons[Controllers.NumDevices] = tpc.dwButtons;
+		Controllers.NumAxes[Controllers.NumDevices] = tpc.dwAxes;
 		Controllers.NumDevices++;
 	}
 	return DIENUM_CONTINUE;
@@ -259,6 +266,7 @@ void	Controllers_Init (void)
 		return;
 	}
 	Controllers.NumButtons[0] = 256;
+	Controllers.NumAxes[0] = 0;
 	strcpy(Controllers.DeviceName[0],"Keyboard");
 
 	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&GUID_SysMouse,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIMouse,NULL)))
@@ -290,6 +298,7 @@ void	Controllers_Init (void)
 		return;
 	}
 	Controllers.NumButtons[1] = tpc.dwButtons;
+	Controllers.NumAxes[1] = tpc.dwAxes;
 	
 	strcpy(Controllers.DeviceName[1],"Mouse");
 	
@@ -435,11 +444,11 @@ int	Controllers_GetConfigKey (HWND hWnd)
 		{
 			IDirectInputDevice7_Acquire(Controllers.DIKeyboard);
 			hr = IDirectInputDevice7_GetDeviceState(Controllers.DIKeyboard,256,Controllers.KeyState);
-			break;
+//			break;
 		}
 		for (i = 0; i < Controllers.NumButtons[0]; i++)
 		{
-			if (Controllers.KeyState[i] & 0x80)
+			if (Controllers_IsPressed(i))
 			{
 				Key = i;
 				break;
@@ -478,11 +487,21 @@ int	Controllers_GetConfigMouse (HWND hWnd)
 		{
 			IDirectInputDevice7_Acquire(Controllers.DIMouse);
 			hr = IDirectInputDevice7_GetDeviceState(Controllers.DIMouse,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
-			break;
+//			break;
 		}
 		for (i = 0; i < Controllers.NumButtons[1]; i++)
 		{
-			if (Controllers.MouseState.rgbButtons[i] & 0x80)
+			if (Controllers_IsPressed((1 << 16) | i))
+			{
+				Key = i;
+				break;
+			}
+		}
+		if (Key != -1)	// if we got a button, don't check for an axis
+			break;
+		for (i = 0x08; i < (0x08 | Controllers.NumAxes[1]); i++)
+		{
+			if (Controllers_IsPressed((1 << 16) | i))
 			{
 				Key = i;
 				break;
@@ -524,7 +543,17 @@ int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
 		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIJoystick[Dev],sizeof(DIJOYSTATE2),&Controllers.JoyState[Dev]);
 		for (i = 0; i < Controllers.NumButtons[Dev+2]; i++)
 		{
-			if (Controllers.JoyState[Dev].rgbButtons[i] & 0x80)
+			if (Controllers_IsPressed(((Dev+2) << 16) | i))
+			{
+				Key = i;
+				break;
+			}
+		}
+		if (Key != -1)	// if we got a button, don't check for an axis
+			break;
+		for (i = 0x80; i < (0x80 | Controllers.NumAxes[Dev+2]); i++)
+		{
+			if (Controllers_IsPressed(((Dev+2) << 16) | i))
 			{
 				Key = i;
 				break;
@@ -541,27 +570,163 @@ int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
 	return Key;
 }
 
-void	Controllers_ConfigButton (int *Button, long Device, HWND hDlg, int dlgItem)
+char *	Controllers_GetButtonLabel (int DevNum, int Button)
 {
-	char tmp[16] = "Undefined!";
-	SendDlgItemMessage(hDlg,dlgItem,WM_SETTEXT,0,(LPARAM)(LPCTSTR)"...");
-//	Controllers_ConfigButton(&Cont->Buttons[0],SendDlgItemMessage(hDlg,IDC_CONT_D0,CB_GETCURSEL,0,0),GetDlgItem(hDlg,IDC_CONT_K0));
-	if (Device == 0)
+	static char str[256];
+	char *axes[16] = {"X-Axis","Y-Axis","Z-Axis","rX-Axis","rY-Axis","rZ-Axis","Slider 1","Slider 2"};
+	if (DevNum == 0)
+		return KeyLookup[Button];
+	else if (DevNum == 1)
 	{
-		*Button = Controllers_GetConfigKey(hDlg);
-		sprintf(tmp,"%i",*Button);
+		if (Button & 0x08)
+		{
+			Button &= 0x07;
+			if (Button & 1)
+				sprintf(str,"%s (+)",axes[Button >> 1]);
+			else	sprintf(str,"%s (-)",axes[Button >> 1]);
+			return str;
+		}
+		else
+		{
+			sprintf(str,"Button %i",Button + 1);
+			return str;
+		}
 	}
-	else if (Device == 1)
+	else // if (DevNum == 2)
 	{
-		*Button = Controllers_GetConfigMouse(hDlg);
-		sprintf(tmp,"Button %i",*Button);
+		if (Button & 0x80)
+		{
+			Button &= 0x7F;
+			if (Button & 1)
+				sprintf(str,"%s (+)",axes[Button >> 1]);
+			else	sprintf(str,"%s (-)",axes[Button >> 1]);
+			return str;
+		}
+		else
+		{
+			sprintf(str,"Button %i",Button + 1);
+			return str;
+		}
 	}
-	else
-	{
-		*Button = Controllers_GetConfigJoy(hDlg,Device-2);
-		sprintf(tmp,"Button %i",*Button);
-	}
-	SendDlgItemMessage(hDlg,dlgItem,WM_SETTEXT,0,(LPARAM)(LPCTSTR)tmp);
 }
 
+void	Controllers_ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
+{
+	*Button &= 0xFFFF;
+	if (getKey)	// this way, we can just re-label the button
+	{
+		HWND key = CreateDialog(hInst,(LPCTSTR)IDD_KEYCONFIG,hDlg,NULL);
+		ShowWindow(key,TRUE);	// FIXME - center this window properly
+		ProcessMessages();	// let the "Press a key..." dialog display itself
+		if (Device == 0)
+			*Button = Controllers_GetConfigKey(key);
+		else if (Device == 1)
+			*Button = Controllers_GetConfigMouse(key);
+		else	*Button = Controllers_GetConfigJoy(key,Device-2);
+		ProcessMessages();	// flush all keypresses - don't want them going back to the parent dialog
+		DestroyWindow(key);	// close the little window
+	}
+	SetWindowText(hDlg,(LPCTSTR)Controllers_GetButtonLabel(Device,*Button));
+	*Button |= Device << 16;	// add the device ID
+}
 
+static	BOOL	LockCursorPos (int x, int y)
+{
+	POINT pos;
+	pos.x = 0;
+	pos.y = 0;
+	ClientToScreen(mWnd,&pos);
+	pos.x += x * SizeMult;
+	pos.y += y * SizeMult;
+	SetCursorPos(pos.x,pos.y);
+	return TRUE;
+}
+
+BOOL	Controllers_IsPressed (int Button)
+{
+	int DevNum = (Button & 0xFFFF0000) >> 16;
+	if (DevNum == 0)	// keyboard
+		return (Controllers.KeyState[Button & 0xFF] & 0x80) ? TRUE : FALSE;
+	else if (DevNum == 1)	// mouse
+	{
+		if (Button & 0x8)	// axis selected
+		{
+			LockCursorPos(128,120);	// if we're detecting mouse movement, lock the cursor in place
+			switch (Button & 0x7)
+			{
+			case 0x0:	return (Controllers.MouseState.lX < 0) ? TRUE : FALSE;	break;
+			case 0x1:	return (Controllers.MouseState.lX > 0) ? TRUE : FALSE;	break;
+			case 0x2:	return (Controllers.MouseState.lY < 0) ? TRUE : FALSE;	break;
+			case 0x3:	return (Controllers.MouseState.lY > 0) ? TRUE : FALSE;	break;
+			case 0x4:	return (Controllers.MouseState.lZ < 0) ? TRUE : FALSE;	break;
+			case 0x5:	return (Controllers.MouseState.lZ > 0) ? TRUE : FALSE;	break;
+			default:	return FALSE;
+			}
+		}
+		else	return (Controllers.MouseState.rgbButtons[Button & 0x7] & 0x80) ? TRUE : FALSE;
+	}
+	else //if (DevNum >= 2)
+	{
+		if (Button & 0x80)
+		{
+			switch (Button & 0xF)
+			{
+			case 0x0:	return (Controllers.JoyState[DevNum-2].lX < 0x4000 && Controllers.JoyState[DevNum-2].lX != 0x0000) ? TRUE : FALSE;	break;
+			case 0x1:	return (Controllers.JoyState[DevNum-2].lX > 0xC000 && Controllers.JoyState[DevNum-2].lX != 0xFFFF) ? TRUE : FALSE;	break;
+			case 0x2:	return (Controllers.JoyState[DevNum-2].lY < 0x4000 && Controllers.JoyState[DevNum-2].lY != 0x0000) ? TRUE : FALSE;	break;
+			case 0x3:	return (Controllers.JoyState[DevNum-2].lY > 0xC000 && Controllers.JoyState[DevNum-2].lY != 0xFFFF) ? TRUE : FALSE;	break;
+			case 0x4:	return (Controllers.JoyState[DevNum-2].lZ < 0x4000 && Controllers.JoyState[DevNum-2].lZ != 0x0000) ? TRUE : FALSE;	break;
+			case 0x5:	return (Controllers.JoyState[DevNum-2].lZ > 0xC000 && Controllers.JoyState[DevNum-2].lZ != 0xFFFF) ? TRUE : FALSE;	break;
+			case 0x6:	return (Controllers.JoyState[DevNum-2].lRx < 0x4000 && Controllers.JoyState[DevNum-2].lRx != 0x0000) ? TRUE : FALSE;	break;
+			case 0x7:	return (Controllers.JoyState[DevNum-2].lRx > 0xC000 && Controllers.JoyState[DevNum-2].lRx != 0xFFFF) ? TRUE : FALSE;	break;
+			case 0x8:	return (Controllers.JoyState[DevNum-2].lRy < 0x4000 && Controllers.JoyState[DevNum-2].lRy != 0x0000) ? TRUE : FALSE;	break;
+			case 0x9:	return (Controllers.JoyState[DevNum-2].lRy > 0xC000 && Controllers.JoyState[DevNum-2].lRy != 0xFFFF) ? TRUE : FALSE;	break;
+			case 0xA:	return (Controllers.JoyState[DevNum-2].lRz < 0x4000 && Controllers.JoyState[DevNum-2].lRz != 0x0000) ? TRUE : FALSE;	break;
+			case 0xB:	return (Controllers.JoyState[DevNum-2].lRz > 0xC000 && Controllers.JoyState[DevNum-2].lRz != 0xFFFF) ? TRUE : FALSE;	break;
+			case 0xC:	return (Controllers.JoyState[DevNum-2].rglSlider[0] < 0x4000 && Controllers.JoyState[DevNum-2].rglSlider[0] != 0x0000) ? TRUE : FALSE;	break;
+			case 0xD:	return (Controllers.JoyState[DevNum-2].rglSlider[0] > 0xC000 && Controllers.JoyState[DevNum-2].rglSlider[0] != 0xFFFF) ? TRUE : FALSE;	break;
+			case 0xE:	return (Controllers.JoyState[DevNum-2].rglSlider[1] < 0x4000 && Controllers.JoyState[DevNum-2].rglSlider[1] != 0x0000) ? TRUE : FALSE;	break;
+			case 0xF:	return (Controllers.JoyState[DevNum-2].rglSlider[1] > 0xC000 && Controllers.JoyState[DevNum-2].rglSlider[1] != 0xFFFF) ? TRUE : FALSE;	break;
+			default:	return FALSE;
+			}
+		}
+		else	return (Controllers.JoyState[DevNum-2].rgbButtons[Button & 0x7F] & 0x80) ? TRUE : FALSE;
+	}
+}
+void	Controllers_ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButtons, int *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	int wmId = LOWORD(wParam);
+	int wmEvent = HIWORD(wParam);
+	int i;
+	if (uMsg == WM_INITDIALOG)
+	{
+		for (i = 0; i < numItems; i++)
+		{
+			int j;
+			SendDlgItemMessage(hDlg,dlgDevices[i],CB_RESETCONTENT,0,0);		// clear the listbox
+			for (j = 0; j < Controllers.NumDevices; j++)
+				SendDlgItemMessage(hDlg,dlgDevices[i],CB_ADDSTRING,0,(LPARAM)Controllers.DeviceName[j]);	// add each device
+			SendDlgItemMessage(hDlg,dlgDevices[i],CB_SETCURSEL,Buttons[i] >> 16,0);	// select the one we want
+			Controllers_ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),FALSE);	// and label the corresponding button
+		}
+	}
+	if (uMsg != WM_COMMAND)
+		return;
+	if (wmId == IDOK)
+	{
+		EndDialog(hDlg,1);
+		return;
+	}
+	for (i = 0; i < numItems; i++)
+	{
+		if (wmId == dlgDevices[i])
+		{
+			if (wmEvent != CBN_SELCHANGE)
+				break;
+			Buttons[i] = 0;
+			Controllers_ConfigButton(&Buttons[i],(int)SendMessage((HWND)lParam,CB_GETCURSEL,0,0),GetDlgItem(hDlg,dlgButtons[i]),FALSE);
+		}
+		if (wmId == dlgButtons[i])
+			Controllers_ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),TRUE);
+	}
+}

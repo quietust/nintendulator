@@ -38,26 +38,30 @@ struct tNES
 
 	BOOL ROMLoaded;
 	BOOL Stop, Stopped, NeedReset, NeedQuit, Scanline;
-	BOOL IsNSF;
 	BOOL GameGenie;
 	BOOL SoundEnabled;
+	BOOL AutoRun;
 };
 extern	struct tNES NES;
 
-extern	unsigned char PRG_ROM[0x800][0x1000];	// 8192 KB
-extern	unsigned char PRG_RAM[0x10][0x1000];	//   64 KB
-extern	unsigned char CHR_ROM[0x1000][0x400];	// 4096 KB
-extern	unsigned char CHR_RAM[0x20][0x400];	//   32 KB
+#define	MAX_PRGROM_MASK	0x7FF
+#define	MAX_PRGRAM_MASK	0xF
+#define	MAX_CHRROM_MASK	0xFFF
+#define	MAX_CHRRAM_MASK	0x1F
+extern	unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];	// 8192 KB
+extern	unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];	//   64 KB
+extern	unsigned char CHR_ROM[MAX_CHRROM_MASK+1][0x400];	// 4096 KB
+extern	unsigned char CHR_RAM[MAX_CHRRAM_MASK+1][0x400];	//   32 KB
 
 void	NES_Init (void);
 void	NES_Release (void);
 void	NES_OpenFile (char *);
 void	NES_CloseFile (void);
-BOOL	NES_OpenFileiNES (char *);
-BOOL	NES_OpenFileUNIF (char *);
-BOOL	NES_OpenFileFDS (char *);
-BOOL	NES_OpenFileNSF (char *);
-BOOL	NES_OpenFileNRFF (char *);
+const char *	NES_OpenFileiNES (char *);
+const char *	NES_OpenFileUNIF (char *);
+const char *	NES_OpenFileFDS (char *);
+const char *	NES_OpenFileNSF (char *);
+//BOOL	NES_OpenFileNRFF (char *);
 void	NES_SetCPUMode (int);
 void	NES_Reset (int);
 void	NES_Run (void);
@@ -65,5 +69,6 @@ void	NES_UpdateInterface (void);
 void	NES_LoadSettings (void);
 void	NES_SaveSettings (void);
 void	NES_Repaint (void);
+void	NES_MapperConfig (void);
 
 #endif

@@ -23,6 +23,8 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #ifndef __DEBUGGER_H__
 #define __DEBUGGER_H__
 
+#ifdef ENABLE_DEBUGGER
+
 struct tDebugger
 {
 	BOOL	Enabled;
@@ -37,7 +39,6 @@ struct tDebugger
 	int	Depth;
 
 	int	PatPalBase;
-	int	DoubleSize;
 
 	//Palette
 	HDC	PaletteWDC, PaletteDC;
@@ -91,5 +92,7 @@ void	Debugger_StartLogging (void);
 void	Debugger_StopLogging (void);
 void	Debugger_DrawTraceLine (unsigned short Addy, short y);
 unsigned char	Debugger_TraceMem (unsigned short Addy);
+
+#endif	/* ENABLE_DEBUGGER */
 
 #endif

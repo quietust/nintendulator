@@ -22,62 +22,32 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #include "Nintendulator.h"
 #include "NES.h"
+#include "APU.h"
 #include "Debugger.h"
 #include "CPU.h"
 #include "PPU.h"
 #include "GFX.h"
 
+#ifdef ENABLE_DEBUGGER
+
 struct tDebugger Debugger;
 
 extern	unsigned char CPU_Flags[0x10000];
 
-#define DW_PAL_LEFT	0
-#define DW_PAL_TOP	1
-#define DW_PAT_LEFT	2
-#define DW_PAT_TOP	3
-#define DW_DMP_LEFT	4
-#define DW_DMP_TOP	5
-#define DW_DMP_WIDTH	6
-#define DW_DMP_HEIGHT	7
-#define DW_NAM_LEFT	8
-#define DW_NAM_TOP	9
-#define DW_TRC_LEFT	10
-#define DW_TRC_TOP	11
-#define DW_TRC_WIDTH	12
-#define DW_TRC_HEIGHT	13
-#define DW_REG_LEFT	14
-#define DW_REG_TOP	15
-#define DW_REG_WIDTH	16
-#define DW_REG_HEIGHT	17
-#define DW_MEM_LEFT	18
-#define DW_MEM_TOP	19
+LRESULT CALLBACK PaletteProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK PatternProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK NameProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK DumpProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK TraceProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK RegProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-BOOL CALLBACK PaletteProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK PatternProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK NameProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK DumpProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK TraceProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK RegProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-const unsigned char CharSC[8] = {
-	0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01
-};
-
-enum ADDRMODE { IMP, ACC, IMM, ABS, IND, REL, ABX, ABY, ZPG, ZPX, ZPY, INX, INY, ERR, NUM_ADDR_MODES };
-
-#define	FLAG_N	0x80
-#define	FLAG_V	0x40
-#define	FLAG_B	0x10
-#define	FLAG_I	0x04
-#define	FLAG_D	0x08
-#define	FLAG_Z	0x02
-#define	FLAG_C	0x01
+enum ADDRMODE { IMP, ACC, IMM, ADR, ABS, IND, REL, ABX, ABY, ZPG, ZPX, ZPY, INX, INY, ERR, NUM_ADDR_MODES };
 
 enum ADDRMODE TraceAddyMode[256] =
 {
 	IMM,INX,ERR,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,ACC,IMM,ABS,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPX,ZPX,IMP,ABY,IMP,ABY,ABX,ABX,ABX,ABX,
-	ABS,INX,ERR,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,ACC,IMM,ABS,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPX,ZPX,IMP,ABY,IMP,ABY,ABX,ABX,ABX,ABX,
-	IMP,INX,ERR,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,ACC,IMM,ABS,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPX,ZPX,IMP,ABY,IMP,ABY,ABX,ABX,ABX,ABX,
+	ADR,INX,ERR,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,ACC,IMM,ABS,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPX,ZPX,IMP,ABY,IMP,ABY,ABX,ABX,ABX,ABX,
+	IMP,INX,ERR,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,ACC,IMM,ADR,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPX,ZPX,IMP,ABY,IMP,ABY,ABX,ABX,ABX,ABX,
 	IMP,INX,ERR,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,ACC,IMM,IND,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPX,ZPX,IMP,ABY,IMP,ABY,ABX,ABX,ABX,ABX,
 	IMM,INX,IMM,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,IMP,IMM,ABS,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPY,ZPY,IMP,ABY,IMP,ABY,ABX,ABX,ABY,ABY,
 	IMM,INX,IMM,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,IMP,IMM,ABS,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPY,ZPY,IMP,ABY,IMP,ABY,ABX,ABX,ABY,ABY,
@@ -85,19 +55,7 @@ enum ADDRMODE TraceAddyMode[256] =
 	IMM,INX,IMM,INX,ZPG,ZPG,ZPG,ZPG,IMP,IMM,IMP,IMM,ABS,ABS,ABS,ABS,REL,INY,ERR,INY,ZPX,ZPX,ZPX,ZPX,IMP,ABY,IMP,ABY,ABX,ABX,ABX,ABX
 };
 
-unsigned char AddrBytes[NUM_ADDR_MODES] = {1,1,2,3,3,2,3,3,2,2,2,2,2,1};
-
-unsigned char bytes[256] =
-{
-	1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
-	3,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
-	1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
-	1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
-	2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,1,3,
-	2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
-	2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3,
-	2,2,2,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
-};
+unsigned char AddrBytes[NUM_ADDR_MODES] = {1,1,2,3,3,3,2,3,3,2,2,2,2,2,1};
 
 char TraceArr[256][4] =
 {
@@ -119,37 +77,20 @@ char TraceArr[256][4] =
 	"BEQ","SBC","HLT","???","???","SBC","INC","???","SED","SBC","???","???","???","SBC","INC","???"
 };
 
-unsigned char PatPal[4] = { 0x0F, 0x3C, 0x2A, 0x30 };
 
 unsigned char VMemory (unsigned long Addy) { return PPU.CHRPointer[(Addy & 0x1C00) >> 10][Addy & 0x03FF]; }
 
-short WindowPoses[2][32] = {
-	//SingleSize Mode
-	{
-		256+8, 240+24+128+24,		//Palette
-		256+8, 240+24,			//Pattern
-		0, 240+48,			//Dumps L/T
-		256+8, 32+24+128,		//Dumps W/H
-		256+8, 0,			//Name Tables
-		256+8+256+8, 32+24+128+48,	//Trace L/T
-		256+8, 32+24+128+48+8,		//Trace W/H
-		256+8+256+8, 0,			//Registers L/T
-		256+8, 32+24+128+48,		//Registers W/H
-		0, 0				//MemView L/T
-	},
-	//DoubleSize Mode
-	{
-		0, 480+48+128+24,	//Palette
-		0, 480+48,		//Pattern
-		256+8, 480+48,		//Dumps L/T
-		256, 32+24+128+24,	//Dumps W/H
-		512+8, 0,		//Name Tables
-		512+8+244, 480+24,	//Trace L/T
-		256+4, 32+24+128+48,	//Trace W/H
-		512+8, 480+24,		//Registers L/T
-		244, 32+24+128+48,	//Registers W/H
-		0, 0			//MemView L/T
-	}
+enum {
+	D_PAL_W = 256,
+	D_PAL_H = 32,
+	D_PAT_W = 256,
+	D_PAT_H = 128,
+	D_NAM_W = 512,
+	D_NAM_H = 480,
+	D_REG_W = 224,
+	D_REG_H = 176,
+	D_TRC_W = 256,
+	D_TRC_H = 256
 };
 
 void	Debugger_Init (void)
@@ -157,24 +98,30 @@ void	Debugger_Init (void)
 	HDC TpHDC = GetDC(mWnd);
 	//Palette
 	Debugger.PaletteDC = CreateCompatibleDC(TpHDC);
-	Debugger.PaletteBMP = CreateCompatibleBitmap(TpHDC,256,32);
+	Debugger.PaletteBMP = CreateCompatibleBitmap(TpHDC,D_PAL_W,D_PAL_H);
+	SelectObject(Debugger.PaletteDC,Debugger.PaletteBMP);
 	//Pattern Tables
 	Debugger.PatternDC = CreateCompatibleDC(TpHDC);
-	Debugger.PatternBMP = CreateCompatibleBitmap(TpHDC,256,128);
+	Debugger.PatternBMP = CreateCompatibleBitmap(TpHDC,D_PAT_W,D_PAT_H);
+	SelectObject(Debugger.PatternDC,Debugger.PatternBMP);
 	//Name Tables
 	Debugger.NameDC = CreateCompatibleDC(TpHDC);
+	Debugger.NameBMP = CreateCompatibleBitmap(TpHDC,D_NAM_W,D_NAM_H);
+	SelectObject(Debugger.NameDC,Debugger.NameBMP);
 	//Trace Window
 	Debugger.TraceDC = CreateCompatibleDC(TpHDC);
+	Debugger.TraceBMP = CreateCompatibleBitmap(TpHDC,D_TRC_W,D_TRC_H);
+	SelectObject(Debugger.TraceDC,Debugger.TraceBMP);
 	//Register Window
 	Debugger.RegDC = CreateCompatibleDC(TpHDC);
+	Debugger.RegBMP = CreateCompatibleBitmap(TpHDC,D_REG_W,D_REG_H);
+	SelectObject(Debugger.RegDC,Debugger.RegBMP);
 
 	ReleaseDC(mWnd,TpHDC);
 
-	ZeroMemory(&Debugger.BreakP, sizeof(Debugger.BreakP));
+	ZeroMemory(Debugger.BreakP,sizeof(Debugger.BreakP));
 	Debugger.TraceOffset = -1;
 	
-	Debugger.DoubleSize = 0;
-
 	Debugger.PatPalBase = 0;
 
 	Debugger.Logging = FALSE;
@@ -199,9 +146,8 @@ void	DPrint (char *text)
 
 void	Debugger_SetMode (int NewMode)
 {
+	RECT rect;
 	HDC TpHDC;
-	if (Debugger.DoubleSize > 1)
-		Debugger.DoubleSize = 0;
 
 	Debugger.Mode = NewMode;
 	Debugger.Enabled = (Debugger.Mode > 0) ? TRUE : FALSE;
@@ -212,63 +158,105 @@ void	Debugger_SetMode (int NewMode)
 	Debugger.PalChanged = TRUE;
 	Debugger.PatChanged = TRUE;
 	
-	SetWindowPos(mWnd,HWND_TOP,0,0,0,0,SWP_NOSIZE);		//Move Main Window to (0,0)
+	if ((Debugger.Enabled) && (SizeMult == 1))	// window positions will overlap if at 1X size
+	{
+		SizeMult = 2;
+		CheckMenuRadioItem(GetMenu(mWnd),ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);
+		SetWindowClientArea(mWnd,512,480);
+	}
+
 	//Release Handles - Assume Mode 0
-	DestroyWindow(Debugger.DumpWnd);
-	ReleaseDC(Debugger.PaletteWnd, Debugger.PaletteWDC);		//Palette
-	DestroyWindow(Debugger.PaletteWnd);
-	ReleaseDC(Debugger.PatternWnd, Debugger.PatternWDC);		//Pattern Tables
-	DestroyWindow(Debugger.PatternWnd);
-	ReleaseDC(Debugger.NameWnd, Debugger.NameWDC);			//Name Tables
-	DestroyWindow(Debugger.NameWnd);
-	DeleteObject(Debugger.NameBMP);
-	Debugger.NameBMP = CreateCompatibleBitmap(TpHDC,256*(Debugger.DoubleSize+1),240*(Debugger.DoubleSize+1));
-	ReleaseDC(Debugger.TraceWnd, Debugger.TraceWDC);			//Trace
-	DestroyWindow(Debugger.TraceWnd);
-	DeleteObject(Debugger.TraceBMP);
-	Debugger.TraceBMP = CreateCompatibleBitmap(TpHDC,WindowPoses[Debugger.DoubleSize][DW_TRC_WIDTH]-8,WindowPoses[Debugger.DoubleSize][DW_TRC_HEIGHT]-24);
-	SelectObject(Debugger.TraceDC,Debugger.TraceBMP);
-	DestroyWindow(Debugger.RegWnd);					//Registers
-	Debugger.RegBMP = CreateCompatibleBitmap(TpHDC,WindowPoses[Debugger.DoubleSize][DW_REG_WIDTH]-8,WindowPoses[Debugger.DoubleSize][DW_REG_HEIGHT]-24);
-	SelectObject(Debugger.RegDC,Debugger.RegBMP);
+	if (Debugger.DumpWnd)					// "Dump" buttons
+	{
+		DestroyWindow(Debugger.DumpWnd);
+		Debugger.DumpWnd = NULL;
+	}
+	if (Debugger.PaletteWnd)				// Palette
+	{
+		ReleaseDC(Debugger.PaletteWnd, Debugger.PaletteWDC);
+		Debugger.PaletteWDC = NULL;
+		DestroyWindow(Debugger.PaletteWnd);
+		Debugger.PaletteWnd = NULL;
+	}
+	if (Debugger.PatternWnd)				// Pattern Tables
+	{
+		ReleaseDC(Debugger.PatternWnd, Debugger.PatternWDC);
+		Debugger.PatternWDC = NULL;
+		DestroyWindow(Debugger.PatternWnd);
+		Debugger.PatternWnd = NULL;
+	}
+	if (Debugger.NameWnd)					// Nametables
+	{
+		ReleaseDC(Debugger.NameWnd, Debugger.NameWDC);
+		Debugger.NameWDC = NULL;
+		DestroyWindow(Debugger.NameWnd);
+		Debugger.NameWnd = NULL;
+	}
+	if (Debugger.TraceWnd)					// Trace window
+	{
+		ReleaseDC(Debugger.TraceWnd, Debugger.TraceWDC);
+		Debugger.TraceWDC = NULL;
+		DestroyWindow(Debugger.TraceWnd);
+		Debugger.TraceWnd = NULL;
+	}
+	if (Debugger.RegWnd)					// Registers
+	{
+		ReleaseDC(Debugger.RegWnd, Debugger.RegWDC);
+		Debugger.RegWDC = NULL;
+		DestroyWindow(Debugger.RegWnd);
+		Debugger.RegWnd = NULL;
+	}
 
 	ReleaseDC(mWnd,TpHDC);
 
 	if (Debugger.Mode >= 1)
-	{	//Palette + Pattern Tables
-		//Palette
-		Debugger.PaletteWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PALETTE, mWnd, PaletteProc);
-		SetWindowPos(Debugger.PaletteWnd,HWND_TOP,WindowPoses[Debugger.DoubleSize][DW_PAL_LEFT],WindowPoses[Debugger.DoubleSize][DW_PAL_TOP],256+8,32+24,SWP_SHOWWINDOW);
-		Debugger.PaletteWDC = GetDC(Debugger.PaletteWnd);
+	{
 		//Pattern Tables
 		Debugger.PatternWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PATTERN, mWnd, PatternProc);
-		SetWindowPos(Debugger.PatternWnd,HWND_TOP,WindowPoses[Debugger.DoubleSize][DW_PAT_LEFT],WindowPoses[Debugger.DoubleSize][DW_PAT_TOP],256+8,128+24,SWP_SHOWWINDOW);
+		GetWindowRect(mWnd,&rect);
+		SetWindowPos(Debugger.PatternWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
+		SetWindowClientArea(Debugger.PatternWnd,D_PAT_W,D_PAT_H);
 		Debugger.PatternWDC = GetDC(Debugger.PatternWnd);
+		
+		//Palette
+		Debugger.PaletteWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PALETTE, mWnd, PaletteProc);
+		GetWindowRect(Debugger.PatternWnd,&rect);
+		SetWindowPos(Debugger.PaletteWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
+		SetWindowClientArea(Debugger.PaletteWnd,D_PAL_W,D_PAL_H);
+		
+		Debugger.PaletteWDC = GetDC(Debugger.PaletteWnd);
 		//Dumps
 		Debugger.DumpWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_DUMPS, mWnd, DumpProc);
-		SetWindowPos(Debugger.DumpWnd,HWND_TOP,WindowPoses[Debugger.DoubleSize][DW_DMP_LEFT],WindowPoses[Debugger.DoubleSize][DW_DMP_TOP],WindowPoses[Debugger.DoubleSize][DW_DMP_WIDTH],WindowPoses[Debugger.DoubleSize][DW_DMP_HEIGHT],SWP_SHOWWINDOW);
+		GetWindowRect(Debugger.PatternWnd,&rect);
+		SetWindowPos(Debugger.DumpWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW | SWP_NOSIZE);
 	}
 	if (Debugger.Mode >= 2)
-	{	// + Name Tables
+	{
 		//Name Tables
 		Debugger.NameWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_NAME, mWnd, NameProc);
-		SetWindowPos(Debugger.NameWnd,HWND_TOP,WindowPoses[Debugger.DoubleSize][DW_NAM_LEFT],WindowPoses[Debugger.DoubleSize][DW_NAM_TOP],(Debugger.DoubleSize+1)*256+8,(Debugger.DoubleSize+1)*240+24,SWP_SHOWWINDOW);
+		GetWindowRect(mWnd,&rect);
+		SetWindowPos(Debugger.NameWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW);
+		SetWindowClientArea(Debugger.NameWnd,D_NAM_W,D_NAM_H);
 		Debugger.NameWDC = GetDC(Debugger.NameWnd);
 	}
 	if (Debugger.Mode >= 3)
-	{	// + Registers
+	{
 		HFONT tpf;
 		int nHeight;
 		//Registers
 		Debugger.RegWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_REGISTERS, mWnd, RegProc);
-		SetWindowPos(Debugger.RegWnd,HWND_TOP,WindowPoses[Debugger.DoubleSize][DW_REG_LEFT],WindowPoses[Debugger.DoubleSize][DW_REG_TOP],WindowPoses[Debugger.DoubleSize][DW_REG_WIDTH],WindowPoses[Debugger.DoubleSize][DW_REG_HEIGHT],SWP_SHOWWINDOW);
+		GetWindowRect(Debugger.NameWnd,&rect);
+		SetWindowPos(Debugger.RegWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
+		SetWindowClientArea(Debugger.RegWnd,D_REG_W,D_REG_H);
 		Debugger.RegWDC = GetDC(Debugger.RegWnd);
 		//Trace Window
 		Debugger.TraceWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_TRACE, mWnd, TraceProc);
-		SetWindowPos(Debugger.TraceWnd,HWND_TOP,WindowPoses[Debugger.DoubleSize][DW_TRC_LEFT],WindowPoses[Debugger.DoubleSize][DW_TRC_TOP],WindowPoses[Debugger.DoubleSize][DW_TRC_WIDTH],WindowPoses[Debugger.DoubleSize][DW_TRC_HEIGHT],SWP_SHOWWINDOW);
+		GetWindowRect(Debugger.RegWnd,&rect);
+		SetWindowPos(Debugger.TraceWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW);
+		SetWindowClientArea(Debugger.TraceWnd,D_TRC_W,D_TRC_H);
 		Debugger.TraceWDC = GetDC(Debugger.TraceWnd);
 
-		//Joint Shit
+		//Font info for register/trace windows
 		nHeight = -MulDiv(Debugger.FontHeight, GetDeviceCaps(Debugger.RegWDC, LOGPIXELSY), 72);
 		tpf = CreateFont(nHeight, Debugger.FontWidth, 0, 0, 0, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DRAFT_QUALITY, FF_MODERN, "Courier New");
 		SelectObject(Debugger.RegWDC, tpf);
@@ -296,63 +284,88 @@ void	Debugger_StopLogging (void)
 	Debugger.Logging = FALSE;
 }
 
-unsigned char TraceMem (unsigned short Addy)
+unsigned char TraceMem (unsigned long Addy)
 {
-	return CPU.ReadHandler[Addy >> 12](Addy >> 12, Addy & 0xFFF);
+	Addy &= 0xFFFF;
+	if ((CPU.ReadHandler[Addy >> 12] == PPU_IntRead) || ((CPU.ReadHandler[Addy >> 12] == CPU_Read4k) && ((Addy & 0xFFF) < 0x18)))
+		return 0xFF;
+	else	return CPU.ReadHandler[Addy >> 12](Addy >> 12, Addy & 0xFFF);
+}
+
+void	DecodeInstruction (unsigned short Addy, char *str)
+{
+	unsigned char OpData[3] = {TraceMem(Addy),0,0};
+	unsigned short Operand = 0, MidAddy = 0, EffectiveAddy = 0;
+	switch (TraceAddyMode[OpData[0]])
+	{
+	case IND:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = TraceMem(Operand) | (TraceMem(Operand+1) << 8);		break;
+	case ADR:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);										break;
+	case ABS:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);										break;
+	case ABX:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = Operand + CPU.X;					break;
+	case ABY:	OpData[1] = TraceMem(Addy+1);	OpData[2] = TraceMem(Addy+2);	Operand = OpData[1] | (OpData[2] << 8);	EffectiveAddy = Operand + CPU.Y;					break;
+	case IMM:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];																break;
+	case ZPG:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];																break;
+	case ZPX:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	EffectiveAddy = (Operand + CPU.X) & 0xFF;										break;
+	case ZPY:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	EffectiveAddy = (Operand + CPU.Y) & 0xFF;										break;
+	case INX:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	MidAddy = (Operand + CPU.X) & 0xFF;	EffectiveAddy = TraceMem(MidAddy) | (TraceMem((MidAddy+1) & 0xFF) << 8);	break;
+	case INY:	OpData[1] = TraceMem(Addy+1);	Operand = OpData[1];	MidAddy = TraceMem(Operand) | (TraceMem((Operand+1) & 0xFF) << 8);	EffectiveAddy = MidAddy + CPU.Y;		break;
+	case IMP:																							break;
+	case ACC:																							break;
+	case ERR:																							break;
+	case REL:	OpData[1] = TraceMem(Addy+1);	Operand = Addy+2+(signed char)OpData[1];													break;
+	}
+
+	switch (TraceAddyMode[TraceMem(Addy)])
+	{
+	case IMP:
+	case ERR:sprintf(str,"%04X  %02X        %s                           ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
+	case ACC:sprintf(str,"%04X  %02X        %s A                         ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
+	case IMM:sprintf(str,"%04X  %02X %02X     %s #$%02X                      ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
+	case REL:sprintf(str,"%04X  %02X %02X     %s $%04X                     ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
+	case ZPG:sprintf(str,"%04X  %02X %02X     %s $%02X = %02X                  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
+	case ZPX:sprintf(str,"%04X  %02X %02X     %s $%02X,X @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case ZPY:sprintf(str,"%04X  %02X %02X     %s $%02X,Y @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case INX:sprintf(str,"%04X  %02X %02X     %s ($%02X,X) @ %02X = %04X = %02X  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
+	case INY:sprintf(str,"%04X  %02X %02X     %s ($%02X),Y = %04X @ %04X = %02X",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
+	case ADR:sprintf(str,"%04X  %02X %02X %02X  %s $%04X                     ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand);							break;
+	case ABS:sprintf(str,"%04X  %02X %02X %02X  %s $%04X = %02X                ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
+	case IND:sprintf(str,"%04X  %02X %02X %02X  %s ($%04X) = %04X            ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy);					break;
+	case ABX:sprintf(str,"%04X  %02X %02X %02X  %s $%04X,X @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case ABY:sprintf(str,"%04X  %02X %02X %02X  %s $%04X,Y @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	default : strcpy(str,"                                              ");																	break;
+	}
 }
 
 void	Debugger_DrawTraceLine (unsigned short Addy, short y)
 {
-	char tpc[32];
-	y -= 3;
+	char tpc[64];
 	Debugger.AddyLine[y/Debugger.FontHeight] = Addy;
 	
-
-	switch (TraceAddyMode[TraceMem(Addy)])
-	{
-	case IMP:sprintf(tpc,"%04X  %02X        %s",			Addy,TraceMem(Addy),					TraceArr[TraceMem(Addy)]);						break;
-	case ACC:sprintf(tpc,"%04X  %02X        %s A",			Addy,TraceMem(Addy),					TraceArr[TraceMem(Addy)]);						break;
-	case IMM:sprintf(tpc,"%04X  %02X %02X     %s #$%02X",		Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-	case ABS:sprintf(tpc,"%04X  %02X %02X %02X  %s $%04X",		Addy,TraceMem(Addy),TraceMem(Addy+1),TraceMem(Addy+2),	TraceArr[TraceMem(Addy)],TraceMem(Addy+1) | (TraceMem(Addy+2) << 8));	break;
-	case IND:sprintf(tpc,"%04X  %02X %02X %02X  %s ($%04X)",	Addy,TraceMem(Addy),TraceMem(Addy+1),TraceMem(Addy+2),	TraceArr[TraceMem(Addy)],TraceMem(Addy+1) | (TraceMem(Addy+2) << 8));	break;
-	case REL:sprintf(tpc,"%04X  %02X %02X     %s $%04X",		Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],Addy+2+(signed char)(TraceMem(Addy+1)));	break;
-	case ABX:sprintf(tpc,"%04X  %02X %02X %02X  %s $%04X,X",	Addy,TraceMem(Addy),TraceMem(Addy+1),TraceMem(Addy+2),	TraceArr[TraceMem(Addy)],TraceMem(Addy+1) | (TraceMem(Addy+2) << 8));	break;
-	case ABY:sprintf(tpc,"%04X  %02X %02X %02X  %s $%04X,Y",	Addy,TraceMem(Addy),TraceMem(Addy+1),TraceMem(Addy+2),	TraceArr[TraceMem(Addy)],TraceMem(Addy+1) | (TraceMem(Addy+2) << 8));	break;
-	case ZPG:sprintf(tpc,"%04X  %02X %02X     %s $%02X",		Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-	case ZPX:sprintf(tpc,"%04X  %02X %02X     %s $%02X,X",		Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-	case ZPY:sprintf(tpc,"%04X  %02X %02X     %s $%02X,Y",		Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-	case INX:sprintf(tpc,"%04X  %02X %02X     %s ($%02X,X)",	Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-	case INY:sprintf(tpc,"%04X  %02X %02X     %s ($%02X),Y",	Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-	case ERR:sprintf(tpc,"%04X  %02X        %s",			Addy,TraceMem(Addy),					TraceArr[TraceMem(Addy)]);						break;
-	default : strcpy(tpc,"");																					break;
-	}
-
+	DecodeInstruction(Addy,tpc);
 	if (Debugger.BreakP[Addy])
 	{
 		HBRUSH RBrush = CreateSolidBrush(RGB(255,0,0));
 		RECT trect;
 		trect.left = 0;
-		trect.top = y+3;
-		trect.right = WindowPoses[Debugger.DoubleSize][DW_TRC_WIDTH];
-		trect.bottom = y+Debugger.FontHeight+3;
+		trect.top = y;
+		trect.right = D_TRC_W;
+		trect.bottom = y+Debugger.FontHeight;
 		FillRect(Debugger.TraceDC, &trect, RBrush);
 		DeleteObject(RBrush);
 	}
 
-	TextOut(Debugger.TraceDC, 1, y, tpc, strlen(tpc));
+	TextOut(Debugger.TraceDC, 1, y-3, tpc, (int)strlen(tpc));
 }
 
 void	Debugger_Update (void)
 {
 	if (Debugger.Mode >= 3)
 	{
-		//Check for BreakPoint
 		if (Debugger.BreakP[CPU.PC])
 			NES.Stop = TRUE;
-
-//		if (NES.Stop)	//Only while stepping
+		if (NES.Stop)
 		{
-			MSG msg;
+//			MSG msg;
 			HBRUSH WBrush = CreateSolidBrush(0xFFFFFF);
 			RECT trect;
 			char tpc[40];
@@ -364,83 +377,83 @@ void	Debugger_Update (void)
 			int StartY;
 			short MaxY;
 
-			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
+/*			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))	// only need this if we're going to update the debug window
+			{						// while it's actually running
 				if (!TranslateAccelerator(mWnd, hAccelTable, &msg)) 
 				{
 					TranslateMessage(&msg);
 					DispatchMessage(&msg);
 				}
-			}
+			}*/
 
 			trect.left = 0;
 			trect.top = 0;
-			trect.right = WindowPoses[Debugger.DoubleSize][DW_REG_WIDTH];
-			trect.bottom = WindowPoses[Debugger.DoubleSize][DW_REG_HEIGHT];
+			trect.right = D_REG_W;
+			trect.bottom = D_REG_H;
 			FillRect(Debugger.RegDC, &trect, WBrush);
 
 			trect.left = 0;
 			trect.top = 0;
-			trect.right = WindowPoses[Debugger.DoubleSize][DW_TRC_WIDTH];
-			trect.bottom = WindowPoses[Debugger.DoubleSize][DW_TRC_HEIGHT];
+			trect.right = D_TRC_W;
+			trect.bottom = D_TRC_H;
 			FillRect(Debugger.TraceDC, &trect, WBrush);
 			DeleteObject(WBrush);
 
-			sprintf(tpc,"PC: %04X",CPU.PC);	TextOut(Debugger.RegDC,0, 0*Debugger.FontHeight,tpc,strlen(tpc));
-			sprintf(tpc,"A: %02X",CPU.A);	TextOut(Debugger.RegDC,0, 1*Debugger.FontHeight,tpc,strlen(tpc));
-			sprintf(tpc,"X: %02X",CPU.X);	TextOut(Debugger.RegDC,0, 2*Debugger.FontHeight,tpc,strlen(tpc));
-			sprintf(tpc,"Y: %02X",CPU.Y);	TextOut(Debugger.RegDC,0, 3*Debugger.FontHeight,tpc,strlen(tpc));
-			sprintf(tpc,"SP: %02X",CPU.SP);	TextOut(Debugger.RegDC,0, 4*Debugger.FontHeight,tpc,strlen(tpc));
-			sprintf(tpc,"P: %02X",CPU.P);	TextOut(Debugger.RegDC,0, 5*Debugger.FontHeight,tpc,strlen(tpc));
-			sprintf(tpc,"->%s%s%s%s%s%s%s%s",CPU.FN?"N":" ",CPU.FV?"V":" "," ",CPU.FB?"B":" ",CPU.FI?"I":" ",CPU.FD?"D":" ",CPU.FZ?"Z":" ",CPU.FC?"C":" ");
-							TextOut(Debugger.RegDC,0, 6*Debugger.FontHeight,tpc,strlen(tpc));
+			sprintf(tpc,"PC: %04X",CPU.PC);	TextOut(Debugger.RegDC,0, 0*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			sprintf(tpc,"A: %02X",CPU.A);	TextOut(Debugger.RegDC,0, 1*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			sprintf(tpc,"X: %02X",CPU.X);	TextOut(Debugger.RegDC,0, 2*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			sprintf(tpc,"Y: %02X",CPU.Y);	TextOut(Debugger.RegDC,0, 3*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			sprintf(tpc,"SP: %02X",CPU.SP);	TextOut(Debugger.RegDC,0, 4*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			CPU_JoinFlags();
+			sprintf(tpc,"P: %02X",CPU.P);	TextOut(Debugger.RegDC,0, 5*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			sprintf(tpc,"->%s%s  %s%s%s%s  %s %s %s",CPU.FN?"N":" ",CPU.FV?"V":" ",CPU.FI?"I":" ",CPU.FD?"D":" ",CPU.FZ?"Z":" ",CPU.FC?"C":" ",(CPU.WantIRQ&IRQ_DPCM)?"DMC":"   ",(CPU.WantIRQ&IRQ_FRAME)?"FRM":"   ",(CPU.WantIRQ&IRQ_EXTERNAL)?"IRQ":"   ");
+							TextOut(Debugger.RegDC,0, 6*Debugger.FontHeight,tpc,(int)strlen(tpc));
 
 			if ((PPU.SLnum >= 0) && (PPU.SLnum < 240))
 				sprintf(tpc,"SLnum: %i",PPU.SLnum);
 			else	sprintf(tpc,"SLnum: %i (VBlank)",PPU.SLnum);
-							TextOut(Debugger.RegDC,0, 7*Debugger.FontHeight,tpc,strlen(tpc));
+							TextOut(Debugger.RegDC,0, 7*Debugger.FontHeight,tpc,(int)strlen(tpc));
 
 			sprintf(tpc,"CPU Ticks: %i/%.3f",PPU.Clockticks,PPU.Clockticks / (PPU.IsPAL ? 3.2 : 3.0));
-							TextOut(Debugger.RegDC,0, 8*Debugger.FontHeight,tpc,strlen(tpc));
+							TextOut(Debugger.RegDC,0, 8*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			sprintf(tpc,"VRAMAddy: %04X",PPU.VRAMAddr);
-							TextOut(Debugger.RegDC,0, 9*Debugger.FontHeight,tpc,strlen(tpc));
+							TextOut(Debugger.RegDC,0, 9*Debugger.FontHeight,tpc,(int)strlen(tpc));
 
-			sprintf(tpc,"CPU Pages:");	TextOut(Debugger.RegDC,0,12*Debugger.FontHeight,tpc,strlen(tpc));
+			sprintf(tpc,"CPU Pages:");	TextOut(Debugger.RegDC,0,12*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			for (i = 0; i < 8; i++)
 			{
-				if (MP.GetPRG_ROM4(i+8) >= 0)
-					sprintf(tpc,"%03X",MP.GetPRG_ROM4(i+8));
-				else if (MP.GetPRG_RAM4(i+8) >= 0)
-					sprintf(tpc,"A%02X",MP.GetPRG_RAM4(i+8));
+				if (EI.GetPRG_ROM4(i+8) >= 0)
+					sprintf(tpc,"%03X",EI.GetPRG_ROM4(i+8));
+				else if (EI.GetPRG_RAM4(i+8) >= 0)
+					sprintf(tpc,"A%02X",EI.GetPRG_RAM4(i+8));
 				else	sprintf(tpc,"???");
-							TextOut(Debugger.RegDC,i*4*Debugger.FontWidth,13*Debugger.FontHeight,tpc,strlen(tpc));
+							TextOut(Debugger.RegDC,i*4*Debugger.FontWidth,13*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			}
-			sprintf(tpc,"PPU Pages:");	TextOut(Debugger.RegDC,0,14*Debugger.FontHeight,tpc,strlen(tpc));
+			sprintf(tpc,"PPU Pages:");	TextOut(Debugger.RegDC,0,14*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			for (i = 0; i < 8; i++)
 			{
-				if (MP.GetCHR_ROM1(i) >= 0)
-					sprintf(tpc,"%03X",MP.GetCHR_ROM1(i));
-				else if (MP.GetCHR_RAM1(i) >= 0)
-					sprintf(tpc,"A%02X",MP.GetCHR_RAM1(i));
+				if (EI.GetCHR_ROM1(i) >= 0)
+					sprintf(tpc,"%03X",EI.GetCHR_ROM1(i));
+				else if (EI.GetCHR_RAM1(i) >= 0)
+					sprintf(tpc,"A%02X",EI.GetCHR_RAM1(i));
 				else	sprintf(tpc,"???");
-							TextOut(Debugger.RegDC,i*4*Debugger.FontWidth,15*Debugger.FontHeight,tpc,strlen(tpc));
+							TextOut(Debugger.RegDC,i*4*Debugger.FontWidth,15*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			}
-			BitBlt(Debugger.RegWDC,0,0,WindowPoses[Debugger.DoubleSize][DW_REG_WIDTH],WindowPoses[Debugger.DoubleSize][DW_REG_HEIGHT],Debugger.RegDC,0,0,SRCCOPY);
+			BitBlt(Debugger.RegWDC,0,0,D_REG_W,D_REG_H,Debugger.RegDC,0,0,SRCCOPY);
 
 			//Add Disasm
 			for (i = 0; i < 64; i++)
 				Debugger.AddyLine[i] = -1;
 
 			StartAddy = (unsigned short)((Debugger.TraceOffset == -1) ? CPU.PC : Debugger.TraceOffset);
-//			short StartY = (WindowPoses[DoubleSize][DW_TRC_HEIGHT]-24) / 2;
-			StartY = 10*Debugger.FontHeight;
+			StartY = D_TRC_H / 2;
 			StartY = StartY - (StartY % Debugger.FontHeight);
 		
 			CurrAddy = StartAddy;
-			MaxY = WindowPoses[Debugger.DoubleSize][DW_TRC_HEIGHT]-24;
+			MaxY = D_TRC_H;
 			MaxY = (int) (MaxY/Debugger.FontHeight)*Debugger.FontHeight;	//Little hack to make it scroll nicely
-			if (!((MaxY/Debugger.FontHeight) & 1))		// "
-				MaxY+=Debugger.FontHeight;				// "
+			if (!((MaxY/Debugger.FontHeight) & 1))
+				MaxY+=Debugger.FontHeight;
 			for (CurrY=StartY; CurrY<MaxY; CurrY+=Debugger.FontHeight)
 			{
 				Debugger_DrawTraceLine(CurrAddy, CurrY);
@@ -462,14 +475,14 @@ void	Debugger_Update (void)
 			}
 
 			MoveToEx(Debugger.TraceDC, 0, StartY, NULL);
-			LineTo(Debugger.TraceDC, WindowPoses[Debugger.DoubleSize][DW_TRC_WIDTH], StartY);
+			LineTo(Debugger.TraceDC, D_TRC_W, StartY);
 
 			MoveToEx(Debugger.TraceDC, 0, StartY+Debugger.FontHeight, NULL);
-			LineTo(Debugger.TraceDC, WindowPoses[Debugger.DoubleSize][DW_TRC_WIDTH], StartY+Debugger.FontHeight);
+			LineTo(Debugger.TraceDC, D_TRC_W, StartY+Debugger.FontHeight);
 
-			BitBlt(Debugger.TraceWDC,0,0,WindowPoses[Debugger.DoubleSize][DW_TRC_WIDTH],WindowPoses[Debugger.DoubleSize][DW_TRC_HEIGHT],Debugger.TraceDC,0,0,SRCCOPY);
+			BitBlt(Debugger.TraceWDC,0,0,D_TRC_W,D_TRC_H,Debugger.TraceDC,0,0,SRCCOPY);
 
-			Debugger_UpdateGraphics();		
+			Debugger_UpdateGraphics();
 		}
 	}
 }
@@ -479,43 +492,25 @@ void	Debugger_AddInst (void)
 	if (Debugger.Logging)
 	{
 		unsigned short Addy = (unsigned short)CPU.PC;
-		char out1[32], out2[40];
-		ZeroMemory(Debugger.Out1, sizeof(Debugger.Out1));
-		switch (TraceAddyMode[TraceMem(Addy)])
-		{
-		case IMP:sprintf(out1,"%04X  %02X        %s          ",		Addy,TraceMem(Addy),					TraceArr[TraceMem(Addy)]);						break;
-		case ACC:sprintf(out1,"%04X  %02X        %s A        ",		Addy,TraceMem(Addy),					TraceArr[TraceMem(Addy)]);						break;
-		case IMM:sprintf(out1,"%04X  %02X %02X     %s #$%02X     ",	Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-		case ABS:sprintf(out1,"%04X  %02X %02X %02X  %s $%04X    ",	Addy,TraceMem(Addy),TraceMem(Addy+1),TraceMem(Addy+2),	TraceArr[TraceMem(Addy)],TraceMem(Addy+1) | (TraceMem(Addy+2) << 8));	break;
-		case IND:sprintf(out1,"%04X  %02X %02X %02X  %s ($%04X)  ",	Addy,TraceMem(Addy),TraceMem(Addy+1),TraceMem(Addy+2),	TraceArr[TraceMem(Addy)],TraceMem(Addy+1) | (TraceMem(Addy+2) << 8));	break;
-		case REL:sprintf(out1,"%04X  %02X %02X     %s $%04X    ",	Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],Addy+2+(signed char)(TraceMem(Addy+1)));	break;
-		case ABX:sprintf(out1,"%04X  %02X %02X %02X  %s $%04X,X  ",	Addy,TraceMem(Addy),TraceMem(Addy+1),TraceMem(Addy+2),	TraceArr[TraceMem(Addy)],TraceMem(Addy+1) | (TraceMem(Addy+2) << 8));	break;
-		case ABY:sprintf(out1,"%04X  %02X %02X %02X  %s $%04X,Y  ",	Addy,TraceMem(Addy),TraceMem(Addy+1),TraceMem(Addy+2),	TraceArr[TraceMem(Addy)],TraceMem(Addy+1) | (TraceMem(Addy+2) << 8));	break;
-		case ZPG:sprintf(out1,"%04X  %02X %02X     %s $%02X      ",	Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-		case ZPX:sprintf(out1,"%04X  %02X %02X     %s $%02X,X    ",	Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-		case ZPY:sprintf(out1,"%04X  %02X %02X     %s $%02X,Y    ",	Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-		case INX:sprintf(out1,"%04X  %02X %02X     %s ($%02X,X)  ",	Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-		case INY:sprintf(out1,"%04X  %02X %02X     %s ($%02X),Y  ",	Addy,TraceMem(Addy),TraceMem(Addy+1),			TraceArr[TraceMem(Addy)],TraceMem(Addy+1));				break;
-		case ERR:sprintf(out1,"%04X  %02X        %s          ",		Addy,TraceMem(Addy),					TraceArr[TraceMem(Addy)]);						break;
-		default : strcpy(out1,"");	break;
-		};
+		char tpc[64];
+		DecodeInstruction(Addy,tpc);
+		DPrint(tpc);
 		CPU_JoinFlags();
-		sprintf(out2,"A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%i\n",CPU.A,CPU.X,CPU.Y,CPU.P,CPU.SP,PPU.Clockticks);
-		DPrint(out1);
-		DPrint(out2);
+		sprintf(tpc,"  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n",CPU.A,CPU.X,CPU.Y,CPU.P,CPU.SP,PPU.Clockticks,PPU.SLnum);
+		DPrint(tpc);
 	}
 }
 
 void	Debugger_UpdateGraphics (void)
 {
-	char DInc = Debugger.Depth;
+	register unsigned char DInc = Debugger.Depth;
 	long PatPtr;
 	unsigned char PalVal;
 	int MemAddy;
 	if (Debugger.Mode >= 1)
 	{
 		//Palette
-		if (Debugger.PalChanged)
+		if (1)//Debugger.PalChanged)
 		{
 			int x, y, z;
 			Debugger.PalChanged = FALSE;
@@ -523,29 +518,37 @@ void	Debugger_UpdateGraphics (void)
 				for (x = 0; x < 16; x++)
 					for (y = 0; y < 16; y++)
 					{
-						int BaseVal = ((y << 8) + ((z << 4) + x));
-						memcpy(&Debugger.PaletteArray[BaseVal*Debugger.Depth],&GFX.FixedPalette[PPU.Palette[z]],DInc);
-						memcpy(&Debugger.PaletteArray[(BaseVal+0x1000)*Debugger.Depth],&GFX.FixedPalette[PPU.Palette[0x10 | z]],DInc);
+						int BaseVal = (y << 8) | (z << 4) | x;
+						if (DInc == 2)
+						{
+							((unsigned short *)Debugger.PaletteArray)[BaseVal         ] = (unsigned short)GFX.FixedPalette[PPU.Palette[       z]];
+							((unsigned short *)Debugger.PaletteArray)[BaseVal | 0x1000] = (unsigned short)GFX.FixedPalette[PPU.Palette[0x10 | z]];
+						}
+						else
+						{
+							((unsigned long *)Debugger.PaletteArray)[BaseVal         ] = GFX.FixedPalette[PPU.Palette[       z]];
+							((unsigned long *)Debugger.PaletteArray)[BaseVal | 0x1000] = GFX.FixedPalette[PPU.Palette[0x10 | z]];
+						}
 					}
 		}
 
-		SetBitmapBits(Debugger.PaletteBMP,DInc*256*32,&Debugger.PaletteArray);
-		SelectObject(Debugger.PaletteDC,Debugger.PaletteBMP);
-		BitBlt(Debugger.PaletteWDC,0,0,256,32,Debugger.PaletteDC,0,0,SRCCOPY);
+		SetBitmapBits(Debugger.PaletteBMP,DInc*D_PAL_W*D_PAL_H,&Debugger.PaletteArray);
+//		SelectObject(Debugger.PaletteDC,Debugger.PaletteBMP);	// Is this necessary?
+		BitBlt(Debugger.PaletteWDC,0,0,D_PAL_W,D_PAL_H,Debugger.PaletteDC,0,0,SRCCOPY);
 
 		//Pattern Tables
-		if (Debugger.PatChanged)
+		if (1)//Debugger.PatChanged)
 		{
 			int i, t, x, y, sx, sy;
+			static unsigned char PatPal[4];
+			Debugger.PatChanged = FALSE;
+
 			PatPal[0] = PPU.Palette[0];
 			for (i = 1; i < 4; i++)
-				PatPal[i] = PPU.Palette[((Debugger.PatPalBase & 7) << 2) | i];
+				PatPal[i] = PPU.Palette[(Debugger.PatPalBase << 2) | i];
 
-			Debugger.PatChanged = FALSE;
 			for (t = 0; t < 2; t++)
-			{
 				for (y = 0; y < 16; y++)
-				{
 					for (x = 0; x < 16; x++)
 					{
 						MemAddy = (t << 12) | (y << 8) | (x << 4);
@@ -554,89 +557,89 @@ void	Debugger_UpdateGraphics (void)
 							PatPtr = (((y << 3) + sy) << 8) + (t << 7) + (x << 3);
 							for (sx = 0; sx < 8; sx++)
 							{
-								PalVal = (VMemory(MemAddy) & CharSC[sx]) >> (7-sx);
-								PalVal |= ((VMemory(MemAddy+8) & CharSC[sx]) >> (7-sx)) << 1;
-								memcpy(&Debugger.PatternArray[PatPtr*DInc],&GFX.FixedPalette[PatPal[PalVal]],DInc);
+								PalVal = (VMemory(MemAddy) & (0x80 >> sx)) >> (7-sx);
+								PalVal |= ((VMemory(MemAddy+8) & (0x80 >> sx)) >> (7-sx)) << 1;
+								if (DInc == 2)
+									((unsigned short *)Debugger.PatternArray)[PatPtr] = (unsigned short)GFX.FixedPalette[PatPal[PalVal]];
+								else	((unsigned long *)Debugger.PatternArray)[PatPtr] = GFX.FixedPalette[PatPal[PalVal]];
 								PatPtr++;
 							}
 							MemAddy++;
 						}
 					}
-				}
-			}
 		}
-		SetBitmapBits(Debugger.PatternBMP,Debugger.Depth*256*128,&Debugger.PatternArray);
-		SelectObject(Debugger.PatternDC,Debugger.PatternBMP);
-		BitBlt(Debugger.PatternWDC,0,0,256,128,Debugger.PatternDC,0,0,SRCCOPY);
+		SetBitmapBits(Debugger.PatternBMP,Debugger.Depth*D_PAT_W*D_PAT_H,&Debugger.PatternArray);
+//		SelectObject(Debugger.PatternDC,Debugger.PatternBMP);	// is this needed?
+		BitBlt(Debugger.PatternWDC,0,0,D_PAT_W,D_PAT_H,Debugger.PatternDC,0,0,SRCCOPY);
 	}
 	if (Debugger.Mode >= 2)
 	{
 		//Name Tables
-		int DS = Debugger.DoubleSize;
-		if (Debugger.NTabChanged)
+		if (1)//Debugger.NTabChanged)
 		{
 			int AttribTableVal, AttribNum;
-			int i, NTy, NTx, TileY, TileX, py, px;
+			int NT, TileY, TileX, py, px;
 			Debugger.NTabChanged = FALSE;
-			for (NTy = 0;NTy < 4; NTy += 2)
-				for (NTx = 0; NTx < 2; NTx++)
-					for (TileY = 0; TileY < 30; TileY++)
-						for (TileX = 0; TileX < 32; TileX++)
+			for (NT = 0; NT < 4; NT ++)
+				for (TileY = 0; TileY < 30; TileY++)
+					for (TileX = 0; TileX < 32; TileX++)
+					{
+						AttribNum = (((TileX & 2) >> 1) | (TileY & 2)) << 1;
+						AttribTableVal = (PPU.CHRPointer[8 | NT][0x3C0 | ((TileY >> 2) << 3) | (TileX >> 2)] & (3 << AttribNum)) >> AttribNum;
+						MemAddy = ((PPU.Reg2000 & 0x10) << 8) | (PPU.CHRPointer[8 | NT][TileX | (TileY << 5)] << 4);
+						for (py = 0; py < 8; py ++)
 						{
-							AttribNum = (((TileX & 2) >> 1) | (TileY & 2)) << 1;
-							AttribTableVal = (PPU.CHRPointer[8 | NTx | NTy][0x3C0 | ((TileY >> 2) << 3) | (TileX >> 2)] & (3 << AttribNum)) >> AttribNum;
-							MemAddy = ((PPU.Reg2000 & 0x10) << 8) | (PPU.CHRPointer[8 | NTx | NTy][TileX | (TileY << 5)] << 4);
-							for (py = 0; py < 8; py += 2-DS)
+							if (NT & 2)
+								PatPtr = (512*240) + ((NT&1) << 8) + (TileY << 12) | (py << 9) | (TileX << 3);
+							else	PatPtr = (NT << 8) + (TileY << 12) | (py << 9) | (TileX << 3);
+							
+							for (px = 0; px < 8; px ++)
 							{
-								if (DS)
-									PatPtr = ((NTy << 8)*240) + (TileY << 12) | (py << 9) | (NTx << 8) | (TileX << 3);
-								else	PatPtr = ((((NTy >> 1) * 120)+(TileY << 2)) << 8) + (py << 7) + (NTx << 7) + (TileX << 2);
-								
-								for (px = 0; px < 8; px += 2-DS)
+								PalVal = (VMemory(MemAddy) & (0x80 >> px)) >> (7-px);
+								PalVal |= ((VMemory(MemAddy+8) & (0x80 >> px)) >> (7-px)) << 1;
+								if (PalVal)
 								{
-									PalVal = (VMemory(MemAddy) & CharSC[px]) >> (7-px);
-									PalVal |= ((VMemory(MemAddy+8) & CharSC[px]) >> (7-px)) << 1;
-
-									if (PalVal)
-									{
-										PalVal |= (AttribTableVal << 2);
-										memcpy(&Debugger.NameArray[PatPtr*DInc],&GFX.FixedPalette[PPU.Palette[PalVal]],DInc);
-									}
-									else	memcpy(&Debugger.NameArray[PatPtr*DInc],&GFX.FixedPalette[PPU.Palette[0]],DInc);
-									PatPtr++;
+									PalVal |= (AttribTableVal << 2);
+									if (DInc == 2)
+										((unsigned short *)Debugger.NameArray)[PatPtr] = (unsigned short)GFX.FixedPalette[PPU.Palette[PalVal]];
+									else	((unsigned long *)Debugger.NameArray)[PatPtr] = GFX.FixedPalette[PPU.Palette[PalVal]];
 								}
-								MemAddy++;
+								else
+								{
+									if (DInc == 2)
+										((unsigned short *)Debugger.NameArray)[PatPtr] = (unsigned short)GFX.FixedPalette[PPU.Palette[0]];
+									else	((unsigned long *)Debugger.NameArray)[PatPtr] = GFX.FixedPalette[PPU.Palette[0]];
+								}
+								PatPtr++;
 							}
+							MemAddy++;
 						}
-			for (i = 0; i < (DS+1)*256; i++)
-				memcpy(&Debugger.NameArray[(((120*(DS+1))<<(8+DS))+i)*DInc],&GFX.FixedPalette[0x41],DInc);
-			for (i = 0; i < (DS+1)*240; i++)
-				memcpy(&Debugger.NameArray[(i*(DS+1)*256+(128*(DS+1)))*DInc],&GFX.FixedPalette[0x41],DInc);
+					}
 		}
 
-		SetBitmapBits(Debugger.NameBMP,DInc*(256*(DS+1))*(240*(DS+1)),&Debugger.NameArray);
-		SelectObject(Debugger.NameDC,Debugger.NameBMP);
-		BitBlt(Debugger.NameWDC,0,0,256*(DS+1),240*(DS+1),Debugger.NameDC,0,0,SRCCOPY);
+		SetBitmapBits(Debugger.NameBMP,DInc*D_NAM_W*D_NAM_H,&Debugger.NameArray);
+//		SelectObject(Debugger.NameDC,Debugger.NameBMP);	// is this needed?
+		BitBlt(Debugger.NameWDC,0,0,D_NAM_W,D_NAM_H,Debugger.NameDC,0,0,SRCCOPY);
 	}
 }
 
-BOOL CALLBACK PaletteProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PaletteProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_PAINT:
-		BitBlt(Debugger.PaletteWDC,0,0,256,32,Debugger.PaletteDC,0,0,SRCCOPY);
+		BitBlt(Debugger.PaletteWDC,0,0,D_PAL_W,D_PAL_H,Debugger.PaletteDC,0,0,SRCCOPY);
 		break;
 	}
 	return FALSE;
 }
 
-BOOL CALLBACK PatternProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PatternProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_PAINT:
-		BitBlt(Debugger.PatternWDC,0,0,256,128,Debugger.PatternDC,0,0,SRCCOPY);
+		BitBlt(Debugger.PatternWDC,0,0,D_PAT_W,D_PAT_H,Debugger.PatternDC,0,0,SRCCOPY);
 		break;
 	case WM_LBUTTONUP:
 		Debugger.PatPalBase = (Debugger.PatPalBase + 1) & 7;
@@ -647,173 +650,154 @@ BOOL CALLBACK PatternProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 	return FALSE;
 }
 
-BOOL CALLBACK NameProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK NameProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_PAINT:
-		BitBlt(Debugger.NameWDC,0,0,256*(Debugger.DoubleSize+1),240*(Debugger.DoubleSize+1),Debugger.NameDC,0,0,SRCCOPY);
+		BitBlt(Debugger.NameWDC,0,0,D_NAM_W,D_NAM_H,Debugger.NameDC,0,0,SRCCOPY);
 		break;
 	}
 	return FALSE;
 }
 
-BOOL CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	switch (uMsg)
 	{
-		case WM_COMMAND:
-			wmId    = LOWORD(wParam); 
-			wmEvent = HIWORD(wParam); 
-			// Parse the menu selections:
-			switch (wmId)
-			{
-				case IDC_DUMP_PPU_MEM:
-					{
-						FILE *PPUMemOut = fopen("PPU.Mem","wb");
-						int i;
-						for (i = 0; i < 12; i++)
-							fwrite(PPU.CHRPointer[i],1,0x400,PPUMemOut);
-						fwrite(PPU.Palette,1,0x20,PPUMemOut);
-						fclose(PPUMemOut);
-					}
-					break;
-				case IDC_START_LOGGING:
-					Debugger_StartLogging();
-					break;
-				case IDC_STOP_LOGGING:
-					Debugger_StopLogging();
-					break;
-				case IDC_IRQBUTTON:
-					CPU.WantIRQ = TRUE;
-					break;
-/*				case IDC_DUMP_FLAGS:
-					{
-						FILE *ROMFlagsOut = fopen("ROM.flg","wb");
-						fwrite(CPU_Flags,1,0x10000,ROMFlagsOut);
-						fclose(ROMFlagsOut);
-					}
-					break;*/
-			}
+	case WM_COMMAND:
+		wmId    = LOWORD(wParam); 
+		wmEvent = HIWORD(wParam); 
+		// Parse the menu selections:
+		switch (wmId)
+		{
+		case IDC_DUMP_PPU_MEM:
+		{
+			FILE *PPUMemOut = fopen("PPU.Mem","wb");
+			int i;
+			for (i = 0; i < 12; i++)
+				fwrite(PPU.CHRPointer[i],1,0x400,PPUMemOut);
+			fwrite(PPU.Palette,1,0x20,PPUMemOut);
+			fclose(PPUMemOut);
+		}	break;
+		case IDC_START_LOGGING:
+			Debugger_StartLogging();
 			break;
+		case IDC_STOP_LOGGING:
+			Debugger_StopLogging();
+			break;
+/*		case IDC_IRQBUTTON:
+			CPU.WantIRQ = TRUE;
+			break;*/
+		}
+		break;
 	}
 	return FALSE;
 }
 
-BOOL CALLBACK TraceProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK TraceProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
-		case WM_PAINT:
-			BitBlt(Debugger.TraceWDC,0,0,WindowPoses[Debugger.DoubleSize][DW_TRC_WIDTH],WindowPoses[Debugger.DoubleSize][DW_TRC_HEIGHT],Debugger.TraceDC,0,0,SRCCOPY);
+	case WM_PAINT:
+		BitBlt(Debugger.TraceWDC,0,0,D_TRC_W,D_TRC_H,Debugger.TraceDC,0,0,SRCCOPY);
+		break;
+	case WM_KEYDOWN:
+		switch (wParam)
+		{
+		case VK_HOME:		//HAX0R!!!!
+			if (Debugger.TraceOffset == -1)
+				Debugger.TraceOffset = CPU.PC - 0x1000;
+			else	Debugger.TraceOffset -= 0x1000;
+			Debugger_Update();
 			break;
-		case WM_KEYDOWN:
-			switch (wParam)
+		case VK_END:		//HAX0R!!!!
+			if (Debugger.TraceOffset == -1)
+				Debugger.TraceOffset = CPU.PC + 0x1000;
+			else	Debugger.TraceOffset += 0x1000;
+			Debugger_Update();
+			break;
+		case VK_PRIOR:{
+			unsigned short NewAddy = Debugger.AddyLine[0];
+			if (NewAddy == CPU.PC)
+				NewAddy = -1;
+			Debugger.TraceOffset = NewAddy;
+			Debugger_Update();
+			}break;
+		case VK_UP:{
+			int i;
+			short MaxAddy = 0;
+			unsigned short NewAddy;
+			for (i = 0; i < 64; i++)
 			{
-				case VK_HOME:		//HAX0R!!!!
-					if (Debugger.TraceOffset == -1)
-						Debugger.TraceOffset = CPU.PC - 0x1000;
-					else	Debugger.TraceOffset -= 0x1000;
-					Debugger_Update();
-					break;
-				case VK_END:		//HAX0R!!!!
-					if (Debugger.TraceOffset == -1)
-						Debugger.TraceOffset = CPU.PC + 0x1000;
-					else	Debugger.TraceOffset += 0x1000;
-					Debugger_Update();
-					break;
-				case VK_PRIOR:
-					{
-						unsigned short NewAddy = Debugger.AddyLine[0];
-						if (NewAddy == CPU.PC)
-							NewAddy = -1;
-						Debugger.TraceOffset = NewAddy;
-						Debugger_Update();
-					}
-					break;
-				case VK_UP:
-					{
-						int i;
-						short MaxAddy = 0;
-						unsigned short NewAddy;
-						for (i=0;i<64;i++)
-						{
-							if (Debugger.AddyLine[i] != -1)
-							{
-								MaxAddy = i;
-							}
-						}
-						NewAddy = Debugger.AddyLine[(MaxAddy/2) - 1];
-						if (NewAddy == CPU.PC)
-							Debugger.TraceOffset = -1;
-						else	Debugger.TraceOffset = NewAddy;
-						Debugger_Update();
-					}
-					break;
-				case VK_DOWN:
-					{
-						int i;
-						short MaxAddy = 0;
-						unsigned short NewAddy;
-						for (i=0;i<64;i++)
-						{
-							if (Debugger.AddyLine[i] != -1)
-							{
-								MaxAddy = i;
-							}
-						}
-						NewAddy = Debugger.AddyLine[(MaxAddy/2) + 1];
-						if (NewAddy == CPU.PC)
-							Debugger.TraceOffset = -1;
-						else	Debugger.TraceOffset = NewAddy;
-						Debugger_Update();
-					}
-					break;
-				case VK_NEXT:
-					{
-						int i;
-						short MaxAddy = 0;
-						unsigned short NewAddy;
-						for (i=0;i<64;i++)
-						{
-							if (Debugger.AddyLine[i] != -1)
-								MaxAddy = i;
-						}
-						NewAddy = Debugger.AddyLine[MaxAddy];
-						if (NewAddy == CPU.PC)
-							Debugger.TraceOffset = -1;
-						else	Debugger.TraceOffset = NewAddy;
-						Debugger_Update();
-					}
-					break;
-			
+				if (Debugger.AddyLine[i] != -1)
+					MaxAddy = i;
 			}
-			break;
-		case WM_LBUTTONDOWN:
+			NewAddy = Debugger.AddyLine[(MaxAddy/2) - 1];
+			if (NewAddy == CPU.PC)
+				Debugger.TraceOffset = -1;
+			else	Debugger.TraceOffset = NewAddy;
+			Debugger_Update();
+			}break;
+		case VK_DOWN:{
+			int i;
+			short MaxAddy = 0;
+			unsigned short NewAddy;
+			for (i=0;i<64;i++)
 			{
-				short xPos = LOWORD(lParam);
-				short yPos = HIWORD(lParam);
-				if ((xPos > 0) && (xPos < WindowPoses[Debugger.DoubleSize][DW_TRC_WIDTH]) && (yPos > 0) && (yPos < WindowPoses[Debugger.DoubleSize][DW_TRC_HEIGHT]))
+				if (Debugger.AddyLine[i] != -1)
 				{
-					Debugger.BreakP[Debugger.AddyLine[-1 + ((yPos-2)/Debugger.FontHeight)]] ^= TRUE;
-					Debugger_Update();
-					SetFocus(mWnd);
+					MaxAddy = i;
 				}
 			}
-			break;
+			NewAddy = Debugger.AddyLine[(MaxAddy/2) + 1];
+			if (NewAddy == CPU.PC)
+				Debugger.TraceOffset = -1;
+			else	Debugger.TraceOffset = NewAddy;
+			Debugger_Update();
+			}break;
+		case VK_NEXT:{
+			int i;
+			short MaxAddy = 0;
+			unsigned short NewAddy;
+			for (i=0;i<64;i++)
+			{
+				if (Debugger.AddyLine[i] != -1)
+					MaxAddy = i;
+			}
+			NewAddy = Debugger.AddyLine[MaxAddy];
+			if (NewAddy == CPU.PC)
+				Debugger.TraceOffset = -1;
+			else	Debugger.TraceOffset = NewAddy;
+			Debugger_Update();
+			}break;
+		}
+		break;
+	case WM_LBUTTONDOWN:{
+		short xPos = LOWORD(lParam);
+		short yPos = HIWORD(lParam);
+		if ((xPos > 0) && (xPos < D_TRC_W) && (yPos > 0) && (yPos < D_TRC_H))
+		{
+			Debugger.BreakP[Debugger.AddyLine[yPos/Debugger.FontHeight]] ^= 1;
+			Debugger_Update();
+			SetFocus(mWnd);
+		}
+		}break;
 	}
 	
 	return FALSE;
 }
 
-BOOL CALLBACK RegProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK RegProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_PAINT:
-		BitBlt(Debugger.RegWDC,0,0,WindowPoses[Debugger.DoubleSize][DW_REG_WIDTH],WindowPoses[Debugger.DoubleSize][DW_REG_HEIGHT],Debugger.RegDC,0,0,SRCCOPY);
+		BitBlt(Debugger.RegWDC,0,0,D_REG_W,D_REG_H,Debugger.RegDC,0,0,SRCCOPY);
 		break;
 	}
 	return FALSE;
 }
+
+#endif	/* ENABLE_DEBUGGER */

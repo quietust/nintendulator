@@ -31,18 +31,22 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #pragma once
 #endif /* _MSC_VER > 1000 */
 
+#pragma warning(disable:4761)
+
 #include <windows.h>
 #include "resource.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+#define	ENABLE_DEBUGGER
+//#define	CPU_BENCHMARK
+
 extern	HINSTANCE	hInst;	/* current instance */
 extern	HWND		mWnd;	/* main window */
 extern	HACCEL		hAccelTable;	/* accelerators */
-extern	int		Width, Height;	/* window size */
 extern	int		SizeMult;	/* window size multiplier */
 extern	char		ProgPath[MAX_PATH];	/* program path */
-
-void	ProcessMessages	(void);
+extern void	SetWindowClientArea (HWND hWnd, int w, int h);
+extern void	ProcessMessages	(void);
 
 #endif /* __NINTENDULATOR_H__ */

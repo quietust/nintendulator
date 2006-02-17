@@ -41,11 +41,15 @@ void	NES_Init (void)
 	PPU_Init();
 	APU_Init();
 	GFX_Init();
+#ifdef ENABLE_DEBUGGER
 	Debugger_Init();
+#endif	/* ENABLE_DEBUGGER */
 	States_Init();
 	Controllers_Init();
 	MapperInterface_Init();
+#ifdef ENABLE_DEBUGGER
 	Debugger_SetMode(0);
+#endif	/* ENABLE_DEBUGGER */
 	NES_LoadSettings();
 	NES_CloseFile();
 
@@ -54,6 +58,7 @@ void	NES_Init (void)
 	NES.NeedQuit = FALSE;
 	NES.GameGenie = FALSE;
 	NES.ROMLoaded = FALSE;
+	memset(&RI,0,sizeof(RI));
 
 	GFX_UpdateTitlebar();
 }
@@ -73,12 +78,11 @@ void	NES_Release (void)
 
 void	NES_OpenFile (char *filename)
 {
-	int len = strlen(filename);
-	BOOL LoadRet;
+	size_t len = strlen(filename);
+	const char *LoadRet = NULL;
 	if (NES.ROMLoaded)
 		NES_CloseFile();
 
-	NES.IsNSF = FALSE;
 	if (!stricmp(filename + len - 4, ".NES"))
 		LoadRet = NES_OpenFileiNES(filename);
 	else if (!stricmp(filename + len - 4, ".NSF"))
@@ -89,34 +93,74 @@ void	NES_OpenFile (char *filename)
 		LoadRet = NES_OpenFileUNIF(filename);
 	else if (!stricmp(filename + len - 4, ".FDS"))
 		LoadRet = NES_OpenFileFDS(filename);
-	else if (!stricmp(filename + len - 4, ".NRF"))
+/*	else if (!stricmp(filename + len - 4, ".NRF"))
 		LoadRet = NES_OpenFileNRFF(filename);
 	else if (!stricmp(filename + len - 5, ".NRFF"))
-		LoadRet = NES_OpenFileNRFF(filename);
-	else	LoadRet = FALSE;
+		LoadRet = NES_OpenFileNRFF(filename);*/
+	else if (!stricmp(filename + len - 4, ".ZIP"))
+		LoadRet = "ZIP support has not yet been implemented!";
+	else	LoadRet = "File type not recognized!";
 
-	if (!LoadRet)
+	if (LoadRet)
 	{
-		MessageBox(mWnd,"File type not recognized or mapper not supported!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mWnd,LoadRet,"Nintendulator",MB_OK | MB_ICONERROR);
+		NES_CloseFile();
 		return;
 	}
 	NES.ROMLoaded = TRUE;
+	if (MI->Config)
+		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_ENABLED);
+	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_DISABLED);
+
 	States_SetFilename(filename);
 
+#ifdef ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
 	Debugger.PalChanged = TRUE;
 	Debugger.PatChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
 
 	NES_Reset(0);
+	if (NES.AutoRun)
+	{
+		if (NES.Stopped)
+		{
+			NES.Stop = FALSE;
+			NES_Run();
+		}
+		else
+		{
+			NES.Stop = TRUE;
+			NES.NeedReset = RESET_SOFT;
+		}
+	}
 }
 
 void	NES_CloseFile (void)
 {
 	int i;
-	if ((MI) && (MI->UnloadMapper))
-		MI->UnloadMapper();
-	MI = NULL;
-	NES.ROMLoaded = FALSE;
+
+	if (RI.ROMType)
+	{
+		if (RI.ROMType == ROM_UNIF)
+			free(RI.UNIF_BoardName);
+		else if (RI.ROMType == ROM_NSF)
+		{
+			free(RI.NSF_Title);
+			free(RI.NSF_Artist);
+			free(RI.NSF_Copyright);
+		}
+		free(RI.Filename);
+		memset(&RI,0,sizeof(RI));
+	}
+	
+	if (NES.ROMLoaded)
+	{
+		MapperInterface_UnloadMapper();
+		NES.ROMLoaded = FALSE;
+	}
+
+	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_GRAYED);
 
 	for (i = 0; i < 16; i++)
 	{
@@ -126,136 +170,184 @@ void	NES_CloseFile (void)
 		CPU.Readable[i] = FALSE;
 		CPU.Writable[i] = FALSE;
 		PPU.CHRPointer[i] = CHR_RAM[0];
-	}
-	for (i = 0; i < 12; i++)
+		PPU.ReadHandler[i] = PPU_BusRead;
+		PPU.WriteHandler[i] = PPU_BusWriteCHR;
 		PPU.Writable[i] = FALSE;
+	}
 }
 
-BOOL	NES_OpenFileiNES (char *filename)
+#define MKID(a) ((unsigned long) \
+		(((a) >> 24) & 0x000000FF) | \
+		(((a) >>  8) & 0x0000FF00) | \
+		(((a) <<  8) & 0x00FF0000) | \
+		(((a) << 24) & 0xFF000000))
+
+const char *	NES_OpenFileiNES (char *filename)
 {
 	FILE *in;
-	unsigned char HeaderBs[4], Trainer[0x200];
+	unsigned char Header[4];
 	unsigned long tmp;
-	BOOL p2Found = FALSE;
-	unsigned char MapperNum;
+	BOOL p2Found;
 
 	in = fopen(filename,"rb");
 	fread(&tmp,4,1,in);
-	if (tmp != 0x1A53454E)
+	if (tmp != MKID('NES\x1A'))
 	{
 		fclose(in);
-		return FALSE;
+		return "iNES header signature not found!";
 	}
-	fread(HeaderBs,1,4,in);
+	RI.Filename = strdup(filename);
+	RI.ROMType = ROM_INES;
+	fread(Header,1,4,in);
 	fseek(in,8,SEEK_CUR);
 	
-	MapperNum = ((HeaderBs[2] & 0xF0) >> 4) | (HeaderBs[3] & 0xF0);
-	MP.Flags = HeaderBs[2] | (HeaderBs[3] << 8);
-	if (HeaderBs[2] & 0x04)
-		fread(Trainer,1,0x200,in);
+	RI.INES_PRGSize = Header[0];
+	RI.INES_CHRSize = Header[1];
+	RI.INES_MapperNum = ((Header[2] & 0xF0) >> 4) | (Header[3] & 0xF0);
+	RI.INES_Flags = (Header[2] & 0xF) | ((Header[3] & 0xF) << 4);
 
-	MP.PRG_ROM_Size = HeaderBs[0] * 0x4000;
-	fread(PRG_ROM,1,MP.PRG_ROM_Size,in);
-	MP.CHR_ROM_Size = HeaderBs[1] * 0x2000;
-	fread(CHR_ROM,1,MP.CHR_ROM_Size,in);
+	if (RI.INES_Flags & 0x04)
+	{
+		fclose(in);
+		return "Trained ROMs are unsupported!";
+	}
+
+	fread(PRG_ROM,1,RI.INES_PRGSize * 0x4000,in);
+	fread(CHR_ROM,1,RI.INES_CHRSize * 0x2000,in);
 
 	fclose(in);
 
-	NES.PRGMask = (HeaderBs[0] << 2) - 1;
-	NES.CHRMask = (HeaderBs[1] << 3) - 1;
+	NES.PRGMask = ((RI.INES_PRGSize << 2) - 1) & MAX_PRGROM_MASK;
+	NES.CHRMask = ((RI.INES_CHRSize << 3) - 1) & MAX_CHRROM_MASK;
 
+	p2Found = FALSE;
 	for (tmp = 1; tmp < 0x40000000; tmp <<= 1)
-		if (tmp == HeaderBs[0])
+		if (tmp == RI.INES_PRGSize)
 			p2Found = TRUE;
 	if (!p2Found)
-		NES.PRGMask = 0xFFFFFFFF;
+		NES.PRGMask = MAX_PRGROM_MASK;
 
-	return MapperInterface_LoadByNum(MapperNum);
+	p2Found = FALSE;
+	for (tmp = 1; tmp < 0x40000000; tmp <<= 1)
+		if (tmp == RI.INES_CHRSize)
+			p2Found = TRUE;
+	if (!p2Found)
+		NES.CHRMask = MAX_CHRROM_MASK;
+	
+	if (!MapperInterface_LoadMapper(&RI))
+	{
+		static char err[256];
+		sprintf(err,"Mapper %i not supported!",RI.INES_MapperNum);
+		return err;
+	}
+	GFX_ShowText("ROM Loaded (mapper %i, %i/%i)",RI.INES_MapperNum,RI.INES_PRGSize << 4,RI.INES_CHRSize << 3);
+	return NULL;
 }
 
-BOOL	NES_OpenFileUNIF (char *filename)
+const char *	NES_OpenFileUNIF (char *filename)
 {
-	char UNIFSig[4], BlockSig[4];
-	unsigned long BlockHeader[2];
-	char BoardName[64];
+	unsigned long Signature, BlockLen;
 	unsigned char *tPRG[0x10], *tCHR[0x10];
-	int PRGSize[0x10], CHRSize[0x10];
+	unsigned char *PRGPoint, *CHRPoint;
+	unsigned long PRGsize, CHRsize;
 	int i;
 	unsigned char tp;
-	unsigned char *PRGPoint, *CHRPoint;
 	BOOL p2Found;
-	int p2;
+	DWORD p2;
 
 	FILE *in = fopen(filename,"rb");
 	if (!in)
 		return FALSE;
-	fread(UNIFSig,1,4,in);
-	if (strncmp(UNIFSig,"UNIF",4))
+	fread(&Signature,4,1,in);
+	if (Signature != MKID('UNIF'))
 	{
 		fclose(in);
-		return FALSE;
+		return "UNIF header signature not found!";
 	}
 
-	fseek(in,28,SEEK_CUR);
+	fseek(in,28,SEEK_CUR);	// skip "expansion area"
 
-	for (i=0;i<0x10;i++)
-	{	tPRG[i] = 0; tCHR[i] = 0; }
+	RI.Filename = strdup(filename);
+	RI.ROMType = ROM_UNIF;
 
-	MP.Flags = 0;
+	for (i = 0; i < 0x10; i++)
+	{
+		tPRG[i] = tCHR[i] = 0;
+	}
+
 	while (!feof(in))
 	{
-		fread(BlockSig,1,4,in);
-		fread(&BlockHeader[1],4,1,in);
+		int id = 0;
+		fread(&Signature,4,1,in);
+		fread(&BlockLen,4,1,in);
 		if (feof(in))
 			continue;
-		
-		if (!strncmp(BlockSig,"MAPR",4)) {
-			fread(BoardName,1,BlockHeader[1],in);
-		} else if (!strncmp(BlockSig,"TVCI",4)) {
+		switch (Signature)
+		{
+		case MKID('MAPR'):
+			RI.UNIF_BoardName = (char *)malloc(BlockLen);
+			fread(RI.UNIF_BoardName,1,BlockLen,in);
+			break;
+		case MKID('TVCI'):
 			fread(&tp,1,1,in);
+			RI.UNIF_NTSCPAL = tp;
 			if (tp == 0) NES_SetCPUMode(0);
 			if (tp == 1) NES_SetCPUMode(1);
 			if (tp == 2) NES_SetCPUMode(0);
-		} else if (!strncmp(BlockSig,"BATR",4)) {
+			break;
+		case MKID('BATR'):
 			fread(&tp,1,1,in);
-			MP.Flags |= 2;
-		} else if (!strncmp(BlockSig,"MIRR",4)) {
+			RI.UNIF_Battery = TRUE;
+			break;
+		case MKID('MIRR'):
 			fread(&tp,1,1,in);
-			MP.Flags |= (tp & 0x0F) << 8;
-		} else if (!strncmp(BlockSig,"PRG0",4)) { PRGSize[0x0] = BlockHeader[1]; tPRG[0x0] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x0], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRG1",4)) { PRGSize[0x1] = BlockHeader[1]; tPRG[0x1] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x1], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRG2",4)) { PRGSize[0x2] = BlockHeader[1]; tPRG[0x2] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x2], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRG3",4)) { PRGSize[0x3] = BlockHeader[1]; tPRG[0x3] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x3], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRG4",4)) { PRGSize[0x4] = BlockHeader[1]; tPRG[0x4] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x4], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRG5",4)) { PRGSize[0x5] = BlockHeader[1]; tPRG[0x5] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x5], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRG6",4)) { PRGSize[0x6] = BlockHeader[1]; tPRG[0x6] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x6], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRG7",4)) { PRGSize[0x7] = BlockHeader[1]; tPRG[0x7] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x7], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRG8",4)) { PRGSize[0x8] = BlockHeader[1]; tPRG[0x8] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x8], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRG9",4)) { PRGSize[0x9] = BlockHeader[1]; tPRG[0x9] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0x9], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRGA",4)) { PRGSize[0xA] = BlockHeader[1]; tPRG[0xA] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0xA], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRGB",4)) { PRGSize[0xB] = BlockHeader[1]; tPRG[0xB] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0xB], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRGC",4)) { PRGSize[0xC] = BlockHeader[1]; tPRG[0xC] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0xC], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRGD",4)) { PRGSize[0xD] = BlockHeader[1]; tPRG[0xD] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0xD], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRGE",4)) { PRGSize[0xE] = BlockHeader[1]; tPRG[0xE] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0xE], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"PRGF",4)) { PRGSize[0xF] = BlockHeader[1]; tPRG[0xF] = (unsigned char *) malloc(BlockHeader[1]); fread(tPRG[0xF], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR0",4)) { CHRSize[0x0] = BlockHeader[1]; tCHR[0x0] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x0], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR1",4)) { CHRSize[0x1] = BlockHeader[1]; tCHR[0x1] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x1], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR2",4)) { CHRSize[0x2] = BlockHeader[1]; tCHR[0x2] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x2], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR3",4)) { CHRSize[0x3] = BlockHeader[1]; tCHR[0x3] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x3], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR4",4)) { CHRSize[0x4] = BlockHeader[1]; tCHR[0x4] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x4], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR5",4)) { CHRSize[0x5] = BlockHeader[1]; tCHR[0x5] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x5], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR6",4)) { CHRSize[0x6] = BlockHeader[1]; tCHR[0x6] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x6], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR7",4)) { CHRSize[0x7] = BlockHeader[1]; tCHR[0x7] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x7], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR8",4)) { CHRSize[0x8] = BlockHeader[1]; tCHR[0x8] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x8], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHR9",4)) { CHRSize[0x9] = BlockHeader[1]; tCHR[0x9] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0x9], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHRA",4)) { CHRSize[0xA] = BlockHeader[1]; tCHR[0xA] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0xA], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHRB",4)) { CHRSize[0xB] = BlockHeader[1]; tCHR[0xB] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0xB], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHRC",4)) { CHRSize[0xC] = BlockHeader[1]; tCHR[0xC] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0xC], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHRD",4)) { CHRSize[0xD] = BlockHeader[1]; tCHR[0xD] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0xD], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHRE",4)) { CHRSize[0xE] = BlockHeader[1]; tCHR[0xE] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0xE], 1, BlockHeader[1], in);
-		} else if (!strncmp(BlockSig,"CHRF",4)) { CHRSize[0xF] = BlockHeader[1]; tCHR[0xF] = (unsigned char *) malloc(BlockHeader[1]); fread(tCHR[0xF], 1, BlockHeader[1], in);
-		} else {
-			fseek(in,BlockHeader[1],SEEK_CUR);
+			RI.UNIF_Mirroring = tp;
+			break;
+		case MKID('PRGF'):	id++;
+		case MKID('PRGE'):	id++;
+		case MKID('PRGD'):	id++;
+		case MKID('PRGC'):	id++;
+		case MKID('PRGB'):	id++;
+		case MKID('PRGA'):	id++;
+		case MKID('PRG9'):	id++;
+		case MKID('PRG8'):	id++;
+		case MKID('PRG7'):	id++;
+		case MKID('PRG6'):	id++;
+		case MKID('PRG5'):	id++;
+		case MKID('PRG4'):	id++;
+		case MKID('PRG3'):	id++;
+		case MKID('PRG2'):	id++;
+		case MKID('PRG1'):	id++;
+		case MKID('PRG0'):
+			RI.UNIF_NumPRG++;
+			RI.UNIF_PRGSize[id] = BlockLen;
+			tPRG[id] = (unsigned char *)malloc(BlockLen);
+			fread(tPRG[id],1,BlockLen,in);
+			break;
+
+		case MKID('CHRF'):	id++;
+		case MKID('CHRE'):	id++;
+		case MKID('CHRD'):	id++;
+		case MKID('CHRC'):	id++;
+		case MKID('CHRB'):	id++;
+		case MKID('CHRA'):	id++;
+		case MKID('CHR9'):	id++;
+		case MKID('CHR8'):	id++;
+		case MKID('CHR7'):	id++;
+		case MKID('CHR6'):	id++;
+		case MKID('CHR5'):	id++;
+		case MKID('CHR4'):	id++;
+		case MKID('CHR3'):	id++;
+		case MKID('CHR2'):	id++;
+		case MKID('CHR1'):	id++;
+		case MKID('CHR0'):
+			RI.UNIF_NumCHR++;
+			RI.UNIF_CHRSize[id] = BlockLen;
+			tCHR[id] = (unsigned char *)malloc(BlockLen);
+			fread(tCHR[id],1,BlockLen,in);
+			break;
+		default:
+			fseek(in,BlockLen,SEEK_CUR);
 		}
 	}
 
@@ -266,65 +358,87 @@ BOOL	NES_OpenFileUNIF (char *filename)
 	{
 		if (tPRG[i])
 		{
-			memcpy(PRGPoint, tPRG[i], PRGSize[i]);
-			PRGPoint += PRGSize[i];
+			memcpy(PRGPoint, tPRG[i], RI.UNIF_PRGSize[i]);
+			PRGPoint += RI.UNIF_PRGSize[i];
 			free(tPRG[i]);
 		}
 		if (tCHR[i])
 		{
-			memcpy(CHRPoint, tCHR[i], CHRSize[i]);
-			CHRPoint += CHRSize[i];
+			memcpy(CHRPoint, tCHR[i], RI.UNIF_CHRSize[i]);
+			CHRPoint += RI.UNIF_CHRSize[i];
 			free(tCHR[i]);
 		}
 	}
 
 	fclose(in);
 
-	MP.PRG_ROM_Size = PRGPoint - PRG_ROM[0];
-	MP.CHR_ROM_Size = CHRPoint - CHR_ROM[0];
-	NES.PRGMask = (MP.PRG_ROM_Size / 0x1000) - 1;
-	NES.CHRMask = (MP.CHR_ROM_Size / 0x400) - 1;
+	PRGsize = (unsigned int)(PRGPoint - PRG_ROM[0]);
+	NES.PRGMask = ((PRGsize / 0x1000) - 1) & MAX_PRGROM_MASK;
+	CHRsize = (unsigned int)(CHRPoint - CHR_ROM[0]);
+	NES.CHRMask = ((CHRsize / 0x400) - 1) & MAX_CHRROM_MASK;
+
 	p2Found = FALSE;
 	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
-		if (p2 == MP.PRG_ROM_Size)
+		if (p2 == PRGsize)
 			p2Found = TRUE;
-	if (!p2Found) NES.PRGMask = 0xffffffff;
+	if (!p2Found)
+		NES.PRGMask = MAX_PRGROM_MASK;
 
-	return	MapperInterface_LoadByBoard(BoardName);
+	p2Found = FALSE;
+	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
+		if (p2 == CHRsize)
+			p2Found = TRUE;
+	if (!p2Found)
+		NES.CHRMask = MAX_CHRROM_MASK;
+
+	if (!MapperInterface_LoadMapper(&RI))
+	{
+		static char err[256];
+		sprintf(err,"Boardset \"%s\" not supported!",RI.UNIF_BoardName);
+		return err;
+	}
+	GFX_ShowText("ROM loaded (%s, %i/%i)",RI.UNIF_BoardName,PRGsize >> 10,CHRsize >> 10);
+	return NULL;
 }
 
-BOOL	NES_OpenFileFDS (char *filename)
+const char *	NES_OpenFileFDS (char *filename)
 {
 	FILE *in;
-	unsigned char Header[16];
+	unsigned long Header;
+	unsigned char numSides;
 	int i;
 
 	in = fopen(filename,"rb");
-	fread(Header,1,16,in);
-	if (strncmp(Header,"FDS\x1a",4))
+	fread(&Header,4,1,in);
+	if (Header != MKID('FDS\x1a'))
 	{
 		fclose(in);
-		return FALSE;
+		return "FDS header signature not found!";
 	}
-	for (i = 0; i < Header[4]; i++)
+	fread(&numSides,1,1,in);
+	fseek(in,11,SEEK_CUR);
+	RI.Filename = strdup(filename);
+	RI.ROMType = ROM_FDS;
+
+	for (i = 0; i < numSides; i++)
 		fread(PRG_ROM[i << 4],1,65500,in);
 	fclose(in);
 
-	MP.PRG_ROM_Size = 0x10000 * Header[4];
-	NES.PRGMask = (Header[4] << 4) - 1;
+	RI.FDS_NumSides = numSides;
 
-	if ((!MapperInterface_LoadByNum(20)) || (!MapperInterface_LoadByBoard("HVC-FMR")))
-	{
-		MessageBox(mWnd,"FDS mapper support not found!","Error",MB_OK);
-		return FALSE;
-	}
-	return TRUE;
+	NES.PRGMask = (((0x10000 * RI.FDS_NumSides) << 4) - 1) & MAX_PRGROM_MASK;
+
+	if (!MapperInterface_LoadMapper(&RI))
+		return "Famicom Disk System support not found!";
+
+	GFX_ShowText("Disk image loaded (%i sides)",RI.FDS_NumSides);
+	return NULL;
 }
 
-BOOL	NES_OpenFileNSF (char *filename)
+const char *	NES_OpenFileNSF (char *filename)
 {
 	FILE *in;
-	unsigned char Header[128];		//Header Bytes
+	unsigned char Header[128];	//Header Bytes
 	int ROMlen;
 
 	in = fopen(filename,"rb");
@@ -332,57 +446,48 @@ BOOL	NES_OpenFileNSF (char *filename)
 	ROMlen = ftell(in) - 128;
 	fseek(in,0,SEEK_SET);
 	fread(Header,1,128,in);
-	if (strncmp((char *)&Header[0],"NESM\x1a\x01",6))
-		return FALSE;
-	if (memcmp(&Header[0x70],"\0\0\0\0\0\0\0\0",8))
+	if (memcmp(Header,"NESM\x1a\x01",6))
+	{
+		fclose(in);
+		return "NSF header signature not found!";
+	}
+
+	RI.Filename = strdup(filename);
+	RI.ROMType = ROM_NSF;
+	RI.NSF_DataSize = ROMlen;
+	RI.NSF_NumSongs = Header[0x06];
+	RI.NSF_SoundChips = Header[0x7B];
+	RI.NSF_NTSCPAL = Header[0x7A];
+	RI.NSF_NTSCSpeed = Header[0x6E] | (Header[0x6F] << 8);
+	RI.NSF_PALSpeed = Header[0x78] | (Header[0x79] << 8);
+	memcpy(RI.NSF_InitBanks,&Header[0x70],8);
+	RI.NSF_InitSong = Header[0x07];
+	RI.NSF_InitAddr = Header[0x0A] | (Header[0x0B] << 8);
+	RI.NSF_PlayAddr = Header[0x0C] | (Header[0x0D] << 8);
+	RI.NSF_Title = (char *)malloc(32);
+	RI.NSF_Artist = (char *)malloc(32);
+	RI.NSF_Copyright = (char *)malloc(32);
+	memcpy(RI.NSF_Title,&Header[0x0E],32);
+	memcpy(RI.NSF_Artist,&Header[0x2E],32);
+	memcpy(RI.NSF_Copyright,&Header[0x4E],32);
+	if (memcmp(RI.NSF_InitBanks,"\0\0\0\0\0\0\0\0",8))
 		fread(&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF),1,ROMlen,in);
 	else
 	{
-		memcpy(&Header[0x70],"\x00\x01\x02\x03\x04\x05\x06\x07",8);
+		memcpy(RI.NSF_InitBanks,"\x00\x01\x02\x03\x04\x05\x06\x07",8);
 		fread(&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF),1,ROMlen,in);
 	}
 	fclose(in);
 
-	MP.Flags = Header[0x7B];
-	MP.PRG_ROM_Size = 0x800000;
-	NES.PRGMask = 0x7FFFFF;
-	{
-		unsigned char NSFcode[139] = {0x47,0x50,0x16,0x50,0x8A,0x50,Header[0x70],Header[0x71],Header[0x72],Header[0x73],Header[0x74],Header[0x75],Header[0x76],Header[0x77],Header[7]-1,Header[6]-1,0x4C,Header[0xA],Header[0xB],0x4C,Header[0xC],Header[0xD],0x78,0xD8,0xA2,0xFF,0x9A,0xAD,0x0E,0x50,0x48,0xA9,0x00,0x48,0xA2,0xFD,0x9A,0xA2,0x07,0xBD,0x06,0x50,0x9D,0xF8,0x5F,0xCA,0x10,0xF7,0xE8,0xA9,0x0F,0x8D,0x15,0x40,0xA9,0x80,0x8D,0x00,0x20,0x8E,0x01,0x20,0xAD,0xFF,0x01,0x20,0x10,0x50,0x4C,0x44,0x50,0x20,0x13,0x50,0xB8,0xA0,0x01,0x8C,0x16,0x40,0x88,0x8C,0x16,0x40,0xA2,0x08,0xAD,0x16,0x40,0x4A,0x98,0x2A,0xA8,0xCA,0xD0,0xF6,0x4D,0xFE,0x01,0x8C,0xFE,0x01,0x2D,0xFE,0x01,0x4A,0x90,0x0D,0xAD,0xFF,0x01,0xCD,0x0F,0x50,0xF0,0xAE,0xEE,0xFF,0x01,0x50,0xA9,0x4A,0x90,0x0A,0xAD,0xFF,0x01,0xF0,0xA1,0xCE,0xFF,0x01,0x50,0x9C,0x29,0x04,0xD0,0x98,0x40};
-		memcpy(PRG_RAM[2],NSFcode,sizeof(NSFcode));
-	}
-
-	if ((!MapperInterface_LoadByNum(666)) || (!MapperInterface_LoadByBoard("NSF")))
-	{
-		MessageBox(mWnd,"NSF mapper support not found!","Error",MB_OK);
-		return FALSE;
-	}
-
-	NES.IsNSF = TRUE;
-	return TRUE;
+	NES.PRGMask = MAX_PRGROM_MASK;
+	
+	if (!MapperInterface_LoadMapper(&RI))
+		return "NSF support not found!";
+	GFX_ShowText("NSF loaded (%iKB)",RI.NSF_DataSize >> 10);
+	return NULL;
 }
-int	__cdecl NSFReader (int Bank, int Addy)
-{
-	if ((Bank == 0xF) && (Addy >= 0xFFA))
-		return CPU_ReadPRG(0x5,Addy - 0xFFA);
-	else	return CPU_ReadPRG(Bank,Addy);
-}
-
-//#define NRFF_HEADER	0x4646524E
-#define NRFF_HEADER	'FFRN'
-//#define NRFF_BORD	0x44524F42
-#define NRFF_BORD	'DROB'
-//#define NRFF_TVCI	0x49435654
-#define NRFF_TVCI	'ICVT'
-//#define NRFF_BATT	0x54544142
-#define NRFF_BATT	'TTAB'
-//#define NRFF_MIRR	0x5252494D
-#define NRFF_MIRR	'RRIM'
-//#define NRFF_PRGM	0x4D475250
-#define NRFF_PRGM	'MGRP'
-//#define NRFF_CHAR	0x52414843
-#define NRFF_CHAR	'RAHC'
-
-BOOL	NES_OpenFileNRFF (char *filename)
+/*
+const char *	NES_OpenFileNRFF (char *filename)
 {
 	unsigned long BlockSig, tp, i;
 	int BlockHeader;
@@ -395,13 +500,13 @@ BOOL	NES_OpenFileNRFF (char *filename)
 	if (!in)
 		return FALSE;
 	fread(&BlockSig,1,4,in);
-	if (BlockSig != NRFF_HEADER)
+	if (BlockSig != MKID('NRFF'))
 	{
 		fclose(in);
-		return FALSE;
+		return "NRFF header signature not found!";
 	}
 	fseek(in,4,SEEK_CUR);
-	MP.Flags = 0;
+	EI.Flags = 0;
 	while (!feof(in))
 	{
 		fread(&BlockSig,1,4,in);
@@ -410,71 +515,90 @@ BOOL	NES_OpenFileNRFF (char *filename)
 			break;
 		switch (BlockSig)
 		{
-		case NRFF_BORD:	BoardName = (char *)malloc(BlockHeader);
-				fread(BoardName,1,BlockHeader,in);	break;
-		case NRFF_TVCI:	fread(&tp,1,4,in);
-				if (BlockHeader-4)
-					fseek(in,BlockHeader-4,SEEK_CUR);
-				if (tp == 0) NES_SetCPUMode(0);
-				if (tp == 1) NES_SetCPUMode(1);		break;
-		case NRFF_BATT:	MP.Flags |= 0x02;			break;
-		case NRFF_MIRR:	fread(&tp,1,4,in);
-				if (BlockHeader-4)
-					fseek(in,BlockHeader-4,SEEK_CUR);
-				if (tp == 3)
-					tp = 5;
-				MP.Flags |= (tp & 0x0F) << 8;		break;
-		case NRFF_PRGM:	fread(&tp,1,4,in);
-				fseek(in,4,SEEK_CUR);
-				BlockHeader -= 8;
-				if (BlockHeader < 0)
-				{
-					MessageBox(mWnd,"PRGM block corrupt!","Error",MB_OK);
-					fclose(in);
-					return FALSE;
-				}
-				if (BlockHeader)
-				{
-					tbuf = (unsigned char *)malloc(BlockHeader);
-					fread(tbuf, 1, BlockHeader, in);
-					for (i = 0; i < tp; i += BlockHeader)
-						memcpy(PRGPoint+i,tbuf,BlockHeader);
-				}
-				else	memset(PRGPoint,0,tp);	// open bus
-				PRGPoint += tp;				break;
-		case NRFF_CHAR:	fread(&tp,1,4,in);
-				fseek(in,4,SEEK_CUR);
-				BlockHeader -= 8;
-				if (BlockHeader < 0)
-				{
-					MessageBox(mWnd,"CHAR block corrupt!","Error",MB_OK);
-					return FALSE;
-				}
-				if (BlockHeader)
-				{
-					tbuf = (unsigned char *)malloc(BlockHeader);
-					fread(tbuf, 1, BlockHeader, in);
-					for (i = 0; i < tp; i += BlockHeader)
-						memcpy(CHRPoint+i,tbuf,BlockHeader);
-				}
-				else	memset(CHRPoint,0,tp);	// open bus
-				CHRPoint += tp;				break;
-		default:	fseek(in,BlockHeader,SEEK_CUR);		break;
+		case MKID('BORD'):
+			BoardName = (char *)malloc(BlockHeader);
+			fread(BoardName,1,BlockHeader,in);
+			break;
+		case MKID('TVCI'):
+			fread(&tp,1,4,in);
+			if (BlockHeader-4)
+				fseek(in,BlockHeader-4,SEEK_CUR);
+			if (tp == 0) NES_SetCPUMode(0);
+			if (tp == 1) NES_SetCPUMode(1);	
+			break;
+		case MKID('BATT'):
+			EI.Flags |= 0x02;
+			break;
+		case MKID('MIRR'):
+			fread(&tp,1,4,in);
+			if (BlockHeader-4)
+				fseek(in,BlockHeader-4,SEEK_CUR);
+			if (tp == 3)
+				tp = 5;
+			EI.Flags |= (tp & 0x0F) << 8;
+			break;
+		case MKID('PRGM'):
+			fread(&tp,1,4,in);
+			fseek(in,4,SEEK_CUR);
+			BlockHeader -= 8;
+			if (BlockHeader < 0)
+			{
+				fclose(in);
+				return "Invalid NRFF - PRGM block corrupt!";
+			}
+			if (BlockHeader)
+			{
+				tbuf = (unsigned char *)malloc(BlockHeader);
+				fread(tbuf, 1, BlockHeader, in);
+				for (i = 0; i < tp; i += BlockHeader)
+					memcpy(PRGPoint+i,tbuf,BlockHeader);
+			}
+			else	memset(PRGPoint,0,tp);	// open bus
+			PRGPoint += tp;
+			break;
+		case MKID('CHAR'):
+			fread(&tp,1,4,in);
+			fseek(in,4,SEEK_CUR);
+			BlockHeader -= 8;
+			if (BlockHeader < 0)
+			{
+				fclose(in);
+				return "Invalid NRFF - CHAR block corrupt!";
+			}
+			if (BlockHeader)
+			{
+				tbuf = (unsigned char *)malloc(BlockHeader);
+				fread(tbuf, 1, BlockHeader, in);
+				for (i = 0; i < tp; i += BlockHeader)
+					memcpy(CHRPoint+i,tbuf,BlockHeader);
+			}
+			else	memset(CHRPoint,0,tp);	// open bus
+			CHRPoint += tp;
+			break;
+		default:
+			fseek(in,BlockHeader,SEEK_CUR);
+			break;
 		}
 	}
 	fclose(in);
-	MP.PRG_ROM_Size = PRGPoint - PRG_ROM[0];
-	MP.CHR_ROM_Size = CHRPoint - CHR_ROM[0];
-	NES.PRGMask = (MP.PRG_ROM_Size >> 12) - 1;
-	NES.CHRMask = (MP.CHR_ROM_Size >> 10) - 1;
+	EI.PRG_ROM_Size = (int)(PRGPoint - PRG_ROM[0]);
+	EI.CHR_ROM_Size = (int)(CHRPoint - CHR_ROM[0]);
+	NES.PRGMask = ((EI.PRG_ROM_Size >> 12) - 1) & MAX_PRGROM_MASK;
+	NES.CHRMask = ((EI.CHR_ROM_Size >> 10) - 1) & MAX_CHRROM_MASK;
 	for (p2 = 1; p2 < 0x10000000; p2 <<= 1)
-		if (p2 == MP.PRG_ROM_Size) p2Found = FALSE;
+		if (p2 == EI.PRG_ROM_Size) p2Found = FALSE;
 	if (!p2Found) NES.PRGMask = 0xFFFFFFFF;
-	p2Found = MapperInterface_LoadByBoard(BoardName);
+	GFX_ShowText("ROM loaded (%s, %i/%i)",BoardName,EI.PRG_ROM_Size >> 10,EI.CHR_ROM_Size >> 10);
+	if (!MapperInterface_LoadByBoard(BoardName))
+	{
+		static char err[256];
+		sprintf(err,"Boardset \"%s\" not supported!",RI.NRFF_BoardName);
+		return err;
+	}
 	free(BoardName);
-	return p2Found;
+	return NULL;
 }
-
+*/
 void	NES_SetCPUMode (int NewMode)
 {
 	HMENU hMenu = GetMenu(mWnd);
@@ -482,6 +606,8 @@ void	NES_SetCPUMode (int NewMode)
 	{
 		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
 		PPU.SLEndFrame = 262;
+		if (PPU.SLnum >= PPU.SLEndFrame)	// if we switched from PAL, scanline number could be invalid
+			PPU.SLnum = PPU.SLEndFrame - 1;
 		GFX.WantFPS = 60;
 		GFX_LoadPalette(0);
 		APU_SetFPS(60);
@@ -667,42 +793,42 @@ static int Code1O, Code2O, Code3O;
 static int Code1V, Code2V, Code3V;
 static unsigned char CodeStat;
 
-int	__cdecl	GenieReader (int Bank, int Addy)
+int	_MAPINT	GenieRead (int Bank, int Addy)
 {
 	int result = CPU_ReadPRG(Bank,Addy);
 	if (NES.GameGenie)
 	{
-		if ((CodeStat & 0x10) && (Bank == Code1B) && (Addy == Code1A) && ((CodeStat & 0x02) || (result == Code1O)))
+		if ((CodeStat & 0x10) && (Addy == Code1A) && (Bank == Code1B) && ((CodeStat & 0x02) || (result == Code1O)))
 			return Code1V;
-		if ((CodeStat & 0x20) && (Bank == Code2B) && (Addy == Code2A) && ((CodeStat & 0x04) || (result == Code2O)))
+		if ((CodeStat & 0x20) && (Addy == Code2A) && (Bank == Code2B) && ((CodeStat & 0x04) || (result == Code2O)))
 			return Code2V;
-		if ((CodeStat & 0x40) && (Bank == Code3B) && (Addy == Code3A) && ((CodeStat & 0x08) || (result == Code3O)))
+		if ((CodeStat & 0x40) && (Addy == Code3A) && (Bank == Code3B) && ((CodeStat & 0x08) || (result == Code3O)))
 			return Code3V;
 	}
 	return result;
 }
 
-void	__cdecl	GenieWriter (int Bank, int Addy, int Val)
+void	_MAPINT	GenieWrite (int Bank, int Addy, int Val)
 {
 	int i;
 	switch (Addy)
 	{
 	case 0:	if (Val & 1)
-			CodeStat = Val ^ 0x7E;
+			CodeStat = Val ^ 0x7F;
 		else
 		{
-			MP.SetCHR_RAM8(0,0);
-			MP.Mirror_4();
+			EI.SetCHR_RAM8(0,0);
+			EI.Mirror_4();
 			for (i = 0x8; i < 0x10; i++)
 			{
 				CPU.WriteHandler[i] = CPU_WritePRG;
-				CPU.ReadHandler[i] = GenieReader;
+				CPU.ReadHandler[i] = GenieRead;
 				CPU.Readable[i] = FALSE;
 			}
 			MI = MI2;
 			PPU_GetHandlers();
-			if (MI)
-				MI->InitMapper(&MP,0);
+			if ((MI) && (MI->Reset))
+				MI->Reset(0);
 		}
 		break;
 	case 1:	Code1B = 8 | (Val >> 4);
@@ -740,8 +866,8 @@ void	NES_Reset (int ResetType)
 	int i;
 	CPU.ReadHandler[0] = CPU_ReadRAM;	CPU.WriteHandler[0] = CPU_WriteRAM;
 	CPU.ReadHandler[1] = CPU_ReadRAM;	CPU.WriteHandler[1] = CPU_WriteRAM;
-	CPU.ReadHandler[2] = PPU_Read;		CPU.WriteHandler[2] = PPU_Write;
-	CPU.ReadHandler[3] = PPU_Read;		CPU.WriteHandler[3] = PPU_Write;
+	CPU.ReadHandler[2] = PPU_IntRead;	CPU.WriteHandler[2] = PPU_IntWrite;
+	CPU.ReadHandler[3] = PPU_IntRead;	CPU.WriteHandler[3] = PPU_IntWrite;
 	CPU.ReadHandler[4] = CPU_Read4k;	CPU.WriteHandler[4] = CPU_Write4k;
 	for (i = 0x5; i < 0x10; i++)
 	{
@@ -750,29 +876,32 @@ void	NES_Reset (int ResetType)
 		CPU.Readable[i] = FALSE;
 		CPU.Writable[i] = FALSE;
 	}
+	for (i = 0x0; i < 0x10; i++)
+	{
+		PPU.ReadHandler[i] = PPU_BusRead;
+		PPU.WriteHandler[i] = PPU_BusWriteCHR;
+	}
+	for (i = 0x8; i < 0xC; i++)
+	{
+		PPU.ReadHandler[i] = PPU_BusRead;
+		PPU.WriteHandler[i] = PPU_BusWriteNT;
+	}
+	PPU.WriteHandler[0xF] = PPU_BusWriteNT3F;
 	switch (ResetType)
 	{
-	case 0:	if (!NES.IsNSF)
-			ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
+	case 0:	ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		PPU_PowerOn();
 		CPU_PowerOn();
-		MP.SetCHR_RAM8(0,0);
-		MP.Mirror_4();
-		if (NES.IsNSF)
-		{
-			MP.SetPRG_RAM4(0x5,2);
-			MP.SetPRG_RAM8(0x6,0);
-			CPU.ReadHandler[0xF] = NSFReader;
-		}
-		if (MI)
-			MI->InitMapper(&MP,1);
+		EI.SetCHR_RAM8(0,0);
+		EI.Mirror_4();
+		if ((MI) && (MI->Reset))
+			MI->Reset(1);
 		break;
 	case RESET_HARD:
-		if ((MI) && (MI->UnloadMapper))
-			MI->UnloadMapper();
-		if (!NES.IsNSF)
-			ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
+		if ((MI) && (MI->Shutdown))
+			MI->Shutdown();
+		ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		CPU_PowerOn();
 		if (MI2)
@@ -781,7 +910,7 @@ void	NES_Reset (int ResetType)
 			MI2 = NULL;
 		}
 		PPU_PowerOn();
-		if ((NES.GameGenie) && (!NES.IsNSF))
+		if (NES.GameGenie)
 		{
 			Code1B = Code2B = Code3B = 0;
 			Code1A = Code2A = Code3A = 0;
@@ -793,58 +922,84 @@ void	NES_Reset (int ResetType)
 				CPU.Readable[i] = TRUE;
 				CPU.PRGPointer[i] = GameGeniePRG;
 			}
-			CPU.WriteHandler[0x8] = GenieWriter;
+			CPU.WriteHandler[0x8] = GenieWrite;
 			for (i = 0; i < 8; i++)
 			{
 				PPU.Writable[i] = FALSE;
 				PPU.CHRPointer[i] = GameGenieCHR;
 			}
-			MP.Mirror_V();
+			EI.Mirror_V();
 			MI2 = MI;
 			MI = NULL;
 			PPU_GetHandlers();
 			break;
 		}
-		MP.SetCHR_RAM8(0,0);
-		MP.Mirror_4();
-		if (NES.IsNSF)
-		{
-			MP.SetPRG_RAM4(0x5,2);
-			MP.SetPRG_RAM8(0x6,0);
-			CPU.ReadHandler[0xF] = NSFReader;
-		}
-		if (MI)
-			MI->InitMapper(&MP,1);
+		EI.SetCHR_RAM8(0,0);
+		EI.Mirror_4();
+		if ((MI) && (MI->Reset))
+			MI->Reset(1);
 		break;
 	case RESET_SOFT:
-		if ((MI) && (MI->UnloadMapper))
-			MI->UnloadMapper();
-		MP.SetCHR_RAM8(0,0);
-		MP.Mirror_4();
-		if (NES.IsNSF)
+		if ((MI) && (MI->Shutdown))
+			MI->Shutdown();
+		EI.SetCHR_RAM8(0,0);
+		EI.Mirror_4();
+		if ((NES.GameGenie) && (CodeStat & 1))
 		{
-			MP.SetPRG_RAM4(0x5,2);
-			MP.SetPRG_RAM8(0x6,0);
-			CPU.ReadHandler[0xF] = NSFReader;
+			for (i = 0x8; i < 0x10; i++)
+				CPU.ReadHandler[i] = GenieRead;
 		}
-		if (MI)
-			MI->InitMapper(&MP,0);
+		if ((MI) && (MI->Reset))
+			MI->Reset(0);
 		break;
 	}
+#ifdef ENABLE_DEBUGGER
 	Debugger.TraceOffset = -1;
-	PPU.Clockticks = -1;
-	PPU.SLnum = 0;
+#endif	/* ENABLE_DEBUGGER */
+	PPU.Clockticks = 339;
+	PPU.SLnum = 241;
 	APU_Reset();
 	CPU_Reset();
+#ifdef ENABLE_DEBUGGER
 	if (Debugger.Enabled)
 		Debugger_Update();
+#endif	/* ENABLE_DEBUGGER */
 }
 
 void	NES_Run (void)
 {
+#ifdef	CPU_BENCHMARK
+	// Run with cyctest.nes
+	int i;
+	char str[512];
+	LARGE_INTEGER ClockFreq;
+	LARGE_INTEGER ClockVal1, ClockVal2;
+	QueryPerformanceFrequency(&ClockFreq);
+	QueryPerformanceCounter(&ClockVal1);
+	for (i = 0; i < 454211; i++)
+	{
+		CPU_ExecOp();
+		CPU_ExecOp();
+		CPU_ExecOp();
+		CPU_ExecOp();
+		CPU_ExecOp();
+		CPU_ExecOp();
+		CPU_ExecOp();
+		CPU_ExecOp();
+		CPU_ExecOp();
+		CPU_ExecOp();
+	}
+	QueryPerformanceCounter(&ClockVal2);
+
+	sprintf(str,"10 seconds emulated in %lu milliseconds",(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
+	MessageBox(NULL,str,"Timing Results",MB_OK);
+#else
+rerun:
 	NES.Stopped = FALSE;
 
+#ifdef ENABLE_DEBUGGER
 	Debugger.TraceOffset = -1;
+#endif	/* ENABLE_DEBUGGER */
 
 	Controllers_Acquire();
 	if ((!NES.Stop) && (NES.SoundEnabled))
@@ -853,27 +1008,32 @@ void	NES_Run (void)
 	NES.NeedReset = 0;
 	do
 	{
-		CPU_ExecOp();
+#ifdef ENABLE_DEBUGGER
 		if (Debugger.Enabled)
-		{
 			Debugger_AddInst();
+#endif	/* ENABLE_DEBUGGER */
+		CPU_ExecOp();
+#ifdef ENABLE_DEBUGGER
+		if (Debugger.Enabled)
 			Debugger_Update();
-		}
+#endif	/* ENABLE_DEBUGGER */
 		if (NES.Scanline)
 		{
 			int SLnum = PPU.SLnum;
 			NES.Scanline = FALSE;
 			ProcessMessages();
-			if (SLnum == 0)
+			if (SLnum > 240)
 			{
 				if (States.NeedSave)
 					States_SaveState();
 				if (States.NeedLoad)
 					States_LoadState();
 			}
-			else if ((SLnum == 240) && (Debugger.Enabled))
+#ifdef ENABLE_DEBUGGER
+			if ((SLnum == 240) && (Debugger.Enabled))
 				Debugger_UpdateGraphics();
-			else if (SLnum == 241)
+#endif	/* ENABLE_DEBUGGER */
+			if (SLnum == 241)
 				Controllers_UpdateInput();
 		}
 	}	while (!NES.Stop);
@@ -904,21 +1064,22 @@ void	NES_Run (void)
 		NES.NeedReset = 0;
 		NES_Reset(RESET_SOFT);
 		NES.Stop = FALSE;
-		NES_Run();
+		goto rerun;
 	}
+#endif	// CPU_BENCHMARK
+}
+
+void	NES_MapperConfig (void)
+{
+	MI->Config();
 }
 
 void	NES_UpdateInterface (void)
 {
-	int W, H;
-	Debugger.DoubleSize = (SizeMult > 1) ? 1 : 0;
+#ifdef ENABLE_DEBUGGER
 	Debugger_SetMode(Debugger.Mode);
-	W = 256 * SizeMult;
-	H = 240 * SizeMult;
-	SetWindowPos(mWnd,HWND_TOP,0,0,W,H,SWP_NOMOVE);
-	W += (W - Width);
-	H += (H - Height);
-	SetWindowPos(mWnd,HWND_TOP,0,0,W,H,SWP_NOMOVE);
+#endif	/* ENABLE_DEBUGGER */
+	SetWindowClientArea(mWnd,256 * SizeMult,240 * SizeMult);
 }
 
 void	NES_LoadSettings (void)
@@ -943,10 +1104,11 @@ void	NES_LoadSettings (void)
 
 	RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Nintendulator\\", 0, KEY_ALL_ACCESS, &SettingsBase);
 	RegQueryValueEx(SettingsBase,"SoundEnabled",0,&Type,(unsigned char *)&NES.SoundEnabled,&Size);
-	RegQueryValueEx(SettingsBase,"SizeMult"    ,0,&Type,(unsigned char *)&SizeMult  ,&Size);
-	RegQueryValueEx(SettingsBase,"FSkip"       ,0,&Type,(unsigned char *)&GFX.FSkip ,&Size);
-	RegQueryValueEx(SettingsBase,"aFSkip"      ,0,&Type,(unsigned char *)&GFX.aFSkip,&Size);
-	RegQueryValueEx(SettingsBase,"PPUMode"     ,0,&Type,(unsigned char *)&PPU.IsPAL ,&Size);
+	RegQueryValueEx(SettingsBase,"SizeMult"    ,0,&Type,(unsigned char *)&SizeMult   ,&Size);
+	RegQueryValueEx(SettingsBase,"FSkip"       ,0,&Type,(unsigned char *)&GFX.FSkip  ,&Size);
+	RegQueryValueEx(SettingsBase,"aFSkip"      ,0,&Type,(unsigned char *)&GFX.aFSkip ,&Size);
+	RegQueryValueEx(SettingsBase,"PPUMode"     ,0,&Type,(unsigned char *)&PPU.IsPAL  ,&Size);
+	RegQueryValueEx(SettingsBase,"AutoRun"     ,0,&Type,(unsigned char *)&NES.AutoRun,&Size);
 
 	RegQueryValueEx(SettingsBase,"Port1T"  ,0,&Type,(unsigned char *)&Port1T  ,&Size);
 	RegQueryValueEx(SettingsBase,"Port2T"  ,0,&Type,(unsigned char *)&Port2T  ,&Size);
@@ -989,29 +1151,19 @@ void	NES_LoadSettings (void)
 	
 	if (GFX.aFSkip)
 		CheckMenuItem(hMenu, ID_PPU_FRAMESKIP_AUTO, MF_CHECKED);
-	switch (GFX.FSkip)
-	{
-	case 0:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_0,MF_BYCOMMAND);	break;
-	case 1:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_1,MF_BYCOMMAND);	break;
-	case 2:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_2,MF_BYCOMMAND);	break;
-	case 3:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_3,MF_BYCOMMAND);	break;
-	case 4:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_4,MF_BYCOMMAND);	break;
-	case 5:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_5,MF_BYCOMMAND);	break;
-	case 6:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_6,MF_BYCOMMAND);	break;
-	case 7:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_7,MF_BYCOMMAND);	break;
-	case 8:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_8,MF_BYCOMMAND);	break;
-	case 9:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_9,MF_BYCOMMAND);	break;
-	}
-	Debugger.DoubleSize = (SizeMult > 1) ? 1 : 0;
+
+	if (NES.AutoRun)
+		CheckMenuItem(hMenu, ID_CPU_AUTORUN, MF_CHECKED);
+
+	GFX_SetFrameskip();
 
 	switch (SizeMult)
 	{
 	case 1:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_1X,MF_BYCOMMAND);	break;
+	default:SizeMult = 2;
 	case 2:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);	break;
 	case 3:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_3X,MF_BYCOMMAND);	break;
 	case 4:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);	break;
-	default:SizeMult = 1;
-		CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_1X,MF_BYCOMMAND);	break;
 	}
 
 	if (PPU.IsPAL)
@@ -1033,6 +1185,7 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,"FSkip"       ,0,REG_DWORD,(unsigned char *)&GFX.FSkip       ,4);
 	RegSetValueEx(SettingsBase,"aFSkip"      ,0,REG_DWORD,(unsigned char *)&GFX.aFSkip      ,4);
 	RegSetValueEx(SettingsBase,"PPUMode"     ,0,REG_DWORD,(unsigned char *)&PPU.IsPAL       ,4);
+	RegSetValueEx(SettingsBase,"AutoRun"     ,0,REG_DWORD,(unsigned char *)&NES.AutoRun     ,4);
 
 	RegSetValueEx(SettingsBase,"Port1T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port1.Type  ,sizeof(Controllers.Port1.Type));
 	RegSetValueEx(SettingsBase,"Port2T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port2.Type  ,sizeof(Controllers.Port2.Type));

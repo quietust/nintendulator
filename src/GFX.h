@@ -63,6 +63,7 @@ void	GFX_DrawScreen (void);
 void	GFX_Update (void);
 void	GFX_Repaint (void);
 void	GFX_LoadPalette (int PalNum);
+void	GFX_SetFrameskip (void);
 void	__cdecl	GFX_ShowText (char *, ...);
 void	GFX_UpdateTitlebar (void);
 

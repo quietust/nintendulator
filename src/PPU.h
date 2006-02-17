@@ -27,11 +27,13 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct	tPPU
 {
+	FPPURead	ReadHandler[0x10];
+	FPPUWrite	WriteHandler[0x10];
 	int SLEndFrame;
 	int Clockticks;
 	int SLnum;
-	unsigned char *CHRPointer[0xC];
-	BOOL Writable[0xC];
+	unsigned char *CHRPointer[0x10];
+	BOOL Writable[0x10];
 
 	unsigned char Sprite[0x100];
 	unsigned char SprAddr;
@@ -41,18 +43,25 @@ struct	tPPU
 	unsigned char ppuLatch;
 
 	unsigned char Reg2000, Reg2001, Reg2002;
-	BOOL HVTog, ShortSL;
+	
+	unsigned char HVTog, ShortSL, IsRendering, OnScreen;
 
 	unsigned long VRAMAddr, IntReg;
-	unsigned char IntX, IntXBak;
+	unsigned char IntX;
 	unsigned char TileData[272];
+
+	unsigned long ColorEmphasis;	// upper 8 bits of $2001 shifted left 1 bit
+
+	unsigned long IOAddr;
+	unsigned char IOVal;
+	unsigned char IOMode;	// 0 for nothing, 1 for renderer read, 2 for $2007 read, 3 for $2007 write
 
 	unsigned char SprBuff[32];
 	BOOL Spr0InLine;
 	int SprCount;
 	unsigned char SprData[8][8];
 	void *GfxData;
-	BOOL IsPAL;
+	unsigned char IsPAL;
 };
 extern	struct	tPPU	PPU;
 extern	unsigned char	PPU_VRAM[0x4][0x400];
@@ -60,10 +69,15 @@ extern	unsigned char	PPU_VRAM[0x4][0x400];
 void	PPU_Init (void);
 void	PPU_GetHandlers (void);
 void	PPU_PowerOn (void);
-int	__cdecl	PPU_Read (int,int);
-void	__cdecl	PPU_Write (int,int,int);
+int	_MAPINT	PPU_IntRead (int,int);
+void	_MAPINT	PPU_IntWrite (int,int,int);
 void	PPU_Run (void);
 void	PPU_SetMirroring (unsigned char M1, unsigned char M2, unsigned char M3, unsigned char M4);
 void	PPU_GetGFXPtr (void);
+
+int	_MAPINT	PPU_BusRead (int,int);
+void	_MAPINT	PPU_BusWriteCHR (int,int,int);
+void	_MAPINT	PPU_BusWriteNT (int,int,int);
+void	_MAPINT	PPU_BusWriteNT3F (int,int,int);
 
 #endif

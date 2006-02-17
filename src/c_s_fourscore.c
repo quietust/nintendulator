@@ -40,6 +40,8 @@ static	unsigned char	Read (struct tStdPort *Cont)
 		break;
 	default:break;
 	}
+	if (Cont->Strobe)
+		Cont->BitPtr = 0;
 	switch (Cont->BitPtr)
 	{
 	case  0:case  1:case  2:case  3:case  4:case  5:case  6:case  7:
@@ -72,13 +74,13 @@ static	void	Write (struct tStdPort *Cont, unsigned char Val)
 		break;
 	default:break;
 	}
-	if ((Cont->Strobe == 1) && (!(Val & 1)))
-		Cont->BitPtr = 0;
 	Cont->Strobe = Val & 1;
+	if (Cont->Strobe)
+		Cont->BitPtr = 0;
 	Port1->Write(Port1,Val);
 	Port2->Write(Port2,Val);
 }
-static	BOOL CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	switch (uMsg)
@@ -122,10 +124,10 @@ static	BOOL CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case IDOK:
 			EndDialog(hDlg,1);
 			break;
-		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort1,SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0)); }	break;
-		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort2,SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0)); }	break;
-		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort3,SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_GETCURSEL,0,0)); }	break;
-		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort4,SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_GETCURSEL,0,0)); }	break;
+		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort1,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0)); }	break;
+		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort2,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0)); }	break;
+		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort3,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_GETCURSEL,0,0)); }	break;
+		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort4,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_GETCURSEL,0,0)); }	break;
 		case IDC_CONT_CPORT1:	Controllers.FSPort1.Config(&Controllers.FSPort1,hDlg);	break;
 		case IDC_CONT_CPORT2:	Controllers.FSPort2.Config(&Controllers.FSPort2,hDlg);	break;
 		case IDC_CONT_CPORT3:	Controllers.FSPort3.Config(&Controllers.FSPort3,hDlg);	break;
