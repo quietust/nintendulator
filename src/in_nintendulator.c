@@ -102,7 +102,7 @@ void	NES_Reset (void)
 
 	CPU_PowerOn();
 	if (MI->Reset)
-		MI->Reset(1);
+		MI->Reset(RESET_HARD);
 	APU_Reset();
 	CPU_Reset();
 }
@@ -244,7 +244,7 @@ void setpan(int pan) { mod.outMod->SetPan(pan); }
 int infoDlg(char *fn, HWND hwnd)
 {
 	if (RI.ROMType)
-		MI->Config(CFG_WINDOW,0);
+		MI->Config(CFG_WINDOW,TRUE);
 	return 0;
 }
 
@@ -322,7 +322,7 @@ DWORD	WINAPI	PlayThread (void *param)
 In_Module mod = 
 {
 	IN_VER,
-	"Nintendulator NSF Player v0.900",
+	"Nintendulator NSF Player v0.950",
 	0,	// hMainWindow
 	0,	// hDllInstance
 	"NSF\0Nintendo Sound File (*.NSF)\0"
