@@ -111,6 +111,7 @@ void	NES_OpenFile (char *filename)
 	if (MI->Config)
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_ENABLED);
 	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_BYCOMMAND | MF_DISABLED);
+	DrawMenuBar(mWnd);
 
 	States_SetFilename(filename);
 
