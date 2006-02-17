@@ -143,7 +143,7 @@ __inline void	Square0_HalfFrame (void)
 	if (!--Square0.BendCtr)
 	{
 		Square0.BendCtr = Square0.swpspeed + 1;
-		if (Square0.swpenab && Square0.ValidFreq)
+		if (Square0.swpenab && Square0.swpstep && Square0.ValidFreq)
 		{
 			int sweep = Square0.freq >> Square0.swpstep;
 			Square0.freq += Square0.swpdir ? ~sweep : sweep;
@@ -236,7 +236,7 @@ __inline void	Square1_HalfFrame (void)
 	if (!--Square1.BendCtr)
 	{
 		Square1.BendCtr = Square1.swpspeed + 1;
-		if (Square1.swpenab && Square1.ValidFreq)
+		if (Square1.swpenab && Square1.swpstep && Square1.ValidFreq)
 		{
 			int sweep = Square1.freq >> Square1.swpstep;
 			Square1.freq += Square1.swpdir ? -sweep : sweep;
