@@ -175,7 +175,7 @@ int play(char *fn)
 	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
 		RI.NSF_NTSCSpeed = 16639;	// adjust NSF playback speed to match actual NTSC NES framerate
 	if (RI.NSF_PALSpeed == 20000)
-		RI.NSF_NTSCSpeed = 19997;	// same for PAL NSFs (though we don't really support those right now)
+		RI.NSF_PALSpeed = 19997;	// same for PAL NSFs (though we don't really support those right now)
 
 	NES.PRGMask = MAX_PRGROM_MASK;
 
