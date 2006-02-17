@@ -441,28 +441,31 @@ void	MapperInterface_Init (void)
 	sprintf(Filename,"%s%s",Path,"*.dll");
 	Handle = FindFirstFile(Filename,&Data);
 	ThisDLL = malloc(sizeof(struct tMapperDLL));
-	do
+	if (Handle != INVALID_HANDLE_VALUE)
 	{
-		char Tmp[MAX_PATH];
-		sprintf(Tmp,"%s%s",Path,Data.cFileName);
-		ThisDLL->dInst = LoadLibrary(Tmp);
-		ThisDLL->LoadDLL = (PLoadMapperDLL)GetProcAddress(ThisDLL->dInst,"LoadMapperDLL");
-		ThisDLL->UnloadDLL = (PUnloadMapperDLL)GetProcAddress(ThisDLL->dInst,"UnloadMapperDLL");
-		if ((ThisDLL->LoadDLL) && (ThisDLL->UnloadDLL))
+		do
 		{
-			ThisDLL->DI = ThisDLL->LoadDLL(mWnd,&EI,CurrentMapperInterface);
-			if (ThisDLL->DI)
+			char Tmp[MAX_PATH];
+			sprintf(Tmp,"%s%s",Path,Data.cFileName);
+			ThisDLL->dInst = LoadLibrary(Tmp);
+			ThisDLL->LoadDLL = (PLoadMapperDLL)GetProcAddress(ThisDLL->dInst,"LoadMapperDLL");
+			ThisDLL->UnloadDLL = (PUnloadMapperDLL)GetProcAddress(ThisDLL->dInst,"UnloadMapperDLL");
+			if ((ThisDLL->LoadDLL) && (ThisDLL->UnloadDLL))
 			{
-				ThisDLL->Next = MapperDLLs;
-				MapperDLLs = ThisDLL;
-				ThisDLL = malloc(sizeof(struct tMapperDLL));
+				ThisDLL->DI = ThisDLL->LoadDLL(mWnd,&EI,CurrentMapperInterface);
+				if (ThisDLL->DI)
+				{
+					ThisDLL->Next = MapperDLLs;
+					MapperDLLs = ThisDLL;
+					ThisDLL = malloc(sizeof(struct tMapperDLL));
+				}
+				else	FreeLibrary(ThisDLL->dInst);
 			}
 			else	FreeLibrary(ThisDLL->dInst);
-		}
-		else	FreeLibrary(ThisDLL->dInst);
-	}	while (FindNextFile(Handle,&Data));
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
 	free(ThisDLL);
-	FindClose(Handle);
 	if (MapperDLLs == NULL)
 		MessageBox(mWnd,"Fatal error: unable to locate any mapper DLLs!","Nintendulator",MB_OK | MB_ICONERROR);
 #else
