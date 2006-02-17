@@ -1049,9 +1049,9 @@ rerun:
 
 	APU_SoundOFF();
 	Controllers_UnAcquire();
-	GFX_UpdateTitlebar();
 
 	NES.Stopped = TRUE;
+	GFX_UpdateTitlebar();
 
 	if (!NES.ROMLoaded)
 	{
