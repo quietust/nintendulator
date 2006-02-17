@@ -32,6 +32,7 @@ struct tGFX
 	unsigned short Palette16[512];
 	unsigned long Palette32[512];
 	char Depth;
+	BOOL Fullscreen;
 
 	LARGE_INTEGER ClockFreq;
 	LARGE_INTEGER LastClockVal;

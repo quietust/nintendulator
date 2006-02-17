@@ -543,6 +543,13 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			GFX.SlowRate = 20;
 			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_20,MF_BYCOMMAND);
 			break;
+		case ID_PPU_FULLSCREEN:
+			NES_Stop();
+			GFX_Release();
+			GFX.Fullscreen = !GFX.Fullscreen;
+			GFX_Create();
+			if (running)
+				NES_Start(FALSE);
 		default:return DefWindowProc(hWnd,message,wParam,lParam);
 			break;
 		}

@@ -38,6 +38,7 @@ struct tGFX GFX;
 	{\
 		GFX_Release();\
 		MessageBox(mWnd,errormsg _T(", retrying"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);\
+		GFX.Fullscreen = FALSE;\
 		GFX_Create();\
 		PPU_GetGFXPtr();\
 		if (FAILED(action))\
@@ -72,6 +73,7 @@ void	GFX_Init (void)
 	GFX.PalettePAL = 1;
 	GFX.NTSChue = 330;
 	GFX.NTSCsat = 50;
+	GFX.Fullscreen = FALSE;
 	GFX_Create();
 }
 
@@ -90,59 +92,102 @@ void	GFX_Create (void)
 		return;
 	}
 
-	if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw,mWnd,DDSCL_NORMAL)))
+	if (GFX.Fullscreen)
 	{
-
-		GFX_Release();
-		MessageBox(mWnd,_T("Failed to set DirectDraw cooperative level"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return;
+		if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw, mWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
+		if (FAILED(IDirectDraw7_SetDisplayMode(GFX.DirectDraw, 320, 240, 32, 0, 0)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to set display mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
+	}
+	else
+	{
+		if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw,mWnd,DDSCL_NORMAL)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to set DirectDraw cooperative level"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
 	}
 
 	ZeroMemory(&GFX.SurfDesc,sizeof(GFX.SurfDesc));
 	GFX.SurfDesc.dwSize = sizeof(GFX.SurfDesc);
-	GFX.SurfDesc.dwFlags = DDSD_CAPS;
-	GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 
-	if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.PrimarySurf,NULL)))
+	if (GFX.Fullscreen)
 	{
-		GFX_Release();
-		MessageBox(mWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return;
+		GFX.SurfDesc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+		GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
+		GFX.SurfDesc.dwBackBufferCount = 1;
+
+		if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.PrimarySurf,NULL)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
+
+		GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
+		if (FAILED(IDirectDrawSurface7_GetAttachedSurface(GFX.PrimarySurf,&GFX.SurfDesc.ddsCaps,&GFX.SecondarySurf)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to get secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
+	}
+	else
+	{
+		GFX.SurfDesc.dwFlags = DDSD_CAPS;
+		GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+
+		if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.PrimarySurf,NULL)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
+
+		GFX.SurfDesc.dwWidth = 256;
+		GFX.SurfDesc.dwHeight = 240;
+		GFX.SurfDesc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+		GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+
+		if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.SecondarySurf,NULL)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to create secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
 	}
 
-	if (FAILED(IDirectDraw7_CreateClipper(GFX.DirectDraw,0,&GFX.Clipper,NULL)))
+	if (!GFX.Fullscreen)
 	{
-		GFX_Release();
-		MessageBox(mWnd,_T("Failed to create clipper"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return;
-	}
+		if (FAILED(IDirectDraw7_CreateClipper(GFX.DirectDraw,0,&GFX.Clipper,NULL)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to create clipper"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
 
-	if (FAILED(IDirectDrawClipper_SetHWnd(GFX.Clipper,0,mWnd)))
-	{
-		GFX_Release();
-		MessageBox(mWnd,_T("Failed to set clipper window"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return;
-	}
+		if (FAILED(IDirectDrawClipper_SetHWnd(GFX.Clipper,0,mWnd)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to set clipper window"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
 
-	if (FAILED(IDirectDrawSurface7_SetClipper(GFX.PrimarySurf,GFX.Clipper)))
-	{
-		GFX_Release();
-		MessageBox(mWnd,_T("Failed to assign clipper to primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return;
-	}
-
-	ZeroMemory(&GFX.SurfDesc,sizeof(GFX.SurfDesc));
-	GFX.SurfDesc.dwSize = sizeof(GFX.SurfDesc);
-	GFX.SurfDesc.dwWidth = 256;
-	GFX.SurfDesc.dwHeight = 240;
-	GFX.SurfDesc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
-	GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
-
-	if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.SecondarySurf,NULL)))
-	{
-		GFX_Release();
-		MessageBox(mWnd,_T("Failed to create secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return;
+		if (FAILED(IDirectDrawSurface7_SetClipper(GFX.PrimarySurf,GFX.Clipper)))
+		{
+			GFX_Release();
+			MessageBox(mWnd,_T("Failed to assign clipper to primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			return;
+		}
 	}
 
 	ZeroMemory(&GFX.SurfDesc,sizeof(GFX.SurfDesc));
@@ -155,6 +200,7 @@ void	GFX_Create (void)
 		return;
 	}
 
+	GFX.Pitch = GFX.SurfDesc.lPitch;
 	GFX.FPSCnt = GFX.FSkip;
 
 	switch (GFX.SurfDesc.ddpfPixelFormat.dwRGBBitCount)
@@ -169,23 +215,9 @@ void	GFX_Create (void)
 		return;			break;
 	}
 
-	GFX.SurfDesc.dwSize = sizeof(GFX.SurfDesc);
-	if (FAILED(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK,0)))
-	{
-		GFX_Release();
-		MessageBox(mWnd,_T("Failed to lock secondary surface (init)"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return;
-	}
-	GFX.Pitch = GFX.SurfDesc.lPitch;
-	memset(GFX.SurfDesc.lpSurface,0,GFX.SurfDesc.lPitch*GFX.SurfDesc.dwHeight);
-	if (FAILED(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL)))
-	{
-		GFX_Release();
-		MessageBox(mWnd,_T("Failed to unlock secondary surface (init)"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		return;
-	}
 	GFX_Update();
 	GFX_LoadPalette(PPU.IsPAL ? GFX.PalettePAL : GFX.PaletteNTSC);
+	EI.DbgOut(_T("Successfully created %ix%i %i-bit display surface (%s)"), GFX.SurfDesc.dwWidth, GFX.SurfDesc.dwHeight, GFX.Depth, GFX.Fullscreen ? _T("fullscreen") : _T("windowed"));
 }
 
 void	GFX_Release (void)
@@ -263,9 +295,21 @@ void	GFX_Update (void)
 		for (y = 0; y < 240; y++)
 		{
 			register unsigned long *dst = (unsigned long *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			if (GFX.Fullscreen)
+			{
+				for (x = 0; x < 32; x++)
+					dst[x] = GFX.Palette32[0x0F];
+				dst += 32;
+			}
 			for (x = 0; x < 256; x++)
 				dst[x] = GFX.Palette32[src[x]];
-			src += x;
+			if (GFX.Fullscreen)
+			{
+				dst += 256;
+				for (x = 0; x < 32; x++)
+					dst[x] = GFX.Palette32[0x0F];
+			}
+			src += 256;
 		}
 	}
 	else if (GFX.Depth == 16)
@@ -274,9 +318,21 @@ void	GFX_Update (void)
 		for (y = 0; y < 240; y++)
 		{
 			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			if (GFX.Fullscreen)
+			{
+				for (x = 0; x < 32; x++)
+					dst[x] = GFX.Palette16[0x0F];
+				dst += 32;
+			}
 			for (x = 0; x < 256; x++)
 				dst[x] = GFX.Palette16[src[x]];
-			src += x;
+			if (GFX.Fullscreen)
+			{
+				dst += 256;
+				for (x = 0; x < 32; x++)
+					dst[x] = GFX.Palette16[0x0F];
+			}
+			src += 256;
 		}
 	}
 	else
@@ -285,9 +341,21 @@ void	GFX_Update (void)
 		for (y = 0; y < 240; y++)
 		{
 			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			if (GFX.Fullscreen)
+			{
+				for (x = 0; x < 32; x++)
+					dst[x] = GFX.Palette15[0x0F];
+				dst += 32;
+			}
 			for (x = 0; x < 256; x++)
 				dst[x] = GFX.Palette15[src[x]];
-			src += x;
+			if (GFX.Fullscreen)
+			{
+				dst += 256;
+				for (x = 0; x < 32; x++)
+					dst[x] = GFX.Palette15[0x0F];
+			}
+			src += 256;
 		}
 	}
 	GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),_T("Failed to unlock secondary surface"))
@@ -296,19 +364,25 @@ void	GFX_Update (void)
 
 void	GFX_Repaint (void)
 {
-	RECT rect;
-	POINT pt = {0,0};
 	if (!GFX.DirectDraw)
 		return;
-	GetClientRect(mWnd,&rect);
-	if ((rect.right == 0) || (rect.bottom == 0))
-		return;
-	ClientToScreen(mWnd,&pt);
-	rect.left += pt.x;
-	rect.right += pt.x;
-	rect.top += pt.y;
-	rect.bottom += pt.y;
-	GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),_T("Failed to blit to primary surface"))
+
+	if (GFX.Fullscreen)
+		GFX_Try(IDirectDrawSurface7_Flip(GFX.PrimarySurf, NULL, DDFLIP_WAIT),_T("Failed to flip to primary surface"))
+	else
+	{
+		RECT rect;
+		POINT pt = {0,0};
+		GetClientRect(mWnd,&rect);
+		if ((rect.right == 0) || (rect.bottom == 0))
+			return;
+		ClientToScreen(mWnd,&pt);
+		rect.left += pt.x;
+		rect.right += pt.x;
+		rect.top += pt.y;
+		rect.bottom += pt.y;
+		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,DDBLT_WAIT,NULL),_T("Failed to blit to primary surface"))
+	}
 }
 
 enum PALETTE { PALETTE_NTSC, PALETTE_PAL, PALETTE_PC10, PALETTE_EXT, PALETTE_VS1, /* PALETTE_VS2, PALETTE_VS3, PALETTE_VS4,*/ PALETTE_TEMP, PALETTE_MAX };
