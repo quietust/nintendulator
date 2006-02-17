@@ -44,6 +44,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 extern	HINSTANCE	hInst;	/* current instance */
 extern	HWND		mWnd;	/* main window */
 extern	HACCEL		hAccelTable;	/* accelerators */
+extern	BOOL		MaskKeyboard;	/* mask keyboard accelerators (for when Family Basic Keyboard is active) */
 extern	int		SizeMult;	/* window size multiplier */
 extern	char		ProgPath[MAX_PATH];	/* program path */
 extern void	SetWindowClientArea (HWND hWnd, int w, int h);

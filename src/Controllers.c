@@ -390,6 +390,8 @@ void	Controllers_Acquire (void)
 	IDirectInputDevice7_Acquire(Controllers.DIMouse);
 	for (i = 2; i < Controllers.NumDevices; i++)
 		IDirectInputDevice7_Acquire(Controllers.DIJoystick[i-2]);
+	if ((Controllers.ExpPort.Type == EXP_FAMILYBASICKEYBOARD) || (Controllers.ExpPort.Type == EXP_ALTKEYBOARD))
+		MaskKeyboard = 1;
 }
 void	Controllers_UnAcquire (void)
 {
@@ -398,6 +400,7 @@ void	Controllers_UnAcquire (void)
 	IDirectInputDevice7_Unacquire(Controllers.DIMouse);
 	for (i = 2; i < Controllers.NumDevices; i++)
 		IDirectInputDevice7_Unacquire(Controllers.DIJoystick[i-2]);
+	MaskKeyboard = 0;
 }
 
 FILE *movie;

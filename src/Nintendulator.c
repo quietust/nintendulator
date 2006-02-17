@@ -39,6 +39,7 @@ HWND		mWnd;		// main window
 HACCEL		hAccelTable;	// accelerators
 int		SizeMult;	// size multiplier
 char		ProgPath[MAX_PATH];	// program path
+BOOL		MaskKeyboard;		// mask keyboard accelerators (for when Family Basic Keyboard is active)
 
 TCHAR	szTitle[MAX_LOADSTRING];	// The title bar text
 TCHAR	szWindowClass[MAX_LOADSTRING];	// The title bar text
@@ -520,8 +521,8 @@ void	ProcessMessages (void)
 {
 	MSG msg;
 	while (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
-//		if (!TranslateAccelerator(msg.hwnd,hAccelTable,&msg))
-		if (!TranslateAccelerator(mWnd,hAccelTable,&msg))
+//		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg))
+		if (MaskKeyboard || !TranslateAccelerator(mWnd,hAccelTable,&msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
