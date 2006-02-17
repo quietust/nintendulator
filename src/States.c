@@ -382,7 +382,7 @@ void	States_LoadState (void)
 		return;
 	}
 	fread(tpchr,1,4,in);
-	if (1 || memcmp(tpchr,STATES_VERSION,4))
+	if (0 && memcmp(tpchr,STATES_VERSION,4))
 	{	/* For now, allow savestates with wrong version */
 		fclose(in);
 		tpchr[4] = 0;
