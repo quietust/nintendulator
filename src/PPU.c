@@ -366,7 +366,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			{
 				if (PPU.IsRendering)
 					PPU.VRAMAddr = PPU.IntReg;
-				if (PPU.ShortSL)
+				if ((PPU.ShortSL) && (!PPU.IsPAL))
 					EndSLTicks = 340;
 				else	EndSLTicks = 341;
 			}
@@ -688,7 +688,7 @@ __inline static	void	RunSkip (int NumTicks)
 			{
 				if (PPU.IsRendering)
 					PPU.VRAMAddr = PPU.IntReg;
-				if (PPU.ShortSL)
+				if ((PPU.ShortSL) && (!PPU.IsPAL))
 					EndSLTicks = 340;
 				else	EndSLTicks = 341;
 			}
