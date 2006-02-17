@@ -562,6 +562,7 @@ void	AddDebug (char *txt)
 	strcat(DebugText,txt);
 	strcat(DebugText,"\r\n");
 	DebugLen += i + 2;
+	GetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText,32767);
 	SetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText);
 }
 void	ShowDebug (void)
