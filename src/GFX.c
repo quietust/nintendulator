@@ -568,6 +568,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		SetDlgItemText(hDlg,IDC_PAL_CUSTFILE,ispal ? GFX.CustPalettePAL : GFX.CustPaletteNTSC);
 		CheckRadioButton(hDlg,IDC_PAL_NTSC,IDC_PAL_CUSTOM,paltable[pal]);
 		UpdatePalette(hDlg,pal);
+		return TRUE;
 		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
