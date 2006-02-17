@@ -789,7 +789,7 @@ void	APU_Reset  (void)
 	Noise.EnvCtr = 1;
 	DPCM.Cycles = 1;
 	Frame.Cycles = 1;
-	Frame.Bits = 0x40;
+	Frame.Bits = 0x00;
 }
 #ifdef	SOUND_LOGGING
 FILE *soundlog = NULL;
