@@ -421,13 +421,13 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							Debugger_AddInst();
 #endif	/* ENABLE_DEBUGGER */
 						CPU_ExecOp();
-#ifdef ENABLE_DEBUGGER
-						if (Debugger.Enabled)
-							Debugger_Update();
-#endif	/* ENABLE_DEBUGGER */
 					} while (!NES.Scanline);
 					NES.Scanline = FALSE;
 				}
+#ifdef ENABLE_DEBUGGER
+				if (Debugger.Enabled)
+					Debugger_Update();
+#endif	/* ENABLE_DEBUGGER */
 				States_SaveState();
 			}
 			break;
