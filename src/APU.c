@@ -1087,28 +1087,31 @@ void	APU_Run (void)
 	int NewBufPos = FREQ * ++APU.Cycles / APU.MHz;
 	if (NewBufPos >= APU.buflen)
 	{
+		LPVOID bufPtr;
+		DWORD bufBytes;
+		unsigned long rpos, wpos;
+
+		APU.Cycles = NewBufPos = 0;
 		if (aviout)
 			AVI_AddAudio();
+		do
+		{
+			Sleep(1);
+			if (!APU.isEnabled)
+				break;
+			APU_Try(IDirectSoundBuffer_GetCurrentPosition(APU.Buffer,&rpos,&wpos),"Error getting audio position")
+			rpos /= APU.LockSize;
+			wpos /= APU.LockSize;
+			if (wpos < rpos)
+				wpos += FRAMEBUF;
+		} while ((rpos <= APU.next_pos) && (APU.next_pos <= wpos));
 		if (APU.isEnabled)
 		{
-			LPVOID bufPtr;
-			DWORD bufBytes;
-			unsigned long rpos, wpos;
-			do
-			{
-				Sleep(1);
-				APU_Try(IDirectSoundBuffer_GetCurrentPosition(APU.Buffer,&rpos,&wpos),"Error getting audio position")
-				rpos /= APU.LockSize;
-				wpos /= APU.LockSize;
-				if (wpos < rpos)
-					wpos += FRAMEBUF;
-			} while ((rpos <= APU.next_pos) && (APU.next_pos <= wpos));
 			APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,APU.next_pos * APU.LockSize,APU.LockSize,&bufPtr,&bufBytes,NULL,0,0),"Error locking sound buffer")
 			memcpy(bufPtr,APU.buffer,bufBytes);
 			APU_Try(IDirectSoundBuffer_Unlock(APU.Buffer,bufPtr,bufBytes,NULL,0),"Error unlocking sound buffer")
 			APU.next_pos = (APU.next_pos + 1) % FRAMEBUF;
 		}
-		APU.Cycles = NewBufPos = 0;
 	}
 #else
 	int NewBufPos = SAMPLERATE * ++APU.Cycles / APU.MHz;
