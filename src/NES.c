@@ -194,7 +194,7 @@ int	NES_FDSLoad (FILE *in)
 	int clen = 0;
 	int n;
 	unsigned long data;
-	fread(&n,4,1,in);
+	fread(&n,4,1,in);	clen += 4;
 	for (; n >= 0; n--)
 	{
 		fread(&data,4,1,in);
