@@ -109,6 +109,8 @@ BEGIN
         MENUITEM "Level 2 (Pattern Tables)\tCtrl+F2", ID_DEBUG_LEVEL2
         MENUITEM "Level &3 (Nametables)\tCtrl+F3", ID_DEBUG_LEVEL3
         MENUITEM "Level &4 (Disassembly)\tCtrl+F4", ID_DEBUG_LEVEL4
+        MENUITEM SEPARATOR
+        MENUITEM "Status Window",               ID_DEBUG_STATWND
     END
     MENUITEM "&Game",                       ID_GAME, GRAYED
     POPUP "&Misc"
@@ -543,6 +545,15 @@ STYLE DS_MODALFRAME | WS_POPUP
 FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "Press a key...",IDC_STATIC,7,7,44,8
+END
+
+IDD_DEBUG DIALOG DISCARDABLE  0, 0, 128, 193
+STYLE WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Debug Information"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_DEBUGTEXT,0,0,127,193,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_WANTRETURN | WS_VSCROLL
 END
 
 
