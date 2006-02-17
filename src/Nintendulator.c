@@ -92,10 +92,16 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 	if (lpCmdLine[0])
 	{
 		TCHAR *cmdline = _tcsdup(GetCommandLine());
-		if (_tcschr(cmdline,'"'))
+		if (cmdline[0] == _T('"'))
+			cmdline = _tcschr(cmdline + 1,'"') + 2;	// EXE filename is enclosed in quotes - skip first char, then next quote char plus 2
+		else	cmdline = _tcschr(cmdline,' ') + 1;	// not in quotes, so just skip to the first space
+		if (_tcschr(cmdline,'"'))	// if the filename is in quotes, strip them off (and ignore everything past it)
+		{
 			cmdline = _tcschr(cmdline,'"') + 1;
-		if (_tcschr(cmdline,'"'))
 			*_tcschr(cmdline,'"') = 0;
+		}
+		else if (_tcschr(cmdline,' '))	// else just get the filename (and ignore everything past it)
+			*_tcschr(cmdline,' ') = 0;
 		NES_OpenFile(cmdline);
 		free(cmdline);
 	}
