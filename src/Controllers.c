@@ -153,6 +153,7 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),TRUE);
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SEXPPORT),TRUE);
 		}
+		return TRUE;
 		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
