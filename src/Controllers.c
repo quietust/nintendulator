@@ -690,6 +690,12 @@ void	Controllers_RecordMovie (BOOL fromState)
 		return;
 	}
 
+	if ((MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
+	{
+		MessageBox(mWnd,"This game does not support recording movies!","Nintendulator",MB_OK);
+		return;
+	}
+
 	ZeroMemory(&ofn,sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = mWnd;
