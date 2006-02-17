@@ -354,8 +354,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 		}
 		else if (!memcmp(csig,"NMOV",4))
 		{
-			extern int MoviePos;
-			extern int ReRecords;
+			extern int MoviePos, MovieLen, ReRecords;
 			char tps[4];
 			int mlen;
 			int tpi;
@@ -425,7 +424,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 					MI->Config(CFG_CMD,Cmd);
 			}
 			else if (Controllers.MovieMode & MOV_PLAY)
-			{	// zoom to the current position in playback, READ from movie file instead of writing it
+			{	// zoom the movie file to the current playback position
 				rewind(movie);
 				fseek(movie,16,SEEK_SET);
 				fread(tps,4,1,movie);
@@ -440,33 +439,29 @@ BOOL	States_LoadData (FILE *in, int flen)
 				fread(&tpl,4,1,in);	fread(&tpl,4,1,movie);		clen -= 4;	// RREC
 				fread(&tpl,4,1,in);	fread(&tpi,4,1,movie);		clen -= 4;	// ILEN
 				fseek(in,tpl,SEEK_CUR);	fseek(movie,tpi,SEEK_CUR);	clen -= tpl;	// INFO
-				fread(&MoviePos,4,1,in);fread(&tpl,4,1,movie);		clen -= 4;	// MLEN
-				tpi = MoviePos;						clen -= tpi;	// MDAT
+				fread(&MoviePos,4,1,in);fread(&MovieLen,4,1,movie);	clen -= 4;	// MLEN
+				tpi = MoviePos;		fseek(movie,tpi,SEEK_CUR);	clen -= tpi;	// MDAT
 				Cmd = 0;
 				while (tpi > 0)
 				{
 					if (Controllers.Port1.MovLen)
 					{
 						fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,in);
-						fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
 						tpi -= Controllers.Port1.MovLen;
 					}
 					if (Controllers.Port2.MovLen)
 					{
 						fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,in);
-						fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
 						tpi -= Controllers.Port2.MovLen;
 					}
 					if (Controllers.ExpPort.MovLen)
 					{
 						fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,in);
-						fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
 						tpi -= Controllers.ExpPort.MovLen;
 					}
 					if (NES.HasMenu)
 					{
 						fread(&Cmd,1,1,in);
-						fread(&Cmd,1,1,movie);
 						tpi--;
 					}
 				}
