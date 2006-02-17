@@ -27,11 +27,31 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Movie.h"
 #include "Controllers.h"
 #include "States.h"
+#include "Genie.h"
 #include "NES.h"
 #include "PPU.h"
 #include <commdlg.h>
 
 struct	tMovie	Movie;
+
+void	Movie_FindBlock (void)
+{
+	unsigned char buf[5];
+	int len;
+
+	rewind(Movie.Data);
+	fseek(Movie.Data,16,SEEK_SET);
+	fread(buf,4,1,Movie.Data);
+	fread(&len,4,1,Movie.Data);
+	while (memcmp(buf,"NMOV",4))
+	{	/* find the NMOV block in the movie */
+		fseek(Movie.Data,len,SEEK_CUR);
+		fread(buf,4,1,Movie.Data);
+		fread(&len,4,1,Movie.Data);
+	}
+	if (feof(Movie.Data))
+		EI.DbgOut(_T("ERROR - Failed to locate movie data block!"));
+}
 
 void	Movie_ShowFrame (void)
 {
@@ -104,7 +124,6 @@ void	Movie_Play (BOOL Review)
 		fclose(Movie.Data);
 		return;
 	}
-	fseek(Movie.Data,16,SEEK_SET);
 
 	Movie.ControllerTypes[0] = Controllers.Port1.Type;
 	Movie.ControllerTypes[1] = Controllers.Port2.Type;
@@ -127,6 +146,16 @@ void	Movie_Play (BOOL Review)
 
 	if (RI.ROMType == ROM_FDS)	// when playing FDS movies, discard savedata; if there is savestate data, we'll be reloading it
 		memcpy(PRG_ROM[0x000],PRG_ROM[0x400],RI.FDS_NumSides << 16);
+
+	Movie_FindBlock();		// SPECIAL - seek to NMOV block
+	fread(buf,4,1,Movie.Data);	// to see if Game Genie is used or not
+
+	if (buf[3] & 0x40)		// we need to check this BEFORE reset so we can possibly swap in the menu
+		NES.GameGenie = TRUE;	// this bit ONLY gets set for reset-based movies
+	else	NES.GameGenie = FALSE;	// if it starts from a savestate, it's already in the game (and we load the GENI block)
+
+	fseek(Movie.Data,16,SEEK_SET);	// seek back to the beginning of the file (past the header)
+
 	NES_Reset(RESET_HARD);
 	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
 	if (!States_LoadData(Movie.Data,len))
@@ -140,16 +169,7 @@ void	Movie_Play (BOOL Review)
 	if (Review)
 		Movie.Mode |= MOV_REVIEW;
 	
-	rewind(Movie.Data);
-	fseek(Movie.Data,16,SEEK_SET);
-	fread(buf,4,1,Movie.Data);
-	fread(&len,4,1,Movie.Data);
-	while (memcmp(buf,"NMOV",4))
-	{	/* find the NMOV block in the movie */
-		fseek(Movie.Data,len,SEEK_CUR);
-		fread(buf,4,1,Movie.Data);
-		fread(&len,4,1,Movie.Data);
-	}
+	Movie_FindBlock();
 
 	fread(buf,1,4,Movie.Data);
 
@@ -184,7 +204,7 @@ void	Movie_Play (BOOL Review)
 	Movie.FrameLen = Controllers.Port1.MovLen + Controllers.Port2.MovLen + Controllers.ExpPort.MovLen;
 	if (NES.HasMenu)
 		Movie.FrameLen++;
-	if (Movie.FrameLen != (buf[3] & 0x7F))
+	if (Movie.FrameLen != (buf[3] & 0x3F))
 		MessageBox(mWnd,_T("The frame size specified in this movie is incorrect! This movie may not play properly!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 
 	fread(&Movie.ReRecords,4,1,Movie.Data);
@@ -208,6 +228,7 @@ void	Movie_Play (BOOL Review)
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_GRAYED);
 	if (Controllers.Port1.MovLen)
 		memset(Controllers.Port1.MovData,0,Controllers.Port1.MovLen);
 	if (Controllers.Port2.MovLen)
@@ -225,6 +246,12 @@ void	Movie_Record (BOOL fromState)
 	if (Movie.Mode)
 	{
 		MessageBox(mWnd,_T("A movie is already open!"),_T("Nintendulator"),MB_OK);
+		return;
+	}
+
+	if (fromState && (Genie.CodeStat & 0x80))
+	{
+		MessageBox(mWnd,_T("Cannot record a savestate-based movie starting from the Game Genie screen!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -308,7 +335,9 @@ void	Movie_Record (BOOL fromState)
 	if (NES.HasMenu)
 		Movie.FrameLen++;
 	x |= Movie.FrameLen;
-	fwrite(&x,1,1,Movie.Data);		// frame size, NTSC/PAL
+	if (NES.GameGenie && !fromState)	// set Game Genie bit only if recording from reset
+		x |= 0x40;			// - otherwise we can just detect it from the GENI block
+	fwrite(&x,1,1,Movie.Data);		// frame size, NTSC/PAL, Game Genie
 	fwrite(&Movie.ReRecords,4,1,Movie.Data);// rerecord count
 	fwrite(&len,4,1,Movie.Data);		// comment length
 	// TODO - Actually store comment text
@@ -319,6 +348,7 @@ void	Movie_Record (BOOL fromState)
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
 }
@@ -398,6 +428,7 @@ static	void	EndMovie (void)
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_ENABLED);
 }
@@ -457,24 +488,13 @@ int	Movie_Save (FILE *out)
 {
 	int clen = 0, offset;
 
-	int mlen;
-	char tps[4];
 	unsigned char tpc;
 	unsigned long tpl;
 	int tpi;
 
 	offset = ftell(Movie.Data);	// save old offset in movie file
 
-	rewind(Movie.Data);
-	fseek(Movie.Data,16,SEEK_SET);
-	fread(tps,4,1,Movie.Data);
-	fread(&mlen,4,1,Movie.Data);
-	while (memcmp(tps,"NMOV",4))
-	{	/* find the NMOV block in the movie file */
-		fseek(Movie.Data,mlen,SEEK_CUR);
-		fread(tps,4,1,Movie.Data);
-		fread(&mlen,4,1,Movie.Data);
-	}
+	Movie_FindBlock();
 
 	fread(&tpc,1,1,Movie.Data);	fwrite(&tpc,1,1,out);	clen++;
 	fread(&tpc,1,1,Movie.Data);	fwrite(&tpc,1,1,out);	clen++;
@@ -511,8 +531,6 @@ int	Movie_Load (FILE *in)
 {
 	int clen = 0;
 
-	char tps[4];
-	int mlen;
 	int tpi;
 	unsigned long tpl;
 	unsigned char tpc;
@@ -520,16 +538,7 @@ int	Movie_Load (FILE *in)
 
 	if (Movie.Mode & MOV_RECORD)
 	{	// zoom to the correct position and update the necessary fields along the way
-		rewind(Movie.Data);
-		fseek(Movie.Data,16,SEEK_SET);
-		fread(tps,4,1,Movie.Data);
-		fread(&mlen,4,1,Movie.Data);
-		while (memcmp(tps,"NMOV",4))
-		{	/* find the NMOV block in the movie file */
-			fseek(Movie.Data,mlen,SEEK_CUR);
-			fread(tps,4,1,Movie.Data);
-			fread(&mlen,4,1,Movie.Data);
-		}
+		Movie_FindBlock();
 		fseek(Movie.Data,0,SEEK_CUR);
 		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Movie.Data);	clen += 4;	// CTRL0, CTRL1, CTEXT, EXTR
 		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Movie.Data);	clen += 4;	// RREC
@@ -582,16 +591,7 @@ int	Movie_Load (FILE *in)
 	}
 	else if (Movie.Mode & MOV_PLAY)
 	{	// zoom the movie file to the current playback position
-		rewind(Movie.Data);
-		fseek(Movie.Data,16,SEEK_SET);
-		fread(tps,4,1,Movie.Data);
-		fread(&mlen,4,1,Movie.Data);
-		while (memcmp(tps,"NMOV",4))
-		{	/* find the NMOV block in the movie file */
-			fseek(Movie.Data,mlen,SEEK_CUR);
-			fread(tps,4,1,Movie.Data);
-			fread(&mlen,4,1,Movie.Data);
-		}
+		Movie_FindBlock();
 		fread(&tpl,4,1,in);	fread(&tpl,4,1,Movie.Data);		clen += 4;	// CTRL0, CTRL1, CTEXT, EXTR
 		fread(&tpl,4,1,in);	fread(&tpl,4,1,Movie.Data);		clen += 4;	// RREC
 		fread(&tpl,4,1,in);	fread(&tpi,4,1,Movie.Data);		clen += 4;	// ILEN
@@ -638,3 +638,4 @@ int	Movie_Load (FILE *in)
 	}
 	return clen;
 }
+

@@ -378,6 +378,25 @@ int	Genie_Load (FILE *in)
 	fread(&val,1,1,in);	clen++;		Genie.Code3O = val;
 	fread(&val,1,1,in);	clen++;		Genie.Code3V = val;
 
+	if (Genie.CodeStat & 0x10)
+	{
+		if (Genie.CodeStat & 0x02)
+			EI.DbgOut(_T("Loaded Game Genie code 1: $%01X%03X -> $%02X"), Genie.Code1B, Genie.Code1A, Genie.Code1V);
+		else	EI.DbgOut(_T("Loaded Game Genie code 1: $%01X%03X : $%02X -> $%02X"), Genie.Code1B, Genie.Code1A, Genie.Code1O, Genie.Code1V);
+	}
+	if (Genie.CodeStat & 0x20)
+	{
+		if (Genie.CodeStat & 0x04)
+			EI.DbgOut(_T("Loaded Game Genie code 2: $%01X%03X -> $%02X"), Genie.Code2B, Genie.Code2A, Genie.Code2V);
+		else	EI.DbgOut(_T("Loaded Game Genie code 2: $%01X%03X : $%02X -> $%02X"), Genie.Code2B, Genie.Code2A, Genie.Code2O, Genie.Code2V);
+	}
+	if (Genie.CodeStat & 0x40)
+	{
+		if (Genie.CodeStat & 0x08)
+			EI.DbgOut(_T("Loaded Game Genie code 3: $%01X%03X -> $%02X"), Genie.Code3B, Genie.Code3A, Genie.Code3V);
+		else	EI.DbgOut(_T("Loaded Game Genie code 3: $%01X%03X : $%02X -> $%02X"), Genie.Code3B, Genie.Code3A, Genie.Code3O, Genie.Code3V);
+	}
+
 	if (NES.GameGenie)
 		CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_CHECKED);
 	else	CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
