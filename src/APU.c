@@ -90,16 +90,9 @@ const	signed char	Duties[4][8] = {
 };
 __inline void	Square0_CheckActive (void)
 {
-	if ((Square0.ValidFreq = ((Square0.freq >= 0x8) && ((Square0.swpdir) || !((Square0.freq + (Square0.freq >> Square0.swpstep)) & 0x800)))) && (Square0.Timer))
-	{
-		Square0.Active = TRUE;
-		Square0.Pos = Duties[Square0.duty][Square0.CurD] * Square0.Vol;
-	}
-	else
-	{
-		Square0.Active = FALSE;
-		Square0.Pos = 0;
-	}
+	Square0.ValidFreq = (Square0.freq >= 0x8) && ((Square0.swpdir) || !((Square0.freq + (Square0.freq >> Square0.swpstep)) & 0x800));
+	Square0.Active = Square0.Timer && Square0.ValidFreq;
+	Square0.Pos = Square0.Active ? (Duties[Square0.duty][Square0.CurD] * Square0.Vol) : 0;
 }
 __inline void	Square0_Write (int Reg, unsigned char Val)
 {
@@ -183,16 +176,9 @@ __inline void	Square0_HalfFrame (void)
 }
 __inline void	Square1_CheckActive (void)
 {
-	if ((Square1.ValidFreq = ((Square1.freq >= 0x8) && ((Square1.swpdir) || !((Square1.freq + (Square1.freq >> Square1.swpstep)) & 0x800)))) && (Square1.Timer))
-	{
-		Square1.Active = TRUE;
-		Square1.Pos = Duties[Square1.duty][Square1.CurD] * Square1.Vol;
-	}
-	else
-	{
-		Square1.Active = FALSE;
-		Square1.Pos = 0;
-	}
+	Square1.ValidFreq = (Square1.freq >= 0x8) && ((Square1.swpdir) || !((Square1.freq + (Square1.freq >> Square1.swpstep)) & 0x800));
+	Square1.Active = Square1.Timer && Square1.ValidFreq;
+	Square1.Pos = Square1.Active ? (Duties[Square1.duty][Square1.CurD] * Square1.Vol) : 0;
 }
 __inline void	Square1_Write (int Reg, unsigned char Val)
 {
