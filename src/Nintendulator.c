@@ -31,6 +31,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Controllers.h"
 #include "States.h"
 #include <commdlg.h>
+#include <shellapi.h>
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -152,6 +153,7 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 	if (!(mWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,LoadMenu(hInst,(LPCTSTR)IDR_NINTENDULATOR),hInstance,NULL)))
 		return FALSE;
 	ShowWindow(mWnd,nCmdShow);
+	DragAcceptFiles(mWnd,TRUE);
 
 	hDebug = CreateDialog(hInst,(LPCTSTR)IDD_DEBUG,mWnd,DebugWnd);
 	SetWindowPos(hDebug,mWnd,0,0,0,0,SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOSIZE);
@@ -505,6 +507,12 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		default:return DefWindowProc(hWnd,message,wParam,lParam);
 			break;
 		}
+		break;
+	case WM_DROPFILES:
+		DragQueryFile((HDROP)wParam,0,FileName,256);
+		DragFinish((HDROP)wParam);
+		NES.Stop = TRUE;
+		NES_OpenFile(FileName);
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd,&ps);
