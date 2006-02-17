@@ -292,7 +292,7 @@ int	PPU_Save (FILE *out)
 	tps = (unsigned short)PPU.IOAddr;
 	fwrite(&tps,2,1,out);		clen += 2;	//	IOADD	uint16		External I/O Address
 	fwrite(&PPU.IOVal,1,1,out);	clen++;		//	IOVAL	uint8		External I/O Value
-	fwrite(&PPU.IOMode,1,1,out);	clen++;		//	IOMOD	uint8		External I/O Mode (0=none, 1=renderer, 2=r2007, 3=w2007)
+	fwrite(&PPU.IOMode,1,1,out);	clen++;		//	IOMOD	uint8		External I/O Mode/Counter
 
 	fwrite(&PPU.IsPAL,1,1,out);	clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
 	return clen;
@@ -329,7 +329,7 @@ int	PPU_Load (FILE *in)
 	fread(&tps,2,1,in);		clen += 2;	//	IOADD	uint16		External I/O Address
 	PPU.IOAddr = tps;
 	fread(&PPU.IOVal,1,1,in);	clen++;		//	IOVAL	uint8		External I/O Value
-	fread(&PPU.IOMode,1,1,in);	clen++;		//	IOMOD	uint8		External I/O Mode (0=none, 1=renderer, 2=r2007, 3=w2007)
+	fread(&PPU.IOMode,1,1,in);	clen++;		//	IOMOD	uint8		External I/O Mode/Counter
 
 	fread(&PPU.IsPAL,1,1,in);	clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
 
@@ -342,6 +342,7 @@ int	PPU_Load (FILE *in)
 
 static int EndSLTicks = 341;
 static unsigned long PatAddr;
+static unsigned char RenderData[4];
 
 __inline static	void	RunNoSkip (int NumTicks)
 {
@@ -400,22 +401,20 @@ __inline static	void	RunNoSkip (int NumTicks)
 				GFX_DrawScreen();
 			}
 		}
-		if ((PPU.IOMode) && (PPU.Clockticks & 1))
-		{
-			if (PPU.IOMode == 3)
-				PPU.WriteHandler[PPU.IOAddr >> 10](PPU.IOAddr >> 10,PPU.IOAddr & 0x3FF,PPU.IOVal);
-			else
-			{
-				if (PPU.ReadHandler[PPU.IOAddr >> 10] == PPU_BusRead)
-					PPU.IOVal = PPU.CHRPointer[PPU.IOAddr >> 10][PPU.IOAddr & 0x3FF];
-				else	PPU.IOVal = PPU.ReadHandler[PPU.IOAddr >> 10](PPU.IOAddr >> 10,PPU.IOAddr & 0x3FF);
-				if (PPU.IOMode == 2)
-					PPU.buf2007 = PPU.IOVal;
-			}
-			PPU.IOMode = 0;
-		}
 		if (PPU.IsRendering)
 		{
+			if (PPU.Clockticks & 1)
+			{
+				if (PPU.IOMode)
+				{
+					RenderData[(PPU.Clockticks >> 1) & 3] = rand() & 0xFF;
+					if (PPU.IOMode == 2)
+						PPU.WriteHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF,PPU.IOVal = RenderData[(PPU.Clockticks >> 1) & 3]);
+				}
+				else if (PPU.ReadHandler[PPU.RenderAddr >> 10] == PPU_BusRead)
+					RenderData[(PPU.Clockticks >> 1) & 3] = PPU.CHRPointer[PPU.RenderAddr >> 10][PPU.RenderAddr & 0x3FF];
+				else	RenderData[(PPU.Clockticks >> 1) & 3] = PPU.ReadHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF);
+			}
 			switch (PPU.Clockticks)
 			{
 			/* BEGIN BACKGROUND */
@@ -424,27 +423,21 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 128:	case 136:	case 144:	case 152:	case 160:	case 168:	case 176:	case 184:
 			case 192:	case 200:	case 208:	case 216:	case 224:	case 232:	case 240:	case 248:
 			case 320:	case 328:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 				break;
 			case   1:	case   9:	case  17:	case  25:	case  33:	case  41:	case  49:	case  57:
 			case  65:	case  73:	case  81:	case  89:	case  97:	case 105:	case 113:	case 121:
 			case 129:	case 137:	case 145:	case 153:	case 161:	case 169:	case 177:	case 185:
 			case 193:	case 201:	case 209:	case 217:	case 225:	case 233:	case 241:	case 249:
 			case 321:	case 329:
-				PatAddr = (PPU.IOVal << 4) | (PPU.VRAMAddr >> 12) | ((PPU.Reg2000 & 0x10) << 8);
+				PatAddr = (RenderData[0] << 4) | (PPU.VRAMAddr >> 12) | ((PPU.Reg2000 & 0x10) << 8);
 				break;
 			case   2:	case  10:	case  18:	case  26:	case  34:	case  42:	case  50:	case  58:
 			case  66:	case  74:	case  82:	case  90:	case  98:	case 106:	case 114:	case 122:
 			case 130:	case 138:	case 146:	case 154:	case 162:	case 170:	case 178:	case 186:
 			case 194:	case 202:	case 210:	case 218:	case 226:	case 234:	case 242:	case 250:
 			case 322:	case 330:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x23C0 | (PPU.VRAMAddr & 0xC00) | AttribLoc[(PPU.VRAMAddr >> 2) & 0xFF];
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x23C0 | (PPU.VRAMAddr & 0xC00) | AttribLoc[(PPU.VRAMAddr >> 2) & 0xFF];
 				break;
 			case   3:	case  11:	case  19:	case  27:	case  35:	case  43:	case  51:	case  59:
 			case  67:	case  75:	case  83:	case  91:	case  99:	case 107:	case 115:	case 123:
@@ -453,7 +446,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				if (PPU.Reg2001 & 0x08)
 				{
 					CurTileData = &PPU.TileData[PPU.Clockticks + 13];
-					TL = AttribBits[(PPU.IOVal >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
+					TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
 					((unsigned long *)CurTileData)[0] = TL;
 					((unsigned long *)CurTileData)[1] = TL;
 				}
@@ -465,7 +458,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				if (PPU.Reg2001 & 0x08)
 				{
 					CurTileData = &PPU.TileData[PPU.Clockticks + 13];
-					TL = AttribBits[(PPU.IOVal >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
+					TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
 					((unsigned long *)CurTileData)[0] = TL;
 					((unsigned long *)CurTileData)[1] = TL;
 				}
@@ -487,7 +480,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				if (PPU.Reg2001 & 0x08)
 				{
 					CurTileData = &PPU.TileData[PPU.Clockticks - 323];
-					TL = AttribBits[(PPU.IOVal >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
+					TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
 					((unsigned long *)CurTileData)[0] = TL;
 					((unsigned long *)CurTileData)[1] = TL;
 				}
@@ -500,10 +493,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 132:	case 140:	case 148:	case 156:	case 164:	case 172:	case 180:	case 188:
 			case 196:	case 204:	case 212:	case 220:	case 228:	case 236:	case 244:	case 252:
 			case 324:	case 332:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = PatAddr;
-				PPU.IOMode = 1;
+				PPU.RenderAddr = PatAddr;
 				break;
 			case   5:	case  13:	case  21:	case  29:	case  37:	case  45:	case  53:	case  61:
 			case  69:	case  77:	case  85:	case  93:	case 101:	case 109:	case 117:	case 125:
@@ -511,7 +501,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 197:	case 205:	case 213:	case 221:	case 229:	case 237:	case 245:	case 253:
 				if (PPU.Reg2001 & 0x08)
 				{
-					TC = ReverseCHR[PPU.IOVal];
+					TC = ReverseCHR[RenderData[2]];
 					CurTileData = &PPU.TileData[PPU.Clockticks + 11];
 					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
@@ -520,7 +510,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 325:	case 333:
 				if (PPU.Reg2001 & 0x08)
 				{
-					TC = ReverseCHR[PPU.IOVal];
+					TC = ReverseCHR[RenderData[2]];
 					CurTileData = &PPU.TileData[PPU.Clockticks - 325];
 					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
@@ -531,10 +521,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 134:	case 142:	case 150:	case 158:	case 166:	case 174:	case 182:	case 190:
 			case 198:	case 206:	case 214:	case 222:	case 230:	case 238:	case 246:	case 254:
 			case 326:	case 334:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = PatAddr | 8;
-				PPU.IOMode = 1;
+				PPU.RenderAddr = PatAddr | 8;
 				break;
 			case   7:	case  15:	case  23:	case  31:	case  39:	case  47:	case  55:	case  63:
 			case  71:	case  79:	case  87:	case  95:	case 103:	case 111:	case 119:	case 127:
@@ -542,7 +529,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 199:	case 207:	case 215:	case 223:	case 231:	case 239:	case 247:	case 255:
 				if (PPU.Reg2001 & 0x08)
 				{
-					TC = ReverseCHR[PPU.IOVal];
+					TC = ReverseCHR[RenderData[3]];
 					CurTileData = &PPU.TileData[PPU.Clockticks + 9];
 					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
@@ -551,7 +538,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 327:	case 335:
 				if (PPU.Reg2001 & 0x08)
 				{
-					TC = ReverseCHR[PPU.IOVal];
+					TC = ReverseCHR[RenderData[3]];
 					CurTileData = &PPU.TileData[PPU.Clockticks - 327];
 					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
@@ -560,18 +547,12 @@ __inline static	void	RunNoSkip (int NumTicks)
 				/* END BACKGROUND */
 				/* BEGIN SPRITES */
 			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 				break;
 			case 257:	case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
 				break;
 			case 258:	case 266:	case 274:	case 282:	case 290:	case 298:	case 306:	case 314:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 				break;
 			case 259:	case 267:	case 275:	case 283:	case 291:	case 299:	case 307:	case 315:
 				SprNum = (PPU.Clockticks >> 1) & 0x1C;
@@ -581,50 +562,69 @@ __inline static	void	RunNoSkip (int NumTicks)
 				else	PatAddr = (TC << 4) | (PPU.SprBuff[SprNum] ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((PPU.Reg2000 & 0x08) << 9);
 				break;
 			case 260:	case 268:	case 276:	case 284:	case 292:	case 300:	case 308:	case 316:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = PatAddr;
-				PPU.IOMode = 1;
+				PPU.RenderAddr = PatAddr;
 				break;
 			case 261:	case 269:	case 277:	case 285:	case 293:	case 301:	case 309:	case 317:
 				SprNum = (PPU.Clockticks >> 1) & 0x1E;
 				if (PPU.SprBuff[SprNum] & 0x40)
-					TC = PPU.IOVal;
-				else	TC = ReverseCHR[PPU.IOVal];
+					TC = RenderData[2];
+				else	TC = ReverseCHR[RenderData[2]];
 				TL = AttribBits[PPU.SprBuff[SprNum] & 0x3];
 				CurTileData = PPU.SprData[SprNum >> 2];
 				((unsigned long *)CurTileData)[0] = CHRLoBit[TC & 0xF] | TL;
 				((unsigned long *)CurTileData)[1] = CHRLoBit[TC >> 4] | TL;
 				break;
 			case 262:	case 270:	case 278:	case 286:	case 294:	case 302:	case 310:	case 318:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = PatAddr | 8;
-				PPU.IOMode = 1;
+				PPU.RenderAddr = PatAddr | 8;
 				break;
 			case 263:	case 271:	case 279:	case 287:	case 295:	case 303:	case 311:	case 319:
 				SprNum = (PPU.Clockticks >> 1) & 0x1E;
 				if (PPU.SprBuff[SprNum] & 0x40)
-					TC = PPU.IOVal;
-				else	TC = ReverseCHR[PPU.IOVal];
+					TC = RenderData[3];
+				else	TC = ReverseCHR[RenderData[3]];
 				CurTileData = PPU.SprData[SprNum >> 2];
 				((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 				((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				break;
 				/* END SPRITES */
 			case 336:	case 338:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 			case 337:	case 339:
 				break;
 			case 340:
 				break;
 			}
+			if (!(PPU.Clockticks & 1))
+			{
+				PPU_PPUCycle(PPU.RenderAddr,PPU.SLnum,PPU.Clockticks,1);
+				if (PPU.IOMode == 2)
+					PPU.WriteHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF,PPU.RenderAddr & 0xFF);
+			}
 		}
-		if (!(PPU.Clockticks & 1))
-			PPU_PPUCycle(PPU.IOAddr,PPU.SLnum,PPU.Clockticks,PPU.IsRendering);
+		if (PPU.IOMode)
+		{
+			unsigned short addr = (unsigned short)(PPU.IOAddr & 0x3FFF);
+			if ((PPU.IOMode >= 5) && (!PPU.IsRendering))
+				PPU_PPUCycle(addr,PPU.SLnum,PPU.Clockticks,PPU.IsRendering);
+			else if (PPU.IOMode == 2)
+			{
+				if (!PPU.IsRendering)
+					PPU.WriteHandler[addr >> 10](addr >> 10,addr & 0x3FF,PPU.IOVal);
+			}
+			else if (PPU.IOMode == 1)
+			{
+				PPU.IOMode++;
+				if (!PPU.IsRendering)
+				{
+					if (PPU.ReadHandler[addr >> 10] == PPU_BusRead)
+						PPU.buf2007 = PPU.CHRPointer[addr >> 10][addr & 0x3FF];
+					else	PPU.buf2007 = PPU.ReadHandler[addr >> 10](addr >> 10,addr & 0x3FF);
+				}
+			}
+			PPU.IOMode -= 2;
+		}
+		if (!PPU.IsRendering && !PPU.IOMode)
+			PPU_PPUCycle(PPU.VRAMAddr,PPU.SLnum,PPU.Clockticks,0);
 		if ((PPU.Clockticks < 256) && (PPU.OnScreen))
 		{
 			register int PalIndex;
@@ -735,6 +735,18 @@ __inline static	void	RunSkip (int NumTicks)
 		}
 		if (PPU.IsRendering)
 		{
+			if (PPU.Clockticks & 1)
+			{
+				if (PPU.IOMode)
+				{
+					RenderData[(PPU.Clockticks >> 1) & 3] = rand() & 0xFF;
+					if (PPU.IOMode == 2)
+						PPU.WriteHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF,PPU.IOVal = RenderData[(PPU.Clockticks >> 1) & 3]);
+				}
+				else if (PPU.ReadHandler[PPU.RenderAddr >> 10] == PPU_BusRead)
+					RenderData[(PPU.Clockticks >> 1) & 3] = PPU.CHRPointer[PPU.RenderAddr >> 10][PPU.RenderAddr & 0x3FF];
+				else	RenderData[(PPU.Clockticks >> 1) & 3] = PPU.ReadHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF);
+			}
 			switch (PPU.Clockticks)
 			{
 			/* BEGIN BACKGROUND */
@@ -743,27 +755,21 @@ __inline static	void	RunSkip (int NumTicks)
 			case 128:	case 136:	case 144:	case 152:	case 160:	case 168:	case 176:	case 184:
 			case 192:	case 200:	case 208:	case 216:	case 224:	case 232:	case 240:	case 248:
 			case 320:	case 328:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 				break;
 			case   1:	case   9:	case  17:	case  25:	case  33:	case  41:	case  49:	case  57:
 			case  65:	case  73:	case  81:	case  89:	case  97:	case 105:	case 113:	case 121:
 			case 129:	case 137:	case 145:	case 153:	case 161:	case 169:	case 177:	case 185:
 			case 193:	case 201:	case 209:	case 217:	case 225:	case 233:	case 241:	case 249:
 			case 321:	case 329:
-				PatAddr = (PPU.IOVal << 4) | (PPU.VRAMAddr >> 12) | ((PPU.Reg2000 & 0x10) << 8);
+				PatAddr = (RenderData[0] << 4) | (PPU.VRAMAddr >> 12) | ((PPU.Reg2000 & 0x10) << 8);
 				break;
 			case   2:	case  10:	case  18:	case  26:	case  34:	case  42:	case  50:	case  58:
 			case  66:	case  74:	case  82:	case  90:	case  98:	case 106:	case 114:	case 122:
 			case 130:	case 138:	case 146:	case 154:	case 162:	case 170:	case 178:	case 186:
 			case 194:	case 202:	case 210:	case 218:	case 226:	case 234:	case 242:	case 250:
 			case 322:	case 330:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x23C0 | (PPU.VRAMAddr & 0xC00) | AttribLoc[(PPU.VRAMAddr >> 2) & 0xFF];
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x23C0 | (PPU.VRAMAddr & 0xC00) | AttribLoc[(PPU.VRAMAddr >> 2) & 0xFF];
 				break;
 			case   3:	case  11:	case  19:	case  27:	case  35:	case  43:	case  51:	case  59:
 			case  67:	case  75:	case  83:	case  91:	case  99:	case 107:	case 115:	case 123:
@@ -794,10 +800,7 @@ __inline static	void	RunSkip (int NumTicks)
 			case 132:	case 140:	case 148:	case 156:	case 164:	case 172:	case 180:	case 188:
 			case 196:	case 204:	case 212:	case 220:	case 228:	case 236:	case 244:	case 252:
 			case 324:	case 332:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = PatAddr;
-				PPU.IOMode = 1;
+				PPU.RenderAddr = PatAddr;
 				break;
 			case   5:	case  13:	case  21:	case  29:	case  37:	case  45:	case  53:	case  61:
 			case  69:	case  77:	case  85:	case  93:	case 101:	case 109:	case 117:	case 125:
@@ -805,7 +808,7 @@ __inline static	void	RunSkip (int NumTicks)
 			case 197:	case 205:	case 213:	case 221:	case 229:	case 237:	case 245:	case 253:
 				if ((PPU.Spr0InLine) && (PPU.Reg2001 & 0x08))
 				{
-					TC = ReverseCHR[PPU.IOVal];
+					TC = ReverseCHR[RenderData[2]];
 					CurTileData = &PPU.TileData[PPU.Clockticks + 11];
 					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
@@ -814,7 +817,7 @@ __inline static	void	RunSkip (int NumTicks)
 			case 325:	case 333:
 				if ((PPU.Spr0InLine) && (PPU.Reg2001 & 0x08))
 				{
-					TC = ReverseCHR[PPU.IOVal];
+					TC = ReverseCHR[RenderData[2]];
 					CurTileData = &PPU.TileData[PPU.Clockticks - 325];
 					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
@@ -825,10 +828,7 @@ __inline static	void	RunSkip (int NumTicks)
 			case 134:	case 142:	case 150:	case 158:	case 166:	case 174:	case 182:	case 190:
 			case 198:	case 206:	case 214:	case 222:	case 230:	case 238:	case 246:	case 254:
 			case 326:	case 334:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = PatAddr | 8;
-				PPU.IOMode = 1;
+				PPU.RenderAddr = PatAddr | 8;
 				break;
 			case   7:	case  15:	case  23:	case  31:	case  39:	case  47:	case  55:	case  63:
 			case  71:	case  79:	case  87:	case  95:	case 103:	case 111:	case 119:	case 127:
@@ -836,7 +836,7 @@ __inline static	void	RunSkip (int NumTicks)
 			case 199:	case 207:	case 215:	case 223:	case 231:	case 239:	case 247:	case 255:
 				if ((PPU.Spr0InLine) && (PPU.Reg2001 & 0x08))
 				{
-					TC = ReverseCHR[PPU.IOVal];
+					TC = ReverseCHR[RenderData[3]];
 					CurTileData = &PPU.TileData[PPU.Clockticks + 9];
 					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
@@ -845,7 +845,7 @@ __inline static	void	RunSkip (int NumTicks)
 			case 327:	case 335:
 				if ((PPU.Spr0InLine) && (PPU.Reg2001 & 0x08))
 				{
-					TC = ReverseCHR[PPU.IOVal];
+					TC = ReverseCHR[RenderData[3]];
 					CurTileData = &PPU.TileData[PPU.Clockticks - 327];
 					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
@@ -854,18 +854,12 @@ __inline static	void	RunSkip (int NumTicks)
 				/* END BACKGROUND */
 				/* BEGIN SPRITES */
 			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 				break;
 			case 257:	case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
 				break;
 			case 258:	case 266:	case 274:	case 282:	case 290:	case 298:	case 306:	case 314:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 				break;
 			case 259:	case 267:	case 275:	case 283:	case 291:	case 299:	case 307:	case 315:
 				SprNum = (PPU.Clockticks >> 1) & 0x1C;
@@ -875,17 +869,14 @@ __inline static	void	RunSkip (int NumTicks)
 				else	PatAddr = (TC << 4) | (PPU.SprBuff[SprNum] ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((PPU.Reg2000 & 0x08) << 9);
 				break;
 			case 260:	case 268:	case 276:	case 284:	case 292:	case 300:	case 308:	case 316:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = PatAddr;
-				PPU.IOMode = 1;
+				PPU.RenderAddr = PatAddr;
 				break;
 			case 261:
 				if (PPU.Spr0InLine)
 				{
 					if (PPU.SprBuff[2] & 0x40)
-						TC = PPU.IOVal;
-					else	TC = ReverseCHR[PPU.IOVal];
+						TC = RenderData[2];
+					else	TC = ReverseCHR[RenderData[2]];
 					((unsigned long *)PPU.SprData[0])[0] = CHRLoBit[TC & 0xF];
 					((unsigned long *)PPU.SprData[0])[1] = CHRLoBit[TC >> 4];
 				}
@@ -893,18 +884,15 @@ __inline static	void	RunSkip (int NumTicks)
 			case 269:	case 277:	case 285:	case 293:	case 301:	case 309:	case 317:
 				break;
 			case 262:	case 270:	case 278:	case 286:	case 294:	case 302:	case 310:	case 318:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = PatAddr | 8;
-				PPU.IOMode = 1;
+				PPU.RenderAddr = PatAddr | 8;
 				break;
 			case 263:
 				if (PPU.Spr0InLine)
 				{
 					SprNum = (PPU.Clockticks >> 1) & 0x1E;
 					if (PPU.SprBuff[2] & 0x40)
-						TC = PPU.IOVal;
-					else	TC = ReverseCHR[PPU.IOVal];
+						TC = RenderData[3];
+					else	TC = ReverseCHR[RenderData[3]];
 					((unsigned long *)PPU.SprData[0])[0] |= CHRHiBit[TC & 0xF];
 					((unsigned long *)PPU.SprData[0])[1] |= CHRHiBit[TC >> 4];
 				}
@@ -913,18 +901,43 @@ __inline static	void	RunSkip (int NumTicks)
 				break;
 				/* END SPRITES */
 			case 336:	case 338:
-				if (PPU.IOMode)
-					break;
-				PPU.IOAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
-				PPU.IOMode = 1;
+				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 			case 337:	case 339:
 				break;
 			case 340:
 				break;
 			}
+			if (!(PPU.Clockticks & 1))
+			{
+				PPU_PPUCycle(PPU.RenderAddr,PPU.SLnum,PPU.Clockticks,1);
+				if (PPU.IOMode == 2)
+					PPU.WriteHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF,PPU.RenderAddr & 0xFF);
+			}
 		}
-		if (!(PPU.Clockticks & 1))
-			PPU_PPUCycle(PPU.IOAddr,PPU.SLnum,PPU.Clockticks,PPU.IsRendering);
+		if (PPU.IOMode)
+		{
+			unsigned short addr = (unsigned short)(PPU.IOAddr & 0x3FFF);
+			if ((PPU.IOMode >= 5) && (!PPU.IsRendering))
+				PPU_PPUCycle(addr,PPU.SLnum,PPU.Clockticks,PPU.IsRendering);
+			else if (PPU.IOMode == 2)
+			{
+				if (!PPU.IsRendering)
+					PPU.WriteHandler[addr >> 10](addr >> 10,addr & 0x3FF,PPU.IOVal);
+			}
+			else if (PPU.IOMode == 1)
+			{
+				PPU.IOMode++;
+				if (!PPU.IsRendering)
+				{
+					if (PPU.ReadHandler[addr >> 10] == PPU_BusRead)
+						PPU.buf2007 = PPU.CHRPointer[addr >> 10][addr & 0x3FF];
+					else	PPU.buf2007 = PPU.ReadHandler[addr >> 10](addr >> 10,addr & 0x3FF);
+				}
+			}
+			PPU.IOMode -= 2;
+		}
+		if (!PPU.IsRendering && !PPU.IOMode)
+			PPU_PPUCycle(PPU.VRAMAddr,PPU.SLnum,PPU.Clockticks,0);
 		if ((PPU.Clockticks < 255) && (PPU.OnScreen) && (PPU.Spr0InLine) && (PPU.Reg2001 & 0x10) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x04)))
 		{
 			register int SprPixel = PPU.Clockticks - PPU.SprBuff[3];
@@ -981,12 +994,11 @@ static	int	__fastcall	Read4 (void)
 static	int	__fastcall	Read7 (void)
 {
 	PPU.IOAddr = PPU.VRAMAddr & 0x3FFF;
-	PPU.IOMode = 2;
+	PPU.IOMode = 5;
 	if (PPU.Reg2000 & 0x04)
 		PPU.VRAMAddr += 32;
 	else	PPU.VRAMAddr++;
-	PPU.VRAMAddr &= 0x3FFF;
-
+	PPU.VRAMAddr &= 0x7FFF;
 	if ((PPU.IOAddr & 0x3F00) == 0x3F00)
 	{
 		if (PPU.Reg2001 & 0x01)
@@ -1070,8 +1082,6 @@ static	void	__fastcall	Write6 (int What)
 		PPU.IntReg &= 0x7F00;
 		PPU.IntReg |= What;
 		PPU.VRAMAddr = PPU.IntReg;
-		if (!PPU.IOMode)
-			PPU.IOAddr = PPU.VRAMAddr & 0x3FFF;
 	}
 	PPU.HVTog = !PPU.HVTog;
 }
@@ -1093,12 +1103,12 @@ static	void	__fastcall	Write7 (int What)
 	{
 		PPU.IOAddr = PPU.VRAMAddr & 0x3FFF;
 		PPU.IOVal = What;
-		PPU.IOMode = 3;
+		PPU.IOMode = 6;
 	}
 	if (PPU.Reg2000 & 0x04)
 		PPU.VRAMAddr += 32;
 	else	PPU.VRAMAddr++;
-	PPU.VRAMAddr &= 0x3FFF;
+	PPU.VRAMAddr &= 0x7FFF;
 }
 
 void	_MAPINT	PPU_IntWrite (int Bank, int Where, int What)

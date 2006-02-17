@@ -53,9 +53,10 @@ struct	tPPU
 	unsigned long GrayScale;	/* ANDed with palette index (0x30 if grayscale, 0x3F if not) */
 	unsigned long ColorEmphasis;	/* ORed with palette index (upper 8 bits of $2001 shifted left 1 bit) */
 
+	unsigned long RenderAddr;
 	unsigned long IOAddr;
 	unsigned char IOVal;
-	unsigned char IOMode;	/* 0 for nothing, 1 for renderer read, 2 for $2007 read, 3 for $2007 write */
+	unsigned char IOMode;	/* Start at 6 for writes, 5 for reads - counts down and eventually hits zero */
 	unsigned char buf2007;
 
 	unsigned char SprBuff[32];
