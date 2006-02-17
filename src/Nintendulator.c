@@ -153,7 +153,7 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 	ShowWindow(mWnd,nCmdShow);
 
 	hDebug = CreateDialog(hInst,(LPCTSTR)IDD_DEBUG,mWnd,DebugWnd);
-	SetWindowPos(hDebug,mWnd,0,0,0,0,SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOSIZE);
+	SetWindowPos(hDebug,mWnd,0,0,0,0,SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOSIZE);
 
 	NES_Init();
 	return TRUE;
@@ -536,7 +536,7 @@ LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	switch (message)
 	{
 	case WM_INITDIALOG:
-		dbgVisible = FALSE;
+		dbgVisible = TRUE;
 		DebugText[0] = 0;
 		DebugLen = 0;
 		return FALSE;
