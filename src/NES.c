@@ -1128,6 +1128,7 @@ void	NES_LoadSettings (void)
 	HKEY SettingsBase;
 	unsigned long Size = 4;	unsigned long Type = REG_DWORD;
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
+	int PosX, PosY;
 
 	/* Load Defaults */
 	SizeMult = 1;
@@ -1149,6 +1150,8 @@ void	NES_LoadSettings (void)
 	RegQueryValueEx(SettingsBase,"aFSkip"      ,0,&Type,(unsigned char *)&GFX.aFSkip ,&Size);
 	RegQueryValueEx(SettingsBase,"PPUMode"     ,0,&Type,(unsigned char *)&PPU.IsPAL  ,&Size);
 	RegQueryValueEx(SettingsBase,"AutoRun"     ,0,&Type,(unsigned char *)&NES.AutoRun,&Size);
+	RegQueryValueEx(SettingsBase,"PosX"        ,0,&Type,(unsigned char *)&PosX       ,&Size);
+	RegQueryValueEx(SettingsBase,"PosY"        ,0,&Type,(unsigned char *)&PosY       ,&Size);
 
 	RegQueryValueEx(SettingsBase,"Port1T"  ,0,&Type,(unsigned char *)&Port1T  ,&Size);
 	RegQueryValueEx(SettingsBase,"Port2T"  ,0,&Type,(unsigned char *)&Port2T  ,&Size);
@@ -1212,12 +1215,16 @@ void	NES_LoadSettings (void)
 	
 	CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
 
+	SetWindowPos(mWnd,mWnd,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
+
 	NES_UpdateInterface();
 }
 
 void	NES_SaveSettings (void)
 {
 	HKEY SettingsBase;
+	RECT wRect;
+	GetWindowRect(mWnd,&wRect);
 	if (RegOpenKeyEx(HKEY_CURRENT_USER,"SOFTWARE\\Nintendulator\\",0,KEY_ALL_ACCESS,&SettingsBase))
 		RegCreateKeyEx(HKEY_CURRENT_USER,"SOFTWARE\\Nintendulator\\",0,"NintendulatorClass",REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&SettingsBase,NULL);
 	RegSetValueEx(SettingsBase,"SoundEnabled",0,REG_DWORD,(unsigned char *)&NES.SoundEnabled,4);
@@ -1226,6 +1233,8 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,"aFSkip"      ,0,REG_DWORD,(unsigned char *)&GFX.aFSkip      ,4);
 	RegSetValueEx(SettingsBase,"PPUMode"     ,0,REG_DWORD,(unsigned char *)&PPU.IsPAL       ,4);
 	RegSetValueEx(SettingsBase,"AutoRun"     ,0,REG_DWORD,(unsigned char *)&NES.AutoRun     ,4);
+	RegSetValueEx(SettingsBase,"PosX"        ,0,REG_DWORD,(unsigned char *)&wRect.left      ,4);
+	RegSetValueEx(SettingsBase,"PosY"        ,0,REG_DWORD,(unsigned char *)&wRect.top       ,4);
 
 	RegSetValueEx(SettingsBase,"Port1T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port1.Type  ,sizeof(Controllers.Port1.Type));
 	RegSetValueEx(SettingsBase,"Port2T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port2.Type  ,sizeof(Controllers.Port2.Type));
