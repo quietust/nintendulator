@@ -634,6 +634,9 @@ void	APU_SetFPSVars (int FPS)
 	}
 #ifndef	NSFPLAYER
 	APU.LockSize = LOCK_SIZE / APU.WantFPS;
+	if (APU.buffer)
+		free(APU.buffer);
+	APU.buffer = (short *)malloc(APU.LockSize);
 #endif
 }
 
@@ -687,13 +690,14 @@ void	APU_Create (void)
 #ifndef	NSFPLAYER
 	if (FAILED(DirectSoundCreate(NULL,&APU.DirectSound,NULL)))
 	{
+		APU_Release();
 		MessageBox(mWnd,"Failed to create DirectSound interface!","Nintendulator",MB_OK);
 		return;
 	}
 
 	if (FAILED(IDirectSound_SetCooperativeLevel(APU.DirectSound,mWnd,DSSCL_PRIORITY)))
 	{
-		IDirectSound_Release(APU.DirectSound);
+		APU_Release();
 		MessageBox(mWnd,"Failed to set cooperative level!","Nintendulator",MB_OK);
 		return;
 	}
@@ -705,7 +709,7 @@ void	APU_Create (void)
 	DSBD.lpwfxFormat = NULL;
 	if (FAILED(IDirectSound_CreateSoundBuffer(APU.DirectSound,&DSBD,&APU.PrimaryBuffer,NULL)))
 	{
-		IDirectSound_Release(APU.DirectSound);
+		APU_Release();
 		MessageBox(mWnd,"Failed to create primary buffer!","Nintendulator",MB_OK);
 		return;
 	}
@@ -719,15 +723,13 @@ void	APU_Create (void)
 	WFX.nAvgBytesPerSec = WFX.nSamplesPerSec * WFX.nBlockAlign;
 	if (FAILED(IDirectSoundBuffer_SetFormat(APU.PrimaryBuffer,&WFX)))
 	{
-		IDirectSoundBuffer_Release(APU.PrimaryBuffer);
-		IDirectSound_Release(APU.DirectSound);
+		APU_Release();
 		MessageBox(mWnd,"Failed to set output format!","Nintendulator",MB_OK);
 		return;
 	}
 	if (FAILED(IDirectSoundBuffer_Play(APU.PrimaryBuffer,0,0,DSBPLAY_LOOPING)))
 	{
-		IDirectSoundBuffer_Release(APU.PrimaryBuffer);
-		IDirectSound_Release(APU.DirectSound);
+		APU_Release();
 		MessageBox(mWnd,"Failed to start playing primary buffer!","Nintendulator",MB_OK);
 		return;
 	}
@@ -738,13 +740,10 @@ void	APU_Create (void)
 
 	if (FAILED(IDirectSound_CreateSoundBuffer(APU.DirectSound,&DSBD,&APU.Buffer,NULL)))
 	{
-		IDirectSoundBuffer_Release(APU.PrimaryBuffer);
-		IDirectSound_Release(APU.DirectSound);
+		APU_Release();
 		MessageBox(mWnd,"Failed to create secondary buffer!","Nintendulator",MB_OK);
 		return;
 	}
-
-	APU.buffer = (short *)malloc(APU.LockSize);
 #endif
 }
 
@@ -815,10 +814,12 @@ void	APU_SoundON (void)
 {
 	LPVOID bufPtr;
 	DWORD bufBytes;
-	if ((!APU.buffer) || (!APU.Buffer))
+	if (!APU.Buffer)
 	{
-		MessageBox(mWnd,"Sound framerate indeterminate!","Nintendulator",MB_OK | MB_ICONSTOP);
-		return;
+		APU.isEnabled = FALSE;
+		APU_Create();
+		if (!APU.Buffer)
+			return;
 	}
 	APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,0,0,&bufPtr,&bufBytes,NULL,0,DSBLOCK_ENTIREBUFFER),"Error locking sound buffer (Clear)")
 	ZeroMemory(bufPtr,bufBytes);
