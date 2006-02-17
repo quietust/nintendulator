@@ -408,30 +408,30 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif	/* ENABLE_DEBUGGER */
 		case ID_CPU_SAVESTATE:
 			States.NeedSave = TRUE;
-			if (NES.Stopped)
-			{
-				while (PPU.SLnum <= 241)
+			if ((NES.Stopped) || (NES.FrameStep))
+			{	// if framestep, SLnum should already be 240
+				while (PPU.SLnum != 240)
 				{
 					do
 					{
-						CPU_ExecOp();
 #ifdef ENABLE_DEBUGGER
 						if (Debugger.Enabled)
 							Debugger_AddInst();
 #endif	/* ENABLE_DEBUGGER */
+						CPU_ExecOp();
+#ifdef ENABLE_DEBUGGER
+						if (Debugger.Enabled)
+							Debugger_Update();
+#endif	/* ENABLE_DEBUGGER */
 					} while (!NES.Scanline);
 					NES.Scanline = FALSE;
 				}
-#ifdef ENABLE_DEBUGGER
-				if (Debugger.Enabled)
-					Debugger_Update();
-#endif	/* ENABLE_DEBUGGER */
 				States_SaveState();
 			}
 			break;
 		case ID_CPU_LOADSTATE:
 			States.NeedLoad = TRUE;
-			if (NES.Stopped)
+			if ((NES.Stopped) || (NES.FrameStep))
 				States_LoadState();
 			break;
 		case ID_CPU_PREVSTATE:

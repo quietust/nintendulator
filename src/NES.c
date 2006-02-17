@@ -873,27 +873,25 @@ rerun:
 			int SLnum = PPU.SLnum;
 			NES.Scanline = FALSE;
 			ProcessMessages();
-			if (SLnum > 241)
+			if (States.NeedLoad)	// load state anywhere
+				States_LoadState();
+			if (SLnum == 240)
 			{
-				if (States.NeedSave)
+				if (States.NeedSave)	// but only save on scanline 240
 					States_SaveState();
-				if (States.NeedLoad)
-					States_LoadState();
+				if (NES.FrameStep)	// and if we need to stop, do it here
+				{	// so if we save, it won't advance the CPU/PPU at all
+					NES.GotStep = FALSE;
+					while (NES.FrameStep && !NES.GotStep && !NES.Stop)
+						ProcessMessages();
+				}
 			}
 #ifdef ENABLE_DEBUGGER
 			if ((SLnum == 240) && (Debugger.Enabled))
 				Debugger_UpdateGraphics();
 #endif	/* ENABLE_DEBUGGER */
 			if (SLnum == 241)
-			{
-				if (NES.FrameStep)
-				{
-					NES.GotStep = FALSE;
-					while (NES.FrameStep && !NES.GotStep && !NES.Stop)
-						ProcessMessages();
-				}
 				Controllers_UpdateInput();
-			}
 		}
 	}	while (!NES.Stop);
 
