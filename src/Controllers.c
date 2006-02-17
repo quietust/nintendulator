@@ -92,6 +92,7 @@ void	ExpPort_SetArkanoidPaddle	(struct tExpPort *);
 void	ExpPort_SetFamilyBasicKeyboard	(struct tExpPort *);
 void	ExpPort_SetAltKeyboard		(struct tExpPort *);
 void	ExpPort_SetFamTrainer		(struct tExpPort *);
+void	ExpPort_SetTablet		(struct tExpPort *);
 
 void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
 {
@@ -104,6 +105,7 @@ void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
 	case EXP_FAMILYBASICKEYBOARD:	ExpPort_SetFamilyBasicKeyboard(Cont);	break;
 	case EXP_ALTKEYBOARD:		ExpPort_SetAltKeyboard(Cont);		break;
 	case EXP_FAMTRAINER:		ExpPort_SetFamTrainer(Cont);		break;
+	case EXP_TABLET:		ExpPort_SetTablet(Cont);		break;
 	default:MessageBox(mWnd,"Error: selected invalid controller type for expansion port!","Nintendulator",MB_OK | MB_ICONERROR);	break;
 	}
 }
@@ -116,6 +118,7 @@ void	ExpPort_SetMappings (void)
 	ExpPort_Mappings[EXP_FAMILYBASICKEYBOARD] = "Family Basic Keyboard";
 	ExpPort_Mappings[EXP_ALTKEYBOARD] = "Alternate Keyboard";
 	ExpPort_Mappings[EXP_FAMTRAINER] = "Family Trainer";
+	ExpPort_Mappings[EXP_TABLET] = "Oeka Kids Tablet";
 }
 
 LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)

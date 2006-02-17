@@ -828,6 +828,18 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,132,156,48,17
 END
 
+IDD_EXPPORT_TABLET DIALOG DISCARDABLE  0, 0, 244, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Oeka Kids Tablet"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,96,36,52,16
+    RTEXT           "Button",IDC_STATIC,8,16,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D0,40,16,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "",IDC_CONT_K0,172,16,64,12
+END
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -1336,6 +1348,26 @@ BEGIN
         HORZGUIDE, 144
         HORZGUIDE, 152
         HORZGUIDE, 156
+    END
+
+    IDD_EXPPORT_TABLET, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 240
+        VERTGUIDE, 8
+        VERTGUIDE, 36
+        VERTGUIDE, 40
+        VERTGUIDE, 96
+        VERTGUIDE, 148
+        VERTGUIDE, 168
+        VERTGUIDE, 172
+        VERTGUIDE, 236
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 56
+        HORZGUIDE, 16
+        HORZGUIDE, 28
+        HORZGUIDE, 36
+        HORZGUIDE, 52
     END
 END
 #endif    // APSTUDIO_INVOKED

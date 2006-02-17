@@ -22,77 +22,90 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #include "Nintendulator.h"
 #include "Controllers.h"
-
-static	BOOL	LockCursorPos (int x, int y)
-{
-	POINT pos;
-	pos.x = 0;
-	pos.y = 0;
-	ClientToScreen(mWnd,&pos);
-	pos.x += x * SizeMult;
-	pos.y += y * SizeMult;
-	SetCursorPos(pos.x,pos.y);
-	return TRUE;
-}
+#include "MapperInterface.h"
 
 #define	Bits	Data[0]
-#define	Pos	Data[1]
+#define	Strobe	Data[1]
 #define	BitPtr	Data[2]
-#define	Strobe	Data[3]
-#define	Button	Data[4]
-#define	NewBits	Data[5]
+#define	PosX	Data[3]
+#define	PosY	Data[4]
+#define	Button	Data[5]
+#define	NewBits	Data[6]
 static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 {
-	int x, i;
+	int x, y;
+	static POINT pos;
 	if (mode & MOV_PLAY)
 	{
-		Cont->Pos = Cont->MovData[0] | ((Cont->MovData[1] << 8) & 0x7F);
-		Cont->Button = Cont->MovData[1] >> 7;
+		Cont->PosX = Cont->MovData[0];
+		Cont->PosY = Cont->MovData[1];
+		Cont->Button = Cont->MovData[2];
+		pos.x = Cont->PosX * SizeMult;
+		pos.y = Cont->PosY * SizeMult;
+		ClientToScreen(mWnd,&pos);
+		SetCursorPos(pos.x,pos.y);
 	}
 	else
 	{
-		LockCursorPos(128,220);
+		GetCursorPos(&pos);
+		ScreenToClient(mWnd,&pos);
+		Cont->PosX = pos.x / SizeMult;
+		Cont->PosY = pos.y / SizeMult;
+		if ((Cont->PosX < 0) || (Cont->PosX > 255) || (Cont->PosY < 0) || (Cont->PosY > 239))
+			Cont->PosX = Cont->PosY = 0;
 		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);
-		Cont->Pos += Controllers.MouseState.lX;
-		if (Cont->Pos < 196)
-			Cont->Pos = 196;
-		if (Cont->Pos > 484)
-			Cont->Pos = 484;
 	}
-	if (Controllers.MovieMode & MOV_RECORD)
+	if (mode & MOV_RECORD)
 	{
-		Cont->MovData[0] = (unsigned char)(Cont->Pos & 0xFF);
-		Cont->MovData[1] = (unsigned char)((Cont->Pos >> 8) | (Cont->Button << 7));
+		Cont->MovData[0] = (unsigned char)Cont->PosX;
+		Cont->MovData[1] = (unsigned char)Cont->PosY;
+		Cont->MovData[2] = (unsigned char)Cont->Button;
 	}
+	
 	Cont->NewBits = 0;
-	x = ~Cont->Pos;
-	for (i = 0; i < 9; i++)
-	{
-		Cont->NewBits <<= 1;
-		Cont->NewBits |= x & 1;
-		x >>= 1;
-	}
+	if (Cont->Button)
+		Cont->NewBits |= 0x0001;
+	if (Cont->PosY >= 48)
+		Cont->NewBits |= 0x0002;
+	else if (Cont->Button)
+		Cont->NewBits |= 0x0003;
+	x = Cont->PosX * 240 / 256 + 8;
+	y = Cont->PosY * 256 / 240 - 16;
+	if (y < 0) y = 0;
+	if (y > 255) y = 255;
+	Cont->NewBits |= (x << 10) | (y << 2);
 }
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
-	if (Cont->Button)
-		return 0x02;
-	else	return 0;
+	return 0;
 }
 static	unsigned char	Read2 (struct tExpPort *Cont)
 {
-	if (Cont->BitPtr < 8)
-		return (unsigned char)(((Cont->Bits >> Cont->BitPtr++) & 1) << 1);
-	else	return 0x02;
+	if (Cont->Strobe & 1)
+	{
+		if (Cont->Strobe & 2)
+		{
+			if ((Cont->Bits << Cont->BitPtr) & 0x40000)
+				return 0x00;
+			else	return 0x08;
+		}
+		else	return 0x04;
+	}
+	else	return 0x00;
 }
 static	void	Write (struct tExpPort *Cont, unsigned char Val)
 {
-	if ((!Cont->Strobe) && (Val & 1))
+	if (Val & 1)
+	{
+		if ((~Cont->Strobe) & Val & 2)
+			Cont->BitPtr++;
+	}
+	else
 	{
 		Cont->Bits = Cont->NewBits;
 		Cont->BitPtr = 0;
 	}
-	Cont->Strobe = Val & 1;
+	Cont->Strobe = Val & 3;
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -106,36 +119,39 @@ static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 static	void	Config (struct tExpPort *Cont, HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE,hWnd,ConfigProc,(LPARAM)Cont);
+	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_TABLET,hWnd,ConfigProc,(LPARAM)Cont);
 }
 static	void	Unload (struct tExpPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
+void	ExpPort_SetTablet (struct tExpPort *Cont)
 {
 	Cont->Read1 = Read1;
 	Cont->Read2 = Read2;
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 1;
-	Cont->DataLen = 5;
+	Cont->DataLen = 7;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
-	Cont->MovLen = 2;
+	Cont->MovLen = 3;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits = 0;
-	Cont->Pos = 340;
-	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
+	Cont->BitPtr = 0;
+	Cont->PosX = 0;
+	Cont->PosY = 0;
 	Cont->Button = 0;
 	Cont->NewBits = 0;
 }
 #undef	NewBits
 #undef	Button
-#undef	Strobe
+#undef	PosY
+#undef	PosX
 #undef	BitPtr
-#undef	Pos
+#undef	Strobe
 #undef	Bits

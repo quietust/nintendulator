@@ -122,6 +122,10 @@ SOURCE=..\src\c_e_fbkey.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\c_e_tablet.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\c_e_unconnected.c
 # End Source File
 # Begin Source File
