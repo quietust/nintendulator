@@ -23,7 +23,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Nintendulator.h"
 #include "Controllers.h"
 
-static	void	Frame (struct tStdPort *Cont)
+static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 }
 static	unsigned char	Read (struct tStdPort *Cont)

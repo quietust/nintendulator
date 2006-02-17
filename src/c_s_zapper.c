@@ -25,46 +25,44 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "GFX.h"
 
 #define	LastPix	Data[0]
-#define	Framed	Data[1]
-static	void	Frame (struct tStdPort *Cont)
-{
-	Cont->Framed = 0;
-}
-
-static	unsigned char	Read (struct tStdPort *Cont)
+#define	PosX	Data[1]
+#define	PosY	Data[2]
+#define	Button	Data[3]
+static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	static POINT pos;
-	int x, y, z;
-	long CurPix = 0;
-	unsigned char Bits = 0x00;
-
-	if (Controllers.MovieMode & MOV_PLAY)
+	if (mode & MOV_PLAY)
 	{
-		x = Cont->MovData[0];
-		y = Cont->MovData[1];
-		z = Cont->MovData[2];
-		pos.x = x * SizeMult;
-		pos.y = y * SizeMult;
+		Cont->PosX = Cont->MovData[0];
+		Cont->PosY = Cont->MovData[1];
+		Cont->Button = Cont->MovData[2];
+		pos.x = Cont->PosX * SizeMult;
+		pos.y = Cont->PosY * SizeMult;
 		ClientToScreen(mWnd,&pos);
 		SetCursorPos(pos.x,pos.y);
 	}
 	else
 	{
-		if (!Cont->Framed)
-			GetCursorPos(&pos);
+		GetCursorPos(&pos);
 		ScreenToClient(mWnd,&pos);
-		x = pos.x / SizeMult;
-		y = pos.y / SizeMult;
-		ClientToScreen(mWnd,&pos);
-		z = Controllers_IsPressed(Cont->Buttons[0]);
+		Cont->PosX = pos.x / SizeMult;
+		Cont->PosY = pos.y / SizeMult;
+		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);
 	}
-	if (Controllers.MovieMode & MOV_RECORD)
+	if (mode & MOV_RECORD)
 	{
-		Cont->MovData[0] = x;
-		Cont->MovData[1] = y;
-		Cont->MovData[2] = z;
+		Cont->MovData[0] = (unsigned char)Cont->PosX;
+		Cont->MovData[1] = (unsigned char)Cont->PosY;
+		Cont->MovData[2] = (unsigned char)Cont->Button;
 	}
-	Cont->Framed = 1;
+}
+
+static	unsigned char	Read (struct tStdPort *Cont)
+{
+	int x = Cont->PosX, y = Cont->PosY, z = Cont->Button;
+	long CurPix = 0;
+	unsigned char Bits = 0x00;
+
 	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
 		return Bits | 0x08;
 
@@ -114,13 +112,17 @@ void	StdPort_SetZapper (struct tStdPort *Cont)
 	Cont->Unload = Unload;
 	Cont->Frame = Frame;
 	Cont->NumButtons = 1;
-	Cont->DataLen = 2;
+	Cont->DataLen = 4;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
 	Cont->MovLen = 3;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->LastPix = 0;
-	Cont->Framed = 0;
+	Cont->PosX = 0;
+	Cont->PosY = 0;
+	Cont->Button = 0;
 }
-#undef	Framed
+#undef	Button
+#undef	PosY
+#undef	PosX
 #undef	LastPix

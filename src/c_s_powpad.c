@@ -27,46 +27,48 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define	Bits2	Data[1]
 #define	BitPtr	Data[2]
 #define	Strobe	Data[3]
+#define	NewBit1	Data[0]
+#define	NewBit2	Data[1]
 
-static	void	Frame (struct tStdPort *Cont)
-{
-}
-
-static	void	UpdateCont (struct tStdPort *Cont)
+static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	int i;
 	unsigned char CBits1[12] = {0x02,0x01,0x00,0x00,0x04,0x10,0x80,0x00,0x08,0x20,0x40,0x00};
 	unsigned char CBits2[12] = {0x00,0x00,0x02,0x01,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x04};
-	if (Controllers.MovieMode & MOV_PLAY)
+	if (mode & MOV_PLAY)
 	{
-		Cont->Bits1 = Cont->MovData[0];
-		Cont->Bits2 = Cont->MovData[1];
+		Cont->NewBit1 = Cont->MovData[0];
+		Cont->NewBit2 = Cont->MovData[1];
 	}
 	else
 	{
-		Cont->Bits1 = 0;
-		Cont->Bits2 = 0;
+		Cont->NewBit1 = 0;
+		Cont->NewBit2 = 0;
 		for (i = 0; i < 12; i++)
 		{
 			if (Controllers_IsPressed(Cont->Buttons[i]))
 			{
-				Cont->Bits1 |= CBits1[i];
-				Cont->Bits2 |= CBits2[i];
+				Cont->NewBit1 |= CBits1[i];
+				Cont->NewBit2 |= CBits2[i];
 			}
 		}
 	}
-	if (Controllers.MovieMode & MOV_RECORD)
+	if (mode & MOV_RECORD)
 	{
-		Cont->MovData[0] = Cont->Bits1;
-		Cont->MovData[1] = Cont->Bits2;
+		Cont->MovData[0] = (unsigned char)Cont->NewBit1;
+		Cont->MovData[1] = (unsigned char)Cont->NewBit2;
 	}
-	Cont->BitPtr = 0;
 }
+
 static	unsigned char	Read (struct tStdPort *Cont)
 {
 	unsigned char result = 0;
 	if (Cont->Strobe)
-		UpdateCont(Cont);
+	{
+		Cont->Bits1 = Cont->NewBit1;
+		Cont->Bits2 = Cont->NewBit2;
+		Cont->BitPtr = 0;
+	}
 	if (Cont->BitPtr < 8)
 		result |= ((unsigned char)(Cont->Bits1 >> Cont->BitPtr) & 1) << 3;
 	else	result |= 0x08;
@@ -79,9 +81,12 @@ static	unsigned char	Read (struct tStdPort *Cont)
 }
 static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
-	Cont->Strobe = Val & 1;
-	if (Cont->Strobe)
-		UpdateCont(Cont);
+	if (Cont->Strobe = Val & 1)
+	{
+		Cont->Bits1 = Cont->NewBit1;
+		Cont->Bits2 = Cont->NewBit2;
+		Cont->BitPtr = 0;
+	}
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -131,7 +136,7 @@ void	StdPort_SetPowerPad (struct tStdPort *Cont)
 	Cont->Unload = Unload;
 	Cont->Frame = Frame;
 	Cont->NumButtons = 12;
-	Cont->DataLen = 5;
+	Cont->DataLen = 6;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
 	Cont->MovLen = 2;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
@@ -140,8 +145,12 @@ void	StdPort_SetPowerPad (struct tStdPort *Cont)
 	Cont->Bits2 = 0;
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
+	Cont->NewBit1 = 0;
+	Cont->NewBit2 = 0;
 }
-#undef	Bits1
-#undef	Bits2
-#undef	BitPtr
+#undef	NewBit2
+#undef	NewBit1
 #undef	Strobe
+#undef	BitPtr
+#undef	Bits2
+#undef	Bits1

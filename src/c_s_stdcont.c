@@ -26,57 +26,56 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define	Bits	Data[0]
 #define	BitPtr	Data[1]
 #define	Strobe	Data[2]
+#define	NewBits	Data[3]
 
-static	void	Frame (struct tStdPort *Cont)
-{
-	if ((Controllers.MovieMode & MOV_PLAY) && (Controllers.MovieMode & MOV_FMV))
-	{	// shuffle FMV data 
-		unsigned char x = Cont->MovData[0], y = 0;
-		if (x & 0x01)	y |= 0x80;	// right
-		if (x & 0x02)	y |= 0x40;	// left
-		if (x & 0x04)	y |= 0x10;	// up
-		if (x & 0x08)	y |= 0x20;	// down
-		if (x & 0x10)	y |= 0x02;	// A
-		if (x & 0x20)	y |= 0x01;	// B
-		if (x & 0x40)	y |= 0x04;	// sel
-		if (x & 0x80)	y |= 0x08;	// start
-		Cont->MovData[0] = y;
-	}
-}
-
-static	void	UpdateCont (struct tStdPort *Cont)
+static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	int i;
-
-	if (Controllers.MovieMode & MOV_PLAY)
-		Cont->Bits = Cont->MovData[0];
+	if (mode & MOV_PLAY)
+	{
+		if (mode & MOV_FMV)
+		{
+			unsigned char x = Cont->MovData[0], y = 0;
+			if (x & 0x01)	y |= 0x80;	// right
+			if (x & 0x02)	y |= 0x40;	// left
+			if (x & 0x04)	y |= 0x10;	// up
+			if (x & 0x08)	y |= 0x20;	// down
+			if (x & 0x10)	y |= 0x02;	// A
+			if (x & 0x20)	y |= 0x01;	// B
+			if (x & 0x40)	y |= 0x04;	// sel
+			if (x & 0x80)	y |= 0x08;	// start
+			Cont->MovData[0] = y;
+		}
+		Cont->NewBits = Cont->MovData[0];
+	}
 	else
 	{
-		Cont->Bits = 0;
+		Cont->NewBits = 0;
 		for (i = 0; i < 8; i++)
 		{
 			if (Controllers_IsPressed(Cont->Buttons[i]))
-				Cont->Bits |= 1 << i;
+				Cont->NewBits |= 1 << i;
 		}
 		if (!Controllers.MovieMode & MOV_RECORD)
 		{	/* prevent simultaneously pressing left+right or up+down, but not when recording a movie :) */
-			if ((Cont->Bits & 0xC0) == 0xC0)
-				Cont->Bits &= 0x3F;
-			if ((Cont->Bits & 0x30) == 0x30)
-				Cont->Bits &= 0xCF;
+			if ((Cont->NewBits & 0xC0) == 0xC0)
+				Cont->NewBits &= 0x3F;
+			if ((Cont->NewBits & 0x30) == 0x30)
+				Cont->NewBits &= 0xCF;
 		}
 	}
 	if (Controllers.MovieMode & MOV_RECORD)
-		Cont->MovData[0] = Cont->Bits;
-
-	Cont->BitPtr = 0;
+		Cont->MovData[0] = (unsigned char)Cont->NewBits;
 }
 
 static	unsigned char	Read (struct tStdPort *Cont)
 {
 	unsigned char result;
 	if (Cont->Strobe)
-		UpdateCont(Cont);
+	{
+		Cont->Bits = Cont->NewBits;
+		Cont->BitPtr = 0;
+	}
 	if (Cont->BitPtr < 8)
 		result = (unsigned char)(Cont->Bits >> Cont->BitPtr++) & 1;
 	else	result = 1;
@@ -84,9 +83,11 @@ static	unsigned char	Read (struct tStdPort *Cont)
 }
 static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
-	Cont->Strobe = Val & 1;
-	if (Cont->Strobe)
-		UpdateCont(Cont);
+	if (Cont->Strobe = Val & 1)
+	{
+		Cont->Bits = Cont->NewBits;
+		Cont->BitPtr = 0;
+	}
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -123,7 +124,9 @@ void	StdPort_SetStdController (struct tStdPort *Cont)
 	Cont->Bits = 0;
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
+	Cont->NewBits = 0;
 }
-#undef	Bits
-#undef	BitPtr
+#undef	NewBits
 #undef	Strobe
+#undef	BitPtr
+#undef	Bits
