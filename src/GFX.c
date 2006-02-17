@@ -172,6 +172,7 @@ void	GFX_Create (void)
 #ifdef	GFX_SAFE_LOCK
 	GFX.SurfSize = GFX.SurfDesc.lPitch*GFX.SurfDesc.dwHeight;
 	GFX.DrawArray = malloc(GFX.SurfSize);
+	memset(GFX.DrawArray,0,GFX.SurfSize);
 #else
 	GFX.DrawArray = GFX.SurfDesc.lpSurface;
 #endif
