@@ -226,11 +226,11 @@ void	GFX_DrawScreen (void)
 		GFX.FPSCnt = 0;
 	}
 	QueryPerformanceCounter(&TmpClockVal);
-	GFX.aFPSnum += (int)((GFX.ClockFreq.QuadPart) / (TmpClockVal.QuadPart - GFX.LastClockVal.QuadPart));
+	GFX.aFPSnum += (int)(TmpClockVal.QuadPart - GFX.LastClockVal.QuadPart);
 	GFX.LastClockVal = TmpClockVal;
-	if (++GFX.aFPScnt > 30)
+	if (++GFX.aFPScnt >= 20)
 	{
-		GFX.FPSnum = GFX.aFPSnum / GFX.aFPScnt;
+		GFX.FPSnum = (int)((GFX.ClockFreq.QuadPart * GFX.aFPScnt) / GFX.aFPSnum);
 		if (GFX.aFSkip)
 		{
 			if ((GFX.FSkip < 9) && (GFX.FPSnum <= (GFX.WantFPS * 9 / 10)))
