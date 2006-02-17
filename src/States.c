@@ -484,10 +484,6 @@ void	States_LoadState (void)
 			return;
 		}
 	}
-	else if (!memcmp(tpchr,"\0\0\0\0",4))
-	{
-		/* For now, allow movies with a null type */
-	}
 	else
 	{
 		fclose(in);
@@ -501,6 +497,9 @@ void	States_LoadState (void)
 
 	if (Controllers.MovieMode & MOV_REVIEW)		/* If the user is reviewing an existing movie */
 		Controllers.MovieMode = MOV_RECORD;	/* then resume recording once they LOAD state */
+
+	NES.GameGenie = FALSE;	/* If the savestate uses it, it'll turn back on shortly */
+	CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
 	if (States_LoadData(in, flen))
 		GFX_ShowText("State loaded: %i", States.SelSlot);
