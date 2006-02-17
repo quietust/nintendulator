@@ -150,7 +150,7 @@ __inline static	void	DiscoverSprites (void)
 	PPU.SprCount = 0;
 	PPU.Spr0InLine = FALSE;
 	for (spt = 0; spt < 32; spt += 4)
-		PPU.SprBuff[spt+1] = PPU.Sprite[spt | 1];	/* pre-init sprite buffer tile indices */
+		PPU.SprBuff[spt+1] = 0xFF;	/* pre-init sprite buffer tile indices */
 	for (spt = 0; spt < 256; spt += 4)
 	{
 		if ((SL >= PPU.Sprite[spt]) && (SL < (PPU.Sprite[spt] + SprHeight)))
@@ -481,7 +481,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				break;
 			}
 		}
-		if ((PPU.IOMode) && !(PPU.Clockticks & 1))
+		if (!(PPU.Clockticks & 1))
 			PPU_PPUCycle(PPU.IOAddr,PPU.SLnum,PPU.Clockticks,PPU.IsRendering);
 		if ((PPU.Clockticks < 256) && (PPU.OnScreen))
 		{
@@ -780,7 +780,7 @@ __inline static	void	RunSkip (int NumTicks)
 				break;
 			}
 		}
-		if ((PPU.IOMode) && !(PPU.Clockticks & 1))
+		if (!(PPU.Clockticks & 1))
 			PPU_PPUCycle(PPU.IOAddr,PPU.SLnum,PPU.Clockticks,PPU.IsRendering);
 		if ((PPU.Clockticks < 256) && (PPU.OnScreen) && (PPU.Reg2001 & 0x10) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x04)))
 		{
@@ -838,7 +838,11 @@ static	int	__fastcall	Read7 (void)
 	PPU.VRAMAddr &= 0x3FFF;
 
 	if ((PPU.IOAddr & 0x3F00) == 0x3F00)
-		return PPU.ppuLatch = PPU.Palette[PPU.IOAddr & 0x1F];
+	{
+		if (PPU.Reg2001 & 0x01)
+			return PPU.ppuLatch = PPU.Palette[PPU.IOAddr & 0x1F] & 0x30;
+		else	return PPU.ppuLatch = PPU.Palette[PPU.IOAddr & 0x1F];
+	}
 	else	return PPU.ppuLatch = PPU.buf2007;
 }
 
@@ -912,7 +916,7 @@ static	void	__fastcall	Write6 (int What)
 	{
 		PPU.IntReg &= 0x7F00;
 		PPU.IntReg |= What;
-		PPU.VRAMAddr = PPU.IntReg;
+		PPU.IOAddr = PPU.VRAMAddr = PPU.IntReg;
 	}
 	PPU.HVTog = !PPU.HVTog;
 }
