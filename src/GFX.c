@@ -228,7 +228,7 @@ void	GFX_DrawScreen (void)
 	QueryPerformanceCounter(&TmpClockVal);
 	GFX.aFPSnum += (int)((GFX.ClockFreq.QuadPart) / (TmpClockVal.QuadPart - GFX.LastClockVal.QuadPart));
 	GFX.LastClockVal = TmpClockVal;
-	if (++GFX.aFPScnt > 9)
+	if (++GFX.aFPScnt > 30)
 	{
 		GFX.FPSnum = GFX.aFPSnum / GFX.aFPScnt;
 		if (GFX.aFSkip)
