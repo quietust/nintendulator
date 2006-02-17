@@ -56,14 +56,15 @@ void	StdPort_SetFourScore		(struct tStdPort *);
 void	StdPort_SetControllerType (struct tStdPort *Cont, int Type)
 {
 	Cont->Unload(Cont);
-	switch (Cont->Type = Type)
+	switch (Cont->Type = Type) 
 	{
-	case 0:	StdPort_SetUnconnected(Cont);		break;
-	case 1:	StdPort_SetStdController(Cont);		break;
-	case 2:	StdPort_SetZapper(Cont);		break;
-	case 3:	StdPort_SetArkanoidPaddle(Cont);	break;
-	case 4:	StdPort_SetPowerPad(Cont);		break;
-	case 5:	StdPort_SetFourScore(Cont);		break;
+	case STD_UNCONNECTED:		StdPort_SetUnconnected(Cont);		break;
+	case STD_STDCONTROLLER:		StdPort_SetStdController(Cont);		break;
+	case STD_ZAPPER:		StdPort_SetZapper(Cont);		break;
+	case STD_ARKANOIDPADDLE:	StdPort_SetArkanoidPaddle(Cont);	break;
+	case STD_POWERPAD:		StdPort_SetPowerPad(Cont);		break;
+	case STD_FOURSCORE:		StdPort_SetFourScore(Cont);		break;
+//	case 0x80:			StdPort_SetMovie(Cont);			break;
 	default:MessageBox(mWnd,"Error: selected invalid controller type for standard port!","Nintendulator",MB_OK | MB_ICONERROR);	break;
 	}
 }
@@ -80,12 +81,12 @@ void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
 	Cont->Unload(Cont);
 	switch (Cont->Type = Type)
 	{
-	case 0:	ExpPort_SetUnconnected(Cont);		break;
-	case 1:	ExpPort_SetFami4Play(Cont);		break;
-	case 2:	ExpPort_SetArkanoidPaddle(Cont);	break;
-	case 3:	ExpPort_SetFamilyBasicKeyboard(Cont);	break;
-	case 4:	ExpPort_SetAltKeyboard(Cont);		break;
-	case 5:	ExpPort_SetFamTrainer(Cont);		break;
+	case EXP_UNCONNECTED:		ExpPort_SetUnconnected(Cont);		break;
+	case EXP_FAMI4PLAY:		ExpPort_SetFami4Play(Cont);		break;
+	case EXP_ARKANOIDPADDLE:	ExpPort_SetArkanoidPaddle(Cont);	break;
+	case EXP_FAMILYBASICKEYBOARD:	ExpPort_SetFamilyBasicKeyboard(Cont);	break;
+	case EXP_ALTKEYBOARD:		ExpPort_SetAltKeyboard(Cont);		break;
+	case EXP_FAMTRAINER:		ExpPort_SetFamTrainer(Cont);		break;
 	default:MessageBox(mWnd,"Error: selected invalid controller type for expansion port!","Nintendulator",MB_OK | MB_ICONERROR);	break;
 	}
 }
@@ -134,16 +135,16 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE)
 					{
 						int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0);
-						if (Type == 5)
+						if (Type == STD_POWERPAD)
 						{
 							StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type);
 							StdPort_SetControllerType(&Controllers.FSPort2,Controllers.Port2.Type);
 							memcpy(Controllers.FSPort1.Buttons,Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
 							memcpy(Controllers.FSPort2.Buttons,Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
-							StdPort_SetControllerType(&Controllers.Port2,5);
-							SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,5,0);
+							StdPort_SetControllerType(&Controllers.Port2,STD_POWERPAD);
+							SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,STD_POWERPAD,0);
 						}
-						else if (Controllers.Port1.Type	== 5)
+						else if (Controllers.Port1.Type	== STD_POWERPAD)
 						{
 							StdPort_SetControllerType(&Controllers.Port1,Type);
 							StdPort_SetControllerType(&Controllers.Port2,Controllers.FSPort2.Type);
@@ -157,16 +158,16 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE)
 					{
 						int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0);
-						if (Type == 5)
+						if (Type == STD_POWERPAD)
 						{
 							StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type);
 							StdPort_SetControllerType(&Controllers.FSPort2,Controllers.Port2.Type);
 							memcpy(Controllers.FSPort1.Buttons,Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
 							memcpy(Controllers.FSPort2.Buttons,Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
-							StdPort_SetControllerType(&Controllers.Port1,5);
-							SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,5,0);
+							StdPort_SetControllerType(&Controllers.Port1,STD_POWERPAD);
+							SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,STD_POWERPAD,0);
 						}
-						else if (Controllers.Port2.Type	== 5)
+						else if (Controllers.Port2.Type	== STD_POWERPAD)
 						{
 							StdPort_SetControllerType(&Controllers.Port1,Controllers.FSPort1.Type);
 							memcpy(Controllers.Port1.Buttons,Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));
