@@ -193,8 +193,9 @@ void	States_SaveState (void)
 	}
 	if ((Controllers.MovieMode & (MOV_RECORD | MOV_PLAY)) && !(Controllers.MovieMode & MOV_FMV))
 	{
+		int tpi;
 		fwrite("NMOV",1,4,out);	flen += 4;
-		clen = ftell(movie);
+		tpi = clen = ftell(movie);
 		fwrite(&clen,1,4,out);	flen += 4;
 		rewind(movie);
 		{
@@ -216,7 +217,7 @@ void	States_SaveState (void)
 			fwrite(&tpc,1,1,out);	flen++;
 		}
 		rewind(movie);
-		fseek(movie,0,SEEK_END);
+		fseek(movie,tpi,SEEK_SET);
 	}
 
 	// Write final filesize
@@ -400,11 +401,12 @@ void	States_LoadState (void)
 					if (ReRecords < (int)tpl)
 						ReRecords = tpl;
 					fwrite(&tpl,4,1,movie);
-					if (tpc & 0x01)
+					if (!(tpc & 0x01))
 						;	// copy the savestate through
 				}
+				clen -= 14;
 				ReRecords++;
-				while (clen > 0)
+				while (clen)
 				{
 					if (Controllers.Port1.MovLen)
 					{
@@ -425,13 +427,15 @@ void	States_LoadState (void)
 						clen -= Controllers.ExpPort.MovLen;
 					}
 				}
-				Controllers.Port1.Frame(&Controllers.Port1,Controllers.MovieMode | MOV_PLAY);
-				Controllers.Port2.Frame(&Controllers.Port2,Controllers.MovieMode | MOV_PLAY);
-				Controllers.ExpPort.Frame(&Controllers.ExpPort,Controllers.MovieMode | MOV_PLAY);
+				Controllers.Port1.Frame(&Controllers.Port1,MOV_PLAY);
+				Controllers.Port2.Frame(&Controllers.Port2,MOV_PLAY);
+				Controllers.ExpPort.Frame(&Controllers.ExpPort,MOV_PLAY);
 			}
 			else
 			{	// nope, skip it
 				fseek(in,clen,SEEK_CUR);
+//				if (Controllers.MovieMode & MOV_PLAY)
+//					fseek(movie,clen,SEEK_SET);
 				clen = 0;
 			}
 		}
