@@ -119,6 +119,7 @@ void	StdPort_SetStdController (struct tStdPort *Cont)
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
 	Cont->MovLen = 1;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
+	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits = 0;
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;

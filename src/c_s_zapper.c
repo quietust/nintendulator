@@ -118,6 +118,7 @@ void	StdPort_SetZapper (struct tStdPort *Cont)
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
 	Cont->MovLen = 3;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
+	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->LastPix = 0;
 	Cont->Framed = 0;
 }

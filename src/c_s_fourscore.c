@@ -34,6 +34,7 @@ static	void	AllocMov (struct tStdPort *Cont)
 	if (Cont == &Controllers.Port2)
 		Cont->MovLen = Controllers.FSPort2.MovLen + Controllers.FSPort4.MovLen;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
+	ZeroMemory(Cont->MovData,Cont->MovLen);
 }
 
 static	void	Frame (struct tStdPort *Cont)

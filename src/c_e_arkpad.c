@@ -124,6 +124,7 @@ void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
 	Cont->MovLen = 0;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
+	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits = 0;
 	Cont->Pos = 340;
 	Cont->BitPtr = 0;
