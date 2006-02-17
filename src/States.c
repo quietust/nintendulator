@@ -268,7 +268,6 @@ BOOL	States_LoadData (FILE *in, int flen)
 		}
 		else if (!memcmp(csig,"NMOV",4))
 		{
-			/* TODO - rewrite this */
 			if (Controllers.MovieMode & MOV_RECORD)
 			{	// are we recording?
 				extern char MovieName[256];
