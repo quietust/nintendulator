@@ -64,6 +64,8 @@ void	CPU_SplitFlags (void);
 void	CPU_GetHandlers (void);
 void	CPU_Reset (void);
 void	CPU_PowerOn (void);
+int	CPU_Save (FILE *);
+int	CPU_Load (FILE *);
 void	CPU_ExecOp (void);
 int	_MAPINT	CPU_ReadRAM (int,int);
 void	_MAPINT	CPU_WriteRAM (int,int,int);

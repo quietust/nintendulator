@@ -839,19 +839,23 @@ void	APU_Config (HWND hWnd)
 {
 }
 
-void	APU_GetSoundRegisters (unsigned char *regs)
+int	APU_Save (FILE *out)
 {
-	memcpy(regs,APU.Regs,0x16);
+	int clen = 0;
+	fwrite(APU.Regs,1,0x16,out);	clen += 0x16;	//	REGS	uint8[0x16]	All of the APU registers
+	return clen;
 }
 
-void	APU_SetSoundRegisters (unsigned char *regs)
+int	APU_Load (FILE *in)
 {
+	int clen = 0;
 	int i;
-	memcpy(APU.Regs,regs,0x16);
-	for (i = 0; i <= 0x13; i++)
-		APU_WriteReg(i,APU.Regs[i]);
+	fread(APU.Regs,1,0x16,in);	clen += 0x16;
 	APU_WriteReg(0x15,APU.Regs[0x15]);
 	APU_WriteReg(0x17,APU.Regs[0x14]);
+	for (i = 0; i < 0x14; i++)
+		APU_WriteReg(i,APU.Regs[i]);
+	return clen;
 }
 #else
 short	sample_pos = 0;

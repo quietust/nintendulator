@@ -263,6 +263,85 @@ void	PPU_PowerOn()
 	PPU_GetHandlers();
 }
 
+int	PPU_Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short tps;
+	fwrite(PPU_VRAM,1,0x1000,out);	clen += 0x1000;	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
+	fwrite(PPU.Sprite,1,0x100,out);	clen += 0x100;	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
+	fwrite(PPU.Palette,1,0x20,out);	clen += 0x20;	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
+	fwrite(&PPU.Reg2000,1,1,out);	clen++;		//	R2000	uint8		Last value written to $2000
+	fwrite(&PPU.Reg2001,1,1,out);	clen++;		//	R2001	uint8		Last value written to $2001
+	fwrite(&PPU.Reg2002,1,1,out);	clen++;		//	R2002	uint8		Current contents of $2002
+	fwrite(&PPU.SprAddr,1,1,out);	clen++;		//	SPADR	uint8		SPR-RAM Address ($2003)
+
+	fwrite(&PPU.IntX,1,1,out);	clen++;		//	XOFF	uint8		Tile X-offset.
+
+	fwrite(&PPU.HVTog,1,1,out);	clen++;		//	VTOG	uint8		Toggle used by $2005 and $2006.
+	tps = (unsigned short)PPU.VRAMAddr;
+	fwrite(&tps,2,1,out);		clen += 2;	//	RADD	uint16		VRAM Address
+	tps = (unsigned short)PPU.IntReg;
+	fwrite(&tps,2,1,out);		clen += 2;	//	TADD	uint16		VRAM Address Latch
+	fwrite(&PPU.buf2007,1,1,out);	clen++;		//	VBUF	uint8		VRAM Read Buffer
+	fwrite(&PPU.ppuLatch,1,1,out);	clen++;		//	PGEN	uint8		PPU "general" latch
+
+	tps = (unsigned short)PPU.Clockticks;
+	fwrite(&tps,2,1,out);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340)
+	tps = (unsigned short)PPU.SLnum;
+	fwrite(&tps,2,1,out);		clen += 2;	//	SLNUM	uint16		Scanline number
+	fwrite(&PPU.ShortSL,1,1,out);	clen++;		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
+
+	tps = (unsigned short)PPU.IOAddr;
+	fwrite(&tps,2,1,out);		clen += 2;	//	IOADD	uint16		External I/O Address
+	fwrite(&PPU.IOVal,1,1,out);	clen++;		//	IOVAL	uint8		External I/O Value
+	fwrite(&PPU.IOMode,1,1,out);	clen++;		//	IOMOD	uint8		External I/O Mode (0=none, 1=renderer, 2=r2007, 3=w2007)
+
+	fwrite(&PPU.IsPAL,1,1,out);	clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
+	return clen;
+}
+
+int	PPU_Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short tps;
+	fread(PPU_VRAM,1,0x1000,in);	clen += 0x1000;	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
+	fread(PPU.Sprite,1,0x100,in);	clen += 0x100;	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
+	fread(PPU.Palette,1,0x20,in);	clen += 0x20;	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
+	fread(&PPU.Reg2000,1,1,in);	clen++;		//	R2000	uint8		Last value written to $2000
+	fread(&PPU.Reg2001,1,1,in);	clen++;		//	R2001	uint8		Last value written to $2001
+	fread(&PPU.Reg2002,1,1,in);	clen++;		//	R2002	uint8		Current contents of $2002
+	fread(&PPU.SprAddr,1,1,in);	clen++;		//	SPADR	uint8		SPR-RAM Address ($2003)
+
+	fread(&PPU.IntX,1,1,in);	clen++;		//	XOFF	uint8		Tile X-offset.
+
+	fread(&PPU.HVTog,1,1,in);	clen++;		//	VTOG	uint8		Toggle used by $2005 and $2006.
+	fread(&tps,2,1,in);		clen += 2;	//	RADD	uint16		VRAM Address
+	PPU.VRAMAddr = tps;
+	fread(&tps,2,1,in);		clen += 2;	//	TADD	uint16		VRAM Address Latch
+	PPU.IntReg = tps;
+	fread(&PPU.buf2007,1,1,in);	clen++;		//	VBUF	uint8		VRAM Read Buffer
+	fread(&PPU.ppuLatch,1,1,in);	clen++;		//	PGEN	uint8		PPU "general" latch.
+
+	fread(&tps,2,1,in);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340)
+	PPU.Clockticks = tps;
+	fread(&tps,2,1,in);		clen += 2;	//	SLNUM	uint16		Scanline number
+	PPU.SLnum = tps;
+	fread(&PPU.ShortSL,1,1,in);	clen++;		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
+
+	fread(&tps,2,1,in);		clen += 2;	//	IOADD	uint16		External I/O Address
+	PPU.IOAddr = tps;
+	fread(&PPU.IOVal,1,1,in);	clen++;		//	IOVAL	uint8		External I/O Value
+	fread(&PPU.IOMode,1,1,in);	clen++;		//	IOMOD	uint8		External I/O Mode (0=none, 1=renderer, 2=r2007, 3=w2007)
+
+	fread(&PPU.IsPAL,1,1,in);	clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
+
+	PPU.IsRendering = PPU.OnScreen = FALSE;
+	PPU.ColorEmphasis = (PPU.Reg2001 & 0xE0) << 1;
+	PPU.GrayScale = (PPU.Reg2001 & 0x01) ? 0x30 : 0x3F;
+	NES_SetCPUMode(PPU.IsPAL);
+	return clen;
+}
+
 static int EndSLTicks = 341;
 static unsigned long PatAddr;
 

@@ -61,8 +61,8 @@ void	APU_Init		(void);
 void	APU_Create		(void);
 void	APU_Release		(void);
 #ifndef NSFPLAYER
-void	APU_GetSoundRegisters	(unsigned char *);
-void	APU_SetSoundRegisters	(unsigned char *);
+int	APU_Save		(FILE *);
+int	APU_Load		(FILE *);
 void	APU_SoundOFF		(void);
 void	APU_SoundON		(void);
 #endif
