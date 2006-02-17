@@ -192,7 +192,6 @@ void	CPU_Reset (void)
 	CPU_MemGet(0x100 | CPU.SP--);
 	CPU_MemGet(0x100 | CPU.SP--);
 	CPU.FI = 1;
-	CPU_JoinFlags();
 
 	CPU.PCL = CPU_MemGet(0xFFFC);
 	CPU.PCH = CPU_MemGet(0xFFFD);
