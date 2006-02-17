@@ -25,8 +25,13 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #define	Out	Data[0]
 #define	Scan	Data[1]
-static	void	Frame (struct tExpPort *Cont)
+static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 {
+	if (mode & MOV_RECORD)
+	{
+		MessageBox(mWnd,"Alternate Famicom Keyboard does not support recording movies!","Nintendulator",MB_OK | MB_ICONERROR);
+		Controllers_StopMovie();
+	}
 }
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
