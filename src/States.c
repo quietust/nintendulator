@@ -198,6 +198,7 @@ void	States_SaveState (void)
 		rewind(movie);
 		{
 			unsigned long tpl;
+			extern int ReRecords;
 			fread(&tpl,4,1,movie);
 			fwrite(&tpl,4,1,out);
 			fread(&tpl,4,1,movie);
@@ -378,7 +379,7 @@ void	States_LoadState (void)
 					fread(&tps,2,1,in);
 					fwrite(&tps,2,1,movie);
 					fread(&tpl,4,1,in);
-					if (ReRecords < tpl)
+					if (ReRecords < (int)tpl)
 						ReRecords = tpl;
 					fwrite(&tpl,4,1,movie);
 				}
