@@ -72,6 +72,7 @@ struct tControllers
 	struct tStdPort FSPort1, FSPort2, FSPort3, FSPort4;
 	struct tExpPort ExpPort;
 
+	BOOL	EnableOpposites;
 
 	int	NumDevices;
 	BOOL	DeviceUsed[MAX_CONTROLLERS];

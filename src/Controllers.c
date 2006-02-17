@@ -156,6 +156,11 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),TRUE);
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SEXPPORT),TRUE);
 		}
+
+		if (Controllers.EnableOpposites)
+			CheckDlgButton(hDlg,IDC_CONT_UDLR,BST_CHECKED);
+		else	CheckDlgButton(hDlg,IDC_CONT_UDLR,BST_UNCHECKED);
+
 		return TRUE;
 		break;
 	case WM_COMMAND:
@@ -164,6 +169,7 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		switch (wmId)
 		{
 		case IDOK:
+			Controllers.EnableOpposites = IsDlgButtonChecked(hDlg,IDC_CONT_UDLR);
 			EndDialog(hDlg,1);
 			break;
 		case IDC_CONT_SPORT1:

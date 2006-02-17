@@ -52,8 +52,8 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 			if ((i < 4) && (Controllers_IsPressed(Cont->Buttons[i+8])))
 				Cont->NewBit2 |= 1 << i;
 		}
-		if (!(mode & MOV_RECORD))
-		{	/* prevent simultaneously pressing left+right or up+down, but not when recording a movie :) */
+		if (!Controllers.EnableOpposites)
+		{	/* prevent simultaneously pressing left+right or up+down */
 			if ((Cont->NewBit1 & 0xC0) == 0xC0)
 				Cont->NewBit1 &= 0x3F;
 			if ((Cont->NewBit1 & 0x30) == 0x30)

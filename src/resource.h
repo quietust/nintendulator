@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by Nintendulator.rc
 //
 #define IDC_MYICON                      2
@@ -108,6 +108,8 @@
 #define IDC_PAL_CUSTFILE                1085
 #define IDC_PAL_SATSLIDER               1087
 #define IDC_PAL_10                      1088
+#define IDC_CHECK1                      1088
+#define IDC_CONT_UDLR                   1088
 #define IDC_PAL_20                      1089
 #define IDC_PAL_30                      1090
 #define IDC_PAL_01                      1091
@@ -238,7 +240,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        151
 #define _APS_NEXT_COMMAND_VALUE         32843
-#define _APS_NEXT_CONTROL_VALUE         1088
+#define _APS_NEXT_CONTROL_VALUE         1089
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

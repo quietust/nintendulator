@@ -1081,6 +1081,8 @@ void	NES_LoadSettings (void)
 	RegQueryValueEx(SettingsBase,_T("NTSChue")     ,0,&Type,(unsigned char *)&GFX.NTSChue    ,&Size);
 	RegQueryValueEx(SettingsBase,_T("NTSCsat")     ,0,&Type,(unsigned char *)&GFX.NTSCsat    ,&Size);
 
+	RegQueryValueEx(SettingsBase,_T("UDLR"),0,&Type,(unsigned char *)&Controllers.EnableOpposites,&Size);
+
 	Size = MAX_PATH * sizeof(TCHAR);
 	RegQueryValueEx(SettingsBase,_T("CustPaletteNTSC"),0,&Type,(unsigned char *)&GFX.CustPaletteNTSC,&Size);
 	RegQueryValueEx(SettingsBase,_T("CustPalettePAL") ,0,&Type,(unsigned char *)&GFX.CustPalettePAL ,&Size);
@@ -1175,6 +1177,8 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,_T("PalettePAL")  ,0,REG_DWORD,(unsigned char *)&GFX.PalettePAL  ,4);
 	RegSetValueEx(SettingsBase,_T("NTSChue")     ,0,REG_DWORD,(unsigned char *)&GFX.NTSChue     ,4);
 	RegSetValueEx(SettingsBase,_T("NTSCsat")     ,0,REG_DWORD,(unsigned char *)&GFX.NTSCsat     ,4);
+
+	RegSetValueEx(SettingsBase,_T("UDLR"),0,REG_DWORD,(unsigned char *)&Controllers.EnableOpposites,4);
 
 	RegSetValueEx(SettingsBase,_T("CustPaletteNTSC"),0,REG_SZ,(unsigned char *)GFX.CustPaletteNTSC,MAX_PATH * sizeof(TCHAR));
 	RegSetValueEx(SettingsBase,_T("CustPalettePAL") ,0,REG_SZ,(unsigned char *)GFX.CustPalettePAL ,MAX_PATH * sizeof(TCHAR));
