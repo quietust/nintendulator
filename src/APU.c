@@ -902,9 +902,9 @@ void	APU_Run (void)
 	{
 		APU.BufPos = NewBufPos;
 #ifdef	SOUND_FILTERING
-		samppos = (samppos / sampcycles) << 5;
+		samppos = (samppos / sampcycles) << 6;
 #else
-		samppos = (Square0.Pos + Square1.Pos + Triangle.Pos + Noise.Pos + DPCM.Pos) << 5;
+		samppos = (Square0.Pos + Square1.Pos + Triangle.Pos + Noise.Pos + DPCM.Pos) << 6;
 #endif
 		if ((MI) && (MI->GenSound))
 			samppos += MI->GenSound(sampcycles);
