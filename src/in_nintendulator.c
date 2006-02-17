@@ -215,18 +215,11 @@ void stop() {
 
 	mod.SAVSADeInit();
 
-	if (RI.ROMType != 0)
-	{
-		MapperInterface_UnloadMapper();
-		
-		if (RI.ROMType == ROM_NSF)
-		{
-			free(RI.NSF_Title);
-			free(RI.NSF_Artist);
-			free(RI.NSF_Copyright);
-		}
-		RI.ROMType = 0;
-	}
+	MapperInterface_UnloadMapper();
+	free(RI.NSF_Title);
+	free(RI.NSF_Artist);
+	free(RI.NSF_Copyright);
+	RI.ROMType = 0;
 }
 
 int getlength() { 
