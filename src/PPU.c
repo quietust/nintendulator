@@ -989,8 +989,8 @@ static	int	__fastcall	Read2 (void)
 
 static	int	__fastcall	Read4 (void)
 {
-	if (PPU.OnScreen && PPU.IsRendering)
-		return 0xFF;
+	if (PPU.IsRendering && PPU.Clockticks < 256)
+		return PPU.ppuLatch = 0xFF;
 	return PPU.ppuLatch = PPU.Sprite[PPU.SprAddr];
 }
 
@@ -1050,7 +1050,7 @@ static	void	__fastcall	Write3 (int What)
 
 static	void	__fastcall	Write4 (int What)
 {
-	if (PPU.OnScreen && PPU.IsRendering)
+	if (PPU.IsRendering)
 		What = 0xFF;
 	if ((PPU.SprAddr & 0x03) == 0x02)
 		What &= 0xE3;
