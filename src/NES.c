@@ -664,6 +664,8 @@ void	NES_SetCPUMode (int NewMode)
 void	NES_Reset (int ResetType)
 {
 	int i;
+	if (Controllers.MovieMode)
+		Controllers_StopMovie();
 	for (i = 0x0; i < 0x10; i++)
 	{
 		CPU.ReadHandler[i] = CPU_ReadPRG;
