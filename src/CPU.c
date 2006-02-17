@@ -22,6 +22,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #ifdef NSFPLAYER
 # include "in_nintendulator.h"
+# include "MapperInterface.h"
 # include "CPU.h"
 # include "APU.h"
 #else
