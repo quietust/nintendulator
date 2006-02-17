@@ -867,6 +867,7 @@ void	APU_Reset  (void)
 	DPCM.Cycles = 1;
 	Frame.Cycles = 1;
 	Frame.Bits = 0x00;
+	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 }
 #ifdef	SOUND_LOGGING
 FILE *soundlog = NULL;
