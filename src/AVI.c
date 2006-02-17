@@ -316,7 +316,7 @@ void	AVI_Start (void)
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = FileName;
-	ofn.nMaxFile = 256;
+	ofn.nMaxFile = MAX_PATH;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = Path_AVI;

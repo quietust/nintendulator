@@ -468,7 +468,7 @@ void	Controllers_UnAcquire (void)
 FILE *movie;
 unsigned char MOV_ControllerTypes[4];
 int ReRecords;
-char MovieName[256];
+char MovieName[MAX_PATH];
 int MovieLen;
 int MoviePos;
 int MovieFrameLen;
@@ -501,7 +501,7 @@ void	Controllers_PlayMovie (BOOL Review)
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = MovieName;
-	ofn.nMaxFile = 256;
+	ofn.nMaxFile = MAX_PATH;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = Path_NMV;
@@ -680,7 +680,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 	ofn.lpstrCustomFilter = NULL;
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = MovieName;
-	ofn.nMaxFile = 256;
+	ofn.nMaxFile = MAX_PATH;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
 	ofn.lpstrInitialDir = Path_NMV;

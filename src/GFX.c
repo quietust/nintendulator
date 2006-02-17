@@ -602,7 +602,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			ofn.lpstrCustomFilter = NULL;
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = filename;
-			ofn.nMaxFile = 256;
+			ofn.nMaxFile = MAX_PATH;
 			ofn.lpstrFileTitle = NULL;
 			ofn.nMaxFileTitle = 0;
 			ofn.lpstrInitialDir = Path_PAL;
