@@ -207,6 +207,7 @@ void	PPU_PowerOn()
 	PPU.IntX = 0;
 	PPU.ppuLatch = 0;
 	PPU.Reg2002 = 0;
+	PPU.buf2007 = 0;
 	PPU.HVTog = TRUE;
 	PPU.ShortSL = TRUE;
 	ZeroMemory(PPU_VRAM,sizeof(PPU_VRAM));
@@ -607,7 +608,7 @@ __inline static	void	RunSkip (int NumTicks)
 					PPU.IOVal = PPU.CHRPointer[PPU.IOAddr >> 10][PPU.IOAddr & 0x3FF];
 				else	PPU.IOVal = PPU.ReadHandler[PPU.IOAddr >> 10](PPU.IOAddr >> 10,PPU.IOAddr & 0x3FF);
 				if (PPU.IOMode == 2)
-					PPU.ppuLatch = PPU.IOVal;
+					PPU.buf2007 = PPU.IOVal;
 			}
 			PPU.IOMode = 0;
 		}
@@ -846,7 +847,7 @@ static	int	__fastcall	Read2 (void)
 
 static	int	__fastcall	Read4 (void)
 {
-	return PPU.ppuLatch;	// $2004, as it turns out, is NOT readable
+	return PPU.Sprite[PPU.SprAddr++];
 }
 
 static	int	__fastcall	Read7 (void)
@@ -857,7 +858,7 @@ static	int	__fastcall	Read7 (void)
 		PPU.VRAMAddr += 32;
 	else	PPU.VRAMAddr++;
 	PPU.VRAMAddr &= 0x3FFF;
-	return PPU.ppuLatch;
+	return PPU.buf2007;
 }
 
 int	_MAPINT	PPU_IntRead (int Bank, int Where)

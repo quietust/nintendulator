@@ -55,6 +55,7 @@ struct	tPPU
 	unsigned long IOAddr;
 	unsigned char IOVal;
 	unsigned char IOMode;	// 0 for nothing, 1 for renderer read, 2 for $2007 read, 3 for $2007 write
+	unsigned char buf2007;
 
 	unsigned char SprBuff[32];
 	BOOL Spr0InLine;
