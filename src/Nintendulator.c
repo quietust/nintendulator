@@ -40,6 +40,10 @@ HWND		mWnd;		// main window
 HACCEL		hAccelTable;	// accelerators
 int		SizeMult;	// size multiplier
 char		ProgPath[MAX_PATH];	// program path
+char		Path_ROM[MAX_PATH];	// current ROM directory
+char		Path_NMV[MAX_PATH];	// current movie directory
+char		Path_AVI[MAX_PATH];	// current AVI directory
+char		Path_PAL[MAX_PATH];	// current palette directory
 BOOL		MaskKeyboard = FALSE;	// mask keyboard accelerators (for when Family Basic Keyboard is active)
 HWND		hDebug;		// Debug Info window
 BOOL		dbgVisible;	// whether or not the Debug window is open
@@ -221,7 +225,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.nMaxFile = 256;
 			ofn.lpstrFileTitle = NULL;
 			ofn.nMaxFileTitle = 0;
-			ofn.lpstrInitialDir = "";
+			ofn.lpstrInitialDir = Path_ROM;
 			ofn.lpstrTitle = "Load ROM";
 			ofn.Flags = OFN_FILEMUSTEXIST;
 			ofn.lpstrDefExt = NULL;
@@ -230,6 +234,8 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lpTemplateName = NULL;
 			if (GetOpenFileName(&ofn))
 			{
+				strcpy(Path_ROM,FileName);
+				Path_ROM[ofn.nFileOffset-1] = 0;
 				NES_Stop();
 				NES_OpenFile(FileName);
 			}

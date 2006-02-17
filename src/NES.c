@@ -1055,6 +1055,7 @@ void	NES_LoadSettings (void)
 	CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_2,MF_BYCOMMAND);
 
 	NES.FrameStep = FALSE;
+	Path_ROM[0] = Path_NMV[0] = Path_AVI[0] = Path_PAL[0] = 0;
 	
 	/* End Defaults */
 
@@ -1074,9 +1075,13 @@ void	NES_LoadSettings (void)
 	RegQueryValueEx(SettingsBase,"NTSChue"     ,0,&Type,(unsigned char *)&GFX.NTSChue    ,&Size);
 	RegQueryValueEx(SettingsBase,"NTSCsat"     ,0,&Type,(unsigned char *)&GFX.NTSCsat    ,&Size);
 
-	Size = 256;
+	Size = MAX_PATH;
 	RegQueryValueEx(SettingsBase,"CustPaletteNTSC",0,&Type,(unsigned char *)&GFX.CustPaletteNTSC,&Size);
 	RegQueryValueEx(SettingsBase,"CustPalettePAL" ,0,&Type,(unsigned char *)&GFX.CustPalettePAL ,&Size);
+	RegQueryValueEx(SettingsBase,"Path_ROM",0,&Type,(unsigned char *)&Path_ROM,&Size);
+	RegQueryValueEx(SettingsBase,"Path_NMV",0,&Type,(unsigned char *)&Path_NMV,&Size);
+	RegQueryValueEx(SettingsBase,"Path_AVI",0,&Type,(unsigned char *)&Path_AVI,&Size);
+	RegQueryValueEx(SettingsBase,"Path_PAL",0,&Type,(unsigned char *)&Path_PAL,&Size);
 
 	Size = 4;
 	RegQueryValueEx(SettingsBase,"Port1T"  ,0,&Type,(unsigned char *)&Port1T  ,&Size);
@@ -1110,7 +1115,7 @@ void	NES_LoadSettings (void)
 	Size = sizeof(Controllers.ExpPort.Buttons);
 	RegQueryValueEx(SettingsBase,"ExpPortD",0,&Type,(unsigned char *)Controllers.ExpPort.Buttons,&Size);
 	Controllers_SetDeviceUsed();
-	
+
 	RegCloseKey(SettingsBase);
 	
 	if (NES.SoundEnabled)
@@ -1165,9 +1170,12 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,"NTSChue"     ,0,REG_DWORD,(unsigned char *)&GFX.NTSChue     ,4);
 	RegSetValueEx(SettingsBase,"NTSCsat"     ,0,REG_DWORD,(unsigned char *)&GFX.NTSCsat     ,4);
 
-	RegSetValueEx(SettingsBase,"CustPaletteNTSC",0,REG_SZ,(unsigned char *)GFX.CustPaletteNTSC,sizeof(GFX.CustPaletteNTSC));
-	RegSetValueEx(SettingsBase,"CustPalettePAL" ,0,REG_SZ,(unsigned char *)GFX.CustPalettePAL ,sizeof(GFX.CustPalettePAL));
-
+	RegSetValueEx(SettingsBase,"CustPaletteNTSC",0,REG_SZ,(unsigned char *)GFX.CustPaletteNTSC,MAX_PATH);
+	RegSetValueEx(SettingsBase,"CustPalettePAL" ,0,REG_SZ,(unsigned char *)GFX.CustPalettePAL ,MAX_PATH);
+	RegSetValueEx(SettingsBase,"Path_ROM",0,REG_SZ,(unsigned char *)Path_ROM,MAX_PATH);
+	RegSetValueEx(SettingsBase,"Path_NMV",0,REG_SZ,(unsigned char *)Path_NMV,MAX_PATH);
+	RegSetValueEx(SettingsBase,"Path_AVI",0,REG_SZ,(unsigned char *)Path_AVI,MAX_PATH);
+	RegSetValueEx(SettingsBase,"Path_PAL",0,REG_SZ,(unsigned char *)Path_PAL,MAX_PATH);
 
 	RegSetValueEx(SettingsBase,"Port1T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port1.Type  ,sizeof(Controllers.Port1.Type));
 	RegSetValueEx(SettingsBase,"Port2T"  ,0,REG_DWORD,(unsigned char *)&Controllers.Port2.Type  ,sizeof(Controllers.Port2.Type));
@@ -1184,7 +1192,7 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,"FSPort3D",0,REG_BINARY,(unsigned char *)Controllers.FSPort3.Buttons,sizeof(Controllers.FSPort3.Buttons));
 	RegSetValueEx(SettingsBase,"FSPort4D",0,REG_BINARY,(unsigned char *)Controllers.FSPort4.Buttons,sizeof(Controllers.FSPort4.Buttons));
 	RegSetValueEx(SettingsBase,"ExpPortD",0,REG_BINARY,(unsigned char *)Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
-	
+
 	RegCloseKey(SettingsBase);
 }
 

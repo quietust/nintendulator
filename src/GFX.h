@@ -50,7 +50,7 @@ struct tGFX
 
 	int PaletteNTSC, PalettePAL;
 	int NTSChue, NTSCsat;
-	char CustPaletteNTSC[256], CustPalettePAL[256];
+	char CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
 
 	LPDIRECTDRAW7		DirectDraw;
 	LPDIRECTDRAWSURFACE7	PrimarySurf, SecondarySurf;

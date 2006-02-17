@@ -605,7 +605,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			ofn.nMaxFile = 256;
 			ofn.lpstrFileTitle = NULL;
 			ofn.nMaxFileTitle = 0;
-			ofn.lpstrInitialDir = "";
+			ofn.lpstrInitialDir = Path_PAL;
 			ofn.Flags = OFN_FILEMUSTEXIST;
 			ofn.lpstrDefExt = NULL;
 			ofn.lCustData = 0;
@@ -613,6 +613,8 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			ofn.lpTemplateName = NULL;
 			if (GetOpenFileName(&ofn))
 			{
+				strcpy(Path_PAL,filename);
+				Path_PAL[ofn.nFileOffset-1] = 0;
 				if (GFX_ImportPalette(filename,TRUE))
 				{
 					pal = 3;

@@ -504,7 +504,7 @@ void	Controllers_PlayMovie (BOOL Review)
 	ofn.nMaxFile = 256;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = "";
+	ofn.lpstrInitialDir = Path_NMV;
 	ofn.Flags = OFN_FILEMUSTEXIST;
 	ofn.lpstrDefExt = NULL;
 	ofn.lCustData = 0;
@@ -513,6 +513,9 @@ void	Controllers_PlayMovie (BOOL Review)
 
 	if (!GetOpenFileName(&ofn))
 		return;
+
+	strcpy(Path_NMV,MovieName);
+	Path_NMV[ofn.nFileOffset-1] = 0;
 
 	if (Review)
 		movie = fopen(MovieName,"r+b");
@@ -680,7 +683,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 	ofn.nMaxFile = 256;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = "";
+	ofn.lpstrInitialDir = Path_NMV;
 	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
 	ofn.lpstrDefExt = "NMV";
 	ofn.lCustData = 0;
@@ -689,6 +692,9 @@ void	Controllers_RecordMovie (BOOL fromState)
 
 	if (!GetSaveFileName(&ofn))
 		return;
+
+	strcpy(Path_NMV,MovieName);
+	Path_NMV[ofn.nFileOffset-1] = 0;
 
 	Controllers_OpenConfig();		// Allow user to choose the desired controllers
 	Controllers.MovieMode = MOV_RECORD;	// ...and lock it out until the movie ends

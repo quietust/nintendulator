@@ -52,6 +52,11 @@ extern	BOOL		dbgVisible;	/* whether or not the Debug window is open */
 extern	int		SizeMult;	/* window size multiplier */
 extern	char		ProgPath[MAX_PATH];	/* program path */
 
+extern	char		Path_ROM[MAX_PATH];
+extern	char		Path_NMV[MAX_PATH];
+extern	char		Path_AVI[MAX_PATH];
+extern	char		Path_PAL[MAX_PATH];
+
 extern void	SetWindowClientArea (HWND hWnd, int w, int h);
 extern BOOL	ProcessMessages	(void);
 
