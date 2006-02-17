@@ -1027,6 +1027,7 @@ rerun:
 		NES.Stop = FALSE;
 		goto rerun;
 	}
+	Controllers_ShowFrame();
 #endif	/* CPU_BENCHMARK */
 }
 
