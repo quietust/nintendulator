@@ -925,7 +925,9 @@ static	__forceinline void	IN_TYA (void)
 extern	void	DPCM_Fetch (void);
 void	CPU_ExecOp (void)
 {
-	BOOL LastFI = CPU.FI;
+	BOOL LastNMI = CPU.WantNMI;
+	BOOL LastIRQ = CPU.WantIRQ && !CPU.FI;
+//	BOOL LastFI = CPU.FI;
 	CPU_MemGetCode(CPU.PC++);
 	switch (CPU.LastRead)
 	{
@@ -968,13 +970,13 @@ case 0xE3:AM_INX();  IN_UNK();break;case 0xF3:AM_INY();  IN_UNK();break;case 0xE
 	DPCM_Fetch();
 
 #ifndef NSFPLAYER
-	if (CPU.WantNMI)
+	if (LastNMI) // CPU.WantNMI)
 	{
 		DoNMI();
 		CPU.WantNMI = FALSE;
 	}
 	else
 #endif
-	if (CPU.WantIRQ && !CPU.FI && !LastFI)
+	if (LastIRQ)// CPU.WantIRQ && !CPU.FI && !LastFI)
 		DoIRQ();
 }
