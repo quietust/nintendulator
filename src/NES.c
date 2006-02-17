@@ -965,7 +965,7 @@ void	NES_Reset (int ResetType)
 #ifdef ENABLE_DEBUGGER
 	Debugger.TraceOffset = -1;
 #endif	/* ENABLE_DEBUGGER */
-	PPU.Clockticks = 339;
+	PPU.Clockticks = 0;
 	PPU.SLnum = 241;
 	APU_Reset();
 	CPU_Reset();
