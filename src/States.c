@@ -32,8 +32,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct	tStates	States;
 
-#define	STATES_OLDVER	"0910"
-#define	STATES_VERSION	"0920"
+#define	STATES_VERSION	"0930"
 
 extern FILE *movie;
 
@@ -65,116 +64,61 @@ void	States_SetSlot (int Slot)
 	GFX_ShowText("State Selected: %i", Slot);
 }
 
-void	States_SaveState (void)
+int	States_SaveData (FILE *out)
 {
-	unsigned short tps;
-	char tpchr[256];
-	int clen, flen;
-	FILE *out;
-
-	States.NeedSave = FALSE;
-	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
-	out = fopen(tpchr,"w+b");
-	flen = 0;
-
-	fwrite("NSS\x1A",1,4,out);
-	fwrite(STATES_VERSION,1,4,out);
-	fwrite(&flen,1,4,out);
-	fwrite(&flen,1,4,out);
+	int flen = 0, clen;
 	{
-		clen = 0;
 		fwrite("CPUS",1,4,out);		flen += 4;
 		fwrite(&clen,1,4,out);		flen += 4;
-			//Data
-		fwrite(&CPU.PCH,1,1,out);	clen++;		//	PCL	uint8		Program Counter, low byte
-		fwrite(&CPU.PCL,1,1,out);	clen++;		//	PCH	uint8		Program Counter, high byte
-		fwrite(&CPU.A,1,1,out);		clen++;		//	A	uint8		Accumulator
-		fwrite(&CPU.X,1,1,out);		clen++;		//	X	uint8		X register
-		fwrite(&CPU.Y,1,1,out);		clen++;		//	Y	uint8		Y register
-		fwrite(&CPU.SP,1,1,out);	clen++;		//	SP	uint8		Stack pointer
-		CPU_JoinFlags();
-		fwrite(&CPU.P,1,1,out);		clen++;		//	P	uint8		Processor status register
-		fwrite(&CPU.LastRead,1,1,out);	clen++;		//	BUS	uint8		Last contents of data bus
-		fwrite(&CPU.WantNMI,1,1,out);	clen++;		//	NMI	uint8		TRUE if falling edge detected on /NMI
-		fwrite(&CPU.WantIRQ,1,1,out);	clen++;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
-		fwrite(CPU_RAM,1,0x800,out);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
-
+		clen = CPU_Save(out);
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
 	}
 	{
-		clen = 0;
 		fwrite("PPUS",1,4,out);		flen += 4;
 		fwrite(&clen,1,4,out);		flen += 4;
-			//Data
-		fwrite(PPU_VRAM,1,0x1000,out);	clen += 0x1000;	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
-		fwrite(PPU.Sprite,1,0x100,out);	clen += 0x100;	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
-		fwrite(PPU.Palette,1,0x20,out);	clen += 0x20;	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
-		fwrite(&PPU.Reg2000,1,1,out);	clen++;		//	R2000	uint8		Last value written to $2000
-		fwrite(&PPU.Reg2001,1,1,out);	clen++;		//	R2001	uint8		Last value written to $2001
-		fwrite(&PPU.Reg2002,1,1,out);	clen++;		//	R2002	uint8		Current contents of $2002
-		fwrite(&PPU.SprAddr,1,1,out);	clen++;		//	SPADR	uint8		SPR-RAM Address ($2003)
-
-		fwrite(&PPU.IntX,1,1,out);	clen++;		//	XOFF	uint8		Tile X-offset.
-
-		fwrite(&PPU.HVTog,1,1,out);	clen++;		//	VTOG	uint8		Toggle used by $2005 and $2006.
-		tps = (unsigned short)PPU.VRAMAddr;
-		fwrite(&tps,2,1,out);		clen += 2;	//	RADD	uint16		VRAM Address
-		tps = (unsigned short)PPU.IntReg;
-		fwrite(&tps,2,1,out);		clen += 2;	//	TADD	uint16		VRAM Address Latch
-		fwrite(&PPU.buf2007,1,1,out);	clen++;		//	VBUF	uint8		VRAM Read Buffer
-		fwrite(&PPU.ppuLatch,1,1,out);	clen++;		//	PGEN	uint8		PPU "general" latch
-
-		tps = (unsigned short)PPU.Clockticks;
-		fwrite(&tps,2,1,out);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340)
-		tps = (unsigned short)PPU.SLnum;
-		fwrite(&tps,2,1,out);		clen += 2;	//	SLNUM	uint16		Scanline number
-		fwrite(&PPU.ShortSL,1,1,out);	clen++;		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
-
-		tps = (unsigned short)PPU.IOAddr;
-		fwrite(&tps,2,1,out);		clen += 2;	//	IOADD	uint16		External I/O Address
-		fwrite(&PPU.IOVal,1,1,out);	clen++;		//	IOVAL	uint8		External I/O Value
-		fwrite(&PPU.IOMode,1,1,out);	clen++;		//	IOMOD	uint8		External I/O Mode (0=none, 1=renderer, 2=r2007, 3=w2007)
-
-		fwrite(&PPU.IsPAL,1,1,out);	clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
-
+		clen = PPU_Save(out);
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
 	}
 	{
-		clen = 0;
 		fwrite("APUS",1,4,out);		flen += 4;
 		fwrite(&clen,1,4,out);		flen += 4;
-			//Data
-		fwrite(APU.Regs,1,0x17,out);	clen += 0x17;	//	REGS	uint8[0x17]	All of the APU registers
+		clen = APU_Save(out);
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
 	}
-	for (clen = sizeof(PRG_RAM) - 1; clen >= 0; clen--)
-		if (PRG_RAM[clen >> 12][clen & 0xFFF])
-			break;
-	if (clen >= 0)
 	{
-		clen++;
-		fwrite("NPRA",1,4,out);		flen += 4;
-		fwrite(&clen,1,4,out);		flen += 4;
-			//Data
-		fwrite(PRG_RAM,1,clen,out);	flen += clen;	//	PRAM	uint8[...]	PRG_RAM data
+		/* TODO - Add CTRL state */
 	}
-
-	for (clen = sizeof(CHR_RAM) - 1; clen >= 0; clen--)
-		if (CHR_RAM[clen >> 10][clen & 0x3FF])
-			break;
-	if (clen >= 0)
 	{
-		clen++;
-		fwrite("NCRA",1,4,out);		flen += 4;
-		fwrite(&clen,1,4,out);		flen += 4;
-			//Data
-		fwrite(CHR_RAM,1,clen,out);	flen += clen;	//	CRAM	uint8[...]	CHR_RAM data
+		for (clen = sizeof(PRG_RAM) - 1; clen >= 0; clen--)
+			if (PRG_RAM[clen >> 12][clen & 0xFFF])
+				break;
+		if (clen >= 0)
+		{
+			clen++;
+			fwrite("NPRA",1,4,out);		flen += 4;
+			fwrite(&clen,1,4,out);		flen += 4;
+				//Data
+			fwrite(PRG_RAM,1,clen,out);	flen += clen;	//	PRAM	uint8[...]	PRG_RAM data
+		}
+	}
+	{
+		for (clen = sizeof(CHR_RAM) - 1; clen >= 0; clen--)
+			if (CHR_RAM[clen >> 10][clen & 0x3FF])
+				break;
+		if (clen >= 0)
+		{
+			clen++;
+			fwrite("NCRA",1,4,out);		flen += 4;
+			fwrite(&clen,1,4,out);		flen += 4;
+				//Data
+			fwrite(CHR_RAM,1,clen,out);	flen += clen;	//	CRAM	uint8[...]	CHR_RAM data
+		}
 	}
 	{
 		if ((MI) && (MI->SaveLoad))
@@ -191,34 +135,87 @@ void	States_SaveState (void)
 			free(tpmi);
 		}
 	}
-	if ((Controllers.MovieMode & (MOV_RECORD | MOV_PLAY)) && !(Controllers.MovieMode & MOV_FMV))
+	if (Controllers.MovieMode & (MOV_RECORD | MOV_PLAY))
 	{
+		int moviepos = ftell(movie);
+		int mlen, mpos;
+		char tps[4];
+		unsigned char tpc;
+		unsigned long tpl;
 		int tpi;
-		fwrite("NMOV",1,4,out);	flen += 4;
-		tpi = clen = ftell(movie);
-		fwrite(&clen,1,4,out);	flen += 4;
+		extern int ReRecords;
+
+		fwrite("NMOV",1,4,out);		flen += 4;
+		fwrite(&clen,1,4,out);		flen += 4;
+		clen = 0;
+		
 		rewind(movie);
-		{
-			unsigned long tpl;
-			extern int ReRecords;
-			fread(&tpl,4,1,movie);
-			fwrite(&tpl,4,1,out);
-			fread(&tpl,4,1,movie);
-			fwrite(&tpl,4,1,out);
-			fread(&tps,2,1,movie);
-			fwrite(&tps,2,1,out);
-			fread(&tpl,4,1,movie);
-			fwrite(&ReRecords,4,1,out);
+		fseek(movie,16,SEEK_SET);
+		fread(tps,4,1,movie);
+		fread(&mlen,4,1,movie);
+		mpos = ftell(movie);
+		while (strncmp(tps,"NMOV",4))
+		{	/* find the NMOV block in the movie */
+			fseek(movie,mlen,SEEK_CUR);
+			fread(tps,4,1,movie);
+			fread(&mlen,4,1,movie);
+			mpos = ftell(movie);
 		}
-		for (clen -= 14; clen > 0; clen--)
+
+		fread(&tpc,1,1,movie);	fwrite(&tpc,1,1,out);	clen++;
+		fread(&tpc,1,1,movie);	fwrite(&tpc,1,1,out);	clen++;
+		fread(&tpc,1,1,movie);	fwrite(&tpc,1,1,out);	clen++;
+		fread(&tpc,1,1,movie);	fwrite(&tpc,1,1,out);	clen++;
+		fseek(movie,4,SEEK_CUR);fwrite(&ReRecords,4,1,out);	clen += 4;	// ignore rerecord count stored in movie
+
+		fread(&tpl,4,1,movie);	fwrite(&tpl,4,1,out);	clen += 4;
+		while (tpl > 0)
 		{
-			char tpc;
 			fread(&tpc,1,1,movie);
-			fwrite(&tpc,1,1,out);	flen++;
+			fwrite(&tpc,1,1,out);	clen++;
+		}
+
+		fread(&tpl,4,1,movie);	clen += 4;	// the MLEN field, which is NOT yet accurate
+		tpl = (moviepos - mpos) - clen;
+		fwrite(&tpl,4,1,out);
+		
+		tpi = tpl;
+		while (tpi > 0)
+		{
+			fread(&tpc,1,1,movie);
+			fwrite(&tpc,1,1,out);	clen++;
+			tpi--;
 		}
 		rewind(movie);
-		fseek(movie,tpi,SEEK_SET);
+		fseek(movie,moviepos,SEEK_SET);
+
+		fseek(out,-clen - 4,SEEK_CUR);
+		fwrite(&clen,1,4,out);
+		fseek(out,clen,SEEK_CUR);	flen += clen;
 	}
+	return flen;
+}
+
+
+void	States_SaveState (void)
+{
+	char tpchr[256];
+	int flen;
+	FILE *out;
+
+	States.NeedSave = FALSE;
+	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
+	out = fopen(tpchr,"w+b");
+	flen = 0;
+
+	fwrite("NSS\x1A",1,4,out);
+	fwrite(STATES_VERSION,1,4,out);
+	fwrite(&flen,1,4,out);
+	if (Controllers.MovieMode & (MOV_RECORD | MOV_PLAY))
+		fwrite("NREC",1,4,out);
+	else	fwrite("NSAV",1,4,out);
+
+	flen = States_SaveData(out);
 
 	// Write final filesize
 	fseek(out,8,SEEK_SET);
@@ -228,117 +225,22 @@ void	States_SaveState (void)
 	GFX_ShowText("State saved: %i", States.SelSlot);
 }
 
-void	States_LoadState (void)
+BOOL	States_LoadData (FILE *in, int flen)
 {
-	char tpchr[256];
-	FILE *in;
-	unsigned short tps;
 	char csig[4];
-	int clen, flen;
+	int clen;
 	BOOL SSOK = TRUE;
-
-	States.NeedLoad = FALSE;
-	if (Controllers.MovieMode & MOV_PLAY)
-	{
-		GFX_ShowText("Cannot load state while playing movie!");
-		return;
-	}
-
-	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
-	in = fopen(tpchr,"rb");
-	if (!in)
-	{
-		GFX_ShowText("No such save state: %i", States.SelSlot);
-		return;
-	}
-
-	fread(tpchr,1,4,in);
-	if (memcmp(tpchr,"NSS\x1a",4))
-	{
-		fclose(in);
-		GFX_ShowText("Corrupted save state: %i", States.SelSlot);
-		return;
-	}
-	fread(tpchr,1,4,in);
-	if (memcmp(tpchr,STATES_VERSION,4) && memcmp(tpchr,STATES_OLDVER,4))
-	{
-		fclose(in);
-		tpchr[4] = '0';
-		GFX_ShowText("Incorrect savestate version (%s): %i", tpchr, States.SelSlot);
-		return;
-	}
-	fread(&flen,4,1,in);
-	fseek(in,4,SEEK_CUR);
-
-	NES_Reset(RESET_SOFT);
-
 	fread(&csig,1,4,in);	flen -= 4;
 	fread(&clen,4,1,in);	flen -= 4;
 	while (flen > 0)
 	{
 		flen -= clen;
 		if (!strncmp(csig,"CPUS",4))
-		{
-			fread(&CPU.PCH,1,1,in);		clen--;		//	PCL	uint8		Program Counter, low byte
-			fread(&CPU.PCL,1,1,in);		clen--;		//	PCH	uint8		Program Counter, high byte
-			fread(&CPU.A,1,1,in);		clen--;		//	A	uint8		Accumulator
-			fread(&CPU.X,1,1,in);		clen--;		//	X	uint8		X register
-			fread(&CPU.Y,1,1,in);		clen--;		//	Y	uint8		Y register
-			fread(&CPU.SP,1,1,in);		clen--;		//	SP	uint8		Stack pointer
-			fread(&CPU.P,1,1,in);		clen--;		//	P	uint8		Processor status register
-			CPU_SplitFlags();
-			fread(&CPU.LastRead,1,1,in);	clen--;		//	BUS	uint8		Last contents of data bus
-			fread(&CPU.WantNMI,1,1,in);	clen--;		//	NMI	uint8		TRUE if falling edge detected on /NMI
-			fread(&CPU.WantIRQ,1,1,in);	clen--;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
-			fread(CPU_RAM,1,0x800,in);	clen -= 0x800;	//	RAM	uint8[0x800]	2KB work RAM
-		}
+			clen -= CPU_Load(in);
 		else if (!strncmp(csig,"PPUS",4))
-		{
-			fread(PPU_VRAM,1,0x1000,in);	clen -= 0x1000;	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
-			fread(PPU.Sprite,1,0x100,in);	clen -= 0x100;	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
-			fread(PPU.Palette,1,0x20,in);	clen -= 0x20;	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
-			fread(&PPU.Reg2000,1,1,in);	clen--;		//	R2000	uint8		Last value written to $2000
-			fread(&PPU.Reg2001,1,1,in);	clen--;		//	R2001	uint8		Last value written to $2001
-			fread(&PPU.Reg2002,1,1,in);	clen--;		//	R2002	uint8		Current contents of $2002
-			fread(&PPU.SprAddr,1,1,in);	clen--;		//	SPADR	uint8		SPR-RAM Address ($2003)
-
-			fread(&PPU.IntX,1,1,in);	clen--;		//	XOFF	uint8		Tile X-offset.
-
-			fread(&PPU.HVTog,1,1,in);	clen--;		//	VTOG	uint8		Toggle used by $2005 and $2006.
-			fread(&tps,2,1,in);		clen -= 2;	//	RADD	uint16		VRAM Address
-			PPU.VRAMAddr = tps;
-			fread(&tps,2,1,in);		clen -= 2;	//	TADD	uint16		VRAM Address Latch
-			PPU.IntReg = tps;
-			fread(&PPU.buf2007,1,1,in);	clen--;		//	VBUF	uint8		VRAM Read Buffer
-			fread(&PPU.ppuLatch,1,1,in);	clen--;		//	PGEN	uint8		PPU "general" latch.
-
-			fread(&tps,2,1,in);		clen -= 2;	//	TICKS	uint16		Clock Ticks (0..340)
-			PPU.Clockticks = tps;
-			fread(&tps,2,1,in);		clen -= 2;	//	SLNUM	uint16		Scanline number
-			PPU.SLnum = tps;
-			fread(&PPU.ShortSL,1,1,in);	clen--;		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
-
-			fread(&tps,2,1,in);		clen -= 2;	//	IOADD	uint16		External I/O Address
-			PPU.IOAddr = tps;
-			fread(&PPU.IOVal,1,1,in);	clen--;		//	IOVAL	uint8		External I/O Value
-			fread(&PPU.IOMode,1,1,in);	clen--;		//	IOMOD	uint8		External I/O Mode (0=none, 1=renderer, 2=r2007, 3=w2007)
-
-			fread(&PPU.IsPAL,1,1,in);	clen--;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
-
-			PPU.IsRendering = PPU.OnScreen = FALSE;
-			PPU.ColorEmphasis = (PPU.Reg2001 & 0xE0) << 1;
-			PPU.GrayScale = (PPU.Reg2001 & 0x01) ? 0x30 : 0x3F;
-			NES_SetCPUMode(PPU.IsPAL);
-		}
+			clen -= PPU_Load(in);
 		else if (!strncmp(csig,"APUS",4))
-		{
-			int i;
-			fread(APU.Regs,1,0x17,in);	clen -= 0x17;
-			APU_WriteReg(0x15,APU.Regs[0x15]);
-			APU_WriteReg(0x17,APU.Regs[0x14]);
-			for (i = 0; i < 0x14; i++)
-				APU_WriteReg(i,APU.Regs[i]);
-		}
+			clen -= APU_Load(in);
 		else if (!strncmp(csig,"NPRA",4))
 		{
 			memset(PRG_RAM,0,sizeof(PRG_RAM));
@@ -369,62 +271,65 @@ void	States_LoadState (void)
 		}
 		else if (!strncmp(csig,"NMOV",4))
 		{
+			/* TODO - rewrite this */
 			if (Controllers.MovieMode & MOV_RECORD)
 			{	// are we recording?
 				extern char MovieName[256];
 				extern int ReRecords;
-				fclose(movie);
-				movie = fopen(MovieName,"w+b");
+				char tps[5];
+				int mlen;
+				int tpi;
+				unsigned long tpl;
+				unsigned char tpc;
+
+				rewind(movie);
+				fseek(movie,16,SEEK_SET);
+				fread(tps,4,1,movie);
+				fread(&mlen,4,1,movie);
+				while (strncmp(tps,"NMOV",4))
+				{	/* find the NMOV block in the movie */
+					fseek(movie,mlen,SEEK_CUR);
+					fread(tps,4,1,movie);
+					fread(&mlen,4,1,movie);
+				}
+				fseek(movie,-4,SEEK_CUR);
+				fwrite(&clen,4,1,movie);	// overwrite NMOV block length
+
+				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// CTRL0, CTRL1, CTEXT, EXTR
+				fread(&tpl,4,1,in);				clen -= 4;	// RREC
+				if (ReRecords < (int)tpl)
+					ReRecords = tpl;
+				ReRecords++;
+				fwrite(&tpl,4,1,movie);
+				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// ILEN
+				tpi = tpl;					clen -= tpl;	// INFO
+				while (tpi > 0)
 				{
-					unsigned char tpc;
-					unsigned long tpl;
-					fread(&tpl,4,1,in);
-					fwrite(&tpl,4,1,movie);
 					fread(&tpc,1,1,in);
 					fwrite(&tpc,1,1,movie);
-					fread(tpchr,1,5,in);
-					fwrite(tpchr,1,5,movie);
-					StdPort_SetControllerType(&Controllers.Port1,tpchr[0]);
-					StdPort_SetControllerType(&Controllers.Port2,tpchr[1]);
-					ExpPort_SetControllerType(&Controllers.ExpPort,tpchr[4]);
-					if (tpc & 0x02)
-					{
-						StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-						StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
-
-						StdPort_SetControllerType(&Controllers.FSPort1,tpchr[0]);
-						StdPort_SetControllerType(&Controllers.FSPort2,tpchr[1]);
-						StdPort_SetControllerType(&Controllers.FSPort3,tpchr[2]);
-						StdPort_SetControllerType(&Controllers.FSPort4,tpchr[3]);
-					}
-					fread(&tpl,4,1,in);
-					if (ReRecords < (int)tpl)
-						ReRecords = tpl;
-					fwrite(&tpl,4,1,movie);
-					if (!(tpc & 0x01))
-						;	// copy the savestate through
+					tpi--;
 				}
-				clen -= 14;
-				ReRecords++;
-				while (clen)
+				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// MLEN
+				tpi = tpl;					clen -= tpl;	// MDAT
+				while (tpi > 0)
 				{
 					if (Controllers.Port1.MovLen)
 					{
 						fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,in);
 						fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);
-						clen -= Controllers.Port1.MovLen;
+						tpi -= Controllers.Port1.MovLen;
 					}
 					if (Controllers.Port2.MovLen)
 					{
 						fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,in);
 						fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);
-						clen -= Controllers.Port2.MovLen;
+						tpi -= Controllers.Port2.MovLen;
 					}
 					if (Controllers.ExpPort.MovLen)
 					{
 						fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,in);
 						fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
-						clen -= Controllers.ExpPort.MovLen;
+						tpi -= Controllers.ExpPort.MovLen;
 					}
 				}
 				Controllers.Port1.Frame(&Controllers.Port1,MOV_PLAY);
@@ -434,8 +339,6 @@ void	States_LoadState (void)
 			else
 			{	// nope, skip it
 				fseek(in,clen,SEEK_CUR);
-//				if (Controllers.MovieMode & MOV_PLAY)
-//					fseek(movie,clen,SEEK_SET);
 				clen = 0;
 			}
 		}
@@ -450,8 +353,85 @@ void	States_LoadState (void)
 			fread(&clen,4,1,in);	flen -= 4;
 		}
 	}
-	fclose(in);
-	if (SSOK)
+	return SSOK;
+}
+
+void	States_LoadState (void)
+{
+	char tpchr[5];
+	FILE *in;
+	int flen;
+
+	States.NeedLoad = FALSE;
+	if (Controllers.MovieMode & MOV_PLAY)
+	{
+		GFX_ShowText("Cannot load state while playing a movie!");
+		return;
+	}
+
+	sprintf(tpchr,"%s.ns%i",States.BaseFilename,States.SelSlot);
+	in = fopen(tpchr,"rb");
+	if (!in)
+	{
+		GFX_ShowText("No such save state: %i", States.SelSlot);
+		return;
+	}
+
+	fread(tpchr,1,4,in);
+	if (memcmp(tpchr,"NSS\x1a",4))
+	{
+		fclose(in);
+		GFX_ShowText("Corrupted save state: %i", States.SelSlot);
+		return;
+	}
+	fread(tpchr,1,4,in);
+	if (1 || memcmp(tpchr,STATES_VERSION,4))
+	{	/* For now, allow savestates with wrong version */
+		fclose(in);
+		tpchr[4] = 0;
+		GFX_ShowText("Incorrect savestate version (%s): %i", tpchr, States.SelSlot);
+		return;
+	}
+	fread(&flen,4,1,in);
+	fread(tpchr,1,4,in);
+
+	if (!memcmp(tpchr,"NMOV",4))
+	{
+		fclose(in);
+		GFX_ShowText("Selected savestate (%i) is a movie file - cannot load!", States.SelSlot);
+		return;
+	}
+	else if (!memcmp(tpchr,"NREC",4))
+	{
+		/* Movie savestate, can always load these */
+	}
+	else if (!memcmp(tpchr,"NSAV",4))
+	{
+		/* Non-movie savestate, can NOT load these while recording */
+		if (Controllers.MovieMode & MOV_RECORD)
+		{
+			fclose(in);
+			GFX_ShowText("Selected savestate (%i) does not contain movie data!", States.SelSlot);
+			return;
+		}
+	}
+	else if (!memcmp(tpchr,"\0\0\0\0",4))
+	{
+		/* For now, allow movies with a null type */
+	}
+	else
+	{
+		fclose(in);
+		tpchr[4] = 0;
+		GFX_ShowText("Selected savestate (%i) has unknown type! (%s)", States.SelSlot, tpchr);
+		return;
+	}
+
+	fseek(in,16,SEEK_SET);
+	NES_Reset(RESET_SOFT);
+
+	if (States_LoadData(in, flen))
 		GFX_ShowText("State loaded: %i", States.SelSlot);
 	else	GFX_ShowText("State loaded with errors: %i", States.SelSlot);
+	fclose(in);
 }
