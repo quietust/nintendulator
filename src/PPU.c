@@ -377,13 +377,16 @@ __inline static	void	RunNoSkip (int NumTicks)
 			}
 			if (PPU.SLnum == -1)
 			{
-				if (PPU.IsRendering)
-					PPU.VRAMAddr = PPU.IntReg;
 				if ((PPU.ShortSL) && (!PPU.IsPAL))
 					EndSLTicks = 340;
 				else	EndSLTicks = 341;
 			}
 			else	EndSLTicks = 341;
+		}
+		else if (PPU.Clockticks == 304)
+		{
+			if ((PPU.IsRendering) && (PPU.SLnum == -1))
+				PPU.VRAMAddr = PPU.IntReg;
 		}
 		else if (PPU.Clockticks == EndSLTicks)
 		{
@@ -467,8 +470,6 @@ __inline static	void	RunNoSkip (int NumTicks)
 				TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
 				((unsigned long *)CurTileData)[0] = TL;
 				((unsigned long *)CurTileData)[1] = TL;
-				PPU.VRAMAddr &= ~0x41F;
-				PPU.VRAMAddr |= PPU.IntReg & 0x41F;
 				if ((PPU.VRAMAddr & 0x7000) == 0x7000)
 				{
 					register int YScroll = PPU.VRAMAddr & 0x3E0;
@@ -539,7 +540,10 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
 				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 				break;
-			case 257:	case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
+			case 257:
+				PPU.VRAMAddr &= ~0x41F;
+				PPU.VRAMAddr |= PPU.IntReg & 0x41F;
+					case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
 				break;
 			case 258:	case 266:	case 274:	case 282:	case 290:	case 298:	case 306:	case 314:
 				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
@@ -678,13 +682,16 @@ __inline static	void	RunSkip (int NumTicks)
 			}
 			if (PPU.SLnum == -1)
 			{
-				if (PPU.IsRendering)
-					PPU.VRAMAddr = PPU.IntReg;
 				if ((PPU.ShortSL) && (!PPU.IsPAL))
 					EndSLTicks = 340;
 				else	EndSLTicks = 341;
 			}
 			else	EndSLTicks = 341;
+		}
+		else if (PPU.Clockticks == 304)
+		{
+			if ((PPU.IsRendering) && (PPU.SLnum == -1))
+				PPU.VRAMAddr = PPU.IntReg;
 		}
 		else if (PPU.Clockticks == EndSLTicks)
 		{
@@ -761,8 +768,6 @@ __inline static	void	RunSkip (int NumTicks)
 				else	PPU.VRAMAddr++;
 				break;
 			case 251:
-				PPU.VRAMAddr &= ~0x41F;
-				PPU.VRAMAddr |= PPU.IntReg & 0x41F;
 				if ((PPU.VRAMAddr & 0x7000) == 0x7000)
 				{
 					register int YScroll = PPU.VRAMAddr & 0x3E0;
@@ -836,7 +841,10 @@ __inline static	void	RunSkip (int NumTicks)
 			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
 				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
 				break;
-			case 257:	case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
+			case 257:
+				PPU.VRAMAddr &= ~0x41F;
+				PPU.VRAMAddr |= PPU.IntReg & 0x41F;
+					case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
 				break;
 			case 258:	case 266:	case 274:	case 282:	case 290:	case 298:	case 306:	case 314:
 				PPU.RenderAddr = 0x2000 | (PPU.VRAMAddr & 0xFFF);
