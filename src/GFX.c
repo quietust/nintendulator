@@ -24,11 +24,12 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "NES.h"
 #include "GFX.h"
 #include "PPU.h"
+#include "AVI.h"
 #include <math.h>
 
 struct tGFX GFX;
 
-/*#define	GFX_SAFE_LOCK	/* only locks the secondary surface when necessary */
+#define	GFX_SAFE_LOCK	/* only locks the secondary surface when necessary */
 
 #define	GFX_Try(action,errormsg)\
 {\
@@ -266,6 +267,8 @@ void	GFX_SetFrameskip (void)
 
 void	GFX_Update (void)
 {
+	if (aviout)
+		AVI_AddVideo();
 #ifdef	GFX_SAFE_LOCK
 	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),"Failed to lock secondary surface")
 	memcpy(GFX.SurfDesc.lpSurface,GFX.DrawArray,GFX.SurfSize);

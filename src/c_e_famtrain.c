@@ -25,6 +25,9 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #define	Bits	Data[0]
 #define	Sel	Data[1]
+static	void	Frame (struct tExpPort *Cont)
+{
+}
 
 static	void	UpdateCont (struct tExpPort *Cont)
 {
@@ -95,6 +98,7 @@ static	void	Config (struct tExpPort *Cont, HWND hWnd)
 static	void	Unload (struct tExpPort *Cont)
 {
 	free(Cont->Data);
+	free(Cont->MovData);
 }
 void	ExpPort_SetFamTrainer (struct tExpPort *Cont)
 {
@@ -106,6 +110,8 @@ void	ExpPort_SetFamTrainer (struct tExpPort *Cont)
 	Cont->NumButtons = 12;
 	Cont->DataLen = 2;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->MovLen = 0;
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	Cont->Bits = 0;
 	Cont->Sel = 0;
 }

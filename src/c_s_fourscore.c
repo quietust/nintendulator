@@ -26,6 +26,59 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define	BitPtr	Data[0]
 #define	Strobe	Data[1]
 #define	PortNum	Data[2]
+static	void	AllocMov (struct tStdPort *Cont)
+{
+	free(Cont->MovData);
+	if (Cont == &Controllers.Port1)
+		Cont->MovLen = Controllers.FSPort1.MovLen + Controllers.FSPort3.MovLen;
+	if (Cont == &Controllers.Port2)
+		Cont->MovLen = Controllers.FSPort2.MovLen + Controllers.FSPort4.MovLen;
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
+}
+
+static	void	Frame (struct tStdPort *Cont)
+{
+	int x = 0, y;
+	if (Cont->PortNum == 0)
+	{
+		Controllers.FSPort1.Frame(&Controllers.FSPort1);
+		Controllers.FSPort3.Frame(&Controllers.FSPort3);
+		if (Controllers.MovieMode & MOV_RECORD)
+		{
+			for (y = 0; x < Controllers.FSPort1.MovLen; x++, y++)
+				Controllers.FSPort1.MovData[y] = Cont->MovData[x];
+			for (y = 0; x < Controllers.FSPort3.MovLen; x++, y++)
+				Controllers.FSPort3.MovData[y] = Cont->MovData[x];
+		}
+		if (Controllers.MovieMode & MOV_PLAY)
+		{
+			for (y = 0; x < Controllers.FSPort1.MovLen; x++, y++)
+				Cont->MovData[x] = Controllers.FSPort1.MovData[y];
+			for (y = 0; x < Controllers.FSPort3.MovLen; x++, y++)
+				Cont->MovData[x] = Controllers.FSPort3.MovData[y];
+		}
+	}
+	if (Cont->PortNum == 1)
+	{
+		if (Controllers.MovieMode & MOV_RECORD)
+		{
+			for (y = 0; x < Controllers.FSPort2.MovLen; x++, y++)
+				Controllers.FSPort2.MovData[y] = Cont->MovData[x];
+			for (y = 0; x < Controllers.FSPort4.MovLen; x++, y++)
+				Controllers.FSPort4.MovData[y] = Cont->MovData[x];
+		}
+		if (Controllers.MovieMode & MOV_PLAY)
+		{
+			for (y = 0; x < Controllers.FSPort2.MovLen; x++, y++)
+				Cont->MovData[x] = Controllers.FSPort2.MovData[y];
+			for (y = 0; x < Controllers.FSPort4.MovLen; x++, y++)
+				Cont->MovData[x] = Controllers.FSPort4.MovData[y];
+		}
+		Controllers.FSPort2.Frame(&Controllers.FSPort2);
+		Controllers.FSPort4.Frame(&Controllers.FSPort4);
+	}
+}
+
 static	unsigned char	Read (struct tStdPort *Cont)
 {
 	unsigned char result = 0;
@@ -123,10 +176,10 @@ static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		case IDOK:
 			EndDialog(hDlg,1);
 			break;
-		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort1,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0)); }	break;
-		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort2,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0)); }	break;
-		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort3,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_GETCURSEL,0,0)); }	break;
-		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort4,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_GETCURSEL,0,0)); }	break;
+		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort1,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0)); AllocMov(&Controllers.Port1); AllocMov(&Controllers.Port2); }	break;
+		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort2,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0)); AllocMov(&Controllers.Port1); AllocMov(&Controllers.Port2); }	break;
+		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort3,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_GETCURSEL,0,0)); AllocMov(&Controllers.Port1); AllocMov(&Controllers.Port2); }	break;
+		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort4,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_GETCURSEL,0,0)); AllocMov(&Controllers.Port1); AllocMov(&Controllers.Port2); }	break;
 		case IDC_CONT_CPORT1:	Controllers.FSPort1.Config(&Controllers.FSPort1,hDlg);	break;
 		case IDC_CONT_CPORT2:	Controllers.FSPort2.Config(&Controllers.FSPort2,hDlg);	break;
 		case IDC_CONT_CPORT3:	Controllers.FSPort3.Config(&Controllers.FSPort3,hDlg);	break;
@@ -144,29 +197,26 @@ static	void	Config (struct tStdPort *Cont, HWND hWnd)
 static	void	Unload (struct tStdPort *Cont)
 {
 	free(Cont->Data);
+	free(Cont->MovData);
 }
 void	StdPort_SetFourScore (struct tStdPort *Cont)
 {
-	Controllers.Port1.Read = Read;
-	Controllers.Port2.Read = Read;
-	Controllers.Port1.Write = Write;
-	Controllers.Port2.Write = Write;
-	Controllers.Port1.Config = Config;
-	Controllers.Port2.Config = Config;
-	Controllers.Port1.Unload = Unload;
-	Controllers.Port2.Unload = Unload;
-	Controllers.Port1.Type = 5;
-	Controllers.Port2.Type = 5;
-	Controllers.Port1.DataLen = 3;
-	Controllers.Port2.DataLen = 3;
-	Controllers.Port1.Data = malloc(Controllers.Port1.DataLen * sizeof(Controllers.Port1.Data));
-	Controllers.Port2.Data = malloc(Controllers.Port2.DataLen * sizeof(Controllers.Port2.Data));
-	Controllers.Port1.BitPtr = 0;
-	Controllers.Port2.BitPtr = 0;
-	Controllers.Port1.Strobe = 0;
-	Controllers.Port2.Strobe = 0;
-	Controllers.Port1.PortNum = 0;
-	Controllers.Port2.PortNum = 1;
+	Cont->Read = Read;
+	Cont->Write = Write;
+	Cont->Config = Config;
+	Cont->Unload = Unload;
+	Cont->Frame = Frame;
+	Cont->Type = STD_FOURSCORE;
+	Cont->DataLen = 3;
+	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->MovData = NULL;
+	AllocMov(Cont);
+	Cont->BitPtr = 0;
+	Cont->Strobe = 0;
+	if (Cont == &Controllers.Port1)
+		Cont->PortNum = 0;
+	if (Cont == &Controllers.Port2)
+		Cont->PortNum = 1;
 }
 #undef	BitPtr
 #undef	Strobe

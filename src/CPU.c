@@ -136,8 +136,8 @@ void	CPU_SplitFlags (void)
 #ifndef NSFPLAYER
 static	__forceinline void	DoNMI (void)
 {
-	RunCycle();
-	RunCycle();
+	CPU_MemGetCode(CPU.PC);
+	CPU_MemGetCode(CPU.PC);
 	Push(CPU.PCH);
 	Push(CPU.PCL);
 	CPU_JoinFlags();
@@ -150,8 +150,8 @@ static	__forceinline void	DoNMI (void)
 #endif
 static	__forceinline void	DoIRQ (void)
 {
-	RunCycle();
-	RunCycle();
+	CPU_MemGetCode(CPU.PC);
+	CPU_MemGetCode(CPU.PC);
 	Push(CPU.PCH);
 	Push(CPU.PCL);
 	CPU_JoinFlags();
@@ -181,10 +181,11 @@ void	CPU_PowerOn (void)
 
 void	CPU_Reset (void)
 {
-	RunCycle();
-	RunCycle();
-	RunCycle();
-	RunCycle();
+	CPU_MemGetCode(CPU.PC);
+	CPU_MemGetCode(CPU.PC);
+	CPU_MemGet(0x100 | CPU.SP--);
+	CPU_MemGet(0x100 | CPU.SP--);
+	CPU_MemGet(0x100 | CPU.SP--);
 	CPU.FI = 1;
 	CPU_JoinFlags();
 

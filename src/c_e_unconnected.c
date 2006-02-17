@@ -23,6 +23,9 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Nintendulator.h"
 #include "Controllers.h"
 
+static	void	Frame (struct tExpPort *Cont)
+{
+}
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
 	return 0;
@@ -40,6 +43,8 @@ static	void	Config (struct tExpPort *Cont, HWND hWnd)
 }
 static	void	Unload (struct tExpPort *Cont)
 {
+	free(Cont->Data);
+	free(Cont->MovData);
 }
 void	ExpPort_SetUnconnected (struct tExpPort *Cont)
 {
@@ -48,7 +53,10 @@ void	ExpPort_SetUnconnected (struct tExpPort *Cont)
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 0;
 	Cont->DataLen = 0;
-	Cont->Data = NULL;
+	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->MovLen = 0;
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 }

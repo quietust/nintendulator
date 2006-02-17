@@ -925,14 +925,14 @@ static	void	__fastcall	Write7 (int What)
 {
 	if ((PPU.VRAMAddr & 0x3F00) == 0x3F00)
 	{
-		register unsigned char Addr = (unsigned char)PPU.VRAMAddr;
+		register unsigned char Addr = (unsigned char)PPU.VRAMAddr & 0x1F;
 		register unsigned Val = What & 0x3F;
 #ifdef ENABLE_DEBUGGER
 		Debugger.PalChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
-		if (Addr & 0x3)
-			PPU.Palette[Addr & 0x1F] = Val;
-		else	PPU.Palette[Addr & 0x0F] = PPU.Palette[0x10 | (Addr & 0xF)] = Val;
+		PPU.Palette[Addr] = Val;
+		if (!(Addr & 0x3))
+			PPU.Palette[Addr ^ 0x10] = Val;
 	}
 	else
 	{

@@ -30,6 +30,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 # include "APU.h"
 # include "CPU.h"
 # include "PPU.h"
+# include "AVI.h"
 #endif
 
 #define	SOUND_FILTERING
@@ -863,6 +864,8 @@ void	APU_Run (void)
 	NewBufPos = FREQ * ++APU.Cycles / APU.MHz;
 	if (NewBufPos >= buflen)
 	{
+		if (aviout)
+			AVI_AddAudio();
 		if (APU.isEnabled)
 		{
 			LPVOID bufPtr;

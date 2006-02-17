@@ -40,6 +40,10 @@ static	BOOL	LockCursorPos (int x, int y)
 #define	BitPtr	Data[2]
 #define	Strobe	Data[3]
 #define	Button	Data[4]
+static	void	Frame (struct tExpPort *Cont)
+{
+}
+
 static	void	UpdateCont (struct tExpPort *Cont)
 {
 	unsigned long x;
@@ -106,6 +110,7 @@ static	void	Config (struct tExpPort *Cont, HWND hWnd)
 static	void	Unload (struct tExpPort *Cont)
 {
 	free(Cont->Data);
+	free(Cont->MovData);
 }
 void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
 {
@@ -117,6 +122,8 @@ void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
 	Cont->NumButtons = 1;
 	Cont->DataLen = 5;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->MovLen = 0;
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	Cont->Bits = 0;
 	Cont->Pos = 340;
 	Cont->BitPtr = 0;

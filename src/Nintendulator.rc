@@ -110,10 +110,14 @@ BEGIN
         MENUITEM "Level &4 (Disassembly)\tCtrl+F4", ID_DEBUG_LEVEL4
     END
     MENUITEM "&Game",                       ID_GAME, GRAYED
-    POPUP "&AVI"
+    POPUP "&Misc"
     BEGIN
-        MENUITEM "S&tart Capture",              ID_AVI_STARTCAPTURE
-        MENUITEM "Sto&p Capture",               ID_AVI_STOPCAPTURE
+        MENUITEM "S&tart AVI Capture",          ID_MISC_STARTAVICAPTURE
+        MENUITEM "St&op AVI Capture",           ID_MISC_STOPAVICAPTURE
+        MENUITEM SEPARATOR
+        MENUITEM "P&lay Movie",                 ID_MISC_PLAYMOVIE
+        MENUITEM "&Record Movie",               ID_MISC_RECORDMOVIE
+        MENUITEM "Sto&p Movie",                 ID_MISC_STOPMOVIE
     END
     POPUP "&Help"
     BEGIN

@@ -34,11 +34,14 @@ struct tStdPort
 	void		(*Write)	(struct tStdPort *,unsigned char);
 	void		(*Config)	(struct tStdPort *,HWND);
 	void		(*Unload)	(struct tStdPort *);
+	void		(*Frame)	(struct tStdPort *);
 	int		Type;
 	int		Buttons[CONTROLLERS_MAXBUTTONS];
 	int		NumButtons;
 	int		DataLen;
 	unsigned long	*Data;
+	int		MovLen;
+	unsigned char	*MovData;
 };
 enum	STDCONT_TYPE	{ STD_UNCONNECTED, STD_STDCONTROLLER, STD_ZAPPER, STD_ARKANOIDPADDLE, STD_POWERPAD, STD_FOURSCORE, STD_MAX };
 void	StdPort_SetControllerType (struct tStdPort *,int);
@@ -50,14 +53,21 @@ struct tExpPort
 	void		(*Write)	(struct tExpPort *,unsigned char);
 	void		(*Config)	(struct tExpPort *,HWND);
 	void		(*Unload)	(struct tExpPort *);
+	void		(*Frame)	(struct tExpPort *);
 	int		Type;
 	int		Buttons[CONTROLLERS_MAXBUTTONS];
 	int		NumButtons;
 	int		DataLen;
 	unsigned long	*Data;
+	int		MovLen;
+	unsigned char	*MovData;
 };
 enum	EXPCONT_TYPE	{ EXP_UNCONNECTED, EXP_FAMI4PLAY, EXP_ARKANOIDPADDLE, EXP_FAMILYBASICKEYBOARD, EXP_ALTKEYBOARD, EXP_FAMTRAINER, EXP_MAX };
 void	ExpPort_SetControllerType (struct tExpPort *,int);
+
+#define	MOV_PLAY	0x01
+#define	MOV_RECORD	0x02
+#define	MOV_FMV		0x04
 
 struct tControllers
 {
@@ -70,6 +80,8 @@ struct tControllers
 	BOOL	DeviceUsed[32];
 	char	DeviceName[32][64];
 	int	NumButtons[32], NumAxes[32];
+
+	unsigned char	MovieMode;
 
 	BYTE		KeyState[256];
 	DIMOUSESTATE2	MouseState;
@@ -94,5 +106,9 @@ void	Controllers_ConfigButton (int *,int,HWND,BOOL);
 
 BOOL	Controllers_IsPressed (int);
 void	Controllers_ParseConfigMessages (HWND,int,int *,int *,int *,UINT,WPARAM,LPARAM);
+
+void	Controllers_PlayMovie (void);
+void	Controllers_RecordMovie (void);
+void	Controllers_StopMovie (void);
 
 #endif

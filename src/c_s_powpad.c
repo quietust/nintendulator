@@ -28,20 +28,37 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define	BitPtr	Data[2]
 #define	Strobe	Data[3]
 
+static	void	Frame (struct tStdPort *Cont)
+{
+}
+
 static	void	UpdateCont (struct tStdPort *Cont)
 {
 	int i;
 	unsigned char CBits1[12] = {0x02,0x01,0x00,0x00,0x04,0x10,0x80,0x00,0x08,0x20,0x40,0x00};
 	unsigned char CBits2[12] = {0x00,0x00,0x02,0x01,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x04};
-	Cont->Bits1 = 0;
-	Cont->Bits2 = 0;
-	for (i = 0; i < 12; i++)
+	if (Controllers.MovieMode & MOV_PLAY)
 	{
-		if (Controllers_IsPressed(Cont->Buttons[i]))
+		Cont->Bits1 = Cont->MovData[0];
+		Cont->Bits2 = Cont->MovData[1];
+	}
+	else
+	{
+		Cont->Bits1 = 0;
+		Cont->Bits2 = 0;
+		for (i = 0; i < 12; i++)
 		{
-			Cont->Bits1 |= CBits1[i];
-			Cont->Bits2 |= CBits2[i];
+			if (Controllers_IsPressed(Cont->Buttons[i]))
+			{
+				Cont->Bits1 |= CBits1[i];
+				Cont->Bits2 |= CBits2[i];
+			}
 		}
+	}
+	if (Controllers.MovieMode & MOV_RECORD)
+	{
+		Cont->MovData[0] = Cont->Bits1;
+		Cont->MovData[1] = Cont->Bits2;
 	}
 	Cont->BitPtr = 0;
 }
@@ -104,6 +121,7 @@ static	void	Config (struct tStdPort *Cont, HWND hWnd)
 static	void	Unload (struct tStdPort *Cont)
 {
 	free(Cont->Data);
+	free(Cont->MovData);
 }
 void	StdPort_SetPowerPad (struct tStdPort *Cont)
 {
@@ -111,9 +129,12 @@ void	StdPort_SetPowerPad (struct tStdPort *Cont)
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 12;
 	Cont->DataLen = 5;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->MovLen = 2;
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	Cont->Bits1 = 0;
 	Cont->Bits2 = 0;
 	Cont->BitPtr = 0;

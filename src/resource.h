@@ -118,8 +118,11 @@
 #define ID_DEBUG_LEVEL3                 32805
 #define ID_DEBUG_LEVEL4                 32806
 #define ID_CPU_STEP                     32807
-#define ID_AVI_STARTCAPTURE             32809
-#define ID_AVI_STOPCAPTURE              32810
+#define ID_MISC_STARTAVICAPTURE         32809
+#define ID_MISC_STOPAVICAPTURE          32810
+#define ID_MISC_PLAYMOVIE               32811
+#define ID_MISC_STOPMOVIE               32812
+#define ID_MISC_RECORDMOVIE             32813
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -127,7 +130,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        144
-#define _APS_NEXT_COMMAND_VALUE         32811
+#define _APS_NEXT_COMMAND_VALUE         32814
 #define _APS_NEXT_CONTROL_VALUE         1060
 #define _APS_NEXT_SYMED_VALUE           109
 #endif

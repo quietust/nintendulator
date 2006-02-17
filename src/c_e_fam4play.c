@@ -40,6 +40,10 @@ static	BOOL	LockCursorPos (int x, int y)
 #define	BitPtr1	Data[2]
 #define	BitPtr2	Data[3]
 #define	Strobe	Data[4]
+static	void	Frame (struct tExpPort *Cont)
+{
+}
+
 static	void	UpdateCont1 (struct tExpPort *Cont)
 {
 	int i;
@@ -119,6 +123,7 @@ static	void	Config (struct tExpPort *Cont, HWND hWnd)
 static	void	Unload (struct tExpPort *Cont)
 {
 	free(Cont->Data);
+	free(Cont->MovData);
 }
 void	ExpPort_SetFami4Play (struct tExpPort *Cont)
 {
@@ -130,6 +135,8 @@ void	ExpPort_SetFami4Play (struct tExpPort *Cont)
 	Cont->NumButtons = 16;
 	Cont->DataLen = 6;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->MovLen = 0;
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	Cont->Bits1 = 0;
 	Cont->Bits2 = 0;
 	Cont->BitPtr1 = 0;

@@ -40,20 +40,43 @@ static	BOOL	LockCursorPos (int x, int y)
 #define	BitPtr	Data[2]
 #define	Strobe	Data[3]
 #define	Button	Data[4]
+#define	Framed	Data[5]
+static	void	Frame (struct tStdPort *Cont)
+{
+	Cont->Framed = 0;
+}
 static	void	UpdateCont (struct tStdPort *Cont)
 {
-	unsigned long x;
+	int x, y;
 	int i;
-	LockCursorPos(128,220);
-	if (Controllers_IsPressed(Cont->Buttons[0]))
+	if (Controllers.MovieMode & MOV_PLAY)
+	{
+		x = Cont->MovData[0] | (Cont->MovData[1] << 8);
+		y = Cont->MovData[2];
+	}
+	else
+	{
+		LockCursorPos(128,220);
+		y = Controllers_IsPressed(Cont->Buttons[0]);
+		x = Cont->Pos;
+		if (!Cont->Framed)
+			x += Controllers.MouseState.lX;
+		if (x < 196)
+			x = 196;
+		if (x > 484)
+			x = 484;
+	}
+	if (Controllers.MovieMode & MOV_RECORD)
+	{
+		Cont->MovData[0] = x & 0xFF;
+		Cont->MovData[1] = x >> 8;
+		Cont->MovData[2] = y;
+
+	}
+	Cont->Framed = 1;
+	if (y)
 		Cont->Button = 1;
 	else	Cont->Button = 0;
-	x = Cont->Pos;
-	x += Controllers.MouseState.lX;
-	if (x < 196)
-		x = 196;
-	if (x > 484)
-		x = 484;
 	Cont->Pos = x;
 	Cont->Bits = 0;
 	x = ~x;
@@ -101,6 +124,7 @@ static	void	Config (struct tStdPort *Cont, HWND hWnd)
 static	void	Unload (struct tStdPort *Cont)
 {
 	free(Cont->Data);
+	free(Cont->MovData);
 }
 void	StdPort_SetArkanoidPaddle (struct tStdPort *Cont)
 {
@@ -108,14 +132,18 @@ void	StdPort_SetArkanoidPaddle (struct tStdPort *Cont)
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 1;
-	Cont->DataLen = 5;
+	Cont->DataLen = 6;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->MovLen = 3;
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	Cont->Bits = 0;
 	Cont->Pos = 340;
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
 	Cont->Button = 0;
+	Cont->Framed = 0;
 }
 #undef	Bits
 #undef	Pos

@@ -25,6 +25,9 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #define	Out	Data[0]
 #define	Scan	Data[1]
+static	void	Frame (struct tExpPort *Cont)
+{
+}
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
 	return 0;	/* tape, not yet implemented */
@@ -202,6 +205,7 @@ static	void	Config (struct tExpPort *Cont, HWND hWnd)
 static	void	Unload (struct tExpPort *Cont)
 {
 	free(Cont->Data);
+	free(Cont->MovData);
 }
 void	ExpPort_SetAltKeyboard (struct tExpPort *Cont)
 {
@@ -210,9 +214,12 @@ void	ExpPort_SetAltKeyboard (struct tExpPort *Cont)
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 0;
 	Cont->DataLen = 2;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->MovLen = 0;
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	Cont->Out = 0;
 	Cont->Scan = 0;
 }

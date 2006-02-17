@@ -23,6 +23,9 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Nintendulator.h"
 #include "Controllers.h"
 
+static	void	Frame (struct tStdPort *Cont)
+{
+}
 static	unsigned char	Read (struct tStdPort *Cont)
 {
 	return 0;
@@ -43,7 +46,10 @@ void	StdPort_SetUnconnected (struct tStdPort *Cont)
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
+	Cont->Frame = Frame;
 	Cont->NumButtons = 0;
 	Cont->DataLen = 0;
-	Cont->Data = NULL;
+	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->MovLen = 0;
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 }

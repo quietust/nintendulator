@@ -26,6 +26,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "PPU.h"
 #include "APU.h"
 #include "GFX.h"
+#include "AVI.h"
 #include "Debugger.h"
 #include "Controllers.h"
 #include "States.h"
@@ -444,6 +445,21 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_GAME:
 			NES_MapperConfig();
+			break;
+		case ID_MISC_STARTAVICAPTURE:
+			AVI_Start();
+			break;
+		case ID_MISC_STOPAVICAPTURE:
+			AVI_End();
+			break;
+		case ID_MISC_PLAYMOVIE:
+			Controllers_PlayMovie();
+			break;
+		case ID_MISC_RECORDMOVIE:
+			Controllers_RecordMovie();
+			break;
+		case ID_MISC_STOPMOVIE:
+			Controllers_StopMovie();
 			break;
 		default:return DefWindowProc(hWnd,message,wParam,lParam);
 			break;
