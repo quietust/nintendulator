@@ -29,6 +29,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "AVI.h"
 #include "Debugger.h"
 #include "States.h"
+#include "Movie.h"
 #include "Controllers.h"
 #include "Genie.h"
 
@@ -288,8 +289,8 @@ void	NES_CloseFile (void)
 
 	if (aviout)
 		AVI_End();
-	if (Controllers.MovieMode)
-		Controllers_StopMovie();
+	if (Movie.Mode)
+		Movie_Stop();
 
 	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_ENABLED);
@@ -947,7 +948,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 	{	// if we save or load while paused, we want to end up here
 		// so we don't end up advancing another frame
 		NES.GotStep = FALSE;
-		Controllers_ShowFrame();
+		Movie_ShowFrame();
 		while (NES.FrameStep && !NES.GotStep && !NES.Stop)
 			Sleep(1);
 	}
@@ -975,7 +976,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 				if (NES.FrameStep)	// if we pause during emulation
 				{	// it'll get caught down here at scanline 240
 					NES.GotStep = FALSE;
-					Controllers_ShowFrame();
+					Movie_ShowFrame();
 					while (NES.FrameStep && !NES.GotStep && !NES.Stop)
 						Sleep(1);
 				}
@@ -986,7 +987,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 	}
 
 	APU_SoundOFF();
-	Controllers_ShowFrame();
+	Movie_ShowFrame();
 
 #endif	/* CPU_BENCHMARK */
 	GFX_UpdateTitlebar();

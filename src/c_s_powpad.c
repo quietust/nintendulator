@@ -21,6 +21,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
 #include "Nintendulator.h"
+#include "Movie.h"
 #include "Controllers.h"
 
 #define	Bits1	Data[0]

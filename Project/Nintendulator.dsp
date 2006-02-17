@@ -92,42 +92,9 @@ LINK32=link.exe
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-# Begin Source File
+# Begin Group "Std Controllers"
 
-SOURCE=..\src\APU.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\AVI.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\c_e_altkey.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\c_e_arkpad.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\c_e_fam4play.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\c_e_famtrain.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\c_e_fbkey.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\c_e_tablet.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\c_e_unconnected.c
-# End Source File
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
 SOURCE=..\src\c_s_arkpad.c
@@ -156,6 +123,47 @@ SOURCE=..\src\c_s_unconnected.c
 
 SOURCE=..\src\c_s_zapper.c
 # End Source File
+# End Group
+# Begin Group "Exp Controllers"
+
+# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Source File
+
+SOURCE=..\src\c_e_altkey.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\c_e_arkpad.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\c_e_fam4play.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\c_e_famtrain.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\c_e_fbkey.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\c_e_tablet.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\c_e_unconnected.c
+# End Source File
+# End Group
+# Begin Source File
+
+SOURCE=..\src\APU.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\AVI.c
+# End Source File
 # Begin Source File
 
 SOURCE=..\src\Controllers.c
@@ -179,6 +187,10 @@ SOURCE=..\src\GFX.c
 # Begin Source File
 
 SOURCE=..\src\MapperInterface.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\Movie.c
 # End Source File
 # Begin Source File
 
@@ -231,6 +243,10 @@ SOURCE=..\src\GFX.h
 # Begin Source File
 
 SOURCE=..\src\MapperInterface.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\Movie.h
 # End Source File
 # Begin Source File
 

@@ -21,6 +21,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
 #include "Nintendulator.h"
+#include "Movie.h"
 #include "Controllers.h"
 
 static	BOOL	LockCursorPos (int x, int y)
@@ -59,7 +60,7 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 		if (Cont->Pos > 484)
 			Cont->Pos = 484;
 	}
-	if (Controllers.MovieMode & MOV_RECORD)
+	if (mode & MOV_RECORD)
 	{
 		Cont->MovData[0] = (unsigned char)(Cont->Pos & 0xFF);
 		Cont->MovData[1] = (unsigned char)((Cont->Pos >> 8) | (Cont->Button << 7));

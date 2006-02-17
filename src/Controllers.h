@@ -65,10 +65,6 @@ struct tExpPort
 enum	EXPCONT_TYPE	{ EXP_UNCONNECTED, EXP_FAMI4PLAY, EXP_ARKANOIDPADDLE, EXP_FAMILYBASICKEYBOARD, EXP_ALTKEYBOARD, EXP_FAMTRAINER, EXP_TABLET, EXP_MAX };
 void	ExpPort_SetControllerType (struct tExpPort *,int);
 
-#define	MOV_PLAY	0x01
-#define	MOV_RECORD	0x02
-#define	MOV_REVIEW	0x04
-
 struct tControllers
 {
 	struct tStdPort Port1, Port2;
@@ -80,8 +76,6 @@ struct tControllers
 	BOOL	DeviceUsed[32];
 	char	DeviceName[32][64];
 	int	NumButtons[32], NumAxes[32];
-
-	unsigned char	MovieMode;
 
 	BYTE		KeyState[256];
 	DIMOUSESTATE2	MouseState;
@@ -106,10 +100,5 @@ void	Controllers_ConfigButton (int *,int,HWND,BOOL);
 
 BOOL	Controllers_IsPressed (int);
 void	Controllers_ParseConfigMessages (HWND,int,int *,int *,int *,UINT,WPARAM,LPARAM);
-
-void	Controllers_ShowFrame (void);
-void	Controllers_PlayMovie (BOOL);
-void	Controllers_RecordMovie (BOOL);
-void	Controllers_StopMovie (void);
 
 #endif /* CONTROLLERS_H */

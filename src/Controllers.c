@@ -21,6 +21,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
 #include "Nintendulator.h"
+#include "Movie.h"
 #include "Controllers.h"
 #include "States.h"
 #include "GFX.h"
@@ -144,7 +145,7 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		for (i = 0; i < EXP_MAX; i++)
 			SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)ExpPort_Mappings[i]);
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_SETCURSEL,Controllers.ExpPort.Type,0);
-		if (Controllers.MovieMode)
+		if (Movie.Mode)
 		{
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),FALSE);
@@ -379,7 +380,7 @@ void	Controllers_Init (void)
 	
 	Controllers.NumDevices = 2;
 	IDirectInput7_EnumDevices(Controllers.DirectInput,DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
-	Controllers.MovieMode = 0;
+	Movie.Mode = 0;
 	Controllers_Acquire();
 }
 
@@ -466,391 +467,6 @@ void	Controllers_UnAcquire (void)
 	MaskKeyboard = 0;
 }
 
-FILE *movie;
-unsigned char MOV_ControllerTypes[4];
-int ReRecords;
-char MovieName[MAX_PATH];
-int MovieLen;
-int MoviePos;
-int MovieFrameLen;
-
-void	Controllers_ShowFrame (void)
-{
-	if (Controllers.MovieMode)
-		EI.StatusOut("Frame %i",MoviePos / MovieFrameLen);
-}
-
-void	Controllers_PlayMovie (BOOL Review)
-{
-	unsigned char buf[5];
-	OPENFILENAME ofn;
-	int len;
-
-	if (Controllers.MovieMode)
-	{
-		MessageBox(mWnd,"A movie is already open!","Nintendulator",MB_OK);
-		return;
-	}
-
-	NES_Stop();
-
-	ZeroMemory(&ofn,sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = mWnd;
-	ofn.hInstance = hInst;
-	ofn.lpstrFilter = "Nintendulator Movie (*.NMV)\0" "*.NMV\0" "\0";
-	ofn.lpstrCustomFilter = NULL;
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFile = MovieName;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = Path_NMV;
-	ofn.Flags = OFN_FILEMUSTEXIST;
-	ofn.lpstrDefExt = NULL;
-	ofn.lCustData = 0;
-	ofn.lpfnHook = NULL;
-	ofn.lpTemplateName = NULL;
-
-	if (!GetOpenFileName(&ofn))
-		return;
-
-	strcpy(Path_NMV,MovieName);
-	Path_NMV[ofn.nFileOffset-1] = 0;
-
-	if (Review)
-		movie = fopen(MovieName,"r+b");
-	else	movie = fopen(MovieName,"rb");
-	fread(buf,1,4,movie);
-	if (memcmp(buf,"NSS\x1a",4))
-	{
-		MessageBox(mWnd,"Invalid movie file selected!","Nintendulator",MB_OK);
-		fclose(movie);
-		return;
-	}
-
-	fread(buf,1,4,movie);
-	if (memcmp(buf,STATES_VERSION,4))
-	{
-		fclose(movie);
-		MessageBox(mWnd,"Incorrect movie version!", "Nintendulator", MB_OK | MB_ICONERROR);
-		return;
-	}
-	fread(&len,4,1,movie);
-	fread(buf,1,4,movie);
-
-	if (memcmp(buf,"NMOV",4))
-	{
-		fclose(movie);
-		MessageBox(mWnd,"This is not a valid Nintendulator movie recording!", "Nintendulator", MB_OK | MB_ICONERROR);
-		return;
-	}
-	fseek(movie,16,SEEK_SET);
-
-	MOV_ControllerTypes[0] = Controllers.Port1.Type;
-	MOV_ControllerTypes[1] = Controllers.Port2.Type;
-	MOV_ControllerTypes[2] = Controllers.ExpPort.Type;
-
-	if (Controllers.Port1.Type == STD_FOURSCORE)
-	{
-		MOV_ControllerTypes[1] = 0;
-		if (Controllers.FSPort1.Type)	MOV_ControllerTypes[1] |= 0x01;
-		if (Controllers.FSPort2.Type)	MOV_ControllerTypes[1] |= 0x02;
-		if (Controllers.FSPort3.Type)	MOV_ControllerTypes[1] |= 0x04;
-		if (Controllers.FSPort4.Type)	MOV_ControllerTypes[1] |= 0x08;
-	}
-
-	MOV_ControllerTypes[3] = 0;	// Reset 'loaded controller state' flag
-
-	MoviePos = MovieLen = 0;
-
-	NES.SRAM_Size = 0;		// when messing with movies, don't save SRAM
-
-	if (RI.ROMType == ROM_FDS)	// when playing FDS movies, discard savedata; if there is savestate data, we'll be reloading it
-		memcpy(PRG_ROM[0x000],PRG_ROM[0x400],RI.FDS_NumSides << 16);
-	NES_Reset(RESET_HARD);
-	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
-	if (!States_LoadData(movie,len))
-	{
-		fclose(movie);
-		MessageBox(mWnd,"Failed to load movie!", "Nintendulator", MB_OK | MB_ICONERROR);
-		return;
-	}
-
-	Controllers.MovieMode = MOV_PLAY;
-	if (Review)
-		Controllers.MovieMode |= MOV_REVIEW;
-	
-	rewind(movie);
-	fseek(movie,16,SEEK_SET);
-	fread(buf,4,1,movie);
-	fread(&len,4,1,movie);
-	while (memcmp(buf,"NMOV",4))
-	{	/* find the NMOV block in the movie */
-		fseek(movie,len,SEEK_CUR);
-		fread(buf,4,1,movie);
-		fread(&len,4,1,movie);
-	}
-
-	fread(buf,1,4,movie);
-
-	if (!MOV_ControllerTypes[3])	// ONLY parse this if we did NOT encounter a controller state block
-	{				// otherwise, it would mess up the original states of the controllers
-		if (buf[0] == STD_FOURSCORE)
-		{
-			if (buf[1] & 0x01)
-				StdPort_SetControllerType(&Controllers.FSPort1,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort1,STD_UNCONNECTED);
-			if (buf[1] & 0x02)
-				StdPort_SetControllerType(&Controllers.FSPort2,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort2,STD_UNCONNECTED);
-			if (buf[1] & 0x04)
-				StdPort_SetControllerType(&Controllers.FSPort3,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort3,STD_UNCONNECTED);
-			if (buf[1] & 0x08)
-				StdPort_SetControllerType(&Controllers.FSPort4,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort4,STD_UNCONNECTED);
-			StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-			StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
-		}
-		else
-		{
-			StdPort_SetControllerType(&Controllers.Port1,buf[0]);
-			StdPort_SetControllerType(&Controllers.Port2,buf[1]);
-		}
-		ExpPort_SetControllerType(&Controllers.ExpPort,buf[2]);
-	}
-	NES_SetCPUMode(buf[3] >> 7);	// Set to NTSC or PAL
-
-	MovieFrameLen = Controllers.Port1.MovLen + Controllers.Port2.MovLen + Controllers.ExpPort.MovLen;
-	if (NES.HasMenu)
-		MovieFrameLen++;
-	if (MovieFrameLen != (buf[3] & 0x7F))
-		MessageBox(mWnd,"The frame size specified in this movie is incorrect! This movie may not play properly!","Nintendulator",MB_OK | MB_ICONWARNING);
-
-	fread(&ReRecords,4,1,movie);
-	fread(&len,4,1,movie);
-	if (len)
-	{
-		char *desc = malloc(len);
-		fread(desc,len,1,movie);
-		EI.DbgOut("Description: \"%s\"",desc);
-		free(desc);
-	}
-	EI.DbgOut("Re-record count: %i",ReRecords);
-	MoviePos = 0;
-	fread(&MovieLen,4,1,movie);
-
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
-	if (Controllers.Port1.MovLen)
-		memset(Controllers.Port1.MovData,0,Controllers.Port1.MovLen);
-	if (Controllers.Port2.MovLen)
-		memset(Controllers.Port2.MovData,0,Controllers.Port2.MovLen);
-	if (Controllers.ExpPort.MovLen)
-		memset(Controllers.ExpPort.MovData,0,Controllers.ExpPort.MovLen);
-}
-
-void	Controllers_RecordMovie (BOOL fromState)
-{
-	OPENFILENAME ofn;
-	int len;
-	unsigned char x;
-
-	if (Controllers.MovieMode)
-	{
-		MessageBox(mWnd,"A movie is already open!","Nintendulator",MB_OK);
-		return;
-	}
-
-	NES_Stop();
-
-	if ((MI) && (MI->Config) && (!NES.HasMenu))
-	{
-		MessageBox(mWnd,"This game does not support using the 'Game' menu while recording!","Nintendulator",MB_OK);
-		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
-	}
-
-	ZeroMemory(&ofn,sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = mWnd;
-	ofn.hInstance = hInst;
-	ofn.lpstrFilter = "Nintendulator Movie (*.NMV)\0" "*.NMV\0" "\0";
-	ofn.lpstrCustomFilter = NULL;
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFile = MovieName;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = Path_NMV;
-	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-	ofn.lpstrDefExt = "NMV";
-	ofn.lCustData = 0;
-	ofn.lpfnHook = NULL;
-	ofn.lpTemplateName = NULL;
-
-	if (!GetSaveFileName(&ofn))
-		return;
-
-	strcpy(Path_NMV,MovieName);
-	Path_NMV[ofn.nFileOffset-1] = 0;
-
-	Controllers_OpenConfig();		// Allow user to choose the desired controllers
-	Controllers.MovieMode = MOV_RECORD;	// ...and lock it out until the movie ends
-
-	movie = fopen(MovieName,"w+b");
-	len = 0;
-	ReRecords = 0;
-	MoviePos = MovieLen = 0;
-
-	NES.SRAM_Size = 0;		// when messing with movies, don't save SRAM
-
-	fwrite("NSS\x1A",1,4,movie);
-	fwrite(STATES_VERSION,1,4,movie);
-	fwrite(&len,1,4,movie);
-	fwrite("NMOV",1,4,movie);
-
-	if (fromState)
-		States_SaveData(movie);
-	else
-	{
-		if (RI.ROMType == ROM_FDS)	// if recording an FDS movie from reset, discard all savedata
-			memcpy(PRG_ROM[0x000],PRG_ROM[0x400],RI.FDS_NumSides << 16);
-		NES_Reset(RESET_HARD);
-	}
-
-	fwrite("NMOV",1,4,movie);
-	fwrite(&len,1,4,movie);
-	
-	MOV_ControllerTypes[0] = Controllers.Port1.Type;
-	MOV_ControllerTypes[1] = Controllers.Port2.Type;
-	MOV_ControllerTypes[2] = Controllers.ExpPort.Type;
-
-	if (MOV_ControllerTypes[0] == STD_FOURSCORE)
-	{
-		MOV_ControllerTypes[1] = 0;
-		if (Controllers.FSPort1.Type)	MOV_ControllerTypes[1] |= 0x01;
-		if (Controllers.FSPort2.Type)	MOV_ControllerTypes[1] |= 0x02;
-		if (Controllers.FSPort3.Type)	MOV_ControllerTypes[1] |= 0x04;
-		if (Controllers.FSPort4.Type)	MOV_ControllerTypes[1] |= 0x08;
-	}
-	fwrite(MOV_ControllerTypes,1,3,movie);
-	x = PPU.IsPAL ? 0x80 : 0x00;
-	MovieFrameLen = 0;
-	MovieFrameLen += Controllers.Port1.MovLen;
-	MovieFrameLen += Controllers.Port2.MovLen;
-	MovieFrameLen += Controllers.ExpPort.MovLen;
-	if (NES.HasMenu)
-		MovieFrameLen++;
-	x |= MovieFrameLen;
-	fwrite(&x,1,1,movie);		// frame size, NTSC/PAL
-	fwrite(&ReRecords,4,1,movie);	// rerecord count
-	fwrite(&len,4,1,movie);		// comment length
-	// TODO - Actually store comment text
-	fwrite(&MovieLen,4,1,movie);	// movie data length (this gets filled in later)
-
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
-}
-
-void	Controllers_EndMovie (void)
-{
-	if (!(Controllers.MovieMode))
-	{
-		MessageBox(mWnd,"No movie is currently active!","Nintendulator",MB_OK);
-		return;
-	}
-	if (Controllers.MovieMode & MOV_RECORD)
-	{
-		int len = ftell(movie);
-		int mlen;
-		char tps[4];
-
-		fseek(movie,8,SEEK_SET);		len -= 16;
-		fwrite(&len,4,1,movie);			// 1: set the file length
-		fseek(movie,16,SEEK_SET);
-		fread(tps,4,1,movie);
-		fread(&mlen,4,1,movie);			len -= 8;
-		while (memcmp(tps,"NMOV",4))
-		{	/* find the NMOV block in the movie */
-			fseek(movie,mlen,SEEK_CUR);	len -= mlen;
-			fread(tps,4,1,movie);
-			fread(&mlen,4,1,movie);		len -= 8;
-		}
-		fseek(movie,-4,SEEK_CUR);
-		fwrite(&len,4,1,movie);			// 2: set the NMOV block length
-		fseek(movie,4,SEEK_CUR);		len -= 4;	// skip controller data
-		fwrite(&ReRecords,4,1,movie);		len -= 4;	// write the final re-record count
-		fseek(movie,ftell(movie),SEEK_SET);
-		fread(&mlen,4,1,movie);			len -= 4;	// read description len
-		if (mlen)
-		{
-			fseek(movie,mlen,SEEK_CUR);	len -= mlen;	// skip the description
-		}
-		fread(tps,4,1,movie);			len -= 4;	// read movie data len
-		fseek(movie,-4,SEEK_CUR);		// rewind
-		if (len != MoviePos)
-			EI.DbgOut("Error - movie length mismatch!");
-		fwrite(&len,4,1,movie);			// 3: terminate the movie data
-		// fseek(movie,len,SEEK_CUR);
-		// TODO - truncate the file to this point
-	}
-	fclose(movie);
-	Controllers.MovieMode = 0;
-
-	if (MOV_ControllerTypes[0] == STD_FOURSCORE)
-	{
-		if (MOV_ControllerTypes[1] & 0x01)
-			StdPort_SetControllerType(&Controllers.FSPort1,STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers.FSPort1,STD_UNCONNECTED);
-		if (MOV_ControllerTypes[1] & 0x02)
-			StdPort_SetControllerType(&Controllers.FSPort2,STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers.FSPort2,STD_UNCONNECTED);
-		if (MOV_ControllerTypes[1] & 0x04)
-			StdPort_SetControllerType(&Controllers.FSPort3,STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers.FSPort3,STD_UNCONNECTED);
-		if (MOV_ControllerTypes[1] & 0x08)
-			StdPort_SetControllerType(&Controllers.FSPort4,STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers.FSPort4,STD_UNCONNECTED);
-		StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-		StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
-	}
-	else
-	{
-		StdPort_SetControllerType(&Controllers.Port1,MOV_ControllerTypes[0]);
-		StdPort_SetControllerType(&Controllers.Port2,MOV_ControllerTypes[1]);
-	}
-	ExpPort_SetControllerType(&Controllers.ExpPort,MOV_ControllerTypes[2]);
-	if ((MI) && (MI->Config))
-		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_ENABLED);
-}
-
-void	Controllers_StopMovie (void)
-{
-	BOOL running = NES.Running;
-	NES_Stop();
-	Controllers_EndMovie();
-	if (running)
-		NES_Start(FALSE);
-}
 
 void	Controllers_UpdateInput (void)
 {
@@ -890,54 +506,20 @@ void	Controllers_UpdateInput (void)
 				ZeroMemory(&Controllers.JoyState[i-2],sizeof(DIJOYSTATE2));
 		}
 
-	if (Controllers.MovieMode & MOV_PLAY)
-	{
-		if (Controllers.Port1.MovLen)
-			fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);	MoviePos += Controllers.Port1.MovLen;
-		if (Controllers.Port2.MovLen)
-			fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);	MoviePos += Controllers.Port2.MovLen;
-		if (Controllers.ExpPort.MovLen)
-			fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);	MoviePos += Controllers.ExpPort.MovLen;
-		if (MoviePos >= MovieLen)
-		{
-			if (MoviePos == MovieLen)
-				GFX_ShowText("Movie stopped.");
-			else	GFX_ShowText("Unexpected EOF in movie!");
-			Controllers_EndMovie();
-		}
-		if (NES.HasMenu)
-		{
-			fread(&Cmd,1,1,movie);
-			MoviePos++;
-		}
-	}
+	if (Movie.Mode & MOV_PLAY)
+		Cmd = Movie_LoadInput();
 	else
 	{
 		if ((MI) && (MI->Config))
 			Cmd = MI->Config(CFG_QUERY,0);
 	}
-	Controllers.Port1.Frame(&Controllers.Port1,Controllers.MovieMode);
-	Controllers.Port2.Frame(&Controllers.Port2,Controllers.MovieMode);
-	Controllers.ExpPort.Frame(&Controllers.ExpPort,Controllers.MovieMode);
+	Controllers.Port1.Frame(&Controllers.Port1,Movie.Mode);
+	Controllers.Port2.Frame(&Controllers.Port2,Movie.Mode);
+	Controllers.ExpPort.Frame(&Controllers.ExpPort,Movie.Mode);
 	if ((Cmd) && (MI) && (MI->Config))
 		MI->Config(CFG_CMD,Cmd);
-	if (Controllers.MovieMode & MOV_RECORD)
-	{
-		int len = 0;
-		if (Controllers.Port1.MovLen)
-			fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,movie);	len += Controllers.Port1.MovLen;
-		if (Controllers.Port2.MovLen)
-			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);	len += Controllers.Port2.MovLen;
-		if (Controllers.ExpPort.MovLen)
-			fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);	len += Controllers.ExpPort.MovLen;
-		if (NES.HasMenu)
-		{
-			fwrite(&Cmd,1,1,movie);
-			len++;
-		}
-		MoviePos += len;
-		MovieLen += len;
-	}
+	if (Movie.Mode & MOV_RECORD)
+		Movie_SaveInput(Cmd);
 }
 
 int	Controllers_GetConfigKey (HWND hWnd)

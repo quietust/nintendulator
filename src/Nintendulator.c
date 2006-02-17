@@ -28,6 +28,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "GFX.h"
 #include "AVI.h"
 #include "Debugger.h"
+#include "Movie.h"
 #include "Controllers.h"
 #include "States.h"
 #include <commdlg.h>
@@ -279,16 +280,16 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CPU_SOFTRESET:
 			NES_Stop();
-			if (Controllers.MovieMode)
-				Controllers_StopMovie();
+			if (Movie.Mode)
+				Movie_Stop();
 			NES_Reset(RESET_SOFT);
 			if (running)
 				NES_Start(FALSE);
 			break;
 		case ID_CPU_HARDRESET:
 			NES_Stop();
-			if (Controllers.MovieMode)
-				Controllers_StopMovie();
+			if (Movie.Mode)
+				Movie_Stop();
 			NES_Reset(RESET_HARD);
 			if (running)
 				NES_Start(FALSE);
@@ -471,19 +472,19 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			AVI_End();
 			break;
 		case ID_MISC_PLAYMOVIE:
-			Controllers_PlayMovie(FALSE);
+			Movie_Play(FALSE);
 			break;
 		case ID_MISC_RESUMEMOVIE:
-			Controllers_PlayMovie(TRUE);
+			Movie_Play(TRUE);
 			break;
 		case ID_MISC_RECORDMOVIE:
-			Controllers_RecordMovie(FALSE);
+			Movie_Record(FALSE);
 			break;
 		case ID_MISC_RECORDSTATE:
-			Controllers_RecordMovie(TRUE);
+			Movie_Record(TRUE);
 			break;
 		case ID_MISC_STOPMOVIE:
-			Controllers_StopMovie();
+			Movie_Stop();
 			break;
 		case ID_CPU_FRAMESTEP_ENABLED:
 			NES.FrameStep = !NES.FrameStep;

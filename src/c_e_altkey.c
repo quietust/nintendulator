@@ -21,6 +21,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
 #include "Nintendulator.h"
+#include "Movie.h"
 #include "Controllers.h"
 
 #define	Out	Data[0]
@@ -30,7 +31,7 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 	if (mode & MOV_RECORD)
 	{
 		MessageBox(mWnd,"Alternate Famicom Keyboard does not support recording movies!","Nintendulator",MB_OK | MB_ICONERROR);
-		Controllers_StopMovie();
+		Movie_Stop();
 	}
 }
 static	unsigned char	Read1 (struct tExpPort *Cont)
