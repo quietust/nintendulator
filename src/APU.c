@@ -20,7 +20,7 @@ For a copy of the GNU General Public License, go to:
 http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
-#ifdef NSFPLAYER
+#ifdef	NSFPLAYER
 # include "in_nintendulator.h"
 # include "APU.h"
 # include "CPU.h"
@@ -34,13 +34,14 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #define	SOUND_FILTERING
 //#define	SOUND_LOGGING
-#ifdef NSFPLAYER
+
+#ifdef	NSFPLAYER
 #undef	SOUND_LOGGING
 #endif
 
 struct tAPU APU;
 
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 #define	FREQ		44100
 #define	BITS		16
 #define	FRAMEBUF	4
@@ -517,7 +518,7 @@ __inline void	Frame_Run (void)
 
 void	APU_WriteReg (int Addy, unsigned char Val)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	APU.Regs[Addy] = Val;
 #endif
 	switch (Addy)
@@ -549,11 +550,11 @@ void	APU_WriteReg (int Addy, unsigned char Val)
 			DPCM_Write(4,Val & 0x10);
 						break;
 	case 0x017:
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 			APU.Regs[0x014] = Val;
 #endif
 			Frame_Write(Val);	break;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	default:	MessageBox(mWnd,"WTF? Invalid sound write!","Nintendulator",MB_OK);
 #else
 	default:	MessageBox(mod.hMainWindow,"WTF? Invalid sound write!","Nintendulator",MB_OK);
@@ -575,7 +576,7 @@ unsigned char	APU_Read4015 (void)
 	return result;
 }
 
-#ifdef NSFPLAYER
+#ifdef	NSFPLAYER
 #define	APU_Try(action,errormsg)\
 {\
 	if (FAILED(action))\
@@ -619,31 +620,31 @@ void	APU_SetFPSVars (int FPS)
 	else if (APU.WantFPS == 50)
 	{
 		APU.MHz = 1662607;
-		APU.QuarterFrameLen = 8313; //6928
+		APU.QuarterFrameLen = 8313;
 		DPCMFreq = DPCMFreqPAL;
 	}
 	else
 	{
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 		MessageBox(mWnd,"Attempted to set indeterminate sound framerate!","Nintendulator",MB_OK | MB_ICONERROR);
 #else
 		MessageBox(mod.hMainWindow,"Attempted to set indeterminate sound framerate!","Nintendulator",MB_OK | MB_ICONERROR);
 #endif
 		return;
 	}
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	APU.LockSize = LOCK_SIZE / APU.WantFPS;
 #endif
 }
 
 void	APU_SetFPS (int FPS)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	BOOL Enabled = APU.isEnabled;
 	APU_Release();
 #endif
 	APU_SetFPSVars(FPS);
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	APU_Create();
 	if (Enabled)
 		APU_SoundON();
@@ -652,7 +653,7 @@ void	APU_SetFPS (int FPS)
 
 void	APU_Init (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	ZeroMemory(APU.Regs,sizeof(APU.Regs));
 	APU.DirectSound		= NULL;
 	APU.PrimaryBuffer	= NULL;
@@ -662,20 +663,20 @@ void	APU_Init (void)
 #endif
 	APU.WantFPS		= 0;
 	APU.MHz			= 1;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	APU.LockSize		= 0;
 #endif
 	APU.QuarterFrameLen	= 0;
 	APU.Cycles		= 0;
 	APU.BufPos		= 0;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	APU.last_pos		= 0;
 #endif
 }
 
 void	APU_Create (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	DSBUFFERDESC DSBD;
 	WAVEFORMATEX WFX;
 #endif
@@ -683,7 +684,7 @@ void	APU_Create (void)
 	if (!APU.WantFPS)
 		APU_SetFPSVars(60);
 
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	if (FAILED(DirectSoundCreate(NULL,&APU.DirectSound,NULL)))
 	{
 		MessageBox(mWnd,"Failed to create DirectSound interface!","Nintendulator",MB_OK);
@@ -749,7 +750,7 @@ void	APU_Create (void)
 
 void	APU_Release (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	if (APU.Buffer)
 	{
 		APU_SoundOFF();
@@ -767,8 +768,8 @@ void	APU_Release (void)
 
 void	APU_Reset  (void)
 {
-#ifndef NSFPLAYER
-	ZeroMemory(APU.Regs,0x16);
+#ifndef	NSFPLAYER
+	ZeroMemory(APU.Regs,0x18);
 #endif
 	ZeroMemory(&Frame,sizeof(Frame));
 	ZeroMemory(&Square0,sizeof(Square0));
@@ -795,7 +796,7 @@ void	APU_Reset  (void)
 FILE *soundlog = NULL;
 #endif
 
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 void	APU_SoundOFF (void)
 {
 	APU.isEnabled = FALSE;
@@ -857,7 +858,7 @@ BOOL	sample_ok = FALSE;
 void	APU_Run (void)
 {
 	static int sampcycles = 0, samppos = 0;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	int NewBufPos, buflen = APU.LockSize / (BITS / 8);
 	NewBufPos = FREQ * ++APU.Cycles / APU.MHz;
 	if (NewBufPos >= buflen)
@@ -907,7 +908,7 @@ void	APU_Run (void)
 #endif
 		if ((MI) && (MI->GenSound))
 			samppos += MI->GenSound(sampcycles);
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 		APU.buffer[APU.BufPos] = samppos;
 #else
 		sample_pos = samppos;
