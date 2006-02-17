@@ -291,7 +291,7 @@ void	_MAPINT	CPU_Write4k (int Bank, int Addy, int Val)
 			APU_WriteReg(Addy,Val);	break;
 	case 0x014:	for (i = 0; i < 0x100; i++)
 				CPU_MemSet(0x2004,CPU_MemGet((Val << 8) | i));
-						break;
+			CPU_MemGet(CPU.PC);	break;
 #ifndef NSFPLAYER
 	case 0x016:	Controllers_Write(Val);	break;
 #endif
