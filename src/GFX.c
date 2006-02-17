@@ -206,6 +206,8 @@ void	GFX_Release (void)
 void	GFX_DrawScreen (void)
 {
 	static int TitleDelay = 0;
+	if (aviout)
+		AVI_AddVideo();
 	GFX.FPSCnt++;
 	if (GFX.FPSCnt > GFX.FSkip)
 	{
@@ -267,8 +269,6 @@ void	GFX_SetFrameskip (void)
 
 void	GFX_Update (void)
 {
-	if (aviout)
-		AVI_AddVideo();
 #ifdef	GFX_SAFE_LOCK
 	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),"Failed to lock secondary surface")
 	memcpy(GFX.SurfDesc.lpSurface,GFX.DrawArray,GFX.SurfSize);
