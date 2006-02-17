@@ -631,6 +631,7 @@ void	Controllers_PlayMovie (BOOL Review)
 			}
 			ExpPort_SetControllerType(&Controllers.ExpPort,buf[2]);
 		}
+		NES_SetCPUMode(buf[3]);	// Set to NTSC or PAL
 
 		fread(&ReRecords,4,1,movie);
 		fread(&len,4,1,movie);
@@ -730,7 +731,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 		if (Controllers.FSPort4.Type)	MOV_ControllerTypes[1] |= 0x08;
 	}
 	fwrite(MOV_ControllerTypes,1,3,movie);
-	fwrite(&len,1,1,movie);	// extra byte
+	fwrite(&PPU.IsPAL,1,1,movie);	// NTSC/PAL
 	fwrite(&len,4,1,movie);	// rerecord count
 	fwrite(&len,4,1,movie);	// comment length
 	// TODO - Actually store comment text
