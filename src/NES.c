@@ -514,6 +514,17 @@ const char *	NES_OpenFileNSF (char *filename)
 	}
 	fclose(in);
 
+	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
+	{
+		EI.DbgOut("Adjusting NSF playback speed for NTSC...");
+		RI.NSF_NTSCSpeed = 16639;
+	}
+	if (RI.NSF_PALSpeed == 20000)
+	{
+		EI.DbgOut("Adjusting NSF playback speed for PAL...");
+		RI.NSF_NTSCSpeed = 19997;
+	}
+
 	NES.PRGMask = MAX_PRGROM_MASK;
 	
 	if (!MapperInterface_LoadMapper(&RI))
