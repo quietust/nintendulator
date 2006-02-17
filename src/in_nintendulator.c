@@ -172,7 +172,12 @@ int play(char *fn)
 		ReadFile(input_file,&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF),file_length,&numBytesRead,NULL);
 	}
 
-	NES.PRGMask = 0x7FFFFF;
+	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
+		RI.NSF_NTSCSpeed = 16639;	// adjust NSF playback speed to match actual NTSC NES framerate
+	if (RI.NSF_PALSpeed == 20000)
+		RI.NSF_NTSCSpeed = 19997;	// same for PAL NSFs (though we don't really support those right now)
+
+	NES.PRGMask = MAX_PRGROM_MASK;
 
 	if (!MapperInterface_LoadMapper(&RI))
 	{
