@@ -587,7 +587,9 @@ void	AddDebug (char *txt)
 	strcat(DebugText,txt);
 	strcat(DebugText,"\r\n");
 	SetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText);
-	/* Scroll it to the bottom - how? */
+	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SETSEL,0,-1);	/* select all text, move caret to end */
+	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SETSEL,-1,-1);	/* remove selection, caret stays at end */
+	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SCROLLCARET,0,0);	/* scroll caret onto screen */
 }
 void	ShowDebug (void)
 {
