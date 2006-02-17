@@ -434,7 +434,7 @@ void	Controllers_SetDeviceUsed (void)
 
 	for (i = 0; i < CONTROLLERS_MAXBUTTONS; i++)
 	{
-		if (Controllers.Port1.Type == 5)
+		if (Controllers.Port1.Type == STD_FOURSCORE)
 		{
 			if (i < Controllers.FSPort1.NumButtons)
 				Controllers.DeviceUsed[Controllers.FSPort1.Buttons[i] >> 16] = TRUE;
@@ -455,6 +455,8 @@ void	Controllers_SetDeviceUsed (void)
 		if (i < Controllers.ExpPort.NumButtons)
 			Controllers.DeviceUsed[Controllers.ExpPort.Buttons[i] >> 16] = TRUE;
 	}
+	if ((Controllers.Port1.Type == STD_ARKANOIDPADDLE) || (Controllers.Port2.Type == STD_ARKANOIDPADDLE) || (Controllers.ExpPort.Type == EXP_ARKANOIDPADDLE))
+		Controllers.DeviceUsed[1] = TRUE;
 }
 
 void	Controllers_Acquire (void)
