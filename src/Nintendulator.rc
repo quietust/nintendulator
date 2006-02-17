@@ -1,0 +1,903 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+#include "resource.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_NINTENDULATOR       ICON    DISCARDABLE     "Nintendulator.ICO"
+IDI_SMALL               ICON    DISCARDABLE     "SMALL.ICO"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_NINTENDULATOR MENU DISCARDABLE 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Open\tCtrl+O",               ID_FILE_OPEN
+        MENUITEM "&Close",                      ID_FILE_CLOSE
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit\tAlt+F4",               IDM_EXIT
+    END
+    POPUP "&CPU"
+    BEGIN
+        MENUITEM "&Run\tF2",                    ID_CPU_RUN
+        MENUITEM "&Step\tShift+F2",             ID_CPU_STEP
+        MENUITEM "S&top\tF3",                   ID_CPU_STOP
+        MENUITEM "H&ard Reset\tF4",             ID_CPU_HARDRESET
+        MENUITEM "So&ft Reset\tShift+F4",       ID_CPU_SOFTRESET
+        MENUITEM SEPARATOR
+        MENUITEM "&Save State\tF5",             ID_CPU_SAVESTATE
+        MENUITEM "&Load State\tF8",             ID_CPU_LOADSTATE
+        MENUITEM "&Prev State\tF6",             ID_CPU_PREVSTATE
+        MENUITEM "&Next State\tF7",             ID_CPU_NEXTSTATE
+        MENUITEM "&Incremental",                ID_CPU_INCREMENTAL
+        MENUITEM SEPARATOR
+        MENUITEM "&Game Genie\tCtrl+G",         ID_CPU_GAMEGENIE
+    END
+    POPUP "&PPU"
+    BEGIN
+        POPUP "&Frameskip"
+        BEGIN
+            MENUITEM "&Auto",                       ID_PPU_FRAMESKIP_AUTO
+            MENUITEM SEPARATOR
+            MENUITEM "&0",                          ID_PPU_FRAMESKIP_0
+            MENUITEM "&1",                          ID_PPU_FRAMESKIP_1
+            MENUITEM "&2",                          ID_PPU_FRAMESKIP_2
+            MENUITEM "&3",                          ID_PPU_FRAMESKIP_3
+            MENUITEM "&4",                          ID_PPU_FRAMESKIP_4
+            MENUITEM "&5",                          ID_PPU_FRAMESKIP_5
+            MENUITEM "&6",                          ID_PPU_FRAMESKIP_6
+            MENUITEM "&7",                          ID_PPU_FRAMESKIP_7
+            MENUITEM "&8",                          ID_PPU_FRAMESKIP_8
+            MENUITEM "&9",                          ID_PPU_FRAMESKIP_9
+        END
+        POPUP "&Size"
+        BEGIN
+            MENUITEM "&1X",                         ID_PPU_SIZE_1X
+            MENUITEM "&2X",                         ID_PPU_SIZE_2X
+            MENUITEM "&3X",                         ID_PPU_SIZE_3X
+            MENUITEM "&4X",                         ID_PPU_SIZE_4X
+        END
+        POPUP "&Mode"
+        BEGIN
+            MENUITEM "&NTSC",                       ID_PPU_MODE_NTSC
+            MENUITEM "&PAL",                        ID_PPU_MODE_PAL
+        END
+    END
+    POPUP "&Sound"
+    BEGIN
+        MENUITEM "&Enabled\tCtrl+S",            ID_SOUND_ENABLED
+    END
+    POPUP "&Input"
+    BEGIN
+        MENUITEM "&Setup",                      ID_INPUT_SETUP
+    END
+    POPUP "&Debug"
+    BEGIN
+        MENUITEM "Level &1 (None)\tCtrl+F1",    ID_DEBUG_LEVEL1
+        MENUITEM "Level 2 (Pattern Tables)\tCtrl+F2", ID_DEBUG_LEVEL2
+        MENUITEM "Level &3 (Nametables)\tCtrl+F3", ID_DEBUG_LEVEL3
+        MENUITEM "Level &4 (Disassembly)\tCtrl+F4", ID_DEBUG_LEVEL4
+    END
+    MENUITEM "Game",                        65535, GRAYED
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About ...",                  IDM_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDC_NINTENDULATOR ACCELERATORS MOVEABLE PURE 
+BEGIN
+    "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    "G",            ID_CPU_GAMEGENIE,       VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_SOUND_ENABLED,       VIRTKEY, CONTROL, NOINVERT
+    VK_F1,          ID_DEBUG_LEVEL1,        VIRTKEY, CONTROL, NOINVERT
+    VK_F2,          ID_CPU_RUN,             VIRTKEY, NOINVERT
+    VK_F2,          ID_DEBUG_LEVEL2,        VIRTKEY, CONTROL, NOINVERT
+    VK_F2,          ID_CPU_STEP,            VIRTKEY, SHIFT, NOINVERT
+    VK_F3,          ID_CPU_STOP,            VIRTKEY, NOINVERT
+    VK_F3,          ID_DEBUG_LEVEL3,        VIRTKEY, CONTROL, NOINVERT
+    VK_F4,          ID_CPU_HARDRESET,       VIRTKEY, NOINVERT
+    VK_F4,          ID_DEBUG_LEVEL4,        VIRTKEY, CONTROL, NOINVERT
+    VK_F4,          ID_CPU_SOFTRESET,       VIRTKEY, SHIFT, NOINVERT
+    VK_F5,          ID_CPU_SAVESTATE,       VIRTKEY, NOINVERT
+    VK_F6,          ID_CPU_PREVSTATE,       VIRTKEY, NOINVERT
+    VK_F7,          ID_CPU_NEXTSTATE,       VIRTKEY, NOINVERT
+    VK_F8,          ID_CPU_LOADSTATE,       VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 73
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 8, "MS Sans Serif"
+BEGIN
+    ICON            IDI_NINTENDULATOR,IDC_MYICON,11,23,20,20
+    LTEXT           "Nintendulator Version 0.900\nCopyright © 2002 Quietust\nDebugger written by David de Regt",
+                    IDC_STATIC,42,20,119,31
+    DEFPUSHBUTTON   "OK",IDOK,172,25,48,16,WS_GROUP
+END
+
+IDD_CONTROLLERS DIALOG DISCARDABLE  0, 0, 224, 84
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Controller Configuration"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,88,60,48,16
+    COMBOBOX        IDC_CONT_SPORT1,68,8,104,64,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CONT_SPORT2,68,24,104,64,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CONT_SEXPPORT,68,40,104,64,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Config",IDC_CONT_CPORT1,176,8,40,12
+    PUSHBUTTON      "Config",IDC_CONT_CPORT2,176,24,40,12
+    PUSHBUTTON      "Config",IDC_CONT_CEXPPORT,176,40,40,12
+    LTEXT           "Controller Port 1",IDC_STATIC,8,8,56,12
+    LTEXT           "Controller Port 2",IDC_STATIC,8,24,56,12
+    LTEXT           "Expansion Port",IDC_STATIC,8,40,56,12
+END
+
+IDD_STDPORT_ZAPPER DIALOG DISCARDABLE  0, 0, 244, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Zapper Config"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,96,40,52,16
+    RTEXT           "Trigger",IDC_STATIC,8,16,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D0,40,16,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K0,172,16,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+END
+
+IDD_STDPORT_STDCONTROLLER DIALOG DISCARDABLE  0, 0, 244, 199
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Standard Controller Config"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,96,180,52,16
+    GROUPBOX        "Buttons",IDC_STATIC,4,4,236,80
+    RTEXT           "A",IDC_STATIC,8,16,28,12,SS_CENTERIMAGE
+    RTEXT           "B",IDC_STATIC,8,32,28,12,SS_CENTERIMAGE
+    RTEXT           "Select",IDC_STATIC,8,48,28,12,SS_CENTERIMAGE
+    RTEXT           "Start",IDC_STATIC,8,64,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D0,40,16,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D1,40,32,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D2,40,48,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D3,40,64,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K0,172,16,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K1,172,32,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K2,172,48,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K3,172,64,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    GROUPBOX        "D-pad",IDC_STATIC,4,92,236,80
+    RTEXT           "Up",IDC_STATIC,8,104,28,11,SS_CENTERIMAGE
+    RTEXT           "Down",IDC_STATIC,8,120,28,12,SS_CENTERIMAGE
+    RTEXT           "Left",IDC_STATIC,8,136,28,12,SS_CENTERIMAGE
+    RTEXT           "Right",IDC_STATIC,8,152,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D4,40,104,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D5,40,120,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D6,40,136,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D7,40,152,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K4,172,104,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K5,172,120,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K6,172,136,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K7,172,152,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+END
+
+IDD_STDPORT_ARKANOIDPADDLE DIALOG DISCARDABLE  0, 0, 244, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Arkanoid Paddle Config"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,96,36,52,16
+    RTEXT           "Button",IDC_STATIC,8,16,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D0,40,16,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K0,172,16,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+END
+
+IDD_STDPORT_POWERPAD DIALOG DISCARDABLE  0, 0, 244, 252
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Power Pad Config"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,96,228,52,16
+    RTEXT           "1",IDC_STATIC,8,8,8,12,SS_CENTERIMAGE
+    RTEXT           "2",IDC_STATIC,8,24,8,12,SS_CENTERIMAGE
+    RTEXT           "3",IDC_STATIC,8,40,8,12,SS_CENTERIMAGE
+    RTEXT           "4",IDC_STATIC,8,56,8,12,SS_CENTERIMAGE
+    RTEXT           "5",IDC_STATIC,8,72,8,12,SS_CENTERIMAGE
+    RTEXT           "6",IDC_STATIC,8,88,8,12,SS_CENTERIMAGE
+    RTEXT           "7",IDC_STATIC,8,104,8,12,SS_CENTERIMAGE
+    RTEXT           "8",IDC_STATIC,8,120,8,12,SS_CENTERIMAGE
+    RTEXT           "9",IDC_STATIC,8,136,8,12,SS_CENTERIMAGE
+    RTEXT           "10",IDC_STATIC,8,152,8,12,SS_CENTERIMAGE
+    RTEXT           "11",IDC_STATIC,8,168,8,12,SS_CENTERIMAGE
+    RTEXT           "12",IDC_STATIC,8,184,8,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D0,20,8,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D1,20,24,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D2,20,40,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D3,20,56,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D4,20,72,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D5,20,88,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D6,20,104,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D7,20,120,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D8,20,136,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D9,20,152,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D10,20,168,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D11,20,184,148,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K0,172,8,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K1,172,24,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K2,172,40,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K3,172,56,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K4,172,72,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K5,172,88,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K6,172,104,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K7,172,120,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K8,172,136,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K9,172,152,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K10,172,168,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K11,172,184,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "      Side A\n\n 1    2    3    4\n 5    6    7    8\n 9   10  11  12",
+                    IDC_STATIC,32,204,48,40
+    LTEXT           "      Side B\n\n       3    2\n 8    7    6    5\n      11  10",
+                    IDC_STATIC,164,204,48,40
+END
+
+IDD_STDPORT_FOURSCORE DIALOG DISCARDABLE  0, 0, 224, 97
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Four-Score Configuration"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,88,76,48,16
+    COMBOBOX        IDC_CONT_SPORT1,36,8,128,64,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_SPORT2,36,24,128,64,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "Config",IDC_CONT_CPORT1,168,8,48,12
+    PUSHBUTTON      "Config",IDC_CONT_CPORT2,168,24,48,12
+    LTEXT           "Port 1",IDC_STATIC,8,8,24,12
+    LTEXT           "Port 2",IDC_STATIC,8,24,24,12
+    LTEXT           "Port 3",IDC_STATIC,8,40,24,12
+    LTEXT           "Port 4",IDC_STATIC,8,56,24,12
+    COMBOBOX        IDC_CONT_SPORT3,36,40,128,64,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_SPORT4,36,56,128,64,CBS_DROPDOWN | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "Config",IDC_CONT_CPORT3,168,40,48,12
+    PUSHBUTTON      "Config",IDC_CONT_CPORT4,168,56,48,12
+END
+
+IDD_EXPPORT_FAMI4PLAY DIALOG DISCARDABLE  0, 0, 488, 199
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Famicom 4-Player Adapter"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,216,180,56,16
+    GROUPBOX        "Buttons",IDC_STATIC,4,4,236,80
+    RTEXT           "A",IDC_STATIC,8,16,28,12,SS_CENTERIMAGE
+    RTEXT           "B",IDC_STATIC,8,32,28,12,SS_CENTERIMAGE
+    RTEXT           "Select",IDC_STATIC,8,48,28,12,SS_CENTERIMAGE
+    RTEXT           "Start",IDC_STATIC,8,64,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D0,40,16,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D1,40,32,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D2,40,48,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D3,40,64,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K0,172,16,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K1,172,32,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K2,172,48,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K3,172,64,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    GROUPBOX        "D-pad",IDC_STATIC,4,92,236,80
+    RTEXT           "Up",IDC_STATIC,8,104,28,11,SS_CENTERIMAGE
+    RTEXT           "Down",IDC_STATIC,8,120,28,12,SS_CENTERIMAGE
+    RTEXT           "Left",IDC_STATIC,8,136,28,12,SS_CENTERIMAGE
+    RTEXT           "Right",IDC_STATIC,8,152,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D4,40,104,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D5,40,120,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D6,40,136,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D7,40,152,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K4,172,104,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K5,172,120,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K6,172,136,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K7,172,152,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    GROUPBOX        "Buttons",IDC_STATIC,248,4,236,80
+    RTEXT           "A",IDC_STATIC,252,16,28,12,SS_CENTERIMAGE
+    RTEXT           "B",IDC_STATIC,252,32,28,12,SS_CENTERIMAGE
+    RTEXT           "Select",IDC_STATIC,252,48,28,12,SS_CENTERIMAGE
+    RTEXT           "Start",IDC_STATIC,252,64,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D8,284,16,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D9,284,32,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D10,284,48,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_D11,284,64,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K8,416,16,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K9,416,32,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K10,416,48,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K11,416,64,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    GROUPBOX        "D-pad",IDC_STATIC,248,92,236,80
+    RTEXT           "Up",IDC_STATIC,252,104,28,11,SS_CENTERIMAGE
+    RTEXT           "Down",IDC_STATIC,252,120,28,12,SS_CENTERIMAGE
+    RTEXT           "Left",IDC_STATIC,252,136,28,12,SS_CENTERIMAGE
+    RTEXT           "Right",IDC_STATIC,252,152,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D12,284,104,128,64,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CONT_D13,284,120,128,64,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CONT_D14,284,136,128,64,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CONT_D15,284,152,128,64,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_CONT_K12,416,104,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K13,416,120,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K14,416,136,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K15,416,152,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+END
+
+IDD_DEBUGGER_TRACE DIALOG DISCARDABLE  0, 0, 186, 125
+STYLE WS_POPUP | WS_CAPTION
+CAPTION "CPU Trace"
+FONT 8, "MS Sans Serif"
+BEGIN
+END
+
+IDD_DEBUGGER_REGISTERS DIALOG DISCARDABLE  0, 0, 186, 95
+STYLE WS_POPUP | WS_CAPTION
+CAPTION "Registers"
+FONT 8, "MS Sans Serif"
+BEGIN
+END
+
+IDD_DEBUGGER_PATTERN DIALOG DISCARDABLE  0, 0, 186, 95
+STYLE WS_POPUP | WS_CAPTION
+CAPTION "Pattern Tables"
+FONT 8, "MS Sans Serif"
+BEGIN
+END
+
+IDD_DEBUGGER_PALETTE DIALOG DISCARDABLE  0, 0, 177, 31
+STYLE WS_POPUP | WS_CAPTION
+CAPTION "Palette"
+FONT 8, "MS Sans Serif"
+BEGIN
+END
+
+IDD_DEBUGGER_NAME DIALOG DISCARDABLE  0, 0, 322, 218
+STYLE WS_POPUP | WS_CAPTION
+CAPTION "Name Tables"
+FONT 8, "MS Sans Serif"
+BEGIN
+END
+
+IDD_DEBUGGER_DUMPS DIALOG DISCARDABLE  0, 0, 186, 95
+STYLE WS_POPUP | WS_CAPTION
+CAPTION "Dumps/Commands"
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Dump PPU Memory",IDC_DUMP_PPU_MEM,7,7,71,12
+    PUSHBUTTON      "Start Logging",IDC_START_LOGGING,79,7,71,12
+    PUSHBUTTON      "Stop Logging",IDC_STOP_LOGGING,79,19,71,12
+    PUSHBUTTON      "IRQ",IDC_IRQBUTTON,7,19,71,12
+END
+
+IDD_EXPPORT_ARKANOIDPADDLE DIALOG DISCARDABLE  0, 0, 244, 60
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Arkanoid Paddle Config"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&OK",IDOK,96,36,52,16
+    RTEXT           "Button",IDC_STATIC,8,16,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D0,40,16,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_CONT_K0,172,16,64,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""resource.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        RIGHTMARGIN, 226
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 69
+    END
+
+    IDD_CONTROLLERS, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 220
+        VERTGUIDE, 8
+        VERTGUIDE, 64
+        VERTGUIDE, 68
+        VERTGUIDE, 88
+        VERTGUIDE, 136
+        VERTGUIDE, 172
+        VERTGUIDE, 176
+        VERTGUIDE, 216
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 80
+        HORZGUIDE, 8
+        HORZGUIDE, 20
+        HORZGUIDE, 24
+        HORZGUIDE, 36
+        HORZGUIDE, 40
+        HORZGUIDE, 52
+        HORZGUIDE, 60
+        HORZGUIDE, 76
+    END
+
+    IDD_STDPORT_ZAPPER, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 240
+        VERTGUIDE, 8
+        VERTGUIDE, 36
+        VERTGUIDE, 40
+        VERTGUIDE, 96
+        VERTGUIDE, 148
+        VERTGUIDE, 168
+        VERTGUIDE, 172
+        VERTGUIDE, 236
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 56
+        HORZGUIDE, 16
+        HORZGUIDE, 28
+        HORZGUIDE, 32
+        HORZGUIDE, 40
+        HORZGUIDE, 56
+    END
+
+    IDD_STDPORT_STDCONTROLLER, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 240
+        VERTGUIDE, 8
+        VERTGUIDE, 36
+        VERTGUIDE, 40
+        VERTGUIDE, 96
+        VERTGUIDE, 148
+        VERTGUIDE, 168
+        VERTGUIDE, 172
+        VERTGUIDE, 236
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 195
+        HORZGUIDE, 16
+        HORZGUIDE, 28
+        HORZGUIDE, 32
+        HORZGUIDE, 44
+        HORZGUIDE, 48
+        HORZGUIDE, 60
+        HORZGUIDE, 64
+        HORZGUIDE, 76
+        HORZGUIDE, 84
+        HORZGUIDE, 92
+        HORZGUIDE, 104
+        HORZGUIDE, 115
+        HORZGUIDE, 120
+        HORZGUIDE, 132
+        HORZGUIDE, 136
+        HORZGUIDE, 148
+        HORZGUIDE, 152
+        HORZGUIDE, 164
+        HORZGUIDE, 172
+        HORZGUIDE, 180
+    END
+
+    IDD_STDPORT_ARKANOIDPADDLE, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 240
+        VERTGUIDE, 8
+        VERTGUIDE, 36
+        VERTGUIDE, 40
+        VERTGUIDE, 96
+        VERTGUIDE, 148
+        VERTGUIDE, 168
+        VERTGUIDE, 172
+        VERTGUIDE, 236
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 56
+        HORZGUIDE, 16
+        HORZGUIDE, 28
+        HORZGUIDE, 36
+        HORZGUIDE, 52
+    END
+
+    IDD_STDPORT_POWERPAD, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 240
+        VERTGUIDE, 8
+        VERTGUIDE, 16
+        VERTGUIDE, 20
+        VERTGUIDE, 32
+        VERTGUIDE, 80
+        VERTGUIDE, 96
+        VERTGUIDE, 148
+        VERTGUIDE, 164
+        VERTGUIDE, 168
+        VERTGUIDE, 172
+        VERTGUIDE, 212
+        VERTGUIDE, 236
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 248
+        HORZGUIDE, 8
+        HORZGUIDE, 20
+        HORZGUIDE, 24
+        HORZGUIDE, 36
+        HORZGUIDE, 40
+        HORZGUIDE, 52
+        HORZGUIDE, 56
+        HORZGUIDE, 68
+        HORZGUIDE, 72
+        HORZGUIDE, 84
+        HORZGUIDE, 88
+        HORZGUIDE, 100
+        HORZGUIDE, 104
+        HORZGUIDE, 116
+        HORZGUIDE, 120
+        HORZGUIDE, 132
+        HORZGUIDE, 136
+        HORZGUIDE, 148
+        HORZGUIDE, 152
+        HORZGUIDE, 164
+        HORZGUIDE, 168
+        HORZGUIDE, 180
+        HORZGUIDE, 184
+        HORZGUIDE, 196
+        HORZGUIDE, 204
+        HORZGUIDE, 228
+        HORZGUIDE, 244
+    END
+
+    IDD_STDPORT_FOURSCORE, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 220
+        VERTGUIDE, 8
+        VERTGUIDE, 32
+        VERTGUIDE, 36
+        VERTGUIDE, 88
+        VERTGUIDE, 136
+        VERTGUIDE, 164
+        VERTGUIDE, 168
+        VERTGUIDE, 216
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 93
+        HORZGUIDE, 8
+        HORZGUIDE, 20
+        HORZGUIDE, 24
+        HORZGUIDE, 36
+        HORZGUIDE, 40
+        HORZGUIDE, 52
+        HORZGUIDE, 56
+        HORZGUIDE, 68
+        HORZGUIDE, 76
+    END
+
+    IDD_EXPPORT_FAMI4PLAY, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 484
+        VERTGUIDE, 8
+        VERTGUIDE, 36
+        VERTGUIDE, 40
+        VERTGUIDE, 168
+        VERTGUIDE, 172
+        VERTGUIDE, 216
+        VERTGUIDE, 236
+        VERTGUIDE, 240
+        VERTGUIDE, 248
+        VERTGUIDE, 252
+        VERTGUIDE, 272
+        VERTGUIDE, 280
+        VERTGUIDE, 284
+        VERTGUIDE, 412
+        VERTGUIDE, 416
+        VERTGUIDE, 480
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 195
+        HORZGUIDE, 16
+        HORZGUIDE, 28
+        HORZGUIDE, 32
+        HORZGUIDE, 44
+        HORZGUIDE, 48
+        HORZGUIDE, 60
+        HORZGUIDE, 64
+        HORZGUIDE, 76
+        HORZGUIDE, 84
+        HORZGUIDE, 92
+        HORZGUIDE, 104
+        HORZGUIDE, 116
+        HORZGUIDE, 120
+        HORZGUIDE, 132
+        HORZGUIDE, 136
+        HORZGUIDE, 148
+        HORZGUIDE, 152
+        HORZGUIDE, 164
+        HORZGUIDE, 172
+        HORZGUIDE, 180
+    END
+
+    IDD_DEBUGGER_REGISTERS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+
+    IDD_DEBUGGER_PATTERN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+
+    IDD_DEBUGGER_PALETTE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 170
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 24
+    END
+
+    IDD_DEBUGGER_NAME, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 315
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 211
+    END
+
+    IDD_DEBUGGER_DUMPS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+
+    IDD_EXPPORT_ARKANOIDPADDLE, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 240
+        VERTGUIDE, 8
+        VERTGUIDE, 36
+        VERTGUIDE, 40
+        VERTGUIDE, 96
+        VERTGUIDE, 148
+        VERTGUIDE, 168
+        VERTGUIDE, 172
+        VERTGUIDE, 236
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 56
+        HORZGUIDE, 16
+        HORZGUIDE, 28
+        HORZGUIDE, 36
+        HORZGUIDE, 52
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,9,0,0
+ PRODUCTVERSION 0,9,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "Nintendulator\0"
+            VALUE "FileVersion", "0,9,0,0\0"
+            VALUE "InternalName", "Nintendulator\0"
+            VALUE "LegalCopyright", "Copyright © 2002 Quietust\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "Nintendulator.exe\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "Nintendulator\0"
+            VALUE "ProductVersion", "0,9,0,0\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_APP_TITLE           "Nintendulator"
+    IDS_NINTENDULATOR       "NINTENDULATOR"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
