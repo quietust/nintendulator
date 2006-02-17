@@ -51,6 +51,8 @@ signed char BranchOffset;
 
 unsigned char TmpData;
 
+unsigned char Opcode;
+unsigned long OpAddr;
 
 static	void	(_MAPINT *CPU_CPUCycle)		(void);
 void	_MAPINT	CPU_NoCPUCycle (void) { }
@@ -448,7 +450,7 @@ end:
 static	__forceinline void	IN_UNK (void)
 {
 #ifndef NSFPLAYER
-	GFX_ShowText("Unknown opcode!");
+	EI.DbgOut("Invalid opcode $%02X encountered at $%04X",Opcode,OpAddr);
 #endif
 }
 static	__forceinline void	IN_ADC (void)
@@ -659,6 +661,7 @@ static	__forceinline void	IN_EOR (void)
 static	__forceinline void	IN_HLT (void)
 {
 #ifndef NSFPLAYER
+	EI.DbgOut("Invalid opcode $%02X encountered at $%04X; CPU locked",Opcode,OpAddr);
 	MessageBox(mWnd, "Bad opcode, CPU locked", "Nintendulator", MB_OK);
 	NES.Stop = TRUE;
 #endif
@@ -974,8 +977,8 @@ static	__forceinline void	IN_TYA (void)
 extern	void	DPCM_Fetch (void);
 void	CPU_ExecOp (void)
 {
-	CPU_MemGetCode(CPU.PC++);
-	switch (CPU.LastRead)
+	Opcode = CPU_MemGetCode(OpAddr = CPU.PC++);
+	switch (Opcode)
 	{
 case 0x00:AM_IMM();  IN_BRK();break;case 0x10:AM_REL();  IN_BPL();break;case 0x08:AM_IMP();  IN_PHP();break;case 0x18:AM_IMP();  IN_CLC();break;case 0x04:AM_ZPG();  IN_UNK();break;case 0x14:AM_ZPX();  IN_UNK();break;case 0x0C:AM_ABS();  IN_UNK();break;case 0x1C:AM_ABX();  IN_UNK();break;
 case 0x20:           IN_JSR();break;case 0x30:AM_REL();  IN_BMI();break;case 0x28:AM_IMP();  IN_PLP();break;case 0x38:AM_IMP();  IN_SEC();break;case 0x24:AM_ZPG();  IN_BIT();break;case 0x34:AM_ZPX();  IN_UNK();break;case 0x2C:AM_ABS();  IN_BIT();break;case 0x3C:AM_ABX();  IN_UNK();break;
