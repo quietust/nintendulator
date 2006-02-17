@@ -192,7 +192,7 @@ CAPTION "About"
 FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_NINTENDULATOR,IDC_MYICON,11,23,20,20
-    LTEXT           "Nintendulator Version 0.950\nCopyright © 2002-2004 Quietust\nDebugger written by David de Regt",
+    LTEXT           "Nintendulator Version 0.955\nCopyright © 2002-2005 Quietust\nDebugger written by David de Regt",
                     IDC_STATIC,42,20,119,31
     DEFPUSHBUTTON   "OK",IDOK,172,25,48,16,WS_GROUP
 END
@@ -1379,8 +1379,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,9,0,0
- PRODUCTVERSION 0,9,0,0
+ FILEVERSION 0,9,5,5
+ PRODUCTVERSION 0,9,5,5
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1398,14 +1398,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "Nintendulator\0"
-            VALUE "FileVersion", "0,9,0,0\0"
+            VALUE "FileVersion", "0, 9, 5, 5\0"
             VALUE "InternalName", "Nintendulator\0"
-            VALUE "LegalCopyright", "Copyright © 2002 Quietust\0"
+            VALUE "LegalCopyright", "Copyright © 2002-2005\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "Nintendulator.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Nintendulator\0"
-            VALUE "ProductVersion", "0,9,0,0\0"
+            VALUE "ProductVersion", "0, 9, 5, 5\0"
             VALUE "SpecialBuild", "\0"
         END
     END
