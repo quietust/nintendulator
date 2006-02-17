@@ -46,8 +46,8 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 	int x, i;
 	if (mode & MOV_PLAY)
 	{
-		Cont->Pos = Cont->MovData[0] | (Cont->MovData[1] << 8);
-		Cont->Button = Cont->MovData[2];
+		Cont->Pos = Cont->MovData[0] | ((Cont->MovData[1] << 8) & 0x7F);
+		Cont->Button = Cont->MovData[1] >> 7;
 	}
 	else
 	{
@@ -62,8 +62,7 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 	if (Controllers.MovieMode & MOV_RECORD)
 	{
 		Cont->MovData[0] = (unsigned char)(Cont->Pos & 0xFF);
-		Cont->MovData[1] = (unsigned char)(Cont->Pos >> 8);
-		Cont->MovData[2] = (unsigned char)Cont->Button;
+		Cont->MovData[1] = (unsigned char)((Cont->Pos >> 8) | (Cont->Button << 7));
 	}
 	Cont->NewBits = 0;
 	x = ~Cont->Pos;
@@ -131,7 +130,7 @@ void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
 	Cont->NumButtons = 1;
 	Cont->DataLen = 5;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
-	Cont->MovLen = 3;
+	Cont->MovLen = 2;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits = 0;
