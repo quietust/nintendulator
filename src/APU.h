@@ -44,6 +44,7 @@ struct	tAPU
 	LPDIRECTSOUNDBUFFER	Buffer;
 
 	short			*buffer;
+	int			buflen;
 	BYTE			Regs[0x18];
 #endif
 

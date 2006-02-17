@@ -634,6 +634,7 @@ void	APU_SetFPSVars (int FPS)
 	}
 #ifndef	NSFPLAYER
 	APU.LockSize = LOCK_SIZE / APU.WantFPS;
+	APU.buflen = APU.LockSize / (BITS / 8);
 	if (APU.buffer)
 		free(APU.buffer);
 	APU.buffer = (short *)malloc(APU.LockSize);
@@ -668,6 +669,7 @@ void	APU_Init (void)
 	APU.MHz			= 1;
 #ifndef	NSFPLAYER
 	APU.LockSize		= 0;
+	APU.buflen		= 0;
 #endif
 	APU.QuarterFrameLen	= 0;
 	APU.Cycles		= 0;
@@ -860,9 +862,8 @@ void	APU_Run (void)
 {
 	static int sampcycles = 0, samppos = 0;
 #ifndef	NSFPLAYER
-	int NewBufPos, buflen = APU.LockSize / (BITS / 8);
-	NewBufPos = FREQ * ++APU.Cycles / APU.MHz;
-	if (NewBufPos >= buflen)
+	int NewBufPos = FREQ * ++APU.Cycles / APU.MHz;
+	if (NewBufPos >= APU.buflen)
 	{
 		if (aviout)
 			AVI_AddAudio();
