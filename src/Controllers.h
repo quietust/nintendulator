@@ -68,6 +68,7 @@ void	ExpPort_SetControllerType (struct tExpPort *,int);
 #define	MOV_PLAY	0x01
 #define	MOV_RECORD	0x02
 #define	MOV_FMV		0x04
+#define	MOV_REVIEW	0x08
 
 struct tControllers
 {

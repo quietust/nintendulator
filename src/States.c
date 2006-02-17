@@ -430,7 +430,6 @@ void	States_LoadState (void)
 	char tpchr[256];
 	FILE *in;
 	int flen;
-	unsigned char MovieMode;
 
 	States.NeedLoad = FALSE;
 	if (Controllers.MovieMode & MOV_PLAY)
@@ -478,7 +477,7 @@ void	States_LoadState (void)
 	else if (!memcmp(tpchr,"NSAV",4))
 	{
 		/* Non-movie savestate, can NOT load these while recording */
-		if (Controllers.MovieMode & MOV_RECORD)
+		if (Controllers.MovieMode & (MOV_RECORD | MOV_REVIEW))
 		{
 			fclose(in);
 			GFX_ShowText("Selected savestate (%i) does not contain movie data!", States.SelSlot);
@@ -498,10 +497,10 @@ void	States_LoadState (void)
 	}
 
 	fseek(in,16,SEEK_SET);
-	MovieMode = Controllers.MovieMode;
-	Controllers.MovieMode = 0;
 	NES_Reset(RESET_HARD);
-	Controllers.MovieMode = MovieMode;
+
+	if (Controllers.MovieMode & MOV_REVIEW)		/* If the user is reviewing an existing movie */
+		Controllers.MovieMode = MOV_RECORD;	/* then resume recording once they LOAD state */
 
 	if (States_LoadData(in, flen))
 		GFX_ShowText("State loaded: %i", States.SelSlot);

@@ -592,6 +592,8 @@ void	Controllers_PlayMovie (BOOL Review)
 		MOV_ControllerTypes[3] = 0;	// Reset 'loaded controller state' flag
 
 		Controllers.MovieMode = MOV_PLAY;
+		if (Review)
+			Controllers.MovieMode |= MOV_REVIEW;
 
 		NES_Reset(RESET_HARD);
 
