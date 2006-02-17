@@ -75,7 +75,7 @@ static	__forceinline void	RunCycle (void)
 #define	CPU_MemGetCode	CPU_MemGet
 unsigned char __fastcall	CPU_MemGet (unsigned int Addy)
 {
-	static unsigned char buf;
+	static int buf;
 	RunCycle();
 	if (CPU.ReadHandler[(Addy >> 12) & 0xF] == CPU_ReadPRG)
 	{
