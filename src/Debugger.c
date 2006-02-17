@@ -664,6 +664,7 @@ LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 			int i;
 			for (i = 0; i < 12; i++)
 				fwrite(PPU.CHRPointer[i],1,0x400,PPUMemOut);
+			fwrite(PPU.Sprite,1,0x100,PPUMemOut);
 			fwrite(PPU.Palette,1,0x20,PPUMemOut);
 			fclose(PPUMemOut);
 		}	break;
