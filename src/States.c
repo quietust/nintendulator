@@ -190,7 +190,7 @@ void	States_SaveState (void)
 			free(tpmi);
 		}
 	}
-	if (Controllers.MovieMode & MOV_RECORD)
+	if ((Controllers.MovieMode & (MOV_RECORD | MOV_PLAY)) && !(Controllers.MovieMode & MOV_FMV))
 	{
 		fwrite("NMOV",1,4,out);	flen += 4;
 		clen = ftell(movie);
