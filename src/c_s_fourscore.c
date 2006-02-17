@@ -152,18 +152,6 @@ static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)"Standard Controller");
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)"Standard Controller");
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)"Standard Controller");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)"Zapper");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)"Zapper");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)"Zapper");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)"Zapper");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)"Arkanoid Paddle");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)"Arkanoid Paddle");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)"Arkanoid Paddle");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)"Arkanoid Paddle");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)"Power Pad");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)"Power Pad");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)"Power Pad");
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)"Power Pad");
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers.FSPort1.Type,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.FSPort2.Type,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_SETCURSEL,Controllers.FSPort3.Type,0);
