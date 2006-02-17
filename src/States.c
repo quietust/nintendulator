@@ -194,8 +194,6 @@ void	States_SaveState (void)
 	{
 		fwrite("NMOV",1,4,out);	flen += 4;
 		clen = ftell(movie);
-		GFX_ShowText("Saving movie (%i bytes)...",clen);
-		Sleep(100);
 		fwrite(&clen,1,4,out);	flen += 4;
 		rewind(movie);
 		{
