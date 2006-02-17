@@ -26,9 +26,13 @@
 #define IDD_EXPPORT_FAMI4PLAY           140
 #define IDB_BITMAP1                     140
 #define IDD_DEBUGGER_TRACE              141
+#define ID_GAME                         141
 #define IDD_DEBUGGER_REGISTERS          142
+#define ID_CPU_AUTORUN                  142
 #define IDD_DEBUGGER_DUMPS              143
 #define IDD_EXPPORT_ARKANOIDPADDLE      144
+#define IDD_KEYCONFIG                   145
+#define IDD_EXPPORT_FAMTRAIN            146
 #define IDC_DUMP_PPU_MEM                1001
 #define IDC_START_LOGGING               1002
 #define IDC_STOP_LOGGING                1003
@@ -75,6 +79,7 @@
 #define IDC_CONT_K13                    1044
 #define IDC_CONT_K14                    1045
 #define IDC_CONT_K15                    1046
+#define IDC_CONT_FLIP                   1055
 #define IDM_ABOUT                       32770
 #define ID_FILE_OPEN                    32771
 #define ID_FILE_CLOSE                   32772
@@ -119,9 +124,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        141
+#define _APS_NEXT_RESOURCE_VALUE        144
 #define _APS_NEXT_COMMAND_VALUE         32809
-#define _APS_NEXT_CONTROL_VALUE         1048
+#define _APS_NEXT_CONTROL_VALUE         1056
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif
