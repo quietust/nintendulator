@@ -299,7 +299,9 @@ __inline void	Triangle_Run (void)
 		{
 			Triangle.CurD++;
 			Triangle.CurD &= 0x1F;
-			Triangle.Pos = TriDuty[Triangle.CurD] * 8;
+			if (Triangle.freq < 4)
+				Triangle.Pos = 0;	// beyond hearing range
+			else	Triangle.Pos = TriDuty[Triangle.CurD] * 8;
 		}
 	}
 }
