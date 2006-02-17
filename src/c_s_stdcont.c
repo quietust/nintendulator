@@ -116,7 +116,7 @@ void	StdPort_SetStdController (struct tStdPort *Cont)
 	Cont->Unload = Unload;
 	Cont->Frame = Frame;
 	Cont->NumButtons = 8;
-	Cont->DataLen = 3;
+	Cont->DataLen = 4;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
 	Cont->MovLen = 1;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
