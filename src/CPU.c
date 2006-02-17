@@ -55,8 +55,15 @@ unsigned char TmpData;
 static	void	(_MAPINT *CPU_CPUCycle)		(void);
 void	_MAPINT	CPU_NoCPUCycle (void) { }
 
+static	BOOL LastNMI;
+static	BOOL LastIRQ;
+
 static	__forceinline void	RunCycle (void)
 {
+#ifndef NSFPLAYER
+	LastNMI = CPU.WantNMI;
+#endif
+	LastIRQ = CPU.WantIRQ && !CPU.FI;
 	CPU_CPUCycle();
 #ifndef	CPU_BENCHMARK
 #ifndef NSFPLAYER
@@ -925,9 +932,6 @@ static	__forceinline void	IN_TYA (void)
 extern	void	DPCM_Fetch (void);
 void	CPU_ExecOp (void)
 {
-	BOOL LastNMI = CPU.WantNMI;
-	BOOL LastIRQ = CPU.WantIRQ && !CPU.FI;
-//	BOOL LastFI = CPU.FI;
 	CPU_MemGetCode(CPU.PC++);
 	switch (CPU.LastRead)
 	{
