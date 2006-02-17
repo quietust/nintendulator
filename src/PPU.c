@@ -970,7 +970,7 @@ static	int	__fastcall	Read2 (void)
 
 static	int	__fastcall	Read4 (void)
 {
-	if (PPU.OnScreen)
+	if (PPU.OnScreen && PPU.IsRendering)
 		return 0xFF;
 	return PPU.ppuLatch = PPU.Sprite[PPU.SprAddr];
 }
@@ -1033,7 +1033,7 @@ static	void	__fastcall	Write3 (int What)
 
 static	void	__fastcall	Write4 (int What)
 {
-	if (PPU.OnScreen)
+	if (PPU.OnScreen && PPU.IsRendering)
 		What = 0xFF;
 	PPU.Sprite[PPU.SprAddr++] = What;
 }
