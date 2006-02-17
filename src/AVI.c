@@ -383,7 +383,7 @@ void AVI_AddVideo ()
 	}
 	bmih.biSize = sizeof(BITMAPINFOHEADER);
 	bmih.biWidth = 256;
-	bmih.biHeight = -240;
+	bmih.biHeight = 240;
 	bmih.biPlanes = 1;
 	bmih.biBitCount = 32;
 	bmih.biCompression = BI_RGB;
