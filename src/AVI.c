@@ -319,7 +319,7 @@ void	AVI_Start (void)
 	ofn.nMaxFile = 256;
 	ofn.lpstrFileTitle = NULL;
 	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = "";
+	ofn.lpstrInitialDir = Path_AVI;
 	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
 	ofn.lpstrDefExt = "AVI";
 	ofn.lCustData = 0;
@@ -328,6 +328,9 @@ void	AVI_Start (void)
 
 	if (!GetSaveFileName(&ofn))
 		return;
+
+	strcpy(Path_AVI,FileName);
+	Path_AVI[ofn.nFileOffset-1] = 0;
 
 	wfx.wFormatTag = WAVE_FORMAT_PCM;
 	wfx.nChannels = 1;
