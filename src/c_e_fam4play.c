@@ -49,7 +49,7 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 			if (Controllers_IsPressed(Cont->Buttons[i+8]))
 				Cont->NewBit2 |= 1 << i;
 		}
-		if (!Controllers.MovieMode & MOV_RECORD)
+		if (!(Controllers.MovieMode & MOV_RECORD))
 		{	/* prevent simultaneously pressing left+right or up+down, but not when recording a movie :) */
 			if ((Cont->NewBit1 & 0xC0) == 0xC0)
 				Cont->NewBit1 &= 0x3F;
