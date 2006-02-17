@@ -63,6 +63,7 @@ struct	tPPU
 	unsigned char SprData[8][8];
 	unsigned short *GfxData;
 	unsigned char IsPAL;
+	unsigned char PALsubticks;
 };
 extern	struct	tPPU	PPU;
 extern	unsigned char	PPU_VRAM[0x4][0x400];

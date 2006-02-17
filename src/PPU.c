@@ -203,6 +203,7 @@ void	PPU_Reset (void)
 	PPU.IOVal = 0;
 	PPU.IOMode = 0;
 	PPU.Clockticks = 0;
+	PPU.PALsubticks = 0;
 	PPU.SLnum = 241;
 	PPU_GetHandlers();
 }
@@ -292,8 +293,8 @@ int	PPU_Save (FILE *out)
 	fwrite(&PPU.buf2007,1,1,out);	clen++;		//	VBUF	uint8		VRAM Read Buffer
 	fwrite(&PPU.ppuLatch,1,1,out);	clen++;		//	PGEN	uint8		PPU "general" latch
 
-	tps = (unsigned short)PPU.Clockticks;
-	fwrite(&tps,2,1,out);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340)
+	tps = (unsigned short)PPU.Clockticks | (PPU.PALsubticks << 12);
+	fwrite(&tps,2,1,out);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340) with PAL subticks stored in upper 4 bits
 	tps = (unsigned short)PPU.SLnum;
 	fwrite(&tps,2,1,out);		clen += 2;	//	SLNUM	uint16		Scanline number
 	fwrite(&PPU.ShortSL,1,1,out);	clen++;		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
@@ -329,8 +330,10 @@ int	PPU_Load (FILE *in)
 	fread(&PPU.buf2007,1,1,in);	clen++;		//	VBUF	uint8		VRAM Read Buffer
 	fread(&PPU.ppuLatch,1,1,in);	clen++;		//	PGEN	uint8		PPU "general" latch.
 
-	fread(&tps,2,1,in);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340)
-	PPU.Clockticks = tps;
+	fread(&tps,2,1,in);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340) with PAL subticks stored in upper 4 bits
+	PPU.Clockticks = tps & 0xFFF;
+	PPU.PALsubticks = tps >> 12;
+
 	fread(&tps,2,1,in);		clen += 2;	//	SLNUM	uint16		Scanline number
 	PPU.SLnum = tps;
 	fread(&PPU.ShortSL,1,1,in);	clen++;		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
@@ -923,15 +926,15 @@ __inline static	void	RunSkip (int NumTicks)
 		}
 	}
 }
+
 void	PPU_Run (void)
 {
 	if (PPU.IsPAL)
 	{
-		static int overflow = 5;
 		register int cycles = 3;
-		if (!--overflow)
+		if (++PPU.PALsubticks == 5)
 		{
-			overflow = 5;
+			PPU.PALsubticks = 0;
 			cycles = 4;
 		}
 		if (GFX.FPSCnt < GFX.FSkip)
