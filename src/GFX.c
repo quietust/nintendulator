@@ -82,7 +82,11 @@ void	GFX_Init (void)
 
 void	GFX_Create (void)
 {
-	QueryPerformanceFrequency(&GFX.ClockFreq);
+	if (!QueryPerformanceFrequency(&GFX.ClockFreq))
+	{
+		MessageBox(mWnd,"Failed to determine performance counter frequency!","Nintendulator",MB_OK | MB_ICONERROR);
+		return;
+	}
 
 	if (FAILED(DirectDrawCreateEx(NULL,(LPVOID *)&GFX.DirectDraw,&IID_IDirectDraw7,NULL)))
 	{
@@ -216,42 +220,35 @@ void	GFX_DrawScreen (void)
 	GFX.FPSCnt++;
 	if (GFX.FPSCnt > GFX.FSkip)
 	{
-		int tFPSnum;
 		LARGE_INTEGER TmpClockVal;
 
-		GFX.FPSCnt = 0;
+		QueryPerformanceCounter(&TmpClockVal);
+		GFX.aFPSnum += (int) ((GFX.FPSCnt*GFX.ClockFreq.QuadPart) / (TmpClockVal.QuadPart - GFX.LastClockVal.QuadPart));
+		GFX.LastClockVal = TmpClockVal;
 
 		GFX_Update();
 
-		QueryPerformanceCounter(&TmpClockVal);
-		if (GFX.FSkip == -1)
-			tFPSnum = (int) ((GFX.ClockFreq.QuadPart) / (TmpClockVal.QuadPart - GFX.LastClockVal.QuadPart));
-		else	tFPSnum = (int) ((GFX.FSkip+1)*(GFX.ClockFreq.QuadPart) / (TmpClockVal.QuadPart - GFX.LastClockVal.QuadPart));
-		GFX.LastClockVal = TmpClockVal;
-
-		GFX.aFPSnum += tFPSnum;
 		GFX.aFPScnt++;
-		if (GFX.aFPScnt == 4)
+		if (GFX.aFPScnt == 3)
 		{
-			GFX.FPSnum = GFX.aFPSnum / 4;
+			GFX.FPSnum = GFX.aFPSnum / GFX.aFPScnt;
 			if (GFX.aFSkip)
 			{
-				if ((GFX.FPSnum <= (GFX.WantFPS * 9 / 10)) && (GFX.FSkip < 5))
+				if ((GFX.FSkip < 9) && (GFX.FPSnum <= (GFX.WantFPS * 9 / 10)))
 					GFX.FSkip++;
-				if ((GFX.FSkip > 0) && (GFX.FPSnum >= GFX.WantFPS))
+				if ((GFX.FSkip > 0) && (GFX.FPSnum >= (GFX.WantFPS - 1)))
 					GFX.FSkip--;
 				GFX_SetFrameskip();
 			}
-			GFX.aFPScnt = 0;
-			GFX.aFPSnum = 0;
+			GFX.aFPScnt = GFX.aFPSnum = 0;
 		}
+		GFX.FPSCnt = 0;
 	}
-	if (TitleDelay == 0)
+	if (!TitleDelay--)
 	{
 		GFX_UpdateTitlebar();
 		TitleDelay = 10;
 	}
-	else	TitleDelay--;
 }
 
 void	GFX_SetFrameskip (void)
