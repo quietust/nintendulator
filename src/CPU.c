@@ -240,7 +240,8 @@ void	_MAPINT	CPU_Write4k (int Bank, int Addy, int Val)
 	case 0x010:case 0x011:case 0x012:case 0x013:
 	case 0x015:case 0x017:
 			APU_WriteReg(Addy,Val);	break;
-	case 0x014:	for (i = 0; i < 0x100; i++)
+	case 0x014:	PPU.SprAddr = 0;	/* Without this, Sachen title 'Huge Insect' does not work */
+			for (i = 0; i < 0x100; i++)
 				CPU_MemSet(0x2004,CPU_MemGet((Val << 8) | i));
 						break;
 #ifndef NSFPLAYER
