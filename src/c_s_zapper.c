@@ -47,6 +47,8 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 		ScreenToClient(mWnd,&pos);
 		Cont->PosX = pos.x / SizeMult;
 		Cont->PosY = pos.y / SizeMult;
+		if ((Cont->PosX < 0) || (Cont->PosX > 255) || (Cont->PosY < 0) || (Cont->PosY > 239))
+			Cont->PosX = Cont->PosY = 255;	// if it's off-screen, push it to the bottom
 		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);
 	}
 	if (mode & MOV_RECORD)
