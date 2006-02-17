@@ -659,6 +659,8 @@ __inline static	void	RunNoSkip (int NumTicks)
 			if (TC & 0x3)
 				PalIndex = PPU.Palette[TC & 0x1F];
 			else	PalIndex = PPU.Palette[0];
+			if ((!PPU.IsRendering) && ((PPU.VRAMAddr & 0x3F00) == 0x3F00))
+				PalIndex = PPU.Palette[PPU.VRAMAddr & 0x1F];
 			PalIndex &= PPU.GrayScale;
 			PalIndex |= PPU.ColorEmphasis;
 			if (GFX.Depth == 16)
@@ -937,20 +939,25 @@ __inline static	void	RunSkip (int NumTicks)
 }
 void	PPU_Run (void)
 {
-	register int Cycles = 3;
 	if (PPU.IsPAL)
 	{
 		static int overflow = 5;
-		overflow--;
-		if (!overflow)
+		register int cycles = 3;
+		if (!--overflow)
 		{
-			Cycles++;
 			overflow = 5;
+			cycles = 4;
 		}
+		if (GFX.FPSCnt < GFX.FSkip)
+			RunSkip(cycles);
+		else	RunNoSkip(cycles);
 	}
-	if (GFX.FPSCnt < GFX.FSkip)
-		RunSkip(Cycles);
-	else	RunNoSkip(Cycles);
+	else
+	{
+		if (GFX.FPSCnt < GFX.FSkip)
+			RunSkip(3);
+		else	RunNoSkip(3);
+	}
 }
 
 static	int	__fastcall	Read01356 (void)
