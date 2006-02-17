@@ -435,40 +435,6 @@ static	void	_MAPINT	Set_SRAMSize (int Size)	/* Sets the size of the SRAM (in byt
 	memset(PRG_RAM,0,sizeof(PRG_RAM));
 #endif
 }
-static	void	_MAPINT	Save_SRAM (void)	/* Saves SRAM to disk */
-{
-#ifndef NSFPLAYER
-	char Filename[MAX_PATH];
-	FILE *SRAMFile;
-	if (!NES.SRAM_Size)			/* for movie recording (see above) */
-		return;
-	sprintf(Filename,"%s.sav",States.BaseFilename);
-	SRAMFile = fopen(Filename,"wb");
-	fwrite(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
-	fclose(SRAMFile);
-#endif
-}
-static	void	_MAPINT	Load_SRAM (void)	/* Loads SRAM from disk */
-{
-#ifndef NSFPLAYER
-	char Filename[MAX_PATH];
-	FILE *SRAMFile;
-	if (!NES.SRAM_Size)			/* for movie recording (see above) */
-		return;
-	sprintf(Filename,"%s.sav",States.BaseFilename);
-	SRAMFile = fopen(Filename,"rb");
-	if (!SRAMFile)
-		return;
-	fseek(SRAMFile,0,SEEK_END);
-	if (ftell(SRAMFile) == NES.SRAM_Size)
-	{
-		fseek(SRAMFile,0,SEEK_SET);
-		fread(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
-	}
-	else	MessageBox(mWnd,"File length mismatch while loading SRAM!","Nintendulator",MB_OK | MB_ICONERROR);
-	fclose(SRAMFile);
-#endif
-}
 
 /******************************************************************************/
 
@@ -598,8 +564,6 @@ void	MapperInterface_Init (void)
 	EI.Mirror_Custom = Mirror_Custom;
 	EI.SetIRQ = SetIRQ;
 	EI.Set_SRAMSize = Set_SRAMSize;
-	EI.Save_SRAM = Save_SRAM;
-	EI.Load_SRAM = Load_SRAM;
 	EI.DbgOut = DbgOut;
 	EI.StatusOut = StatusOut;
 	MI = NULL;

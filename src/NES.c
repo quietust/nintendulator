@@ -119,6 +119,7 @@ void	NES_OpenFile (char *filename)
 	if (MI->Config)
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_ENABLED);
 	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
+	NES_LoadSRAM();
 
 	if (RI.ROMType == ROM_NSF)
 	{
@@ -174,10 +175,43 @@ void	NES_OpenFile (char *filename)
 	}
 }
 
+void	NES_SaveSRAM (void)
+{
+	char Filename[MAX_PATH];
+	FILE *SRAMFile;
+	if (!NES.SRAM_Size)
+		return;
+	sprintf(Filename,"%s.sav",States.BaseFilename);
+	SRAMFile = fopen(Filename,"wb");
+	fwrite(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
+	fclose(SRAMFile);
+	EI.DbgOut("Saved SRAM.");
+}
+void	NES_LoadSRAM (void)
+{
+	char Filename[MAX_PATH];
+	FILE *SRAMFile;
+	if (!NES.SRAM_Size)
+		return;
+	sprintf(Filename,"%s.sav",States.BaseFilename);
+	SRAMFile = fopen(Filename,"rb");
+	if (!SRAMFile)
+		return;
+	fseek(SRAMFile,0,SEEK_END);
+	if (ftell(SRAMFile) == NES.SRAM_Size)
+	{
+		fseek(SRAMFile,0,SEEK_SET);
+		fread(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
+	}
+	else	EI.DbgOut("File length mismatch while loading SRAM!");
+	fclose(SRAMFile);
+	EI.DbgOut("Loaded SRAM.");
+}
+
 void	NES_CloseFile (void)
 {
 	int i;
-
+	NES_SaveSRAM();
 	if (NES.ROMLoaded)
 	{
 		MapperInterface_UnloadMapper();
