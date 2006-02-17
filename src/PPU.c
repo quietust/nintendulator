@@ -1011,7 +1011,6 @@ int	_MAPINT	PPU_IntRead (int Bank, int Where)
 {
 	static int (__fastcall *funcs[8])(void) = {Read01356,Read01356,Read2,Read01356,Read4,Read01356,Read01356,Read7};
 	return funcs[Where & 7]();
-
 }
 
 static	void	__fastcall	Write0 (int What)
