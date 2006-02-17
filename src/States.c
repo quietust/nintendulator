@@ -497,7 +497,7 @@ void	States_LoadState (void)
 	}
 
 	fseek(in,16,SEEK_SET);
-	NES_Reset(RESET_HARD);
+	NES_Reset(RESET_SOFT);
 
 	if (Controllers.MovieMode & MOV_REVIEW)		/* If the user is reviewing an existing movie */
 		Controllers.MovieMode = MOV_RECORD;	/* then resume recording once they LOAD state */
