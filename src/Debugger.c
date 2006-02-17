@@ -57,24 +57,24 @@ enum ADDRMODE TraceAddyMode[256] =
 
 unsigned char AddrBytes[NUM_ADDR_MODES] = {1,1,2,3,3,3,2,3,3,2,2,2,2,2,1};
 
-char TraceArr[256][4] =
+char TraceArr[256][5] =
 {
-	"BRK","ORA","HLT","???","???","ORA","ASL","???","PHP","ORA","ASL","???","???","ORA","ASL","???",
-	"BPL","ORA","HLT","???","???","ORA","ASL","???","CLC","ORA","???","???","???","ORA","ASL","???",
-	"JSR","AND","HLT","???","BIT","AND","ROL","???","PLP","AND","ROL","???","BIT","AND","ROL","???",
-	"BMI","AND","HLT","???","???","AND","ROL","???","SEC","AND","???","???","???","AND","ROL","???",
-	"RTI","EOR","HLT","???","???","EOR","LSR","???","PHA","EOR","LSR","???","JMP","EOR","LSR","???",
-	"BVC","EOR","HLT","???","???","EOR","LSR","???","CLI","EOR","???","???","???","EOR","LSR","???",
-	"RTS","ADC","HLT","???","???","ADC","ROR","???","PLA","ADC","ROR","???","JMP","ADC","ROR","???",
-	"BVS","ADC","HLT","???","???","ADC","ROR","???","SEI","ADC","???","???","???","ADC","ROR","???",
-	"???","STA","???","???","STY","STA","STX","???","DEY","???","TXA","???","STY","STA","STX","???",
-	"BCC","STA","HLT","???","STY","STA","STX","???","TYA","STA","TXS","???","???","STA","???","???",
-	"LDY","LDA","LDX","???","LDY","LDA","LDX","???","TAY","LDA","TAX","???","LDY","LDA","LDX","???",
-	"BCS","LDA","HLT","???","LDY","LDA","LDX","???","CLV","LDA","TSX","???","LDY","LDA","LDX","???",
-	"CPY","CMP","???","???","CPY","CMP","DEC","???","INY","CMP","DEX","???","CPY","CMP","DEC","???",
-	"BNE","CMP","HLT","???","???","CMP","DEC","???","CLD","CMP","???","???","???","CMP","DEC","???",
-	"CPX","SBC","???","???","CPX","SBC","INC","???","INX","SBC","NOP","???","CPX","SBC","INC","???",
-	"BEQ","SBC","HLT","???","???","SBC","INC","???","SED","SBC","???","???","???","SBC","INC","???"
+	" BRK"," ORA","*HLT","*SLO","*NOP"," ORA"," ASL","*SLO"," PHP"," ORA"," ASL"," ???","*NOP"," ORA"," ASL","*SLO",
+	" BPL"," ORA","*HLT","*SLO","*NOP"," ORA"," ASL","*SLO"," CLC"," ORA","*NOP","*SLO","*NOP"," ORA"," ASL","*SLO",
+	" JSR"," AND","*HLT","*RLA"," BIT"," AND"," ROL","*RLA"," PLP"," AND"," ROL"," ???"," BIT"," AND"," ROL","*RLA",
+	" BMI"," AND","*HLT","*RLA","*NOP"," AND"," ROL","*RLA"," SEC"," AND","*NOP","*RLA","*NOP"," AND"," ROL","*RLA",
+	" RTI"," EOR","*HLT","*SRE","*NOP"," EOR"," LSR","*SRE"," PHA"," EOR"," LSR"," ???"," JMP"," EOR"," LSR","*SRE",
+	" BVC"," EOR","*HLT","*SRE","*NOP"," EOR"," LSR","*SRE"," CLI"," EOR","*NOP","*SRE","*NOP"," EOR"," LSR","*SRE",
+	" RTS"," ADC","*HLT","*RRA","*NOP"," ADC"," ROR","*RRA"," PLA"," ADC"," ROR"," ???"," JMP"," ADC"," ROR","*RRA",
+	" BVS"," ADC","*HLT","*RRA","*NOP"," ADC"," ROR","*RRA"," SEI"," ADC","*NOP","*RRA","*NOP"," ADC"," ROR","*RRA",
+	"*NOP"," STA","*NOP","*SAX"," STY"," STA"," STX","*SAX"," DEY","*NOP"," TXA"," ???"," STY"," STA"," STX","*SAX",
+	" BCC"," STA","*HLT"," ???"," STY"," STA"," STX","*SAX"," TYA"," STA"," TXS"," ???"," ???"," STA"," ???"," ???",
+	" LDY"," LDA"," LDX","*LAX"," LDY"," LDA"," LDX","*LAX"," TAY"," LDA"," TAX"," ???"," LDY"," LDA"," LDX","*LAX",
+	" BCS"," LDA","*HLT","*LAX"," LDY"," LDA"," LDX","*LAX"," CLV"," LDA"," TSX"," ???"," LDY"," LDA"," LDX","*LAX",
+	" CPY"," CMP","*NOP","*DCP"," CPY"," CMP"," DEC","*DCP"," INY"," CMP"," DEX"," ???"," CPY"," CMP"," DEC","*DCP",
+	" BNE"," CMP","*HLT","*DCP","*NOP"," CMP"," DEC","*DCP"," CLD"," CMP","*NOP","*DCP","*NOP"," CMP"," DEC","*DCP",
+	" CPX"," SBC","*NOP","*ISB"," CPX"," SBC"," INC","*ISB"," INX"," SBC"," NOP","*SBC"," CPX"," SBC"," INC","*ISB",
+	" BEQ"," SBC","*HLT","*ISB","*NOP"," SBC"," INC","*ISB"," SED"," SBC","*NOP","*ISB","*NOP"," SBC"," INC","*ISB"
 };
 
 
@@ -307,21 +307,21 @@ void	DecodeInstruction (unsigned short Addy, char *str)
 	switch (TraceAddyMode[TraceMem(Addy)])
 	{
 	case IMP:
-	case ERR:sprintf(str,"%04X  %02X        %s                           ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
-	case ACC:sprintf(str,"%04X  %02X        %s A                         ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
-	case IMM:sprintf(str,"%04X  %02X %02X     %s #$%02X                      ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
-	case REL:sprintf(str,"%04X  %02X %02X     %s $%04X                     ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
-	case ZPG:sprintf(str,"%04X  %02X %02X     %s $%02X = %02X                  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
-	case ZPX:sprintf(str,"%04X  %02X %02X     %s $%02X,X @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	case ZPY:sprintf(str,"%04X  %02X %02X     %s $%02X,Y @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	case INX:sprintf(str,"%04X  %02X %02X     %s ($%02X,X) @ %02X = %04X = %02X  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
-	case INY:sprintf(str,"%04X  %02X %02X     %s ($%02X),Y = %04X @ %04X = %02X",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
-	case ADR:sprintf(str,"%04X  %02X %02X %02X  %s $%04X                     ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand);							break;
-	case ABS:sprintf(str,"%04X  %02X %02X %02X  %s $%04X = %02X                ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
-	case IND:sprintf(str,"%04X  %02X %02X %02X  %s ($%04X) = %04X            ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy);					break;
-	case ABX:sprintf(str,"%04X  %02X %02X %02X  %s $%04X,X @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	case ABY:sprintf(str,"%04X  %02X %02X %02X  %s $%04X,Y @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
-	default : strcpy(str,"                                              ");																	break;
+	case ERR:sprintf(str,"%04X  %02X       %s                           ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
+	case ACC:sprintf(str,"%04X  %02X       %s A                         ",		Addy,OpData[0],				TraceArr[OpData[0]]);								break;
+	case IMM:sprintf(str,"%04X  %02X %02X    %s #$%02X                      ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
+	case REL:sprintf(str,"%04X  %02X %02X    %s $%04X                     ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand);							break;
+	case ZPG:sprintf(str,"%04X  %02X %02X    %s $%02X = %02X                  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
+	case ZPX:sprintf(str,"%04X  %02X %02X    %s $%02X,X @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case ZPY:sprintf(str,"%04X  %02X %02X    %s $%02X,Y @ %02X = %02X           ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case INX:sprintf(str,"%04X  %02X %02X    %s ($%02X,X) @ %02X = %04X = %02X  ",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
+	case INY:sprintf(str,"%04X  %02X %02X    %s ($%02X),Y = %04X @ %04X = %02X",	Addy,OpData[0],OpData[1],		TraceArr[OpData[0]],Operand,MidAddy,EffectiveAddy,TraceMem(EffectiveAddy));	break;
+	case ADR:sprintf(str,"%04X  %02X %02X %02X %s $%04X                     ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand);							break;
+	case ABS:sprintf(str,"%04X  %02X %02X %02X %s $%04X = %02X                ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,TraceMem(Operand));					break;
+	case IND:sprintf(str,"%04X  %02X %02X %02X %s ($%04X) = %04X            ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy);					break;
+	case ABX:sprintf(str,"%04X  %02X %02X %02X %s $%04X,X @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	case ABY:sprintf(str,"%04X  %02X %02X %02X %s $%04X,Y @ %04X = %02X       ",	Addy,OpData[0],OpData[1],OpData[2],	TraceArr[OpData[0]],Operand,EffectiveAddy,TraceMem(EffectiveAddy));		break;
+	default : strcpy(str,"                                             ");																	break;
 	}
 }
 
