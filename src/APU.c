@@ -550,53 +550,36 @@ __inline void	Frame_Write (unsigned char Val)
 	if (Frame.Bits & 0x80)
 		Frame.Cycles = 1;
 	else	Frame.Cycles = APU.QuarterFrameLen;
-	CPU.WantIRQ &= ~IRQ_FRAME;
+	if (Frame.Bits & 0x40)
+		CPU.WantIRQ &= ~IRQ_FRAME;
 }
 __inline void	Frame_Run (void)
 {
 	if (!--Frame.Cycles)
 	{
-		switch (Frame.Num++)
+		Frame.Cycles = APU.QuarterFrameLen;
+		if (Frame.Num < 4)
 		{
-		case 0:	Square0_QuarterFrame();
+			Square0_QuarterFrame();
 			Square1_QuarterFrame();
 			Triangle_QuarterFrame();
 			Noise_QuarterFrame();
-			Frame.Cycles = APU.QuarterFrameLen;
-			if (APU.WantFPS == 60)
-				Frame.Cycles++;		break;
-		case 1:	Square0_QuarterFrame();
-			Square1_QuarterFrame();
-			Triangle_QuarterFrame();
-			Noise_QuarterFrame();
-			Square0_HalfFrame();
-			Square1_HalfFrame();
-			Triangle_HalfFrame();
-			Noise_HalfFrame();
-			Frame.Cycles = APU.QuarterFrameLen;	break;
-		case 2:	Square0_QuarterFrame();
-			Square1_QuarterFrame();
-			Triangle_QuarterFrame();
-			Noise_QuarterFrame();
-			Frame.Cycles = APU.QuarterFrameLen;
-			if (APU.WantFPS == 60)
-				Frame.Cycles++;		break;
-		case 3:	Square0_QuarterFrame();
-			Square1_QuarterFrame();
-			Triangle_QuarterFrame();
-			Noise_QuarterFrame();
-			Square0_HalfFrame();
-			Square1_HalfFrame();
-			Triangle_HalfFrame();
-			Noise_HalfFrame();
-			if (!(Frame.Bits & 0xC0))
-				CPU.WantIRQ |= IRQ_FRAME;
-			Frame.Num = 0;
-			if (Frame.Bits & 0x80)
-				Frame.Cycles = 2 * APU.QuarterFrameLen;
-			else	Frame.Cycles = APU.QuarterFrameLen;
-								break;
+			if (( (Frame.Bits & 0x80) && !(Frame.Num & 1)) ||
+			    (!(Frame.Bits & 0x80) &&  (Frame.Num & 1)))
+			{
+				Square0_HalfFrame();
+				Square1_HalfFrame();
+				Triangle_HalfFrame();
+				Noise_HalfFrame();
+			}
 		}
+		if ((APU.WantFPS == 60) && (Frame.Num & 1))
+			Frame.Cycles++;
+		if ((Frame.Num == 3) && !(Frame.Bits & 0xC0))
+			CPU.WantIRQ |= IRQ_FRAME;
+		Frame.Num++;
+		if (Frame.Num == ((Frame.Bits & 0x80) ? 5 : 4))
+			Frame.Num = 0;
 	}
 }
 
