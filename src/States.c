@@ -90,6 +90,15 @@ int	States_SaveData (FILE *out)
 		fseek(out,clen,SEEK_CUR);	flen += clen;
 	}
 	{
+		fwrite("CTRL",1,4,out);		flen += 4;
+		fwrite(&clen,1,4,out);		flen += 4;
+
+		
+
+		fseek(out,-clen - 4,SEEK_CUR);
+		fwrite(&clen,1,4,out);
+		fseek(out,clen,SEEK_CUR);	flen += clen;
+
 		/* TODO - Add CTRL state */
 	}
 	{
@@ -164,24 +173,26 @@ int	States_SaveData (FILE *out)
 		fread(&tpc,1,1,movie);	fwrite(&tpc,1,1,out);	clen++;
 		fread(&tpc,1,1,movie);	fwrite(&tpc,1,1,out);	clen++;
 		fread(&tpc,1,1,movie);	fwrite(&tpc,1,1,out);	clen++;
-		fseek(movie,4,SEEK_CUR);fwrite(&ReRecords,4,1,out);	clen += 4;	// ignore rerecord count stored in movie
+		fread(&tpl,4,1,movie);	fwrite(&ReRecords,4,1,out);	clen += 4;	// ignore rerecord count stored in movie
 
 		fread(&tpl,4,1,movie);	fwrite(&tpl,4,1,out);	clen += 4;
-		while (tpl > 0)
-		{
-			fread(&tpc,1,1,movie);
-			fwrite(&tpc,1,1,out);	clen++;
-		}
-
-		fread(&tpl,4,1,movie);	clen += 4;	// the MLEN field, which is NOT yet accurate
-		tpl = (moviepos - mpos) - clen;
-		fwrite(&tpl,4,1,out);
-		
-		tpi = tpl;
+		tpi = tpl;					clen += tpi;
 		while (tpi > 0)
 		{
 			fread(&tpc,1,1,movie);
-			fwrite(&tpc,1,1,out);	clen++;
+			fwrite(&tpc,1,1,out);
+			tpi--;
+		}
+
+		fread(&tpl,4,1,movie);				clen += 4;	// the MLEN field, which is NOT yet accurate
+		tpl = (moviepos - mpos) - clen;
+		fwrite(&tpl,4,1,out);
+		
+		tpi = tpl;					clen += tpi;
+		while (tpi > 0)
+		{
+			fread(&tpc,1,1,movie);
+			fwrite(&tpc,1,1,out);
 			tpi--;
 		}
 		rewind(movie);
@@ -288,17 +299,13 @@ BOOL	States_LoadData (FILE *in, int flen)
 					fread(tps,4,1,movie);
 					fread(&mlen,4,1,movie);
 				}
-				fseek(movie,-4,SEEK_CUR);
-				fwrite(&clen,4,1,movie);	// overwrite NMOV block length
-
 				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// CTRL0, CTRL1, CTEXT, EXTR
-				fread(&tpl,4,1,in);				clen -= 4;	// RREC
+				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// RREC
 				if (ReRecords < (int)tpl)
 					ReRecords = tpl;
 				ReRecords++;
-				fwrite(&tpl,4,1,movie);
 				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// ILEN
-				tpi = tpl;					clen -= tpl;	// INFO
+				tpi = tpl;					clen -= tpi;	// INFO
 				while (tpi > 0)
 				{
 					fread(&tpc,1,1,in);
@@ -306,7 +313,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 					tpi--;
 				}
 				fread(&tpl,4,1,in);	fwrite(&tpl,4,1,movie);	clen -= 4;	// MLEN
-				tpi = tpl;					clen -= tpl;	// MDAT
+				tpi = tpl;					clen -= tpi;	// MDAT
 				while (tpi > 0)
 				{
 					if (Controllers.Port1.MovLen)
