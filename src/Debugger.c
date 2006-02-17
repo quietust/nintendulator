@@ -177,11 +177,8 @@ void	Debugger_SetMode (int NewMode)
 	Debugger.PatChanged = TRUE;
 	
 	if ((Debugger.Enabled) && (SizeMult == 1))	/* window positions will overlap if at 1X size */
-	{
-		SizeMult = 2;
-		CheckMenuRadioItem(GetMenu(mWnd),ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);
 		SetWindowClientArea(mWnd,512,480);
-	}
+	else	SetWindowClientArea(mWnd,256 * SizeMult,240 * SizeMult);
 
 	CPU.WantIRQ &= ~IRQ_DEBUG;
 	if (Debugger.DumpWnd)

@@ -1015,8 +1015,9 @@ void	NES_UpdateInterface (void)
 {
 #ifdef ENABLE_DEBUGGER
 	Debugger_SetMode(Debugger.Mode);
-#endif	/* ENABLE_DEBUGGER */
+#else
 	SetWindowClientArea(mWnd,256 * SizeMult,240 * SizeMult);
+#endif	/* ENABLE_DEBUGGER */
 }
 
 void	NES_LoadSettings (void)
