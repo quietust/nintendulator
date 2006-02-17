@@ -908,6 +908,13 @@ int	Controllers_GetConfigKey (HWND hWnd)
 			}
 		}
 	}
+	{
+waitrelease:
+		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIKeyboard,256,Controllers.KeyState);
+		for (i = 0; i < Controllers.NumButtons[0]; i++)
+			if (Controllers_IsPressed(i))
+				goto waitrelease;
+	}
 	IDirectInputDevice7_Unacquire(Controllers.DIKeyboard);
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIKeyboard,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
@@ -954,6 +961,16 @@ int	Controllers_GetConfigMouse (HWND hWnd)
 			}
 		}
 	}
+	{
+waitrelease:
+		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIMouse,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
+		for (i = 0; i < Controllers.NumButtons[1]; i++)
+			if (Controllers_IsPressed((1 << 16) | i))
+				goto waitrelease;
+		for (i = 0x08; i < (0x08 | Controllers.NumAxes[1]); i++)
+			if (Controllers_IsPressed((1 << 16) | i))
+				goto waitrelease;
+	}
 	IDirectInputDevice7_Unacquire(Controllers.DIMouse);
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIMouse,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
@@ -999,6 +1016,17 @@ int	Controllers_GetConfigJoy (HWND hWnd, int Dev)
 				break;
 			}
 		}
+	}
+	{
+waitrelease:
+		hr = IDirectInputDevice7_Poll(Controllers.DIJoystick[Dev]);
+		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIJoystick[Dev],sizeof(DIJOYSTATE2),&Controllers.JoyState[Dev]);
+		for (i = 0; i < Controllers.NumButtons[Dev+2]; i++)
+			if (Controllers_IsPressed(((Dev+2) << 16) | i))
+				goto waitrelease;
+		for (i = 0x80; i < 0x90; i++)
+			if (Controllers_IsPressed(((Dev+2) << 16) | i))
+				goto waitrelease;
 	}
 	IDirectInputDevice7_Unacquire(Controllers.DIJoystick[Dev]);
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIJoystick[Dev],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
