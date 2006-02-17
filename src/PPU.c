@@ -642,6 +642,8 @@ __inline static	void	RunNoSkip (int NumTicks)
 				PalIndex = PPU.Palette[PPU.VRAMAddr & 0x1F];
 			PalIndex &= PPU.GrayScale;
 			PalIndex |= PPU.ColorEmphasis;
+/*			if (CPU.WantIRQ)
+				PalIndex ^= 0x80;*/
 			*PPU.GfxData = PalIndex;
 			PPU.GfxData++;
 		}
