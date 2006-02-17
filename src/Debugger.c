@@ -88,7 +88,7 @@ enum {
 	D_NAM_W = 512,
 	D_NAM_H = 480,
 	D_REG_W = 224,
-	D_REG_H = 176,
+	D_REG_H = 184,
 	D_TRC_W = 256,
 	D_TRC_H = 256
 };
@@ -398,25 +398,27 @@ void	Debugger_Update (void)
 			sprintf(tpc,"VRAMAddy: %04X",PPU.VRAMAddr);
 							TextOut(Debugger.RegDC,0, 9*Debugger.FontHeight,tpc,(int)strlen(tpc));
 
-			sprintf(tpc,"CPU Pages:");	TextOut(Debugger.RegDC,0,12*Debugger.FontHeight,tpc,(int)strlen(tpc));
-			for (i = 0; i < 8; i++)
+			sprintf(tpc,"CPU Pages:");	TextOut(Debugger.RegDC,0,11*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			for (i = 0; i < 16; i++)
 			{
-				if (EI.GetPRG_ROM4(i+8) >= 0)
-					sprintf(tpc,"%03X",EI.GetPRG_ROM4(i+8));
-				else if (EI.GetPRG_RAM4(i+8) >= 0)
-					sprintf(tpc,"A%02X",EI.GetPRG_RAM4(i+8));
+				if (EI.GetPRG_ROM4(i) >= 0)
+					sprintf(tpc,"%03X",EI.GetPRG_ROM4(i));
+				else if (EI.GetPRG_RAM4(i) >= 0)
+					sprintf(tpc,"A%02X",EI.GetPRG_RAM4(i));
 				else	sprintf(tpc,"???");
-							TextOut(Debugger.RegDC,i*4*Debugger.FontWidth,13*Debugger.FontHeight,tpc,(int)strlen(tpc));
+							TextOut(Debugger.RegDC,(i&7)*4*Debugger.FontWidth,(12 + (i >> 3))*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			}
-			sprintf(tpc,"PPU Pages:");	TextOut(Debugger.RegDC,0,14*Debugger.FontHeight,tpc,(int)strlen(tpc));
-			for (i = 0; i < 8; i++)
+			sprintf(tpc,"PPU Pages:");	TextOut(Debugger.RegDC,0,15*Debugger.FontHeight,tpc,(int)strlen(tpc));
+			for (i = 0; i < 12; i++)
 			{
 				if (EI.GetCHR_ROM1(i) >= 0)
 					sprintf(tpc,"%03X",EI.GetCHR_ROM1(i));
 				else if (EI.GetCHR_RAM1(i) >= 0)
 					sprintf(tpc,"A%02X",EI.GetCHR_RAM1(i));
+				else if ((EI.GetCHR_Ptr1(i) >= PPU_VRAM[0]) && (EI.GetCHR_Ptr1(i) <= PPU_VRAM[3]))
+					sprintf(tpc,"N%02X",(EI.GetCHR_Ptr1(i) - PPU_VRAM[0]) >> 10);
 				else	sprintf(tpc,"???");
-							TextOut(Debugger.RegDC,i*4*Debugger.FontWidth,15*Debugger.FontHeight,tpc,(int)strlen(tpc));
+							TextOut(Debugger.RegDC,(i&7)*4*Debugger.FontWidth,(16 + (i >> 3))*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			}
 			BitBlt(Debugger.RegWDC,0,0,D_REG_W,D_REG_H,Debugger.RegDC,0,0,SRCCOPY);
 
