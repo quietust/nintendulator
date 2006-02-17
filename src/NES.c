@@ -1046,6 +1046,7 @@ rerun:
 
 	if (!NES.ROMLoaded)
 	{
+		NES.ROMLoaded = TRUE;	// so CloseFile() flushes the mapper
 		NES_CloseFile();
 		return;
 	}
