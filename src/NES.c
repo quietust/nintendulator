@@ -1035,8 +1035,9 @@ void	NES_LoadSettings (void)
 	GFX.FSkip = 0;
 	GFX.PaletteNTSC = 0;
 	GFX.PalettePAL = 1;
-	GFX.NTSChue = 340;
-	GFX.NTSCsat = 30;
+	GFX.NTSChue = 0;
+	GFX.NTSCsat = 50;
+	GFX.PALsat = 50;
 	GFX.CustPaletteNTSC[0] = GFX.CustPalettePAL[0] = 0;
 	Controllers.Port1.Type = 0;
 	ZeroMemory(Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
@@ -1069,6 +1070,7 @@ void	NES_LoadSettings (void)
 	RegQueryValueEx(SettingsBase,_T("PalettePAL")  ,0,&Type,(unsigned char *)&GFX.PalettePAL ,&Size);
 	RegQueryValueEx(SettingsBase,_T("NTSChue")     ,0,&Type,(unsigned char *)&GFX.NTSChue    ,&Size);
 	RegQueryValueEx(SettingsBase,_T("NTSCsat")     ,0,&Type,(unsigned char *)&GFX.NTSCsat    ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PALsat")      ,0,&Type,(unsigned char *)&GFX.PALsat     ,&Size);
 
 	RegQueryValueEx(SettingsBase,_T("UDLR"),0,&Type,(unsigned char *)&Controllers.EnableOpposites,&Size);
 
@@ -1122,7 +1124,10 @@ void	NES_LoadSettings (void)
 		CheckMenuItem(hMenu, ID_PPU_FRAMESKIP_AUTO, MF_CHECKED);
 
 	if (NES.AutoRun)
-		CheckMenuItem(hMenu, ID_CPU_AUTORUN, MF_CHECKED);
+		CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_CHECKED);
+
+	if (GFX.NTSChue >= 300)		// old hue settings were 300 to 360
+		GFX.NTSChue -= 330;	// new settings are -30 to +30
 
 	GFX_SetFrameskip();
 
@@ -1166,6 +1171,7 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,_T("PalettePAL")  ,0,REG_DWORD,(unsigned char *)&GFX.PalettePAL  ,4);
 	RegSetValueEx(SettingsBase,_T("NTSChue")     ,0,REG_DWORD,(unsigned char *)&GFX.NTSChue     ,4);
 	RegSetValueEx(SettingsBase,_T("NTSCsat")     ,0,REG_DWORD,(unsigned char *)&GFX.NTSCsat     ,4);
+	RegSetValueEx(SettingsBase,_T("PALsat")      ,0,REG_DWORD,(unsigned char *)&GFX.PALsat      ,4);
 
 	RegSetValueEx(SettingsBase,_T("UDLR"),0,REG_DWORD,(unsigned char *)&Controllers.EnableOpposites,4);
 

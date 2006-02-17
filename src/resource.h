@@ -183,6 +183,9 @@
 #define IDC_PAL_3F                      1152
 #define IDC_PAL_VS3                     1153
 #define IDC_PAL_VS4                     1154
+#define IDC_PAL_ER                      1155
+#define IDC_PAL_EG                      1156
+#define IDC_PAL_EB                      1157
 #define IDM_ABOUT                       32770
 #define ID_FILE_OPEN                    32771
 #define ID_FILE_CLOSE                   32772

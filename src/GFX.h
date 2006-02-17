@@ -47,7 +47,7 @@ struct tGFX
 	int SlowRate;
 
 	int PaletteNTSC, PalettePAL;
-	int NTSChue, NTSCsat;
+	int NTSChue, NTSCsat, PALsat;
 	TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
 
 	LPDIRECTDRAW7		DirectDraw;
