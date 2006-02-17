@@ -823,7 +823,7 @@ void	APU_Reset  (void)
 	Noise.EnvCtr = 1;
 	DPCM.Cycles = 1;
 	Frame.Cycles = 1;
-	Frame.Bits = 0x40;	// some games will behave BADLY if we don't do this
+	Frame.Bits = 0;	// technically correct behavior, though some demos may not like it
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 }
 
