@@ -432,7 +432,7 @@ void	States_LoadState (void)
 	int flen;
 
 	States.NeedLoad = FALSE;
-	if (Controllers.MovieMode & MOV_PLAY)
+	if ((Controllers.MovieMode & MOV_PLAY) && !(Controllers.MovieMode & MOV_REVIEW))
 	{
 		GFX_ShowText("Cannot load state while playing a movie!");
 		return;
