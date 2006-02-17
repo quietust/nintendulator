@@ -276,12 +276,16 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (Controllers.MovieMode)
 				Controllers_StopMovie();
 			NES_Reset(RESET_SOFT);
+			if (running)
+				NES_Start(FALSE);
 			break;
 		case ID_CPU_HARDRESET:
 			NES_Stop();
 			if (Controllers.MovieMode)
 				Controllers_StopMovie();
 			NES_Reset(RESET_HARD);
+			if (running)
+				NES_Start(FALSE);
 			break;
 		case ID_CPU_GAMEGENIE:
 			NES.GameGenie = !NES.GameGenie;
