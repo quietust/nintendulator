@@ -165,7 +165,9 @@ void	GFX_Create (void)
 			GFX.Depth = 16;
 		else	GFX.Depth = 15;	break;
 	case 32:GFX.Depth = 32;		break;
-	default:MessageBox(mWnd,_T("Invalid bit depth detected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+	default:
+		GFX_Release();
+		MessageBox(mWnd,_T("Invalid bit depth detected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;			break;
 	}
 
