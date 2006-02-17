@@ -528,17 +528,12 @@ LRESULT CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-char DebugText[32767];
-int DebugLen;
-
 LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
 	case WM_INITDIALOG:
 		dbgVisible = TRUE;
-		DebugText[0] = 0;
-		DebugLen = 0;
 		return FALSE;
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDCANCEL)
@@ -554,15 +549,17 @@ LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	}
 	return FALSE;
 }
+static char DebugText[32767];
 void	AddDebug (char *txt)
 {
-	int i = strlen(txt);
-	if ((i + DebugLen + 2) > 32767)
+	int i = strlen(txt), j;
+
+	GetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText,32767);
+	j = strlen(DebugText);
+	if ((i + j + 2) > 32767)
 		return;
 	strcat(DebugText,txt);
 	strcat(DebugText,"\r\n");
-	DebugLen += i + 2;
-	GetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText,32767);
 	SetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText);
 }
 void	ShowDebug (void)
