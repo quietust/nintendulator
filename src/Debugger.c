@@ -695,7 +695,7 @@ LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 		switch (wmId)
 		{
-		case IDC_DUMP_CPU_MEM:
+		case IDC_DEBUG_DUMPCPU:
 			_stprintf(filename,_T("%s.%04i%02i%02i_%02i%02i%02i.cpumem"), States.BaseFilename,
 				newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 			out = _tfopen(filename, _T("wb"));
@@ -705,7 +705,7 @@ LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 					fwrite(CPU.PRGPointer[i],1,0x1000,out);
 			fclose(out);
 			break;
-		case IDC_DUMP_PPU_MEM:
+		case IDC_DEBUG_DUMPPPU:
 			_stprintf(filename,_T("%s.%04i%02i%02i_%02i%02i%02i.ppumem"), States.BaseFilename,
 				newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 			out = _tfopen(filename, _T("wb"));
@@ -715,13 +715,13 @@ LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 			fwrite(PPU.Palette,1,0x20,out);
 			fclose(out);
 			break;
-		case IDC_START_LOGGING:
+		case IDC_DEBUG_STARTLOG:
 			Debugger_StartLogging();
 			break;
-		case IDC_STOP_LOGGING:
+		case IDC_DEBUG_STOPLOG:
 			Debugger_StopLogging();
 			break;
-		case IDC_IRQBUTTON:
+		case IDC_DEBUG_IRQ:
 			CPU.WantIRQ |= IRQ_DEBUG;
 			break;
 		}

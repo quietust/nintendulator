@@ -214,10 +214,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// Parse the menu selections:
 		switch (wmId)
 		{
-		case IDM_ABOUT:
-			DialogBox(hInst,(LPCTSTR)IDD_ABOUTBOX,hWnd,(DLGPROC)About);
-			break;
-		case IDM_EXIT:
+		case ID_FILE_EXIT:
 			SendMessage(hWnd,WM_CLOSE,0,0);
 			break;
 		case ID_FILE_OPEN:
@@ -286,6 +283,13 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (GetOpenFileName(&ofn))
 				DialogBoxParam(hInst,(LPCTSTR)IDD_INESHEADER,hWnd,InesHeader,(LPARAM)FileName);
 			break;
+		case ID_FILE_AUTORUN:
+			NES.AutoRun = !NES.AutoRun;
+			if (NES.AutoRun)
+				CheckMenuItem(MyMenu,ID_FILE_AUTORUN,MF_CHECKED);
+			else	CheckMenuItem(MyMenu,ID_FILE_AUTORUN,MF_UNCHECKED);
+			break;
+
 		case ID_CPU_RUN:
 			NES_Start(FALSE);
 			break;
@@ -312,37 +316,58 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (running)
 				NES_Start(FALSE);
 			break;
+		case ID_CPU_SAVESTATE:
+			NES_Stop();
+			while (PPU.SLnum != 240)
+			{
+				if (NES.FrameStep && !NES.GotStep)
+					MessageBox(mWnd,_T("Impossible: savestate is advancing to scanline 240 in framestep mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+				do
+				{
+#ifdef ENABLE_DEBUGGER
+					if (Debugger.Enabled)
+						Debugger_AddInst();
+#endif	/* ENABLE_DEBUGGER */
+					CPU_ExecOp();
+				} while (!NES.Scanline);
+				NES.Scanline = FALSE;
+			}
+#ifdef ENABLE_DEBUGGER
+			if (Debugger.Enabled)
+				Debugger_Update();
+#endif	/* ENABLE_DEBUGGER */
+			States_SaveState();
+			if (running)	NES_Start(FALSE);
+			break;
+		case ID_CPU_LOADSTATE:
+			NES_Stop();
+			States_LoadState();
+			if (running)	NES_Start(FALSE);
+			break;
+		case ID_CPU_PREVSTATE:
+			States.SelSlot += 9;
+			States.SelSlot %= 10;
+			States_SetSlot(States.SelSlot);
+			break;
+		case ID_CPU_NEXTSTATE:
+			States.SelSlot += 1;
+			States.SelSlot %= 10;
+			States_SetSlot(States.SelSlot);
+			break;
 		case ID_CPU_GAMEGENIE:
 			NES.GameGenie = !NES.GameGenie;
 			if (NES.GameGenie)
 				CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
 			else	CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 			break;
-		case ID_FILE_AUTORUN:
-			NES.AutoRun = !NES.AutoRun;
-			if (NES.AutoRun)
-				CheckMenuItem(MyMenu,ID_CPU_AUTORUN,MF_CHECKED);
-			else	CheckMenuItem(MyMenu,ID_CPU_AUTORUN,MF_UNCHECKED);
+		case ID_CPU_FRAMESTEP_ENABLED:
+			NES.FrameStep = !NES.FrameStep;
+			if (NES.FrameStep)
+				CheckMenuItem(MyMenu,ID_CPU_FRAMESTEP_ENABLED,MF_CHECKED);
+			else	CheckMenuItem(MyMenu,ID_CPU_FRAMESTEP_ENABLED,MF_UNCHECKED);
 			break;
-		case ID_PPU_SIZE_1X:
-			SizeMult = 1;
-			NES_UpdateInterface();
-			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_1X,MF_BYCOMMAND);
-			break;
-		case ID_PPU_SIZE_2X:
-			SizeMult = 2;
-			NES_UpdateInterface();
-			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);
-			break;
-		case ID_PPU_SIZE_3X:
-			SizeMult = 3;
-			NES_UpdateInterface();
-			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_3X,MF_BYCOMMAND);
-			break;
-		case ID_PPU_SIZE_4X:
-			SizeMult = 4;
-			NES_UpdateInterface();
-			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);
+		case ID_CPU_FRAMESTEP_STEP:
+			NES.GotStep = TRUE;
 			break;
 		case ID_PPU_FRAMESKIP_AUTO:
 			if (GFX.aFSkip = !GFX.aFSkip)
@@ -389,76 +414,25 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			GFX.FSkip = 9;
 			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_9,MF_BYCOMMAND);
 			break;
-#ifdef ENABLE_DEBUGGER
-		case ID_DEBUG_LEVEL1:
-			Debugger_SetMode(0);
-			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
+		case ID_PPU_SIZE_1X:
+			SizeMult = 1;
+			NES_UpdateInterface();
+			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_1X,MF_BYCOMMAND);
 			break;
-		case ID_DEBUG_LEVEL2:
-			Debugger_SetMode(1);
-			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL2,MF_BYCOMMAND);
+		case ID_PPU_SIZE_2X:
+			SizeMult = 2;
+			NES_UpdateInterface();
+			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);
 			break;
-		case ID_DEBUG_LEVEL3:
-			Debugger_SetMode(2);
-			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL3,MF_BYCOMMAND);
+		case ID_PPU_SIZE_3X:
+			SizeMult = 3;
+			NES_UpdateInterface();
+			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_3X,MF_BYCOMMAND);
 			break;
-		case ID_DEBUG_LEVEL4:
-			Debugger_SetMode(3);
-			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL4,MF_BYCOMMAND);
-			break;
-		case ID_DEBUG_STATWND:
-			ShowDebug();
-			break;
-#endif	/* ENABLE_DEBUGGER */
-		case ID_CPU_SAVESTATE:
-			NES_Stop();
-			while (PPU.SLnum != 240)
-			{
-				if (NES.FrameStep && !NES.GotStep)
-					MessageBox(mWnd,_T("Impossible: savestate is advancing to scanline 240 in framestep mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-				do
-				{
-#ifdef ENABLE_DEBUGGER
-					if (Debugger.Enabled)
-						Debugger_AddInst();
-#endif	/* ENABLE_DEBUGGER */
-					CPU_ExecOp();
-				} while (!NES.Scanline);
-				NES.Scanline = FALSE;
-			}
-#ifdef ENABLE_DEBUGGER
-			if (Debugger.Enabled)
-				Debugger_Update();
-#endif	/* ENABLE_DEBUGGER */
-			States_SaveState();
-			if (running)	NES_Start(FALSE);
-			break;
-		case ID_CPU_LOADSTATE:
-			NES_Stop();
-			States_LoadState();
-			if (running)	NES_Start(FALSE);
-			break;
-		case ID_CPU_PREVSTATE:
-			States.SelSlot += 9;
-			States.SelSlot %= 10;
-			States_SetSlot(States.SelSlot);
-			break;
-		case ID_CPU_NEXTSTATE:
-			States.SelSlot += 1;
-			States.SelSlot %= 10;
-			States_SetSlot(States.SelSlot);
-			break;
-		case ID_SOUND_ENABLED:
-			if (NES.SoundEnabled = !NES.SoundEnabled)
-			{
-				if (running)	APU_SoundON();
-				CheckMenuItem(MyMenu,ID_SOUND_ENABLED,MF_CHECKED);
-			}
-			else
-			{
-				if (running)	APU_SoundOFF();
-				CheckMenuItem(MyMenu,ID_SOUND_ENABLED,MF_UNCHECKED);
-			}
+		case ID_PPU_SIZE_4X:
+			SizeMult = 4;
+			NES_UpdateInterface();
+			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);
 			break;
 		case ID_PPU_MODE_NTSC:
 			NES_Stop();
@@ -474,44 +448,6 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_PPU_PALETTE:
 			GFX_PaletteConfig();
-			break;
-		case ID_INPUT_SETUP:
-			NES_Stop();
-			Controllers_OpenConfig();
-			if (running)	NES_Start(FALSE);
-			break;
-		case ID_GAME:
-			NES_MapperConfig();
-			break;
-		case ID_MISC_STARTAVICAPTURE:
-			AVI_Start();
-			break;
-		case ID_MISC_STOPAVICAPTURE:
-			AVI_End();
-			break;
-		case ID_MISC_PLAYMOVIE:
-			Movie_Play(FALSE);
-			break;
-		case ID_MISC_RESUMEMOVIE:
-			Movie_Play(TRUE);
-			break;
-		case ID_MISC_RECORDMOVIE:
-			Movie_Record(FALSE);
-			break;
-		case ID_MISC_RECORDSTATE:
-			Movie_Record(TRUE);
-			break;
-		case ID_MISC_STOPMOVIE:
-			Movie_Stop();
-			break;
-		case ID_CPU_FRAMESTEP_ENABLED:
-			NES.FrameStep = !NES.FrameStep;
-			if (NES.FrameStep)
-				CheckMenuItem(MyMenu,ID_CPU_FRAMESTEP_ENABLED,MF_CHECKED);
-			else	CheckMenuItem(MyMenu,ID_CPU_FRAMESTEP_ENABLED,MF_UNCHECKED);
-			break;
-		case ID_CPU_FRAMESTEP_STEP:
-			NES.GotStep = TRUE;
 			break;
 		case ID_PPU_SLOWDOWN_ENABLED:
 			GFX.SlowDown = !GFX.SlowDown;
@@ -550,6 +486,72 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			GFX_Create();
 			if (running)
 				NES_Start(FALSE);
+			break;
+		case ID_SOUND_ENABLED:
+			if (NES.SoundEnabled = !NES.SoundEnabled)
+			{
+				if (running)	APU_SoundON();
+				CheckMenuItem(MyMenu,ID_SOUND_ENABLED,MF_CHECKED);
+			}
+			else
+			{
+				if (running)	APU_SoundOFF();
+				CheckMenuItem(MyMenu,ID_SOUND_ENABLED,MF_UNCHECKED);
+			}
+			break;
+		case ID_INPUT_SETUP:
+			NES_Stop();
+			Controllers_OpenConfig();
+			if (running)	NES_Start(FALSE);
+			break;
+#ifdef ENABLE_DEBUGGER
+		case ID_DEBUG_LEVEL1:
+			Debugger_SetMode(0);
+			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
+			break;
+		case ID_DEBUG_LEVEL2:
+			Debugger_SetMode(1);
+			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL2,MF_BYCOMMAND);
+			break;
+		case ID_DEBUG_LEVEL3:
+			Debugger_SetMode(2);
+			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL3,MF_BYCOMMAND);
+			break;
+		case ID_DEBUG_LEVEL4:
+			Debugger_SetMode(3);
+			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL4,MF_BYCOMMAND);
+			break;
+		case ID_DEBUG_STATWND:
+			ShowDebug();
+			break;
+#endif	/* ENABLE_DEBUGGER */
+		case ID_GAME:
+			NES_MapperConfig();
+			break;
+		case ID_MISC_STARTAVICAPTURE:
+			AVI_Start();
+			break;
+		case ID_MISC_STOPAVICAPTURE:
+			AVI_End();
+			break;
+		case ID_MISC_PLAYMOVIE:
+			Movie_Play(FALSE);
+			break;
+		case ID_MISC_RECORDMOVIE:
+			Movie_Record(FALSE);
+			break;
+		case ID_MISC_RECORDSTATE:
+			Movie_Record(TRUE);
+			break;
+		case ID_MISC_RESUMEMOVIE:
+			Movie_Play(TRUE);
+			break;
+		case ID_MISC_STOPMOVIE:
+			Movie_Stop();
+			break;
+		case ID_HELP_ABOUT:
+			DialogBox(hInst,(LPCTSTR)IDD_ABOUTBOX,hWnd,(DLGPROC)About);
+			break;
 		default:return DefWindowProc(hWnd,message,wParam,lParam);
 			break;
 		}
@@ -678,117 +680,117 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			i--;
 		_tcscpy(name,filename+i+1);
 		name[_tcslen(name)-4] = 0;
-		SetDlgItemText(hDlg,IDC_INESNAME,name);
-		SetDlgItemInt(hDlg,IDC_INESPRG,header[4],FALSE);
-		SetDlgItemInt(hDlg,IDC_INESCHR,header[5],FALSE);
-		SetDlgItemInt(hDlg,IDC_INESMAP,((header[6] >> 4) & 0xF) | (header[7] & 0xF0),FALSE);
-		CheckDlgButton(hDlg,IDC_INESBATT,(header[6] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hDlg,IDC_INESTRAIN,(header[6] & 0x04) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hDlg,IDC_INES4SCR,(header[6] & 0x08) ? BST_CHECKED : BST_UNCHECKED);
+		SetDlgItemText(hDlg,IDC_INES_NAME,name);
+		SetDlgItemInt(hDlg,IDC_INES_PRG,header[4],FALSE);
+		SetDlgItemInt(hDlg,IDC_INES_CHR,header[5],FALSE);
+		SetDlgItemInt(hDlg,IDC_INES_MAP,((header[6] >> 4) & 0xF) | (header[7] & 0xF0),FALSE);
+		CheckDlgButton(hDlg,IDC_INES_BATT,(header[6] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg,IDC_INES_TRAIN,(header[6] & 0x04) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg,IDC_INES_4SCR,(header[6] & 0x08) ? BST_CHECKED : BST_UNCHECKED);
 		if (header[6] & 0x01)
-			CheckRadioButton(hDlg,IDC_INESHORIZ,IDC_INESVERT,IDC_INESVERT);
-		else	CheckRadioButton(hDlg,IDC_INESHORIZ,IDC_INESVERT,IDC_INESHORIZ);
-		CheckDlgButton(hDlg,IDC_INESVS,(header[7] & 0x01) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hDlg,IDC_INESPC10,(header[7] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
-		if (IsDlgButtonChecked(hDlg,IDC_INES4SCR))
+			CheckRadioButton(hDlg,IDC_INES_HORIZ,IDC_INES_VERT,IDC_INES_VERT);
+		else	CheckRadioButton(hDlg,IDC_INES_HORIZ,IDC_INES_VERT,IDC_INES_HORIZ);
+		CheckDlgButton(hDlg,IDC_INES_VS,(header[7] & 0x01) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg,IDC_INES_PC10,(header[7] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
+		if (IsDlgButtonChecked(hDlg,IDC_INES_4SCR))
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_INESHORIZ),FALSE);
-			EnableWindow(GetDlgItem(hDlg,IDC_INESVERT),FALSE);
+			EnableWindow(GetDlgItem(hDlg,IDC_INES_HORIZ),FALSE);
+			EnableWindow(GetDlgItem(hDlg,IDC_INES_VERT),FALSE);
 		}
 		else
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_INESHORIZ),TRUE);
-			EnableWindow(GetDlgItem(hDlg,IDC_INESVERT),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_INES_HORIZ),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_INES_VERT),TRUE);
 		}
-		if (IsDlgButtonChecked(hDlg,IDC_INESVS))
-			EnableWindow(GetDlgItem(hDlg,IDC_INESPC10),FALSE);
-		else if (IsDlgButtonChecked(hDlg,IDC_INESPC10))
-			EnableWindow(GetDlgItem(hDlg,IDC_INESVS),FALSE);
+		if (IsDlgButtonChecked(hDlg,IDC_INES_VS))
+			EnableWindow(GetDlgItem(hDlg,IDC_INES_PC10),FALSE);
+		else if (IsDlgButtonChecked(hDlg,IDC_INES_PC10))
+			EnableWindow(GetDlgItem(hDlg,IDC_INES_VS),FALSE);
 		else
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_INESVS),TRUE);
-			EnableWindow(GetDlgItem(hDlg,IDC_INESPC10),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_INES_VS),TRUE);
+			EnableWindow(GetDlgItem(hDlg,IDC_INES_PC10),TRUE);
 		}
 		return TRUE;
 		break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
-		case IDC_INESPRG:
-			i = GetDlgItemInt(hDlg,IDC_INESPRG,NULL,FALSE);
+		case IDC_INES_PRG:
+			i = GetDlgItemInt(hDlg,IDC_INES_PRG,NULL,FALSE);
 			if ((i < 0) || (i > 255))
-				SetDlgItemInt(hDlg,IDC_INESPRG,0,FALSE);
+				SetDlgItemInt(hDlg,IDC_INES_PRG,i = 0,FALSE);
 			header[4] = i & 0xFF;
 			break;
-		case IDC_INESCHR:
-			i = GetDlgItemInt(hDlg,IDC_INESCHR,NULL,FALSE);
+		case IDC_INES_CHR:
+			i = GetDlgItemInt(hDlg,IDC_INES_CHR,NULL,FALSE);
 			if ((i < 0) || (i > 255))
-				SetDlgItemInt(hDlg,IDC_INESCHR,0,FALSE);
+				SetDlgItemInt(hDlg,IDC_INES_CHR,i = 0,FALSE);
 			header[5] = i & 0xFF;
 			break;
-		case IDC_INESMAP:
-			i = GetDlgItemInt(hDlg,IDC_INESMAP,NULL,FALSE);
+		case IDC_INES_MAP:
+			i = GetDlgItemInt(hDlg,IDC_INES_MAP,NULL,FALSE);
 			if ((i < 0) || (i > 255))
-				SetDlgItemInt(hDlg,IDC_INESMAP,0,FALSE);
+				SetDlgItemInt(hDlg,IDC_INES_MAP,i = 0,FALSE);
 			header[6] = (header[6] & 0x0F) | ((i & 0x0F) << 4);
 			header[7] = (header[7] & 0x0F) | (i & 0xF0);
 			break;
-		case IDC_INESBATT:
-			if (IsDlgButtonChecked(hDlg,IDC_INESBATT))
+		case IDC_INES_BATT:
+			if (IsDlgButtonChecked(hDlg,IDC_INES_BATT))
 				header[6] |= 0x02;
 			else	header[6] &= ~0x02;
 			break;
-		case IDC_INESTRAIN:
-			if (IsDlgButtonChecked(hDlg,IDC_INESTRAIN))
+		case IDC_INES_TRAIN:
+			if (IsDlgButtonChecked(hDlg,IDC_INES_TRAIN))
 			{
 				MessageBox(hDlg,_T("Trained ROMs are not supported in Nintendulator!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 				header[6] |= 0x04;
 			}
 			else	header[6] &= ~0x04;
 			break;
-		case IDC_INES4SCR:
-			if (IsDlgButtonChecked(hDlg,IDC_INES4SCR))
+		case IDC_INES_4SCR:
+			if (IsDlgButtonChecked(hDlg,IDC_INES_4SCR))
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INESHORIZ),FALSE);
-				EnableWindow(GetDlgItem(hDlg,IDC_INESVERT),FALSE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INES_HORIZ),FALSE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INES_VERT),FALSE);
 				header[6] |= 0x08;
 			}
 			else
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INESHORIZ),TRUE);
-				EnableWindow(GetDlgItem(hDlg,IDC_INESVERT),TRUE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INES_HORIZ),TRUE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INES_VERT),TRUE);
 				header[6] &= ~0x08;
 			}
 			break;
-		case IDC_INESHORIZ:
-			if (IsDlgButtonChecked(hDlg,IDC_INESHORIZ))
+		case IDC_INES_HORIZ:
+			if (IsDlgButtonChecked(hDlg,IDC_INES_HORIZ))
 				header[6] &= ~0x01;
 			break;
-		case IDC_INESVERT:
-			if (IsDlgButtonChecked(hDlg,IDC_INESVERT))
+		case IDC_INES_VERT:
+			if (IsDlgButtonChecked(hDlg,IDC_INES_VERT))
 				header[6] |= 0x01;
 			break;
-		case IDC_INESVS:
-			if (IsDlgButtonChecked(hDlg,IDC_INESVS))
+		case IDC_INES_VS:
+			if (IsDlgButtonChecked(hDlg,IDC_INES_VS))
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INESPC10),FALSE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INES_PC10),FALSE);
 				header[7] |= 0x01;
 			}
 			else
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INESPC10),TRUE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INES_PC10),TRUE);
 				header[7] &= ~0x01;
 			}
 			break;
-		case IDC_INESPC10:
-			if (IsDlgButtonChecked(hDlg,IDC_INESPC10))
+		case IDC_INES_PC10:
+			if (IsDlgButtonChecked(hDlg,IDC_INES_PC10))
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INESVS),FALSE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INES_VS),FALSE);
 				header[7] |= 0x02;
 			}
 			else
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INESVS),TRUE);
+				EnableWindow(GetDlgItem(hDlg,IDC_INES_VS),TRUE);
 				header[7] &= ~0x02;
 			}
 			break;
