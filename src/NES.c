@@ -877,6 +877,10 @@ rerun:
 				States_LoadState();
 			if (SLnum == 240)
 			{
+#ifdef ENABLE_DEBUGGER
+				if (Debugger.Enabled)
+					Debugger_UpdateGraphics();
+#endif	/* ENABLE_DEBUGGER */
 				if (States.NeedSave)	// but only save on scanline 240
 					States_SaveState();
 				if (NES.FrameStep)	// and if we need to stop, do it here
@@ -886,10 +890,6 @@ rerun:
 						ProcessMessages();
 				}
 			}
-#ifdef ENABLE_DEBUGGER
-			if ((SLnum == 240) && (Debugger.Enabled))
-				Debugger_UpdateGraphics();
-#endif	/* ENABLE_DEBUGGER */
 			if (SLnum == 241)
 				Controllers_UpdateInput();
 		}

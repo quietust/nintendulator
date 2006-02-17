@@ -408,10 +408,12 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif	/* ENABLE_DEBUGGER */
 		case ID_CPU_SAVESTATE:
 			States.NeedSave = TRUE;
-			if ((NES.Stopped) || (NES.FrameStep))
-			{	// if framestep, SLnum should already be 240
+			if ((NES.Stopped) || (NES.FrameStep && !NES.GotStep))
+			{	// if waiting, SLnum should already be 240
 				while (PPU.SLnum != 240)
 				{
+					if (NES.FrameStep && !NES.GotStep)
+						MessageBox(mWnd,"Impossible: savestate is advancing to scanline 240 in framestep mode!","Nintendulator",MB_OK | MB_ICONERROR);
 					do
 					{
 #ifdef ENABLE_DEBUGGER
@@ -431,7 +433,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CPU_LOADSTATE:
 			States.NeedLoad = TRUE;
-			if ((NES.Stopped) || (NES.FrameStep))
+			if ((NES.Stopped) || (NES.FrameStep && !NES.GotStep))
 				States_LoadState();
 			break;
 		case ID_CPU_PREVSTATE:
