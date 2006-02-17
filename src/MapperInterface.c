@@ -32,6 +32,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 # include "GFX.h"
 # include "Debugger.h"
 # include "States.h"
+# include "Controllers.h"
 #endif
 
 TEmulatorInterface	EI;
@@ -362,7 +363,9 @@ static	void	_MAPINT	Mirror_Custom (int M1, int M2, int M3, int M4)
 static	void	_MAPINT	Set_SRAMSize (int Size)	/* Sets the size of the SRAM (in bytes) and clears PRG_RAM */
 {
 #ifndef NSFPLAYER
-	NES.SRAM_Size = Size;
+	if (Controllers.MovieMode)		/* Do not save SRAM when recording movies */
+		NES.SRAM_Size = 0;
+	else	NES.SRAM_Size = Size;
 	memset(PRG_RAM,0,sizeof(PRG_RAM));
 #endif
 }
@@ -371,6 +374,8 @@ static	void	_MAPINT	Save_SRAM (void)	/* Saves SRAM to disk */
 #ifndef NSFPLAYER
 	char Filename[MAX_PATH];
 	FILE *SRAMFile;
+	if (!NES.SRAM_Size)			/* for movie recording (see above) */
+		return;
 	sprintf(Filename,"%s.sav",States.BaseFilename);
 	SRAMFile = fopen(Filename,"wb");
 	fwrite(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
@@ -382,6 +387,8 @@ static	void	_MAPINT	Load_SRAM (void)	/* Loads SRAM from disk */
 #ifndef NSFPLAYER
 	char Filename[MAX_PATH];
 	FILE *SRAMFile;
+	if (!NES.SRAM_Size)			/* for movie recording (see above) */
+		return;
 	sprintf(Filename,"%s.sav",States.BaseFilename);
 	SRAMFile = fopen(Filename,"rb");
 	if (!SRAMFile)
