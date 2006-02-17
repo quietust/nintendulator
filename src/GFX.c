@@ -519,33 +519,33 @@ void	GFX_UpdateTitlebar (void)
 
 void	UpdatePalette (HWND hDlg, int pal)
 {
-	const int PalEntries[64] = {
-		IDC_PAL_00,IDC_PAL_01,IDC_PAL_02,IDC_PAL_03,IDC_PAL_04,IDC_PAL_05,IDC_PAL_06,IDC_PAL_07,IDC_PAL_08,IDC_PAL_09,IDC_PAL_0A,IDC_PAL_0B,IDC_PAL_0C,IDC_PAL_0D,IDC_PAL_0E,IDC_PAL_0F,
-		IDC_PAL_10,IDC_PAL_11,IDC_PAL_12,IDC_PAL_13,IDC_PAL_14,IDC_PAL_15,IDC_PAL_16,IDC_PAL_17,IDC_PAL_18,IDC_PAL_19,IDC_PAL_1A,IDC_PAL_1B,IDC_PAL_1C,IDC_PAL_1D,IDC_PAL_1E,IDC_PAL_1F,
-		IDC_PAL_20,IDC_PAL_21,IDC_PAL_22,IDC_PAL_23,IDC_PAL_24,IDC_PAL_25,IDC_PAL_26,IDC_PAL_27,IDC_PAL_28,IDC_PAL_29,IDC_PAL_2A,IDC_PAL_2B,IDC_PAL_2C,IDC_PAL_2D,IDC_PAL_2E,IDC_PAL_2F,
-		IDC_PAL_30,IDC_PAL_31,IDC_PAL_32,IDC_PAL_33,IDC_PAL_34,IDC_PAL_35,IDC_PAL_36,IDC_PAL_37,IDC_PAL_38,IDC_PAL_39,IDC_PAL_3A,IDC_PAL_3B,IDC_PAL_3C,IDC_PAL_3D,IDC_PAL_3E,IDC_PAL_3F
-	};
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_HUESLIDER),(pal == 0));
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_HUE),(pal == 0));
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_TINTSLIDER),(pal == 0));
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_TINT),(pal == 0));
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_CUSTFILE),(pal == 3));
 	EnableWindow(GetDlgItem(hDlg,IDC_PAL_BROWSE),(pal == 3));
-
-//	for (i = 0; i < 64; i++)
-//		SetPixel(GetDC(GetDlgItem(hDlg,PalEntries[i])),0,0,cPalette[4][i][0] | (cPalette[4][i][1] << 8) | (cPalette[4][i][2] << 16));
+	RedrawWindow(hDlg,NULL,NULL,RDW_INVALIDATE);
 }
 
 LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const int paltable[4] = {IDC_PAL_NTSC,IDC_PAL_PAL,IDC_PAL_RGB,IDC_PAL_CUSTOM};
+	const int PalEntries[64] = {
+		IDC_PAL_00,IDC_PAL_01,IDC_PAL_02,IDC_PAL_03,IDC_PAL_04,IDC_PAL_05,IDC_PAL_06,IDC_PAL_07,IDC_PAL_08,IDC_PAL_09,IDC_PAL_0A,IDC_PAL_0B,IDC_PAL_0C,IDC_PAL_0D,IDC_PAL_0E,IDC_PAL_0F,
+		IDC_PAL_10,IDC_PAL_11,IDC_PAL_12,IDC_PAL_13,IDC_PAL_14,IDC_PAL_15,IDC_PAL_16,IDC_PAL_17,IDC_PAL_18,IDC_PAL_19,IDC_PAL_1A,IDC_PAL_1B,IDC_PAL_1C,IDC_PAL_1D,IDC_PAL_1E,IDC_PAL_1F,
+		IDC_PAL_20,IDC_PAL_21,IDC_PAL_22,IDC_PAL_23,IDC_PAL_24,IDC_PAL_25,IDC_PAL_26,IDC_PAL_27,IDC_PAL_28,IDC_PAL_29,IDC_PAL_2A,IDC_PAL_2B,IDC_PAL_2C,IDC_PAL_2D,IDC_PAL_2E,IDC_PAL_2F,
+		IDC_PAL_30,IDC_PAL_31,IDC_PAL_32,IDC_PAL_33,IDC_PAL_34,IDC_PAL_35,IDC_PAL_36,IDC_PAL_37,IDC_PAL_38,IDC_PAL_39,IDC_PAL_3A,IDC_PAL_3B,IDC_PAL_3C,IDC_PAL_3D,IDC_PAL_3E,IDC_PAL_3F
+	};
 
 	int wmId, wmEvent;
 	char filename[256];
 	OPENFILENAME ofn;
+	PAINTSTRUCT ps;
+	HDC hdc;
 
 	static BOOL ispal;
-	static int hue, tint, pal;
+	static int hue, tint, pal, i;
 
 	switch (uMsg)
 	{
@@ -649,13 +649,49 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			hue = SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_GETPOS,0,0);
 			SetDlgItemInt(hDlg,IDC_PAL_HUE,hue,FALSE);
 			GFX_GenerateNTSC(hue,tint,TRUE);
+			UpdatePalette(hDlg,pal);
 		}
 		if (lParam == (LPARAM)GetDlgItem(hDlg,IDC_PAL_TINTSLIDER))
 		{
 			tint = SendDlgItemMessage(hDlg,IDC_PAL_TINTSLIDER,TBM_GETPOS,0,0);
 			SetDlgItemInt(hDlg,IDC_PAL_TINT,tint,FALSE);
 			GFX_GenerateNTSC(hue,tint,TRUE);
+			UpdatePalette(hDlg,pal);
 		}
+		break;
+	case WM_PAINT:
+		hdc = BeginPaint(hDlg,&ps);
+		{
+			HDC compdc = CreateCompatibleDC(hdc);
+			HBITMAP bmp;
+			POINT wcl = {0,0};
+			RECT wrect, rect;
+			ClientToScreen(hDlg,&wcl);
+			GetWindowRect(GetDlgItem(hDlg,PalEntries[0]),&rect);
+			wrect.top = rect.top - wcl.y;
+			wrect.left = rect.left - wcl.x;
+			GetWindowRect(GetDlgItem(hDlg,PalEntries[63]),&rect);
+			wrect.bottom = rect.bottom - wcl.y;
+			wrect.right = rect.right - wcl.x;
+			bmp = CreateCompatibleBitmap(hdc,wrect.right-wrect.left,wrect.bottom-wrect.top);
+			SelectObject(compdc,bmp);
+			for (i = 0; i < 64; i++)
+			{
+				HWND dlgitem = GetDlgItem(hDlg,PalEntries[i]);
+				HBRUSH brush = CreateSolidBrush(cPalette[4][i][0] | (cPalette[4][i][1] << 8) | (cPalette[4][i][2] << 16));
+				GetWindowRect(dlgitem,&rect);
+				rect.top -= wcl.y + wrect.top;
+				rect.bottom -= wcl.y + wrect.top;
+				rect.left -= wcl.x + wrect.left;
+				rect.right -= wcl.x + wrect.left;
+				FillRect(compdc,&rect,brush);
+				DeleteObject(brush);
+			}
+			BitBlt(hdc,wrect.left,wrect.top,wrect.right-wrect.left,wrect.bottom-wrect.top,compdc,0,0,SRCCOPY);
+			DeleteDC(compdc);
+			DeleteObject(bmp);
+		}
+		EndPaint(hDlg,&ps);
 		break;
 	}
 
