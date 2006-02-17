@@ -138,6 +138,10 @@ SOURCE=..\src\c_s_powpad.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\c_s_snescont.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\c_s_stdcont.c
 # End Source File
 # Begin Source File
