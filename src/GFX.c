@@ -31,7 +31,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct tGFX GFX;
 
-#define	GFX_Try(action,errormsg)\
+#define	GFX_Try(action,errormsg,failaction)\
 {\
 	if (FAILED(action))\
 	{\
@@ -41,11 +41,11 @@ struct tGFX GFX;
 		if (FAILED(action))\
 		{\
 			MessageBox(mWnd,errormsg,"Nintendulator",MB_OK | MB_ICONERROR);\
+			failaction;\
 			return;\
 		}\
 	}\
 }
-
 void	GFX_Init (void)
 {
 	ZeroMemory(&GFX.SurfDesc,sizeof(GFX.SurfDesc));
@@ -184,7 +184,11 @@ void	GFX_Create (void)
 		MessageBox(mWnd,"Failed to unlock secondary surface (init)","Nintendulator",MB_OK | MB_ICONERROR);
 		return;
 	}
-	GFX_Update();
+	if (WaitForSingleObject(GFX.Semaphore,0) == WAIT_OBJECT_0)
+	{
+		ReleaseSemaphore(GFX.Semaphore,1,NULL);
+		GFX_Update();
+	}
 	GFX_LoadPalette(PPU.IsPAL ? GFX.PalettePAL : GFX.PaletteNTSC);
 }
 
@@ -255,7 +259,7 @@ void	GFX_Update (void)
 {
 	register unsigned short *src = DrawArray;
 	WaitForSingleObject(GFX.Semaphore,INFINITE);
-	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),"Failed to lock secondary surface")
+	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),"Failed to lock secondary surface",ReleaseSemaphore(GFX.Semaphore,1,NULL))
 	if (GFX.Depth == 32)
 	{
 		int x, y;
@@ -289,7 +293,7 @@ void	GFX_Update (void)
 			src += x;
 		}
 	}
-	GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),"Failed to unlock secondary surface")
+	GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),"Failed to unlock secondary surface",ReleaseSemaphore(GFX.Semaphore,1,NULL))
 	ReleaseSemaphore(GFX.Semaphore,1,NULL);
 	GFX_Repaint();
 }
@@ -309,7 +313,7 @@ void	GFX_Repaint (void)
 		rect.top += pt.y;
 		rect.bottom += pt.y;
 		WaitForSingleObject(GFX.Semaphore,INFINITE);
-		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),"Failed to blit to primary surface")
+		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),"Failed to blit to primary surface",ReleaseSemaphore(GFX.Semaphore,1,NULL))
 		ReleaseSemaphore(GFX.Semaphore,1,NULL);
 	}
 }
