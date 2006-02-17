@@ -244,18 +244,19 @@ void	_MAPINT	GenieWrite (int Bank, int Addy, int Val)
 			EI.SetCHR_RAM8(0,0);
 			EI.Mirror_4();
 			for (i = 0x8; i < 0x10; i++)
-			{
+			{	// reset PRG I/O handlers
 				CPU.PRGPointer[i] = NULL;
-				CPU.ReadHandler[i] = GenieRead;
+				CPU.ReadHandler[i] = CPU_ReadPRG;
 				CPU.WriteHandler[i] = CPU_WritePRG;
 				CPU.Writable[i] = FALSE;
 				CPU.Readable[i] = FALSE;
 			}
-			MI = MI2;
-			PPU_GetHandlers();
-			CPU_GetHandlers();
-			if ((MI) && (MI->Reset))
-				MI->Reset(RESET_HARD);
+			Genie_Init();	// and map in the appropriate [optimized] read handlers
+			MI = MI2;	// swap in the REAL mapper
+			PPU_GetHandlers();	// grab a copy of PPUCycle
+			CPU_GetHandlers();	// and CPUCycle
+			if ((MI) && (MI->Reset))	// then hard-reset the mapper
+				MI->Reset(RESET_HARD);	// (where appropriate)
 		}
 		break;
 	case 1:	Genie.Code1B = 8 | (Val >> 4);
