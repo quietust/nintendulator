@@ -446,7 +446,7 @@ void	Controllers_UnAcquire (void)
 }
 
 FILE *movie;
-unsigned char MOV_ControllerTypes[3];
+unsigned char MOV_ControllerTypes[4];
 int	ReRecords;
 char MovieName[256];
 
@@ -496,22 +496,20 @@ void	Controllers_PlayMovie (BOOL Review)
 			return;
 		}
 		Controllers.MovieMode = MOV_PLAY | MOV_FMV;
+
+		MOV_ControllerTypes[0] = Controllers.Port1.Type;
+		MOV_ControllerTypes[1] = Controllers.Port2.Type;
+		MOV_ControllerTypes[2] = Controllers.ExpPort.Type;
+
 		if (Controllers.Port1.Type == STD_FOURSCORE)
 		{
-			MOV_ControllerTypes[0] = Controllers.FSPort1.Type;
-			MOV_ControllerTypes[1] = Controllers.FSPort3.Type;
-			MOV_ControllerTypes[2] = Controllers.FSPort2.Type;
-			MOV_ControllerTypes[3] = Controllers.FSPort4.Type;
-			MOV_ControllerTypes[4] = Controllers.ExpPort.Type;
+			MOV_ControllerTypes[1] = 0;
+			if (Controllers.FSPort1.Type)	MOV_ControllerTypes[1] |= 0x01;
+			if (Controllers.FSPort2.Type)	MOV_ControllerTypes[1] |= 0x02;
+			if (Controllers.FSPort3.Type)	MOV_ControllerTypes[1] |= 0x04;
+			if (Controllers.FSPort4.Type)	MOV_ControllerTypes[1] |= 0x08;
 		}
-		else
-		{
-			MOV_ControllerTypes[0] = Controllers.Port1.Type;
-			MOV_ControllerTypes[1] = Controllers.Port2.Type;
-			MOV_ControllerTypes[2] = STD_UNCONNECTED;
-			MOV_ControllerTypes[3] = STD_UNCONNECTED;
-			MOV_ControllerTypes[4] = Controllers.ExpPort.Type;
-		}
+
 		StdPort_SetControllerType(&Controllers.Port1,STD_STDCONTROLLER);
 		if (x & 0x40)
 			StdPort_SetControllerType(&Controllers.Port2,STD_STDCONTROLLER);
@@ -544,16 +542,6 @@ void	Controllers_PlayMovie (BOOL Review)
 		}
 		fseek(movie,16,SEEK_SET);
 
-		NES_Reset(RESET_HARD);
-
-		if (!States_LoadData(movie, len))
-		{
-			fclose(movie);
-			MessageBox(mWnd,"Failed to load movie!", "Nintendulator", MB_OK | MB_ICONERROR);
-			return;
-		}
-		
-		Controllers.MovieMode = MOV_PLAY;
 		MOV_ControllerTypes[0] = Controllers.Port1.Type;
 		MOV_ControllerTypes[1] = Controllers.Port2.Type;
 		MOV_ControllerTypes[2] = Controllers.ExpPort.Type;
@@ -566,6 +554,19 @@ void	Controllers_PlayMovie (BOOL Review)
 			if (Controllers.FSPort3.Type)	MOV_ControllerTypes[1] |= 0x04;
 			if (Controllers.FSPort4.Type)	MOV_ControllerTypes[1] |= 0x08;
 		}
+
+		MOV_ControllerTypes[3] = 0;	// Reset 'loaded controller state' flag
+
+		NES_Reset(RESET_HARD);
+
+		if (!States_LoadData(movie,len))
+		{
+			fclose(movie);
+			MessageBox(mWnd,"Failed to load movie!", "Nintendulator", MB_OK | MB_ICONERROR);
+			return;
+		}
+		
+		Controllers.MovieMode = MOV_PLAY;
 		rewind(movie);
 		fseek(movie,16,SEEK_SET);
 		fread(buf,4,1,movie);
@@ -579,29 +580,32 @@ void	Controllers_PlayMovie (BOOL Review)
 
 		fread(buf,1,4,movie);
 
-		if (buf[0] == STD_FOURSCORE)
-		{
-			if (buf[1] & 0x01)
-				StdPort_SetControllerType(&Controllers.FSPort1,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort1,STD_UNCONNECTED);
-			if (buf[1] & 0x02)
-				StdPort_SetControllerType(&Controllers.FSPort2,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort2,STD_UNCONNECTED);
-			if (buf[1] & 0x04)
-				StdPort_SetControllerType(&Controllers.FSPort3,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort3,STD_UNCONNECTED);
-			if (buf[1] & 0x08)
-				StdPort_SetControllerType(&Controllers.FSPort4,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort4,STD_UNCONNECTED);
-			StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-			StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+		if (!MOV_ControllerTypes[3])	// If we've loaded controller state, this is all redundant
+		{				// and, indeed, things will BREAK if we do it again!
+			if (buf[0] == STD_FOURSCORE)
+			{
+				if (buf[1] & 0x01)
+					StdPort_SetControllerType(&Controllers.FSPort1,STD_STDCONTROLLER);
+				else	StdPort_SetControllerType(&Controllers.FSPort1,STD_UNCONNECTED);
+				if (buf[1] & 0x02)
+					StdPort_SetControllerType(&Controllers.FSPort2,STD_STDCONTROLLER);
+				else	StdPort_SetControllerType(&Controllers.FSPort2,STD_UNCONNECTED);
+				if (buf[1] & 0x04)
+					StdPort_SetControllerType(&Controllers.FSPort3,STD_STDCONTROLLER);
+				else	StdPort_SetControllerType(&Controllers.FSPort3,STD_UNCONNECTED);
+				if (buf[1] & 0x08)
+					StdPort_SetControllerType(&Controllers.FSPort4,STD_STDCONTROLLER);
+				else	StdPort_SetControllerType(&Controllers.FSPort4,STD_UNCONNECTED);
+				StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
+				StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+			}
+			else
+			{
+				StdPort_SetControllerType(&Controllers.Port1,buf[0]);
+				StdPort_SetControllerType(&Controllers.Port2,buf[1]);
+			}
+			ExpPort_SetControllerType(&Controllers.ExpPort,buf[2]);
 		}
-		else
-		{
-			StdPort_SetControllerType(&Controllers.Port1,buf[0]);
-			StdPort_SetControllerType(&Controllers.Port2,buf[1]);
-		}
-		ExpPort_SetControllerType(&Controllers.ExpPort,buf[2]);
 
 		fread(&ReRecords,4,1,movie);
 		fread(&len,4,1,movie);

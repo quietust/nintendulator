@@ -262,6 +262,9 @@ BOOL	States_LoadData (FILE *in, int flen)
 		else if (!memcmp(csig,"CTRL",4))
 		{
 			int tpi;
+			extern unsigned char MOV_ControllerTypes[4];
+			MOV_ControllerTypes[3] = 1;
+
 			fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort1,tpi);	clen -= 4;
 			fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort2,tpi);	clen -= 4;
 			fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort3,tpi);	clen -= 4;
