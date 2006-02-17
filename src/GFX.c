@@ -501,7 +501,7 @@ void	__cdecl	GFX_ShowText (char *Text, ...)
 void	GFX_UpdateTitlebar (void)
 {
 	char titlebar[256];
-	if (NES.Stop)
+	if (NES.Running)
 		strcpy(titlebar,"Nintendulator - Stopped");
 	else	sprintf(titlebar,"Nintendulator - %i FPS (%i %sFSkip)",GFX.FPSnum,GFX.FSkip,GFX.aFSkip?"Auto":"");
 	if (GFX.ShowTextCounter > 0)
