@@ -938,7 +938,6 @@ DWORD	WINAPI	NES_Thread (void *param)
 	Debugger.TraceOffset = -1;
 #endif	/* ENABLE_DEBUGGER */
 
-	Controllers_Acquire();
 	if ((!NES.Stop) && (NES.SoundEnabled))
 		APU_SoundON();	// don't turn on sound if we're only stepping 1 instruction
 
@@ -985,7 +984,6 @@ DWORD	WINAPI	NES_Thread (void *param)
 	}
 
 	APU_SoundOFF();
-	Controllers_UnAcquire();
 	Controllers_ShowFrame();
 
 #endif	/* CPU_BENCHMARK */

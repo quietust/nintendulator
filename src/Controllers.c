@@ -227,8 +227,10 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 }
 void	Controllers_OpenConfig (void)
 {
+	Controllers_UnAcquire();
 	DialogBox(hInst,(LPCTSTR)IDD_CONTROLLERS,mWnd,ControllerProc);
 	Controllers_SetDeviceUsed();
+	Controllers_Acquire();
 }
 
 BOOL CALLBACK	EnumJoysticksCallback (const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
@@ -378,6 +380,7 @@ void	Controllers_Init (void)
 	Controllers.NumDevices = 2;
 	IDirectInput7_EnumDevices(Controllers.DirectInput,DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
 	Controllers.MovieMode = 0;
+	Controllers_Acquire();
 }
 
 void	Controllers_Release (void)
@@ -642,7 +645,6 @@ void	Controllers_PlayMovie (BOOL Review)
 		memset(Controllers.Port2.MovData,0,Controllers.Port2.MovLen);
 	if (Controllers.ExpPort.MovLen)
 		memset(Controllers.ExpPort.MovData,0,Controllers.ExpPort.MovLen);
-	NES_Start(FALSE);
 }
 
 void	Controllers_RecordMovie (BOOL fromState)
