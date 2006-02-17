@@ -671,6 +671,7 @@ void	Controllers_PlayMovie (BOOL Review)
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
 	if (Controllers.Port1.MovLen)
 		memset(Controllers.Port1.MovData,0,Controllers.Port1.MovLen);
 	if (Controllers.Port2.MovLen)
@@ -692,8 +693,8 @@ void	Controllers_RecordMovie (BOOL fromState)
 
 	if ((MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
 	{
-		MessageBox(mWnd,"This game does not support recording movies!","Nintendulator",MB_OK);
-		return;
+		MessageBox(mWnd,"This game does not support using the 'Game' menu while recording!","Nintendulator",MB_OK);
+		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
 	}
 
 	ZeroMemory(&ofn,sizeof(ofn));
@@ -834,6 +835,8 @@ void	Controllers_StopMovie (void)
 		StdPort_SetControllerType(&Controllers.Port2,MOV_ControllerTypes[1]);
 	}
 	ExpPort_SetControllerType(&Controllers.ExpPort,MOV_ControllerTypes[2]);
+	if (MI->Config)
+		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_ENABLED);
