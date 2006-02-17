@@ -40,26 +40,26 @@ struct tDebugger
 
 	int	PatPalBase;
 
-	HDC	PaletteWDC, PaletteDC;	/* Palette */
+	HDC	PaletteDC;	/* Palette */
 	HWND	PaletteWnd;
 	HBITMAP	PaletteBMP;
 	unsigned char PaletteArray[(256*32)*4];
 
-	HDC	PatternWDC, PatternDC;	/* Pattern tables */
+	HDC	PatternDC;	/* Pattern tables */
 	HWND	PatternWnd;
 	HBITMAP	PatternBMP;
 	unsigned char PatternArray[(256*128)*4];
 
-	HDC	NameWDC, NameDC;	/* Nametables */
+	HDC	NameDC;		/* Nametables */
 	HWND	NameWnd;
 	HBITMAP	NameBMP;
 	unsigned char NameArray[(512*480)*4];
 
-	HDC	TraceWDC, TraceDC;	/* Trace window */
+	HDC	TraceDC;	/* Trace window */
 	HWND	TraceWnd;
 	HBITMAP	TraceBMP;
 
-	HDC	RegWDC, RegDC;		/* Registers */
+	HDC	RegDC;		/* Registers */
 	HWND	RegWnd;
 	HBITMAP	RegBMP;
 

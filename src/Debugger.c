@@ -95,7 +95,25 @@ enum {
 
 void	Debugger_Init (void)
 {
+	HFONT tpf;
 	HDC TpHDC = GetDC(mWnd);
+	int nHeight;
+
+	ZeroMemory(Debugger.BreakP,sizeof(Debugger.BreakP));
+	Debugger.TraceOffset = -1;
+	
+	Debugger.PatPalBase = 0;
+
+	Debugger.Logging = FALSE;
+
+	Debugger.FontWidth = 7;
+	Debugger.FontHeight = 10;
+	
+	Debugger.Depth = (GetDeviceCaps(TpHDC,BITSPIXEL) >> 3);
+	ReleaseDC(GetDesktopWindow(), TpHDC);
+
+	TpHDC = GetWindowDC(GetDesktopWindow());
+	
 	Debugger.PaletteDC = CreateCompatibleDC(TpHDC);
 	Debugger.PaletteBMP = CreateCompatibleBitmap(TpHDC,D_PAL_W,D_PAL_H);
 	SelectObject(Debugger.PaletteDC,Debugger.PaletteBMP);
@@ -112,21 +130,15 @@ void	Debugger_Init (void)
 	Debugger.RegBMP = CreateCompatibleBitmap(TpHDC,D_REG_W,D_REG_H);
 	SelectObject(Debugger.RegDC,Debugger.RegBMP);
 
+	nHeight = -MulDiv(Debugger.FontHeight, GetDeviceCaps(TpHDC, LOGPIXELSY), 72);
+	tpf = CreateFont(nHeight, Debugger.FontWidth, 0, 0, 0, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DRAFT_QUALITY, FF_MODERN, "Courier New");
+	SelectObject(Debugger.RegDC, tpf);
+	SelectObject(Debugger.TraceDC, tpf);
+	DeleteObject(tpf);
+	SetBkMode(Debugger.RegDC,TRANSPARENT);
+	SetBkMode(Debugger.TraceDC,TRANSPARENT);
+
 	ReleaseDC(mWnd,TpHDC);
-
-	ZeroMemory(Debugger.BreakP,sizeof(Debugger.BreakP));
-	Debugger.TraceOffset = -1;
-	
-	Debugger.PatPalBase = 0;
-
-	Debugger.Logging = FALSE;
-
-	Debugger.FontWidth = 7;
-	Debugger.FontHeight = 10;
-	
-	TpHDC = GetWindowDC(GetDesktopWindow());
-	Debugger.Depth = (GetDeviceCaps(TpHDC,BITSPIXEL) >> 3);
-	ReleaseDC(GetDesktopWindow(), TpHDC);
 }
 
 void	Debugger_Release (void)
@@ -142,12 +154,9 @@ void	DPrint (char *text)
 void	Debugger_SetMode (int NewMode)
 {
 	RECT rect;
-	HDC TpHDC;
 
 	Debugger.Mode = NewMode;
 	Debugger.Enabled = (Debugger.Mode > 0) ? TRUE : FALSE;
-
-	TpHDC = GetDC(mWnd);
 
 	Debugger.NTabChanged = TRUE;
 	Debugger.PalChanged = TRUE;
@@ -167,41 +176,29 @@ void	Debugger_SetMode (int NewMode)
 	}
 	if (Debugger.PaletteWnd)
 	{
-		ReleaseDC(Debugger.PaletteWnd, Debugger.PaletteWDC);
-		Debugger.PaletteWDC = NULL;
 		DestroyWindow(Debugger.PaletteWnd);
 		Debugger.PaletteWnd = NULL;
 	}
 	if (Debugger.PatternWnd)
 	{
-		ReleaseDC(Debugger.PatternWnd, Debugger.PatternWDC);
-		Debugger.PatternWDC = NULL;
 		DestroyWindow(Debugger.PatternWnd);
 		Debugger.PatternWnd = NULL;
 	}
 	if (Debugger.NameWnd)
 	{
-		ReleaseDC(Debugger.NameWnd, Debugger.NameWDC);
-		Debugger.NameWDC = NULL;
 		DestroyWindow(Debugger.NameWnd);
 		Debugger.NameWnd = NULL;
 	}
 	if (Debugger.TraceWnd)
 	{
-		ReleaseDC(Debugger.TraceWnd, Debugger.TraceWDC);
-		Debugger.TraceWDC = NULL;
 		DestroyWindow(Debugger.TraceWnd);
 		Debugger.TraceWnd = NULL;
 	}
 	if (Debugger.RegWnd)
 	{
-		ReleaseDC(Debugger.RegWnd, Debugger.RegWDC);
-		Debugger.RegWDC = NULL;
 		DestroyWindow(Debugger.RegWnd);
 		Debugger.RegWnd = NULL;
 	}
-
-	ReleaseDC(mWnd,TpHDC);
 
 	if (Debugger.Mode >= 1)
 	{
@@ -209,14 +206,11 @@ void	Debugger_SetMode (int NewMode)
 		GetWindowRect(mWnd,&rect);
 		SetWindowPos(Debugger.PatternWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.PatternWnd,D_PAT_W,D_PAT_H);
-		Debugger.PatternWDC = GetDC(Debugger.PatternWnd);
-		
+
 		Debugger.PaletteWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PALETTE, mWnd, PaletteProc);
 		GetWindowRect(Debugger.PatternWnd,&rect);
 		SetWindowPos(Debugger.PaletteWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.PaletteWnd,D_PAL_W,D_PAL_H);
-		
-		Debugger.PaletteWDC = GetDC(Debugger.PaletteWnd);
 
 		Debugger.DumpWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_DUMPS, mWnd, DumpProc);
 		GetWindowRect(Debugger.PatternWnd,&rect);
@@ -228,33 +222,19 @@ void	Debugger_SetMode (int NewMode)
 		GetWindowRect(mWnd,&rect);
 		SetWindowPos(Debugger.NameWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.NameWnd,D_NAM_W,D_NAM_H);
-		Debugger.NameWDC = GetDC(Debugger.NameWnd);
 	}
 	if (Debugger.Mode >= 3)
 	{
-		HFONT tpf;
-		int nHeight;
 		Debugger.RegWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_REGISTERS, mWnd, RegProc);
 		GetWindowRect(Debugger.NameWnd,&rect);
 		SetWindowPos(Debugger.RegWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.RegWnd,D_REG_W,D_REG_H);
-		Debugger.RegWDC = GetDC(Debugger.RegWnd);
 
 		Debugger.TraceWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_TRACE, mWnd, TraceProc);
 		GetWindowRect(Debugger.RegWnd,&rect);
 		SetWindowPos(Debugger.TraceWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.TraceWnd,D_TRC_W,D_TRC_H);
-		Debugger.TraceWDC = GetDC(Debugger.TraceWnd);
 
-		nHeight = -MulDiv(Debugger.FontHeight, GetDeviceCaps(Debugger.RegWDC, LOGPIXELSY), 72);
-		tpf = CreateFont(nHeight, Debugger.FontWidth, 0, 0, 0, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DRAFT_QUALITY, FF_MODERN, "Courier New");
-		SelectObject(Debugger.RegWDC, tpf);
-		SelectObject(Debugger.RegDC, tpf);
-		SelectObject(Debugger.TraceWDC, tpf);
-		SelectObject(Debugger.TraceDC, tpf);
-		DeleteObject(tpf);
-		SetBkMode(Debugger.RegDC,TRANSPARENT);
-		SetBkMode(Debugger.TraceDC,TRANSPARENT);
 		Debugger_Update();
 	}
 
@@ -420,7 +400,7 @@ void	Debugger_Update (void)
 				else	sprintf(tpc,"???");
 							TextOut(Debugger.RegDC,(i&7)*4*Debugger.FontWidth,(16 + (i >> 3))*Debugger.FontHeight,tpc,(int)strlen(tpc));
 			}
-			BitBlt(Debugger.RegWDC,0,0,D_REG_W,D_REG_H,Debugger.RegDC,0,0,SRCCOPY);
+			RedrawWindow(Debugger.RegWnd,NULL,NULL,RDW_INVALIDATE);
 
 			for (i = 0; i < 64; i++)
 				Debugger.AddyLine[i] = -1;
@@ -459,8 +439,7 @@ void	Debugger_Update (void)
 
 			MoveToEx(Debugger.TraceDC, 0, StartY+Debugger.FontHeight, NULL);
 			LineTo(Debugger.TraceDC, D_TRC_W, StartY+Debugger.FontHeight);
-
-			BitBlt(Debugger.TraceWDC,0,0,D_TRC_W,D_TRC_H,Debugger.TraceDC,0,0,SRCCOPY);
+			RedrawWindow(Debugger.TraceWnd,NULL,NULL,RDW_INVALIDATE);
 
 			Debugger_UpdateGraphics();
 		}
@@ -510,10 +489,8 @@ void	Debugger_UpdateGraphics (void)
 						}
 					}
 		}
-
 		SetBitmapBits(Debugger.PaletteBMP,DInc*D_PAL_W*D_PAL_H,&Debugger.PaletteArray);
-/*		SelectObject(Debugger.PaletteDC,Debugger.PaletteBMP);	/* Is this necessary? */
-		BitBlt(Debugger.PaletteWDC,0,0,D_PAL_W,D_PAL_H,Debugger.PaletteDC,0,0,SRCCOPY);
+		RedrawWindow(Debugger.PaletteWnd,NULL,NULL,RDW_INVALIDATE);
 
 		if (Debugger.PatChanged)
 		{
@@ -547,8 +524,7 @@ void	Debugger_UpdateGraphics (void)
 					}
 		}
 		SetBitmapBits(Debugger.PatternBMP,Debugger.Depth*D_PAT_W*D_PAT_H,&Debugger.PatternArray);
-/*		SelectObject(Debugger.PatternDC,Debugger.PatternBMP);	/* is this needed? */
-		BitBlt(Debugger.PatternWDC,0,0,D_PAT_W,D_PAT_H,Debugger.PatternDC,0,0,SRCCOPY);
+		RedrawWindow(Debugger.PatternWnd,NULL,NULL,RDW_INVALIDATE);
 	}
 	if (Debugger.Mode >= 2)
 	{
@@ -595,17 +571,20 @@ void	Debugger_UpdateGraphics (void)
 		}
 
 		SetBitmapBits(Debugger.NameBMP,DInc*D_NAM_W*D_NAM_H,&Debugger.NameArray);
-/*		SelectObject(Debugger.NameDC,Debugger.NameBMP);	/* is this needed? */
-		BitBlt(Debugger.NameWDC,0,0,D_NAM_W,D_NAM_H,Debugger.NameDC,0,0,SRCCOPY);
+		RedrawWindow(Debugger.NameWnd,NULL,NULL,RDW_INVALIDATE);
 	}
 }
 
 LRESULT CALLBACK PaletteProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	PAINTSTRUCT ps;
+	HDC hdc;
 	switch (uMsg)
 	{
 	case WM_PAINT:
-		BitBlt(Debugger.PaletteWDC,0,0,D_PAL_W,D_PAL_H,Debugger.PaletteDC,0,0,SRCCOPY);
+		hdc = BeginPaint(hwndDlg,&ps);
+		BitBlt(hdc,0,0,D_PAL_W,D_PAL_H,Debugger.PaletteDC,0,0,SRCCOPY);
+		EndPaint(hwndDlg,&ps);
 		break;
 	}
 	return FALSE;
@@ -613,10 +592,14 @@ LRESULT CALLBACK PaletteProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 LRESULT CALLBACK PatternProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	PAINTSTRUCT ps;
+	HDC hdc;
 	switch (uMsg)
 	{
 	case WM_PAINT:
-		BitBlt(Debugger.PatternWDC,0,0,D_PAT_W,D_PAT_H,Debugger.PatternDC,0,0,SRCCOPY);
+		hdc = BeginPaint(hwndDlg,&ps);
+		BitBlt(hdc,0,0,D_PAT_W,D_PAT_H,Debugger.PatternDC,0,0,SRCCOPY);
+		EndPaint(hwndDlg,&ps);
 		break;
 	case WM_LBUTTONUP:
 		Debugger.PatPalBase = (Debugger.PatPalBase + 1) & 7;
@@ -629,10 +612,14 @@ LRESULT CALLBACK PatternProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 LRESULT CALLBACK NameProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	PAINTSTRUCT ps;
+	HDC hdc;
 	switch (uMsg)
 	{
 	case WM_PAINT:
-		BitBlt(Debugger.NameWDC,0,0,D_NAM_W,D_NAM_H,Debugger.NameDC,0,0,SRCCOPY);
+		hdc = BeginPaint(hwndDlg,&ps);
+		BitBlt(hdc,0,0,D_NAM_W,D_NAM_H,Debugger.NameDC,0,0,SRCCOPY);
+		EndPaint(hwndDlg,&ps);
 		break;
 	}
 	return FALSE;
@@ -674,10 +661,14 @@ LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 LRESULT CALLBACK TraceProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	PAINTSTRUCT ps;
+	HDC hdc;
 	switch (uMsg)
 	{
 	case WM_PAINT:
-		BitBlt(Debugger.TraceWDC,0,0,D_TRC_W,D_TRC_H,Debugger.TraceDC,0,0,SRCCOPY);
+		hdc = BeginPaint(hwndDlg,&ps);
+		BitBlt(hdc,0,0,D_TRC_W,D_TRC_H,Debugger.TraceDC,0,0,SRCCOPY);
+		EndPaint(hwndDlg,&ps);
 		break;
 	case WM_KEYDOWN:
 		switch (wParam)
@@ -767,10 +758,14 @@ LRESULT CALLBACK TraceProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 LRESULT CALLBACK RegProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	PAINTSTRUCT ps;
+	HDC hdc;
 	switch (uMsg)
 	{
 	case WM_PAINT:
-		BitBlt(Debugger.RegWDC,0,0,D_REG_W,D_REG_H,Debugger.RegDC,0,0,SRCCOPY);
+		hdc = BeginPaint(hwndDlg,&ps);
+		BitBlt(hdc,0,0,D_REG_W,D_REG_H,Debugger.RegDC,0,0,SRCCOPY);
+		EndPaint(hwndDlg,&ps);
 		break;
 	}
 	return FALSE;
