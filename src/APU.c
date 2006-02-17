@@ -368,7 +368,7 @@ static	struct
 	signed long Pos;
 }	DPCM;
 const	unsigned long	DPCMFreqNTSC[16] = {0x1AC,0x17C,0x154,0x140,0x11E,0x0FE,0x0E2,0x0D6,0x0BE,0x0A0,0x08E,0x080,0x06A,0x054,0x048,0x036};
-const	unsigned long	DPCMFreqPAL[16]  = {0x18E,0x161,0x13C,0x129,0x10A,0x0EC,0x0D2,0x0C7,0x0B1,0x095,0x084,0x077,0x062,0x04E,0x043,0x032};
+const	unsigned long	DPCMFreqPAL[16]  = {0x18E,0x161,0x13C,0x129,0x10A,0x0EC,0x0D2,0x0C7,0x0B1,0x095,0x084,0x077,0x062,0x04E,0x042,0x032};
 const	unsigned long	*DPCMFreq;
 __inline void	DPCM_Write (int Reg, unsigned char Val)
 {
@@ -428,6 +428,7 @@ __inline void	DPCM_Run (void)
 				DPCM.outmode = 1;
 				DPCM.shiftreg = DPCM.buffer;
 				DPCM.buffull = FALSE;
+				CPU.PCMCycles = 4;
 			}
 			else	DPCM.outmode = 0;
 		}
@@ -438,10 +439,8 @@ void	DPCM_Fetch (void)
 {
 	if (DPCM.buffull || !DPCM.LengthCtr)
 		return;
-	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
-	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
-	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
-	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
+	while (CPU.PCMCycles--)
+		DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
 	DPCM.buffull = TRUE;
 	if (++DPCM.CurAddr == 0x10000)
 		DPCM.CurAddr = 0x8000;
