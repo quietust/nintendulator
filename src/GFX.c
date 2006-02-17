@@ -321,6 +321,12 @@ void	GFX_Repaint (void)
 	ReleaseSemaphore(GFX.Semaphore,1,NULL);
 }
 
+#define	PALETTE_NTSC	0
+#define	PALETTE_PAL	1
+#define	PALETTE_PC10	2
+#define	PALETTE_EXT	3
+#define	PALETTE_TEMP	4
+
 static unsigned char cPalette[5][64][3] = {
 	{	/* NTSC (generated) */
 		{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},{0x00,0x00,0x00},
@@ -387,7 +393,7 @@ void	GFX_GenerateNTSC (int hue, int sat, BOOL config)
 		{
 			double s, y, r, g, b, theta;
 			unsigned char ir, ig, ib;
-			int p = config ? 4 : 0;
+			int p = config ? PALETTE_TEMP : PALETTE_NTSC;
 			s = sat / 100.0;
 			if ((z < 1) || (z > 12))
 				s = 0;
@@ -422,7 +428,7 @@ void	GFX_GenerateNTSC (int hue, int sat, BOOL config)
 
 BOOL	GFX_ImportPalette (TCHAR *filename, BOOL config)
 {
-	int p = config ? 4 : 3;
+	int p = config ? PALETTE_TEMP : PALETTE_EXT;
 	int i;
 	FILE *pal = _tfopen(filename,_T("rb"));
 	if (!pal)
@@ -459,21 +465,21 @@ void	GFX_LoadPalette (int PalNum)
 
 	unsigned int RV, GV, BV;
 	int i;
-	if (PalNum == 0)
+	if (PalNum == PALETTE_NTSC)
 		GFX_GenerateNTSC(GFX.NTSChue,GFX.NTSCsat,FALSE);
-	if (PalNum == 3)
+	if (PalNum == PALETTE_CUST)
 	{
 		if (!GFX_ImportPalette(PPU.IsPAL ? GFX.CustPalettePAL : GFX.CustPaletteNTSC,FALSE))
 		{
 			MessageBox(mWnd,_T("Unable to load the specified palette! Reverting to default!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			if (PPU.IsPAL)
-				GFX.PalettePAL = PalNum = 1;
-			else	GFX.PaletteNTSC = PalNum = 0;
+				GFX.PalettePAL = PalNum = PALETTE_PAL;
+			else	GFX.PaletteNTSC = PalNum = PALETTE_NTSC;
 		}
 	}
 	for (i = 0; i < 0x200; i++)
 	{
-		if (PalNum == 2)
+		if (PalNum == PALETTE_PC10)
 		{
 			RV = (i & 0x040) ? 0xFF : cPalette[PalNum][i & 0x3F][0];
 			GV = (i & 0x080) ? 0xFF : cPalette[PalNum][i & 0x3F][1];
@@ -534,7 +540,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		pal = ispal ? GFX.PalettePAL : GFX.PaletteNTSC;
 		if (pal == 0)
 			GFX_GenerateNTSC(hue,sat,TRUE);
-		else	memcpy(cPalette[4],cPalette[pal],64*3);
+		else	memcpy(cPalette[PALETTE_TEMP],cPalette[pal],64*3);
 		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETRANGE,FALSE,MAKELONG(300,360));
 		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETTICFREQ,5,0);
 		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETPOS,TRUE,hue);
@@ -554,23 +560,23 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		switch (wmId)
 		{
 		case IDC_PAL_NTSC:
-			pal = 0;
+			pal = PALETTE_NTSC;
 			GFX_GenerateNTSC(hue,sat,TRUE);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_PAL:
-			pal = 1;
-			memcpy(cPalette[4],cPalette[pal],64*3);
+			pal = PALETTE_PAL;
+			memcpy(cPalette[PALETTE_TEMP],cPalette[pal],64*3);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_RGB:
-			pal = 2;
-			memcpy(cPalette[4],cPalette[pal],64*3);
+			pal = PALETTE_PC10;
+			memcpy(cPalette[PALETTE_TEMP],cPalette[pal],64*3);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_CUSTOM:
 			GetDlgItemText(hDlg,IDC_PAL_CUSTFILE,filename,256);
-			pal = 3;
+			pal = PALETTE_EXT;
 			GFX_ImportPalette(filename,TRUE);
 			UpdatePalette(hDlg,pal);
 			break;
@@ -658,7 +664,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			for (i = 0; i < 64; i++)
 			{
 				HWND dlgitem = GetDlgItem(hDlg,PalEntries[i]);
-				HBRUSH brush = CreateSolidBrush(cPalette[4][i][0] | (cPalette[4][i][1] << 8) | (cPalette[4][i][2] << 16));
+				HBRUSH brush = CreateSolidBrush(cPalette[PALETTE_TEMP][i][0] | (cPalette[PALETTE_TEMP][i][1] << 8) | (cPalette[PALETTE_TEMP][i][2] << 16));
 				GetWindowRect(dlgitem,&rect);
 				rect.top -= wcl.y + wrect.top;
 				rect.bottom -= wcl.y + wrect.top;
