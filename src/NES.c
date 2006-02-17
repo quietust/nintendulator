@@ -1061,7 +1061,7 @@ rerun:
 			int SLnum = PPU.SLnum;
 			NES.Scanline = FALSE;
 			ProcessMessages();
-			if (SLnum > 240)
+			if (SLnum > 239)
 			{
 				if (States.NeedSave)
 					States_SaveState();
