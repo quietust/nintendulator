@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define	Bits	Data[0]
 #define	Sel	Data[1]
 #define	NewBits	Data[2]
-static	void	Frame (struct tExpPort *Cont, int mode)
+static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 {
 	int i;
 	if (mode & MOV_PLAY)
