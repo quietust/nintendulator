@@ -184,8 +184,10 @@ struct tNES
 };
 extern	struct tNES NES;
 
-extern	unsigned char PRG_ROM[0x800][0x1000];	// 8192 KB
-extern	unsigned char PRG_RAM[0x10][0x1000];	//   64 KB
+#define	MAX_PRGROM_MASK	0x7FF	// 8192 KB
+#define	MAX_PRGRAM_MASK	0xF	// 64 KB
+extern	unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];
+extern	unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];
 
 extern	In_Module	mod;
 
