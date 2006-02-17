@@ -898,6 +898,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 	APU_Reset();
 	CPU_Reset();
 	PPU_Reset();
+	CPU.WantNMI = FALSE;
 #ifdef ENABLE_DEBUGGER
 	if (Debugger.Enabled)
 		Debugger_Update();
