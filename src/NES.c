@@ -620,10 +620,15 @@ const char *	NES_OpenFileNSF (char *filename)
 	ROMlen = ftell(in) - 128;
 	fseek(in,0,SEEK_SET);
 	fread(Header,1,128,in);
-	if (memcmp(Header,"NESM\x1a\x01",6))
+	if (memcmp(Header,"NESM\x1a",5))
 	{
 		fclose(in);
 		return "NSF header signature not found!";
+	}
+	if (Header[5] != 1)
+	{
+		fclose(in);
+		return "This NSF version is not supported!";
 	}
 
 	RI.Filename = strdup(filename);
@@ -834,11 +839,15 @@ void	NES_Reset (RESET_TYPE ResetType)
 	{
 		PPU.ReadHandler[i] = PPU_BusRead;
 		PPU.WriteHandler[i] = PPU_BusWriteCHR;
+		PPU.CHRPointer[i] = PPU_OpenBus;
+		PPU.Writable[i] = FALSE;
 	}
 	for (i = 0x8; i < 0x10; i++)
 	{
 		PPU.ReadHandler[i] = PPU_BusRead;
 		PPU.WriteHandler[i] = PPU_BusWriteNT;
+		PPU.CHRPointer[i] = PPU_OpenBus;
+		PPU.Writable[i] = FALSE;
 	}
 	switch (ResetType)
 	{
@@ -848,8 +857,6 @@ void	NES_Reset (RESET_TYPE ResetType)
 		EI.DbgOut("Performing initial hard reset...");
 		PPU_PowerOn();
 		CPU_PowerOn();
-		EI.SetCHR_RAM8(0,0);
-		EI.Mirror_4();
 		if ((MI) && (MI->Reset))
 			MI->Reset(RESET_HARD);
 		break;
@@ -866,13 +873,8 @@ void	NES_Reset (RESET_TYPE ResetType)
 		PPU_PowerOn();
 		if (NES.GameGenie)
 			Genie_Reset();
-		else
-		{
-			EI.SetCHR_RAM8(0,0);
-			EI.Mirror_4();
-			if ((MI) && (MI->Reset))
-				MI->Reset(RESET_HARD);
-		}
+		else	if ((MI) && (MI->Reset))
+			MI->Reset(RESET_HARD);
 		break;
 	case RESET_SOFT:
 		EI.DbgOut("Performing soft reset...");
@@ -881,8 +883,6 @@ void	NES_Reset (RESET_TYPE ResetType)
 			MI = MI2;
 			MI2 = NULL;
 		}
-		EI.SetCHR_RAM8(0,0);
-		EI.Mirror_4();
 		if (NES.GameGenie)
 		{
 			if (Genie.CodeStat & 1)
