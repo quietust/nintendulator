@@ -843,7 +843,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 	switch (ResetType)
 	{
 	case RESET_FULL:
-		ZeroMemory(PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
+		ZeroMemory((unsigned char *)PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		EI.DbgOut("Performing initial hard reset...");
 		PPU_PowerOn();
@@ -855,7 +855,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 		break;
 	case RESET_HARD:
 		EI.DbgOut("Performing hard reset...");
-		ZeroMemory(PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
+		ZeroMemory((unsigned char *)PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		CPU_PowerOn();
 		if (MI2)
