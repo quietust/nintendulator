@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "States.h"
 #include "GFX.h"
 #include "NES.h"
+#include "PPU.h"
 #include <commdlg.h>
 
 static	HWND key;
