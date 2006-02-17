@@ -30,8 +30,8 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #define	Bits2	Data[1]
 #define	BitPtr	Data[2]
 #define	Strobe	Data[3]
-#define	NewBit1	Data[0]
-#define	NewBit2	Data[1]
+#define	NewBit1	Data[4]
+#define	NewBit2	Data[5]
 
 static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
@@ -124,9 +124,9 @@ void	StdPort_SetSnesController (struct tStdPort *Cont)
 	Cont->Frame = Frame;
 	Cont->NumButtons = 12;
 	Cont->DataLen = 6;
-	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data[0]));
 	Cont->MovLen = 2;
-	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits1 = 0;
 	Cont->Bits2 = 0;

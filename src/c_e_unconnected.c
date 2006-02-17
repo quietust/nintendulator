@@ -56,8 +56,8 @@ void	ExpPort_SetUnconnected (struct tExpPort *Cont)
 	Cont->Frame = Frame;
 	Cont->NumButtons = 0;
 	Cont->DataLen = 0;
-	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data[0]));
 	Cont->MovLen = 0;
-	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 }

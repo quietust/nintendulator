@@ -32,11 +32,11 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 static	void	AllocMov (struct tStdPort *Cont)
 {
 	free(Cont->MovData);
-	if (Cont == &Controllers.Port1)
+	if (Cont->PortNum == 0)
 		Cont->MovLen = Controllers.FSPort1.MovLen + Controllers.FSPort3.MovLen;
-	if (Cont == &Controllers.Port2)
+	if (Cont->PortNum == 1)
 		Cont->MovLen = Controllers.FSPort2.MovLen + Controllers.FSPort4.MovLen;
-	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 }
 
@@ -214,15 +214,15 @@ void	StdPort_SetFourScore (struct tStdPort *Cont)
 	Cont->Frame = Frame;
 	Cont->Type = STD_FOURSCORE;
 	Cont->DataLen = 3;
-	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
-	Cont->MovData = NULL;
-	AllocMov(Cont);
+	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data[0]));
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
 	if (Cont == &Controllers.Port1)
 		Cont->PortNum = 0;
 	if (Cont == &Controllers.Port2)
 		Cont->PortNum = 1;
+	Cont->MovData = NULL;
+	AllocMov(Cont);
 }
 #undef	BitPtr
 #undef	Strobe

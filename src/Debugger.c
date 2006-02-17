@@ -21,6 +21,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 */
 
 #include "stdafx.h"
+#include <time.h>
 #include "Nintendulator.h"
 #include "resource.h"
 #include "MapperInterface.h"
@@ -31,6 +32,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "PPU.h"
 #include "GFX.h"
 #include "Genie.h"
+#include "States.h"
 
 #ifdef ENABLE_DEBUGGER
 
@@ -255,8 +257,17 @@ void	Debugger_SetMode (int NewMode)
 
 void	Debugger_StartLogging (void)
 {
+	TCHAR filename[MAX_PATH];
+	struct tm *newtime;
+	time_t aclock;
+	time(&aclock);
+	newtime = localtime(&aclock);
+
+	_stprintf(filename,_T("%s.%04i%02i%02i_%02i%02i%02i.debug"), States.BaseFilename,
+		newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
+
 	Debugger.Logging = TRUE;
-	Debugger.LogFile = fopen("debug.txt","a+");
+	Debugger.LogFile = _tfopen(filename, _T("a+"));
 }
 
 void	Debugger_StopLogging (void)
@@ -666,34 +677,44 @@ LRESULT CALLBACK NameProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 LRESULT CALLBACK DumpProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	TCHAR filename[MAX_PATH];
+	struct tm *newtime;
+	time_t aclock;
+	FILE *out;
+	int i;
 	int wmId, wmEvent;
+
 	switch (uMsg)
 	{
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
+
+		time(&aclock);
+		newtime = localtime(&aclock);
+
 		switch (wmId)
 		{
 		case IDC_DUMP_CPU_MEM:
-		{
-			FILE *CPUMemOut = fopen("CPU.Mem","wb");
-			int i;
-			fwrite(CPU_RAM,1,0x800,CPUMemOut);
+			_stprintf(filename,_T("%s.%04i%02i%02i_%02i%02i%02i.cpumem"), States.BaseFilename,
+				newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
+			out = _tfopen(filename, _T("wb"));
+			fwrite(CPU_RAM,1,0x800,out);
 			for (i = 4; i < 16; i++)
 				if (CPU.PRGPointer[i])
-					fwrite(CPU.PRGPointer[i],1,0x1000,CPUMemOut);
-			fclose(CPUMemOut);
-		}	break;
+					fwrite(CPU.PRGPointer[i],1,0x1000,out);
+			fclose(out);
+			break;
 		case IDC_DUMP_PPU_MEM:
-		{
-			FILE *PPUMemOut = fopen("PPU.Mem","wb");
-			int i;
+			_stprintf(filename,_T("%s.%04i%02i%02i_%02i%02i%02i.ppumem"), States.BaseFilename,
+				newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
+			out = _tfopen(filename, _T("wb"));
 			for (i = 0; i < 12; i++)
-				fwrite(PPU.CHRPointer[i],1,0x400,PPUMemOut);
-			fwrite(PPU.Sprite,1,0x100,PPUMemOut);
-			fwrite(PPU.Palette,1,0x20,PPUMemOut);
-			fclose(PPUMemOut);
-		}	break;
+				fwrite(PPU.CHRPointer[i],1,0x400,out);
+			fwrite(PPU.Sprite,1,0x100,out);
+			fwrite(PPU.Palette,1,0x20,out);
+			fclose(out);
+			break;
 		case IDC_START_LOGGING:
 			Debugger_StartLogging();
 			break;

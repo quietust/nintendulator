@@ -135,9 +135,9 @@ void	ExpPort_SetTablet (struct tExpPort *Cont)
 	Cont->Frame = Frame;
 	Cont->NumButtons = 1;
 	Cont->DataLen = 7;
-	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
+	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data[0]));
 	Cont->MovLen = 3;
-	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
+	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits = 0;
 	Cont->Strobe = 0;
