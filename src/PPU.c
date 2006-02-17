@@ -121,31 +121,6 @@ void	_MAPINT	PPU_BusWriteNT (int Bank, int Addr, int Val)
 	PPU.CHRPointer[Bank][Addr] = Val;
 }
 
-void	_MAPINT	PPU_BusWriteNT3F (int Bank, int Addr, int Val)
-{
-	if ((Addr & 0x300) == 0x300)
-	{
-		Val &= 0x3F;
-#ifdef ENABLE_DEBUGGER
-		Debugger.PalChanged = TRUE;
-#endif	/* ENABLE_DEBUGGER */
-		if (Addr & 0x3)
-			PPU.Palette[Addr & 0x1F] = Val;
-		else	PPU.Palette[Addr & 0x0F] = PPU.Palette[0x10 | (Addr & 0xF)] = Val;
-/*		else if (!(Addr & 0xF))
-			PPU.Palette[0x0] = PPU.Palette[0x4] = PPU.Palette[0x8] = PPU.Palette[0xC] = PPU.Palette[0x10] = PPU.Palette[0x14] = PPU.Palette[0x18] = PPU.Palette[0x1C] = Val;
-*/	}
-	else
-	{
-		if (!PPU.Writable[Bank])
-			return;
-#ifdef ENABLE_DEBUGGER
-		Debugger.NTabChanged = TRUE;
-#endif	/* ENABLE_DEBUGGER */
-		PPU.CHRPointer[Bank][Addr] = Val;
-	}
-}
-
 void	PPU_Init (void)
 {
 }
@@ -861,7 +836,10 @@ static	int	__fastcall	Read7 (void)
 		PPU.VRAMAddr += 32;
 	else	PPU.VRAMAddr++;
 	PPU.VRAMAddr &= 0x3FFF;
-	return PPU.ppuLatch = PPU.buf2007;
+
+	if ((PPU.IOAddr & 0x3F00) == 0x3F00)
+		return PPU.ppuLatch = PPU.Palette[PPU.IOAddr & 0x1F];
+	else	return PPU.ppuLatch = PPU.buf2007;
 }
 
 int	_MAPINT	PPU_IntRead (int Bank, int Where)
@@ -941,9 +919,23 @@ static	void	__fastcall	Write6 (int What)
 
 static	void	__fastcall	Write7 (int What)
 {
-	PPU.IOAddr = PPU.VRAMAddr & 0x3FFF;
-	PPU.IOVal = What;
-	PPU.IOMode = 3;
+	if ((PPU.VRAMAddr & 0x3F00) == 0x3F00)
+	{
+		register unsigned char Addr = (unsigned char)PPU.VRAMAddr;
+		register unsigned Val = What & 0x3F;
+#ifdef ENABLE_DEBUGGER
+		Debugger.PalChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
+		if (Addr & 0x3)
+			PPU.Palette[Addr & 0x1F] = Val;
+		else	PPU.Palette[Addr & 0x0F] = PPU.Palette[0x10 | (Addr & 0xF)] = Val;
+	}
+	else
+	{
+		PPU.IOAddr = PPU.VRAMAddr & 0x3FFF;
+		PPU.IOVal = What;
+		PPU.IOMode = 3;
+	}
 	if (PPU.Reg2000 & 0x04)
 		PPU.VRAMAddr += 32;
 	else	PPU.VRAMAddr++;

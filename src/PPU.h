@@ -79,6 +79,5 @@ void	PPU_GetGFXPtr (void);
 int	_MAPINT	PPU_BusRead (int,int);
 void	_MAPINT	PPU_BusWriteCHR (int,int,int);
 void	_MAPINT	PPU_BusWriteNT (int,int,int);
-void	_MAPINT	PPU_BusWriteNT3F (int,int,int);
 
 #endif

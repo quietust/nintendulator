@@ -885,17 +885,16 @@ void	NES_Reset (int ResetType)
 		CPU.Readable[i] = FALSE;
 		CPU.Writable[i] = FALSE;
 	}
-	for (i = 0x0; i < 0x10; i++)
+	for (i = 0x0; i < 0x8; i++)
 	{
 		PPU.ReadHandler[i] = PPU_BusRead;
 		PPU.WriteHandler[i] = PPU_BusWriteCHR;
 	}
-	for (i = 0x8; i < 0xC; i++)
+	for (i = 0x8; i < 0x10; i++)
 	{
 		PPU.ReadHandler[i] = PPU_BusRead;
 		PPU.WriteHandler[i] = PPU_BusWriteNT;
 	}
-	PPU.WriteHandler[0xF] = PPU_BusWriteNT3F;
 	switch (ResetType)
 	{
 	case 0:	ZeroMemory(PRG_RAM,sizeof(PRG_RAM));
