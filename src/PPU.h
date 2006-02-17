@@ -23,8 +23,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #ifndef PPU_H
 #define PPU_H
 
-#include "MapperInterface.h"
-
 struct	tPPU
 {
 	FPPURead	ReadHandler[0x10];

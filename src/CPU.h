@@ -23,8 +23,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #ifndef CPU_H
 #define CPU_H
 
-#include "MapperInterface.h"
-
 union SplitReg { unsigned long Full; unsigned char Segment[4]; };
 
 #define	IRQ_FRAME	0x01

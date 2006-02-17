@@ -23,10 +23,10 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "stdafx.h"
 #include "Nintendulator.h"
 #include "resource.h"
+#include "MapperInterface.h"
 #include "Movie.h"
 #include "Controllers.h"
 #include "States.h"
-//#include "GFX.h"
 #include "NES.h"
 #include "PPU.h"
 #include <commdlg.h>

@@ -22,6 +22,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #include "stdafx.h"
 #include "Nintendulator.h"
+#include "MapperInterface.h"
 #include "NES.h"
 #include "PPU.h"
 #include "CPU.h"

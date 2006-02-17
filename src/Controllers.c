@@ -166,59 +166,70 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case IDOK:
 			EndDialog(hDlg,1);
 			break;
-		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE)
-					{
-						int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0);
-						if (Type == STD_FOURSCORE)
-						{
-							StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type);
-							StdPort_SetControllerType(&Controllers.FSPort2,Controllers.Port2.Type);
-							memcpy(Controllers.FSPort1.Buttons,Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
-							memcpy(Controllers.FSPort2.Buttons,Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
-							StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
-							SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,STD_FOURSCORE,0);
-						}
-						else if (Controllers.Port1.Type	== STD_FOURSCORE)
-						{
-							StdPort_SetControllerType(&Controllers.Port1,Type);
-							StdPort_SetControllerType(&Controllers.Port2,Controllers.FSPort2.Type);
-							memcpy(Controllers.Port2.Buttons,Controllers.FSPort2.Buttons,sizeof(Controllers.FSPort2.Buttons));
-							SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers.Port1.Type,0);
-							SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.Port2.Type,0);
-						}
-						else	StdPort_SetControllerType(&Controllers.Port1,Type);
-						SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers.Port1.Type,0);
-					}
-					break;
-		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE)
-					{
-						int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0);
-						if (Type == STD_FOURSCORE)
-						{
-							StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type);
-							StdPort_SetControllerType(&Controllers.FSPort2,Controllers.Port2.Type);
-							memcpy(Controllers.FSPort1.Buttons,Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
-							memcpy(Controllers.FSPort2.Buttons,Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
-							StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-							SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,STD_FOURSCORE,0);
-						}
-						else if (Controllers.Port2.Type	== STD_FOURSCORE)
-						{
-							StdPort_SetControllerType(&Controllers.Port1,Controllers.FSPort1.Type);
-							memcpy(Controllers.Port1.Buttons,Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));
-							StdPort_SetControllerType(&Controllers.Port2,Type);
-							SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers.Port1.Type,0);
-							SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.Port2.Type,0);
-						}
-						else	StdPort_SetControllerType(&Controllers.Port2,Type);
-						SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.Port2.Type,0);
-					}
-					break;
-		case IDC_CONT_SEXPPORT:	if (wmEvent == CBN_SELCHANGE) { ExpPort_SetControllerType(&Controllers.ExpPort,(int)SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_GETCURSEL,0,0)); }	break;
-
-		case IDC_CONT_CPORT1:	Controllers.Port1.Config(&Controllers.Port1,hDlg);	break;
-		case IDC_CONT_CPORT2:	Controllers.Port2.Config(&Controllers.Port2,hDlg);	break;
-		case IDC_CONT_CEXPPORT:	Controllers.ExpPort.Config(&Controllers.ExpPort,hDlg);	break;
+		case IDC_CONT_SPORT1:
+			if (wmEvent == CBN_SELCHANGE)
+			{
+				int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0);
+				if (Type == STD_FOURSCORE)
+				{
+					StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
+					StdPort_SetControllerType(&Controllers.FSPort2,Controllers.Port2.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
+					memcpy(Controllers.FSPort1.Buttons,Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
+					memcpy(Controllers.FSPort2.Buttons,Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
+					StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
+					StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,STD_FOURSCORE,0);
+				}
+				else if (Controllers.Port1.Type	== STD_FOURSCORE)
+				{
+					StdPort_SetControllerType(&Controllers.Port1,Type);
+					StdPort_SetControllerType(&Controllers.Port2,Controllers.FSPort2.Type);
+					memcpy(Controllers.Port2.Buttons,Controllers.FSPort2.Buttons,sizeof(Controllers.FSPort2.Buttons));
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.Port2.Type,0);
+				}
+				else	StdPort_SetControllerType(&Controllers.Port1,Type);
+			}
+			break;
+		case IDC_CONT_SPORT2:
+			if (wmEvent == CBN_SELCHANGE)
+			{
+				int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0);
+				if (Type == STD_FOURSCORE)
+				{
+					StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
+					StdPort_SetControllerType(&Controllers.FSPort2,Controllers.Port2.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
+					memcpy(Controllers.FSPort1.Buttons,Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
+					memcpy(Controllers.FSPort2.Buttons,Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
+					StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
+					StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,STD_FOURSCORE,0);
+				}
+				else if (Controllers.Port2.Type	== STD_FOURSCORE)
+				{
+					StdPort_SetControllerType(&Controllers.Port1,Controllers.FSPort1.Type);
+					memcpy(Controllers.Port1.Buttons,Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));
+					StdPort_SetControllerType(&Controllers.Port2,Type);
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers.Port1.Type,0);
+				}
+				else	StdPort_SetControllerType(&Controllers.Port2,Type);
+			}
+			break;
+		case IDC_CONT_SEXPPORT:
+			if (wmEvent == CBN_SELCHANGE)
+			{
+				int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_GETCURSEL,0,0);
+				ExpPort_SetControllerType(&Controllers.ExpPort,Type);
+			}
+			break;
+		case IDC_CONT_CPORT1:
+			Controllers.Port1.Config(&Controllers.Port1,hDlg);
+			break;
+		case IDC_CONT_CPORT2:
+			Controllers.Port2.Config(&Controllers.Port2,hDlg);
+			break;
+		case IDC_CONT_CEXPPORT:
+			Controllers.ExpPort.Config(&Controllers.ExpPort,hDlg);
+			break;
 		};
 		break;
 	}

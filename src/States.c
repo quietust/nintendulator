@@ -23,6 +23,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "stdafx.h"
 #include "Nintendulator.h"
 #include "resource.h"
+#include "MapperInterface.h"
 #include "NES.h"
 #include "States.h"
 #include "CPU.h"
@@ -32,7 +33,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Controllers.h"
 #include "GFX.h"
 #include "Genie.h"
-#include "MapperInterface.h"
 
 struct	tStates	States;
 

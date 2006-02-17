@@ -23,6 +23,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "stdafx.h"
 #include "Nintendulator.h"
 #include "resource.h"
+#include "MapperInterface.h"
 #include <vfw.h>
 #include "APU.h"
 #include "PPU.h"

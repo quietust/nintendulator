@@ -25,6 +25,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "resource.h"
 #include "Movie.h"
 #include "Controllers.h"
+#include "MapperInterface.h"
 #include "PPU.h"
 
 #define	PosX	Data[0]
