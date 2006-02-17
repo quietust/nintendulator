@@ -25,25 +25,31 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #define	Bits	Data[0]
 #define	Sel	Data[1]
-static	void	Frame (struct tExpPort *Cont)
-{
-}
-
-static	void	UpdateCont (struct tExpPort *Cont)
+#define	NewBits	Data[2]
+static	void	Frame (struct tExpPort *Cont, int mode)
 {
 	int i;
-	Cont->Bits = 0;
-	for (i = 0; i < 12; i++)
+	if (mode & MOV_PLAY)
+		Cont->NewBits = Cont->MovData[0] | (Cont->MovData[1] << 8);
+	else
 	{
-		if (Controllers_IsPressed(Cont->Buttons[i]))
-			Cont->Bits |= 1 << i;
+		Cont->NewBits = 0;
+		for (i = 0; i < 12; i++)
+		{
+			if (Controllers_IsPressed(Cont->Buttons[i]))
+				Cont->NewBits |= 1 << i;
+		}
+	}
+	if (mode & MOV_RECORD)
+	{
+		Cont->MovData[0] = (unsigned char)(Cont->NewBits & 0xFF);
+		Cont->MovData[1] = (unsigned char)(Cont->NewBits >> 8);
 	}
 }
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
 	return 0;
 }
-
 static	unsigned char	Read2 (struct tExpPort *Cont)
 {
 	unsigned char result = 0;
@@ -57,7 +63,7 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 }
 static	void	Write (struct tExpPort *Cont, unsigned char Val)
 {
-	UpdateCont(Cont);
+	Cont->Bits = Cont->NewBits;
 	Cont->Sel = ~Val & 7;
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -108,13 +114,15 @@ void	ExpPort_SetFamTrainer (struct tExpPort *Cont)
 	Cont->Config = Config;
 	Cont->Unload = Unload;
 	Cont->NumButtons = 12;
-	Cont->DataLen = 2;
+	Cont->DataLen = 3;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
 	Cont->MovLen = 0;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits = 0;
 	Cont->Sel = 0;
+	Cont->NewBits = 0;
 }
-#undef	Bits
+#undef	NewBits
 #undef	Sel
+#undef	Bits
