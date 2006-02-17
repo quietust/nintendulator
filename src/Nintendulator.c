@@ -554,12 +554,17 @@ LRESULT CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
+static char *DebugText;
+static int DebugLen;
 LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
 	case WM_INITDIALOG:
 		dbgVisible = TRUE;
+		SendDlgItemMessage(hDlg,IDC_DEBUGTEXT,EM_SETLIMITTEXT,0,0);
+		DebugText = malloc(8192);
+		DebugLen = 8192;
 		return FALSE;
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDCANCEL)
@@ -575,20 +580,21 @@ LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	}
 	return FALSE;
 }
-static char DebugText[32767];
 void	AddDebug (char *txt)
 {
-	int i = strlen(txt), j;
-
-	GetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText,32767);
-	j = strlen(DebugText);
-	if ((i + j + 2) > 32767)
-		return;
+	int i = strlen(txt), j = GetWindowTextLength(GetDlgItem(hDebug,IDC_DEBUGTEXT));
+	
+	if (i + j + 2 > DebugLen)
+	{
+		while (i + j + 2 > DebugLen)
+			DebugLen += 8192;
+		DebugText = realloc(DebugText,DebugLen);
+	}
+	GetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText,DebugLen);
 	strcat(DebugText,txt);
 	strcat(DebugText,"\r\n");
 	SetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText);
-	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SETSEL,0,-1);	/* select all text, move caret to end */
-	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SETSEL,-1,-1);	/* remove selection, caret stays at end */
+	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SETSEL,i+j+2,-1);	/* select last char, move caret to end */
 	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SCROLLCARET,0,0);	/* scroll caret onto screen */
 }
 void	ShowDebug (void)
