@@ -419,6 +419,7 @@ void	States_LoadState (void)
 	char tpchr[256];
 	FILE *in;
 	int flen;
+	unsigned char MovieMode;
 
 	States.NeedLoad = FALSE;
 	if (Controllers.MovieMode & MOV_PLAY)
@@ -486,7 +487,10 @@ void	States_LoadState (void)
 	}
 
 	fseek(in,16,SEEK_SET);
+	MovieMode = Controllers.MovieMode;
+	Controllers.MovieMode = 0;
 	NES_Reset(RESET_HARD);
+	Controllers.MovieMode = MovieMode;
 
 	if (States_LoadData(in, flen))
 		GFX_ShowText("State loaded: %i", States.SelSlot);
