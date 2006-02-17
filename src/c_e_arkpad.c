@@ -40,34 +40,39 @@ static	BOOL	LockCursorPos (int x, int y)
 #define	BitPtr	Data[2]
 #define	Strobe	Data[3]
 #define	Button	Data[4]
-static	void	Frame (struct tExpPort *Cont)
+#define	NewBits	Data[5]
+static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 {
-}
-
-static	void	UpdateCont (struct tExpPort *Cont)
-{
-	unsigned long x;
-	int i;
-	LockCursorPos(128,220);
-	if (Controllers_IsPressed(Cont->Buttons[0]))
-		Cont->Button = 1;
-	else	Cont->Button = 0;
-	x = Cont->Pos;
-	x += Controllers.MouseState.lX;
-	if (x < 196)
-		x = 196;
-	if (x > 484)
-		x = 484;
-	Cont->Pos = x;
-	Cont->Bits = 0;
-	x = ~x;
+	int x, i;
+	if (mode & MOV_PLAY)
+	{
+		Cont->Pos = Cont->MovData[0] | (Cont->MovData[1] << 8);
+		Cont->Button = Cont->MovData[2];
+	}
+	else
+	{
+		LockCursorPos(128,220);
+		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);
+		Cont->Pos += Controllers.MouseState.lX;
+		if (Cont->Pos < 196)
+			Cont->Pos = 196;
+		if (Cont->Pos > 484)
+			Cont->Pos = 484;
+	}
+	if (Controllers.MovieMode & MOV_RECORD)
+	{
+		Cont->MovData[0] = (unsigned char)(Cont->Pos & 0xFF);
+		Cont->MovData[1] = (unsigned char)(Cont->Pos >> 8);
+		Cont->MovData[2] = (unsigned char)Cont->Button;
+	}
+	Cont->NewBits = 0;
+	x = ~Cont->Pos;
 	for (i = 0; i < 9; i++)
 	{
-		Cont->Bits <<= 1;
-		Cont->Bits |= x & 1;
+		Cont->NewBits <<= 1;
+		Cont->NewBits |= x & 1;
 		x >>= 1;
 	}
-	Cont->BitPtr = 0;
 }
 static	unsigned char	Read1 (struct tExpPort *Cont)
 {
@@ -75,23 +80,27 @@ static	unsigned char	Read1 (struct tExpPort *Cont)
 		return 0x02;
 	else	return 0;
 }
-
 static	unsigned char	Read2 (struct tExpPort *Cont)
 {
 	unsigned char result;
 	if (Cont->Strobe)
-		UpdateCont(Cont);
-	result = (char)(((Cont->Bits >> Cont->BitPtr++) & 1) << 1);
+	{
+		Cont->Bits = Cont->NewBits;
+		Cont->BitPtr = 0;
+	}
+	result = (unsigned char)(((Cont->Bits >> Cont->BitPtr++) & 1) << 1);
 	if (Cont->BitPtr == 9)
 		Cont->BitPtr--;
 	return result;
 }
-
 static	void	Write (struct tExpPort *Cont, unsigned char Val)
 {
 	Cont->Strobe = Val & 1;
-	if (Cont->Strobe)
-		UpdateCont(Cont);
+	if (Cont->Strobe = Val & 1)
+	{
+		Cont->Bits = Cont->NewBits;
+		Cont->BitPtr = 0;
+	}
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -122,7 +131,7 @@ void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
 	Cont->NumButtons = 1;
 	Cont->DataLen = 5;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
-	Cont->MovLen = 0;
+	Cont->MovLen = 3;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits = 0;
@@ -130,9 +139,11 @@ void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
 	Cont->Button = 0;
+	Cont->NewBits = 0;
 }
-#undef	Bits
-#undef	Pos
-#undef	BitPtr
-#undef	Strobe
+#undef	NewBits
 #undef	Button
+#undef	Strobe
+#undef	BitPtr
+#undef	Pos
+#undef	Bits
