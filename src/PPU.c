@@ -446,25 +446,19 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case  67:	case  75:	case  83:	case  91:	case  99:	case 107:	case 115:	case 123:
 			case 131:	case 139:	case 147:	case 155:	case 163:	case 171:	case 179:	case 187:
 			case 195:	case 203:	case 211:	case 219:	case 227:	case 235:	case 243:
-				if (PPU.Reg2001 & 0x08)
-				{
-					CurTileData = &PPU.TileData[PPU.Clockticks + 13];
-					TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
-					((unsigned long *)CurTileData)[0] = TL;
-					((unsigned long *)CurTileData)[1] = TL;
-				}
+				CurTileData = &PPU.TileData[PPU.Clockticks + 13];
+				TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
+				((unsigned long *)CurTileData)[0] = TL;
+				((unsigned long *)CurTileData)[1] = TL;
 				if ((PPU.VRAMAddr & 0x1F) == 0x1F)
 					PPU.VRAMAddr ^= 0x41F;
 				else	PPU.VRAMAddr++;
 				break;
 			case 251:
-				if (PPU.Reg2001 & 0x08)
-				{
-					CurTileData = &PPU.TileData[PPU.Clockticks + 13];
-					TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
-					((unsigned long *)CurTileData)[0] = TL;
-					((unsigned long *)CurTileData)[1] = TL;
-				}
+				CurTileData = &PPU.TileData[PPU.Clockticks + 13];
+				TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
+				((unsigned long *)CurTileData)[0] = TL;
+				((unsigned long *)CurTileData)[1] = TL;
 				PPU.VRAMAddr &= ~0x41F;
 				PPU.VRAMAddr |= PPU.IntReg & 0x41F;
 				if ((PPU.VRAMAddr & 0x7000) == 0x7000)
@@ -480,13 +474,10 @@ __inline static	void	RunNoSkip (int NumTicks)
 				else	PPU.VRAMAddr += 0x1000;
 				break;
 			case 323:	case 331:
-				if (PPU.Reg2001 & 0x08)
-				{
-					CurTileData = &PPU.TileData[PPU.Clockticks - 323];
-					TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
-					((unsigned long *)CurTileData)[0] = TL;
-					((unsigned long *)CurTileData)[1] = TL;
-				}
+				CurTileData = &PPU.TileData[PPU.Clockticks - 323];
+				TL = AttribBits[(RenderData[1] >> AttribShift[PPU.VRAMAddr & 0x7F]) & 3];
+				((unsigned long *)CurTileData)[0] = TL;
+				((unsigned long *)CurTileData)[1] = TL;
 				if ((PPU.VRAMAddr & 0x1F) == 0x1F)
 					PPU.VRAMAddr ^= 0x41F;
 				else	PPU.VRAMAddr++;
@@ -502,22 +493,16 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case  69:	case  77:	case  85:	case  93:	case 101:	case 109:	case 117:	case 125:
 			case 133:	case 141:	case 149:	case 157:	case 165:	case 173:	case 181:	case 189:
 			case 197:	case 205:	case 213:	case 221:	case 229:	case 237:	case 245:	case 253:
-				if (PPU.Reg2001 & 0x08)
-				{
-					TC = ReverseCHR[RenderData[2]];
-					CurTileData = &PPU.TileData[PPU.Clockticks + 11];
-					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
-					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
-				}
+				TC = ReverseCHR[RenderData[2]];
+				CurTileData = &PPU.TileData[PPU.Clockticks + 11];
+				((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
+				((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
 				break;
 			case 325:	case 333:
-				if (PPU.Reg2001 & 0x08)
-				{
-					TC = ReverseCHR[RenderData[2]];
-					CurTileData = &PPU.TileData[PPU.Clockticks - 325];
-					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
-					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
-				}
+				TC = ReverseCHR[RenderData[2]];
+				CurTileData = &PPU.TileData[PPU.Clockticks - 325];
+				((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
+				((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
 				break;
 			case   6:	case  14:	case  22:	case  30:	case  38:	case  46:	case  54:	case  62:
 			case  70:	case  78:	case  86:	case  94:	case 102:	case 110:	case 118:	case 126:
@@ -530,22 +515,16 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case  71:	case  79:	case  87:	case  95:	case 103:	case 111:	case 119:	case 127:
 			case 135:	case 143:	case 151:	case 159:	case 167:	case 175:	case 183:	case 191:
 			case 199:	case 207:	case 215:	case 223:	case 231:	case 239:	case 247:	case 255:
-				if (PPU.Reg2001 & 0x08)
-				{
-					TC = ReverseCHR[RenderData[3]];
-					CurTileData = &PPU.TileData[PPU.Clockticks + 9];
-					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
-					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
-				}
+				TC = ReverseCHR[RenderData[3]];
+				CurTileData = &PPU.TileData[PPU.Clockticks + 9];
+				((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
+				((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				break;
 			case 327:	case 335:
-				if (PPU.Reg2001 & 0x08)
-				{
-					TC = ReverseCHR[RenderData[3]];
-					CurTileData = &PPU.TileData[PPU.Clockticks - 327];
-					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
-					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
-				}
+				TC = ReverseCHR[RenderData[3]];
+				CurTileData = &PPU.TileData[PPU.Clockticks - 327];
+				((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
+				((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				break;
 				/* END BACKGROUND */
 				/* BEGIN SPRITES */
@@ -631,7 +610,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 		if ((PPU.Clockticks < 256) && (PPU.OnScreen))
 		{
 			register int PalIndex;
-			if ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x02))
+			if ((PPU.Reg2001 & 0x08) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x02)))
 				TC = PPU.TileData[PPU.Clockticks + PPU.IntX];
 			else	TC = 0;
 			if ((PPU.Reg2001 & 0x10) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x04)))
