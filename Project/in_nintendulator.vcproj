@@ -19,15 +19,20 @@
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			CharacterSet="2"
+			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
+				FavorSizeOrSpeed="1"
+				OptimizeForWindowsApplication="TRUE"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER"
 				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
+				EnableFunctionLevelLinking="FALSE"
 				PrecompiledHeaderFile="$(IntDir)/in_nintendulator.pch"
 				AssemblerOutput="2"
 				AssemblerListingLocation="$(IntDir)/"
@@ -41,10 +46,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dsound.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile="$(OutDir)/in_nintendulator.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
+				SubSystem="2"
 				ImportLibrary="$(OutDir)/in_nintendulator.lib"
 				TargetMachine="1"/>
 			<Tool
@@ -213,15 +219,20 @@
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="1">
+			CharacterSet="1"
+			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
+				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
+				FavorSizeOrSpeed="1"
+				OptimizeForWindowsApplication="TRUE"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER"
 				StringPooling="TRUE"
+				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
+				EnableFunctionLevelLinking="FALSE"
 				PrecompiledHeaderFile="$(IntDir)/in_nintendulator.pch"
 				AssemblerOutput="2"
 				AssemblerListingLocation="$(IntDir)/"
@@ -235,10 +246,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dsound.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile="$(OutDir)/in_nintendulator.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
+				SubSystem="2"
 				ImportLibrary="$(OutDir)/in_nintendulator.lib"
 				TargetMachine="1"/>
 			<Tool
@@ -284,7 +296,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BrowseInformation="1"/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -292,7 +304,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
@@ -301,7 +313,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
@@ -310,7 +322,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BrowseInformation="1"/>
 				</FileConfiguration>
 			</File>
@@ -321,7 +333,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BrowseInformation="1"/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -329,7 +341,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
@@ -338,7 +350,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
@@ -347,7 +359,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BrowseInformation="1"/>
 				</FileConfiguration>
 			</File>
@@ -358,7 +370,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BrowseInformation="1"/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -366,7 +378,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
@@ -375,7 +387,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
@@ -384,7 +396,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BrowseInformation="1"/>
 				</FileConfiguration>
 			</File>
@@ -395,7 +407,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BrowseInformation="1"/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -403,7 +415,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
@@ -412,7 +424,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
@@ -421,7 +433,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_MBCS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER;$(NoInherit)"
+						PreprocessorDefinitions=""
 						BrowseInformation="1"/>
 				</FileConfiguration>
 			</File>

@@ -603,9 +603,9 @@ void	APU_WriteReg (int Addr, unsigned char Val)
 						break;
 	case 0x017:	Frame_Write(Val);	break;
 #ifndef	NSFPLAYER
-	default:	MessageBox(mWnd,_T("WTF? Invalid sound write!"),_T("Nintendulator"),MB_OK);
+	default:	MessageBox(mWnd,_T("ERROR: Invalid sound write!"),_T("Nintendulator"),MB_OK);
 #else
-	default:	MessageBox(mod.hMainWindow,"WTF? Invalid sound write!","Nintendulator",MB_OK);
+	default:	MessageBox(mod.hMainWindow,_T("ERROR: Invalid sound write!"),_T("in_nintendulator"),MB_OK);
 #endif
 						break;
 	}
@@ -661,7 +661,7 @@ void	APU_SetFPSVars (int FPS)
 #ifndef	NSFPLAYER
 		MessageBox(mWnd,_T("Attempted to set indeterminate sound framerate!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 #else
-		MessageBox(mod.hMainWindow,"Attempted to set indeterminate sound framerate!","Nintendulator",MB_OK | MB_ICONERROR);
+		MessageBox(mod.hMainWindow,_T("Attempted to set indeterminate sound framerate!"),_T("in_nintendulator"),MB_OK | MB_ICONERROR);
 #endif
 		return;
 	}

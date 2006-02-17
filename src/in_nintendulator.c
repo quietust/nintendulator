@@ -36,8 +36,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "CPU.h"
 #include "APU.h"
 
-// avoid CRT. Evil. Big. Bloated.
-BOOL WINAPI _DllMainCRTStartup(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	return TRUE;
 }
@@ -60,11 +59,11 @@ DWORD WINAPI __stdcall PlayThread(void *b);	// the decode thread procedure
 
 void config(HWND hwndParent)
 {
-	MessageBox(hwndParent,"No configuration is yet available","Configuration",MB_OK);
+	MessageBox(hwndParent,_T("No configuration is yet available"),_T("Configuration"),MB_OK);
 }
 void about(HWND hwndParent)
 {
-	MessageBox(hwndParent,"Nintendulator NSF Player, by Quietust","About Nintendulator NSF player",MB_OK);
+	MessageBox(hwndParent,_T("Nintendulator NSF Player, by Quietust"),_T("About Nintendulator NSF player"),MB_OK);
 }
 
 void	init (void)
@@ -109,14 +108,23 @@ void	NES_Reset (void)
 }
 
 int play(char *fn) 
-{ 
+{
+	TCHAR *filename;
 	int maxlatency;
 	int thread_id;
 	unsigned char Header[128];	// NSF header bytes
 	DWORD numBytesRead;	// so ReadFile() won't crash under Windows 9x
 
-	input_file = CreateFile(fn,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
+#ifdef UNICODE
+	filename = malloc((strlen(fn) + 1) * sizeof(TCHAR));
+	mbstowcs(filename, fn, strlen(fn));
+#else
+	filename = fn;
+#endif
+
+	input_file = CreateFile(filename,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
 		OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+
 	if (input_file == INVALID_HANDLE_VALUE) // error opening file
 		return 1;
 
@@ -147,7 +155,7 @@ int play(char *fn)
 	if (memcmp(Header,"NESM\x1a\x01",6))
 		return 1;
 
-	RI.Filename = lastfn;
+	RI.Filename = filename;
 	RI.ROMType = ROM_NSF;
 	RI.NSF_DataSize = file_length;
 	RI.NSF_NumSongs = Header[0x06];
@@ -207,7 +215,7 @@ void stop() {
 		killPlayThread = TRUE;
 		if (WaitForSingleObject(thread_handle,INFINITE) == WAIT_TIMEOUT)
 		{
-			MessageBox(mod.hMainWindow,"error asking thread to die!\n","error killing decode thread",0);
+			MessageBox(mod.hMainWindow,_T("error asking thread to die!\n"),_T("error killing decode thread"),0);
 			TerminateThread(thread_handle,0);
 		}
 		CloseHandle(thread_handle);
@@ -227,6 +235,7 @@ void stop() {
 	free(RI.NSF_Title);
 	free(RI.NSF_Artist);
 	free(RI.NSF_Copyright);
+	free(RI.Filename);
 	RI.ROMType = 0;
 }
 
@@ -268,13 +277,24 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
 		if (length_in_ms) 
 		{
 			HANDLE hFile;
+			TCHAR *fname;
+#ifdef UNICODE
+			fname = malloc((strlen(filename) + 1) * sizeof(TCHAR));
+			mbstowcs(fname, filename, strlen(filename));
+#else
+			fname = filename;
+#endif
 			*length_in_ms=-1000;
-			hFile = CreateFile(filename,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
+			hFile = CreateFile(fname,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
 				OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 			if (hFile != INVALID_HANDLE_VALUE)
 			{
 				*length_in_ms = (GetFileSize(hFile,NULL)*10)/(SAMPLERATE/100*NCH*(BPS/8));
 			}
+#ifdef UNICODE
+			free(fname);
+#endif
+
 			CloseHandle(hFile);
 		}
 		if (title) 
