@@ -82,8 +82,9 @@ void	quit (void)
 int isourfile(char *fn) { return 0; }	// used for detecting URL streams.. unused here. strncmp(fn,"http://",7) to detect HTTP streams, etc
 
 struct tNES NES;
-unsigned char PRG_ROM[0x800][0x1000];	// 8192 KB
-unsigned char PRG_RAM[0x10][0x1000];	//   64 KB
+
+unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];
+unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];
 
 void	NES_Reset (void)
 {
@@ -147,6 +148,7 @@ int play(char *fn)
 
 	RI.Filename = lastfn;
 	RI.ROMType = ROM_NSF;
+	RI.NSF_DataSize = file_length;
 	RI.NSF_NumSongs = Header[0x06];
 	RI.NSF_SoundChips = Header[0x7B];
 	RI.NSF_NTSCPAL = Header[0x7A];
@@ -156,13 +158,12 @@ int play(char *fn)
 	RI.NSF_InitSong = Header[0x07];
 	RI.NSF_InitAddr = Header[0x0A] | (Header[0x0B] << 8);
 	RI.NSF_PlayAddr = Header[0x0C] | (Header[0x0D] << 8);
-	RI.NSF_Title = malloc(32);
-	RI.NSF_Artist = malloc(32);
-	RI.NSF_Copyright = malloc(32);
+	RI.NSF_Title = (char *)malloc(32);
+	RI.NSF_Artist = (char *)malloc(32);
+	RI.NSF_Copyright = (char *)malloc(32);
 	memcpy(RI.NSF_Title,&Header[0x0E],32);
 	memcpy(RI.NSF_Artist,&Header[0x2E],32);
 	memcpy(RI.NSF_Copyright,&Header[0x4E],32);
-
 	if (memcmp(RI.NSF_InitBanks,"\0\0\0\0\0\0\0\0",8))
 		ReadFile(input_file,&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF),file_length,&numBytesRead,NULL);
 	else
@@ -171,7 +172,6 @@ int play(char *fn)
 		ReadFile(input_file,&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF),file_length,&numBytesRead,NULL);
 	}
 
-	RI.PRGSize = file_length;
 	NES.PRGMask = 0x7FFFFF;
 
 	if (!MapperInterface_LoadMapper(&RI))
