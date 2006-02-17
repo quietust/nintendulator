@@ -121,7 +121,7 @@ void	NES_OpenFile (char *filename)
 #endif	/* ENABLE_DEBUGGER */
 
 	NES_Reset(0);
-	if (NES.AutoRun)
+	if ((NES.AutoRun) || (RI.ROMType == ROM_NSF))
 	{
 		if (NES.Stopped)
 		{
