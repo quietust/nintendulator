@@ -619,7 +619,9 @@ void	Controllers_PlayMovie (BOOL Review)
 		return;
 	}
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_BYCOMMAND | MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_BYCOMMAND | MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_ENABLED);
 	if (Controllers.Port1.MovLen)
 		memset(Controllers.Port1.MovData,0,Controllers.Port1.MovLen);
@@ -707,7 +709,9 @@ void	Controllers_RecordMovie (BOOL fromState)
 
 	ReRecords = 0;
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_BYCOMMAND | MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_GRAYED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_BYCOMMAND | MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_ENABLED);
 }
 
@@ -776,7 +780,9 @@ void	Controllers_StopMovie (void)
 	}
 	ExpPort_SetControllerType(&Controllers.ExpPort,MOV_ControllerTypes[2]);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_BYCOMMAND | MF_ENABLED);
+	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_BYCOMMAND | MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_BYCOMMAND | MF_GRAYED);
 }
 
