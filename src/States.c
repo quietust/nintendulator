@@ -376,6 +376,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 				}
 				fread(&MovieLen,4,1,in);	fwrite(&MovieLen,4,1,movie);	clen -= 4;	// MLEN
 				tpi = MovieLen;					clen -= tpi;	// MDAT
+				Cmd = 0;
 				while (tpi > 0)
 				{
 					if (Controllers.Port1.MovLen)
@@ -396,7 +397,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 						fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
 						tpi -= Controllers.ExpPort.MovLen;
 					}
-					if ((MI) && (MI->Config))
+					if ((MI) && (MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
 					{
 						fread(&Cmd,1,1,in);
 						fwrite(&Cmd,1,1,movie);
@@ -431,6 +432,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 
 void	States_LoadState (void)
 {
+	extern int MovieLen, MovieFrameLen;
 	char tpchr[256];
 	FILE *in;
 	int flen;
@@ -506,7 +508,11 @@ void	States_LoadState (void)
 	CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
 	if (States_LoadData(in, flen))
-		GFX_ShowText("State loaded: %i", States.SelSlot);
+	{
+		if (Controllers.MovieMode & MOV_RECORD)
+			GFX_ShowText("State loaded: %i", States.SelSlot);
+		else	GFX_ShowText("State loaded: %i (frame %i)", States.SelSlot, MovieLen / MovieFrameLen);
+	}
 	else	GFX_ShowText("State loaded with errors: %i", States.SelSlot);
 	fclose(in);
 }
