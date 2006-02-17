@@ -118,8 +118,13 @@ void	NES_OpenFile (char *filename)
 	EI.DbgOut("Loaded successfully!");
 	States_SetFilename(filename);
 
+	NES.HasMenu = FALSE;
 	if (MI->Config)
+	{
+		if (MI->Config(CFG_WINDOW,FALSE))
+			NES.HasMenu = TRUE;
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_ENABLED);
+	}
 	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
 	NES_LoadSRAM();
 

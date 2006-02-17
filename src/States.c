@@ -413,7 +413,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 						fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);
 						tpi -= Controllers.ExpPort.MovLen;
 					}
-					if ((MI) && (MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
+					if (NES.HasMenu)
 					{
 						fread(&Cmd,1,1,in);
 						fwrite(&Cmd,1,1,movie);

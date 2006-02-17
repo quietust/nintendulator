@@ -615,7 +615,7 @@ void	Controllers_PlayMovie (BOOL Review)
 	NES_SetCPUMode(buf[3] >> 7);	// Set to NTSC or PAL
 
 	MovieFrameLen = Controllers.Port1.MovLen + Controllers.Port2.MovLen + Controllers.ExpPort.MovLen;
-	if ((MI) && (MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
+	if (NES.HasMenu)
 		MovieFrameLen++;
 	if (MovieFrameLen != (buf[3] & 0x7F))
 		MessageBox(mWnd,"The frame size specified in this movie is incorrect! This movie may not play properly!","Nintendulator",MB_OK | MB_ICONWARNING);
@@ -660,7 +660,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 		return;
 	}
 
-	if ((MI) && (MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
+	if ((MI) && (MI->Config) && (!NES.HasMenu))
 	{
 		MessageBox(mWnd,"This game does not support using the 'Game' menu while recording!","Nintendulator",MB_OK);
 		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
@@ -729,7 +729,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 	MovieFrameLen += Controllers.Port1.MovLen;
 	MovieFrameLen += Controllers.Port2.MovLen;
 	MovieFrameLen += Controllers.ExpPort.MovLen;
-	if ((MI) && (MI->Config) && (MI->Config(CFG_WINDOW,FALSE)))
+	if (NES.HasMenu)
 		MovieFrameLen++;
 	x |= MovieFrameLen;
 	fwrite(&x,1,1,movie);		// frame size, NTSC/PAL
@@ -879,7 +879,7 @@ void	Controllers_UpdateInput (void)
 			else	GFX_ShowText("Unexpected EOF in movie!");
 			Controllers_StopMovie();
 		}
-		if ((MI) && (MI->Config))
+		if (NES.HasMenu)
 		{
 			fread(&Cmd,1,1,movie);
 			MovieLen--;
@@ -903,7 +903,7 @@ void	Controllers_UpdateInput (void)
 			fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,movie);	MovieLen += Controllers.Port2.MovLen;
 		if (Controllers.ExpPort.MovLen)
 			fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,movie);	MovieLen += Controllers.ExpPort.MovLen;
-		if ((MI) && (MI->Config))
+		if (NES.HasMenu)
 		{
 			fwrite(&Cmd,1,1,movie);
 			MovieLen++;

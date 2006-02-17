@@ -39,6 +39,7 @@ struct tNES
 	BOOL SoundEnabled;
 	BOOL AutoRun;
 	BOOL FrameStep, GotStep;
+	BOOL HasMenu;
 };
 extern	struct tNES NES;
 
