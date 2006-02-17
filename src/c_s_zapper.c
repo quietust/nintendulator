@@ -22,12 +22,11 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #include "Nintendulator.h"
 #include "Controllers.h"
-#include "GFX.h"
+#include "PPU.h"
 
-#define	LastPix	Data[0]
-#define	PosX	Data[1]
-#define	PosY	Data[2]
-#define	Button	Data[3]
+#define	PosX	Data[0]
+#define	PosY	Data[1]
+#define	Button	Data[2]
 static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	static POINT pos;
@@ -62,26 +61,17 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 static	unsigned char	Read (struct tStdPort *Cont)
 {
 	int x = Cont->PosX, y = Cont->PosY, z = Cont->Button;
-	long CurPix = 0;
+	int CurPix = 0xF;
 	unsigned char Bits = 0x00;
 
 	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
 		return Bits | 0x08;
-
 	if (z)
 		Bits |= 0x10;
-
-	switch (GFX.Depth)
-	{
-	case 15:CurPix = ((unsigned short *)((char *)GFX.DrawArray + y*GFX.Pitch))[x];
-		CurPix = ((CurPix & 0x1F) << 3) | ((CurPix & 0x3E0) << 6) | ((CurPix & 0x7C00) << 9) | 0x070707;break;
-	case 16:CurPix = ((unsigned short *)((char *)GFX.DrawArray + y*GFX.Pitch))[x];
-		CurPix = ((CurPix & 0x1F) << 3) | ((CurPix & 0x7E0) << 5) | ((CurPix & 0xF800) << 8) | 0x070307;break;
-	case 32:CurPix = ((long *)((char *)GFX.DrawArray + y*GFX.Pitch))[x];					break;
-	}
-	if ((CurPix != 0xFFFFFF) && (CurPix != 0xC0C0C0))
+	if (y < 240)
+		CurPix = DrawArray[y*256 + x] & 0x3F;
+	if ((CurPix != 0x20) && (CurPix != 0x30) && (CurPix != 0x3D))
 		Bits |= 0x08;
-	Cont->LastPix = CurPix;
 	return Bits;
 }
 static	void	Write (struct tStdPort *Cont, unsigned char Val)
@@ -114,12 +104,11 @@ void	StdPort_SetZapper (struct tStdPort *Cont)
 	Cont->Unload = Unload;
 	Cont->Frame = Frame;
 	Cont->NumButtons = 1;
-	Cont->DataLen = 4;
+	Cont->DataLen = 3;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data));
 	Cont->MovLen = 3;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
-	Cont->LastPix = 0;
 	Cont->PosX = 0;
 	Cont->PosY = 0;
 	Cont->Button = 0;

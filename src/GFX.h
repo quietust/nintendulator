@@ -28,13 +28,13 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct tGFX
 {
-	unsigned long FixedPalette[512];
+	unsigned short Palette15[512];
+	unsigned short Palette16[512];
+	unsigned long Palette32[512];
 	char Depth;
 
 	char TextDisp[256];
 	int ShowTextCounter;
-
-	void *DrawArray;
 
 	LARGE_INTEGER ClockFreq;
 	LARGE_INTEGER LastClockVal;
@@ -67,7 +67,7 @@ void	GFX_Release (void);
 void	GFX_DrawScreen (void);
 void	GFX_Update (void);
 void	GFX_Repaint (void);
-void	GFX_LoadPalette (int PalNum);
+void	GFX_LoadPalette (int);
 void	GFX_SetFrameskip (void);
 void	__cdecl	GFX_ShowText (char *, ...);
 void	GFX_UpdateTitlebar (void);

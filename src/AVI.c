@@ -23,11 +23,15 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Nintendulator.h"
 #include <vfw.h>
 #include "APU.h"
+#include "PPU.h"
 #include "GFX.h"
 #include "AVI.h"
 #include <commdlg.h>
 
-// First, we'll define the WAV file format.
+// AVI utilities -- for creating avi files
+// (c) 2002 Lucian Wischik. No restrictions on use.
+// http://www.wischik.com/lu/programmer/avi_utils.html
+
 #include <pshpack1.h>
 typedef struct
 {
@@ -273,7 +277,7 @@ unsigned int FormatAviMessage(HRESULT code, char *buf,unsigned int len)
 }
 
 HAVI aviout = NULL;
-void AVI_End ()
+void	AVI_End (void)
 {
 	if (!aviout)
 	{
@@ -285,7 +289,8 @@ void AVI_End ()
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_ENABLED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPAVICAPTURE,MF_GRAYED);
 }
-void AVI_Start ()
+
+void	AVI_Start (void)
 {
 	WAVEFORMATEX wfx;
 	HBITMAP hbm;
@@ -300,12 +305,6 @@ void AVI_Start ()
 	if (aviout)
 	{
 		MessageBox(mWnd,"An AVI capture is already in progress!","Nintendulator",MB_OK);
-		return;
-	}
-
-	if (GFX.Depth != 32)
-	{
-		MessageBox(mWnd,"AVI capture currently requires 32-bit color!","Nintendulator",MB_OK);
 		return;
 	}
 
@@ -338,7 +337,9 @@ void AVI_Start ()
 	wfx.wBitsPerSample = 16;
 	wfx.cbSize = 0;
 
-	aviout = CreateAvi(FileName,16639261,&wfx);
+	if (PPU.IsPAL)
+		aviout = CreateAvi(FileName,19997209,&wfx);
+	else	aviout = CreateAvi(FileName,16639263,&wfx);
 
 	bmih.biSize = sizeof(BITMAPINFOHEADER);
 	bmih.biWidth = 256;
@@ -368,13 +369,12 @@ void AVI_Start ()
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPAVICAPTURE,MF_ENABLED);
 }
 
-void AVI_AddVideo ()
+void	AVI_AddVideo (void)
 {
 	HBITMAP hbm;
-	long *pBits;
+	unsigned long *pBits;
 	BITMAPINFOHEADER bmih;
 	HRESULT hr;
-	int i;
 
 	if (!aviout)
 	{
@@ -395,8 +395,18 @@ void AVI_AddVideo ()
 	
 	hbm = CreateDIBSection(NULL,(BITMAPINFO *)&bmih,DIB_RGB_COLORS,&pBits,NULL,0);
 
-	for (i = 0; i < 240; i++)
-		memcpy((unsigned char *)pBits + GFX.Pitch*i,(unsigned char *)GFX.DrawArray + GFX.Pitch*(239 - i),GFX.Pitch);
+	{
+		register unsigned short *src = DrawArray;
+		int x, y;
+		for (y = 0; y < 240; y++)
+		{
+			register unsigned long *dst = pBits + 256*(239-y);
+			for (x = 0; x < 256; x++)
+				dst[x] = GFX.Palette32[src[x]];
+			src += x;
+		}
+	}
+	
 	if (hr = AddAviFrame(aviout,hbm))
 	{
 		char msg[256];
@@ -406,7 +416,7 @@ void AVI_AddVideo ()
 	DeleteObject(hbm);
 }
 
-void AVI_AddAudio ()
+void	AVI_AddAudio (void)
 {
 	HRESULT hr;
 	if (!aviout)

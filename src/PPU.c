@@ -29,6 +29,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct	tPPU	PPU;
 unsigned char	PPU_VRAM[0x4][0x400];
+unsigned short	DrawArray[256*240];
 
 const	unsigned char	ReverseCHR[256] =
 {
@@ -206,6 +207,7 @@ void	PPU_GetHandlers (void)
 	if ((MI) && (MI->PPUCycle))
 		PPU_PPUCycle = MI->PPUCycle;
 	else	PPU_PPUCycle = PPU_NoPPUCycle;
+	PPU_GetGFXPtr();
 }
 __inline static	void	DiscoverSprites (void)
 {
@@ -242,7 +244,7 @@ __inline static	void	DiscoverSprites (void)
 }
 void	PPU_GetGFXPtr (void)
 {
-	PPU.GfxData = (unsigned char *)GFX.DrawArray + PPU.SLnum*GFX.Pitch;
+	PPU.GfxData = DrawArray;
 }
 
 void	PPU_PowerOn()
@@ -382,14 +384,12 @@ __inline static	void	RunNoSkip (int NumTicks)
 			PPU.SLnum++;
 			NES.Scanline = TRUE;
 			if (PPU.SLnum < 240)
-			{
 				PPU.OnScreen = TRUE;
-				PPU_GetGFXPtr();
-			}
 			else if (PPU.SLnum == 240)
 				PPU.IsRendering = PPU.OnScreen = FALSE;
 			else if (PPU.SLnum == 241)
 			{
+				PPU_GetGFXPtr();
 				GFX_DrawScreen();
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
@@ -641,9 +641,8 @@ __inline static	void	RunNoSkip (int NumTicks)
 				PalIndex = PPU.Palette[PPU.VRAMAddr & 0x1F];
 			PalIndex &= PPU.GrayScale;
 			PalIndex |= PPU.ColorEmphasis;
-			if (GFX.Depth == 16)
-				((unsigned short *)PPU.GfxData)[PPU.Clockticks] = (unsigned short)GFX.FixedPalette[PalIndex];
-			else	((unsigned long *)PPU.GfxData)[PPU.Clockticks] = GFX.FixedPalette[PalIndex];
+			*PPU.GfxData = PalIndex;
+			PPU.GfxData++;
 		}
 	}
 }

@@ -63,12 +63,13 @@ struct	tPPU
 	BOOL Spr0InLine;
 	int SprCount;
 	unsigned char SprData[8][8];
-	void *GfxData;
+	unsigned short *GfxData;
 	unsigned char IsPAL;
 };
 extern	struct	tPPU	PPU;
 extern	unsigned char	PPU_VRAM[0x4][0x400];
 extern	unsigned char	PPU_OpenBus[0x400];
+extern	unsigned short	DrawArray[256*240];
 
 void	PPU_GetHandlers (void);
 void	PPU_PowerOn (void);

@@ -31,8 +31,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct tGFX GFX;
 
-#define	GFX_SAFE_LOCK	/* only locks the secondary surface when necessary */
-
 #define	GFX_Try(action,errormsg)\
 {\
 	if (FAILED(action))\
@@ -51,16 +49,14 @@ struct tGFX GFX;
 void	GFX_Init (void)
 {
 	ZeroMemory(&GFX.SurfDesc,sizeof(GFX.SurfDesc));
-	ZeroMemory(GFX.FixedPalette,sizeof(GFX.FixedPalette));
+	ZeroMemory(GFX.Palette15,sizeof(GFX.Palette15));
+	ZeroMemory(GFX.Palette16,sizeof(GFX.Palette16));
+	ZeroMemory(GFX.Palette32,sizeof(GFX.Palette32));
 	ZeroMemory(GFX.TextDisp,sizeof(GFX.TextDisp));
 	GFX.DirectDraw = NULL;
 	GFX.PrimarySurf = NULL;
 	GFX.SecondarySurf = NULL;
 	GFX.Clipper = NULL;
-	GFX.DrawArray = NULL;
-#ifdef	GFX_SAFE_LOCK
-	GFX.SurfSize = 0;
-#endif
 	GFX.Pitch = 0;
 	GFX.WantFPS = 0;
 	GFX.FPSCnt = 0;
@@ -179,23 +175,14 @@ void	GFX_Create (void)
 		MessageBox(mWnd,"Failed to lock secondary surface (init)","Nintendulator",MB_OK | MB_ICONERROR);
 		return;
 	}
-#ifdef	GFX_SAFE_LOCK
-	GFX.SurfSize = GFX.SurfDesc.lPitch*GFX.SurfDesc.dwHeight;
-	GFX.DrawArray = malloc(GFX.SurfSize);
-	memset(GFX.DrawArray,0,GFX.SurfSize);
-#else
-	GFX.DrawArray = GFX.SurfDesc.lpSurface;
-#endif
 	GFX.Pitch = GFX.SurfDesc.lPitch;
 	memset(GFX.SurfDesc.lpSurface,0,GFX.SurfDesc.lPitch*GFX.SurfDesc.dwHeight);
-#ifdef	GFX_SAFE_LOCK
 	if (FAILED(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL)))
 	{
 		GFX_Release();
 		MessageBox(mWnd,"Failed to unlock secondary surface (init)","Nintendulator",MB_OK | MB_ICONERROR);
 		return;
 	}
-#endif
 	GFX_Update();
 	GFX_LoadPalette(PPU.IsPAL ? GFX.PalettePAL : GFX.PaletteNTSC);
 }
@@ -206,10 +193,6 @@ void	GFX_Release (void)
 	if (GFX.SecondarySurf)	IDirectDrawSurface7_Release(GFX.SecondarySurf);	GFX.SecondarySurf = NULL;
 	if (GFX.PrimarySurf)	IDirectDrawSurface7_Release(GFX.PrimarySurf);	GFX.PrimarySurf = NULL;
 	if (GFX.DirectDraw)	IDirectDraw7_Release(GFX.DirectDraw);		GFX.DirectDraw = NULL;
-#ifdef	GFX_SAFE_LOCK
-	if (GFX.DrawArray)	free(GFX.DrawArray);
-#endif
-	GFX.DrawArray = NULL;
 }
 
 void	GFX_DrawScreen (void)
@@ -269,11 +252,42 @@ void	GFX_SetFrameskip (void)
 
 void	GFX_Update (void)
 {
-#ifdef	GFX_SAFE_LOCK
+	register unsigned short *src = DrawArray;
 	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),"Failed to lock secondary surface")
-	memcpy(GFX.SurfDesc.lpSurface,GFX.DrawArray,GFX.SurfSize);
+	if (GFX.Depth == 32)
+	{
+		int x, y;
+		for (y = 0; y < 240; y++)
+		{
+			register unsigned long *dst = (unsigned long *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			for (x = 0; x < 256; x++)
+				dst[x] = GFX.Palette32[src[x]];
+			src += x;
+		}
+	}
+	else if (GFX.Depth == 16)
+	{
+		int x, y;
+		for (y = 0; y < 240; y++)
+		{
+			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			for (x = 0; x < 256; x++)
+				dst[x] = GFX.Palette16[src[x]];
+			src += x;
+		}
+	}
+	else
+	{
+		int x, y;
+		for (y = 0; y < 240; y++)
+		{
+			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			for (x = 0; x < 256; x++)
+				dst[x] = GFX.Palette15[src[x]];
+			src += x;
+		}
+	}
 	GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),"Failed to unlock secondary surface")
-#endif
 	GFX_Repaint();
 }
 
@@ -291,13 +305,7 @@ void	GFX_Repaint (void)
 		rect.right += pt.x;
 		rect.top += pt.y;
 		rect.bottom += pt.y;
-#ifdef	GFX_SAFE_LOCK
 		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),"Failed to blit to primary surface")
-#else
-		GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),"Failed to unlock secondary surface")
-		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,0,NULL),"Failed to blit to primary surface")
-		GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),"Failed to lock secondary surface")
-#endif
 	}
 }
 
@@ -469,21 +477,9 @@ void	GFX_LoadPalette (int PalNum)
 		if (GV > 0xFF)	GV = 0xFF;
 		if (BV > 0xFF)	BV = 0xFF;
 
-		switch (GFX.Depth)
-		{
-		case 15:RV >>= 3;
-			GV >>= 3;
-			BV >>= 3;
-			GFX.FixedPalette[i] = (RV << 10) | (GV << 5) | (BV << 0);
-			break;
-		case 16:RV >>= 3;
-			GV >>= 2;
-			BV >>= 3;
-			GFX.FixedPalette[i] = (RV << 11) | (GV << 5) | (BV << 0);
-			break;
-		case 32:GFX.FixedPalette[i] = (RV << 16) | (GV << 8) | (BV << 0);
-			break;
-		}
+		GFX.Palette15[i] = ((RV << 7) & 0x7C00) | ((GV << 2) & 0x03E0) | (BV >> 3);
+		GFX.Palette16[i] = ((RV << 8) & 0xF800) | ((GV << 3) & 0x07E0) | (BV >> 3);
+		GFX.Palette32[i] = (RV << 16) | (GV << 8) | BV;
 	}
 }
 

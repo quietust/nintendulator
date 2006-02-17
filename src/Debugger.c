@@ -109,7 +109,7 @@ void	Debugger_Init (void)
 	Debugger.FontWidth = 7;
 	Debugger.FontHeight = 10;
 	
-	Debugger.Depth = (GetDeviceCaps(TpHDC,BITSPIXEL) >> 3);
+	Debugger.Depth = GetDeviceCaps(TpHDC,BITSPIXEL);
 	ReleaseDC(GetDesktopWindow(), TpHDC);
 
 	TpHDC = GetWindowDC(GetDesktopWindow());
@@ -490,15 +490,20 @@ void	Debugger_UpdateGraphics (void)
 					for (y = 0; y < 16; y++)
 					{
 						int BaseVal = (y << 8) | (z << 4) | x;
-						if (DInc == 2)
+						if (Debugger.Depth == 32)
 						{
-							((unsigned short *)Debugger.PaletteArray)[BaseVal         ] = (unsigned short)GFX.FixedPalette[PPU.Palette[       z]];
-							((unsigned short *)Debugger.PaletteArray)[BaseVal | 0x1000] = (unsigned short)GFX.FixedPalette[PPU.Palette[0x10 | z]];
+							((unsigned long *)Debugger.PaletteArray)[BaseVal         ] = GFX.Palette32[PPU.Palette[       z]];
+							((unsigned long *)Debugger.PaletteArray)[BaseVal | 0x1000] = GFX.Palette32[PPU.Palette[0x10 | z]];
+						}
+						else if (Debugger.Depth == 16)
+						{
+							((unsigned short *)Debugger.PaletteArray)[BaseVal         ] = GFX.Palette16[PPU.Palette[       z]];
+							((unsigned short *)Debugger.PaletteArray)[BaseVal | 0x1000] = GFX.Palette16[PPU.Palette[0x10 | z]];
 						}
 						else
 						{
-							((unsigned long *)Debugger.PaletteArray)[BaseVal         ] = GFX.FixedPalette[PPU.Palette[       z]];
-							((unsigned long *)Debugger.PaletteArray)[BaseVal | 0x1000] = GFX.FixedPalette[PPU.Palette[0x10 | z]];
+							((unsigned short *)Debugger.PaletteArray)[BaseVal         ] = GFX.Palette15[PPU.Palette[       z]];
+							((unsigned short *)Debugger.PaletteArray)[BaseVal | 0x1000] = GFX.Palette15[PPU.Palette[0x10 | z]];
 						}
 					}
 		}
@@ -527,9 +532,11 @@ void	Debugger_UpdateGraphics (void)
 							{
 								PalVal = (VMemory(MemAddy) & (0x80 >> sx)) >> (7-sx);
 								PalVal |= ((VMemory(MemAddy+8) & (0x80 >> sx)) >> (7-sx)) << 1;
-								if (DInc == 2)
-									((unsigned short *)Debugger.PatternArray)[PatPtr] = (unsigned short)GFX.FixedPalette[PatPal[PalVal]];
-								else	((unsigned long *)Debugger.PatternArray)[PatPtr] = GFX.FixedPalette[PatPal[PalVal]];
+								if (Debugger.Depth == 32)
+									((unsigned long *)Debugger.PatternArray)[PatPtr] = GFX.Palette32[PatPal[PalVal]];
+								else if (Debugger.Depth == 16)
+									((unsigned short *)Debugger.PatternArray)[PatPtr] = GFX.Palette16[PatPal[PalVal]];
+								else	((unsigned short *)Debugger.PatternArray)[PatPtr] = GFX.Palette15[PatPal[PalVal]];
 								PatPtr++;
 							}
 							MemAddy++;
@@ -566,15 +573,19 @@ void	Debugger_UpdateGraphics (void)
 								if (PalVal)
 								{
 									PalVal |= (AttribTableVal << 2);
-									if (DInc == 2)
-										((unsigned short *)Debugger.NameArray)[PatPtr] = (unsigned short)GFX.FixedPalette[PPU.Palette[PalVal]];
-									else	((unsigned long *)Debugger.NameArray)[PatPtr] = GFX.FixedPalette[PPU.Palette[PalVal]];
+									if (Debugger.Depth == 32)
+										((unsigned long *)Debugger.NameArray)[PatPtr] = GFX.Palette32[PPU.Palette[PalVal]];
+									else if (Debugger.Depth == 16)
+										((unsigned short *)Debugger.NameArray)[PatPtr] = GFX.Palette16[PPU.Palette[PalVal]];
+									else	((unsigned short *)Debugger.NameArray)[PatPtr] = GFX.Palette15[PPU.Palette[PalVal]];
 								}
 								else
 								{
-									if (DInc == 2)
-										((unsigned short *)Debugger.NameArray)[PatPtr] = (unsigned short)GFX.FixedPalette[PPU.Palette[0]];
-									else	((unsigned long *)Debugger.NameArray)[PatPtr] = GFX.FixedPalette[PPU.Palette[0]];
+									if (Debugger.Depth == 32)
+										((unsigned long *)Debugger.NameArray)[PatPtr] = GFX.Palette32[PPU.Palette[0]];
+									else if (Debugger.Depth == 16)
+										((unsigned short *)Debugger.NameArray)[PatPtr] = GFX.Palette16[PPU.Palette[0]];
+									else	((unsigned short *)Debugger.NameArray)[PatPtr] = GFX.Palette15[PPU.Palette[0]];
 								}
 								PatPtr++;
 							}
