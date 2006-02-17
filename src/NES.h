@@ -69,7 +69,6 @@ void	NES_Stop (void);
 void	NES_UpdateInterface (void);
 void	NES_LoadSettings (void);
 void	NES_SaveSettings (void);
-void	NES_Repaint (void);
 void	NES_MapperConfig (void);
 
 #endif /* NES_H */

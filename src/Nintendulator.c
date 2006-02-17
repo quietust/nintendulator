@@ -555,7 +555,8 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd,&ps);
-		NES_Repaint();
+		if (!NES.Running)
+			GFX_Repaint();
 		EndPaint(hWnd,&ps);
 		break;
 	case WM_CLOSE:

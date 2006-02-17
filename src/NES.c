@@ -1194,8 +1194,3 @@ void	NES_SaveSettings (void)
 
 	RegCloseKey(SettingsBase);
 }
-
-void	NES_Repaint (void)
-{
-	GFX_Repaint();
-}

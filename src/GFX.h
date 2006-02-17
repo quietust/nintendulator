@@ -54,8 +54,6 @@ struct tGFX
 	LPDIRECTDRAWCLIPPER	Clipper;
 	DDSURFACEDESC2		SurfDesc;
 	DWORD			SurfSize;
-	
-	HANDLE			Semaphore;
 };
 
 extern struct tGFX GFX;
