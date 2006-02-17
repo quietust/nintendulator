@@ -199,7 +199,16 @@ const char *	NES_OpenFileiNES (char *filename)
 	RI.Filename = strdup(filename);
 	RI.ROMType = ROM_INES;
 	fread(Header,1,4,in);
-	fseek(in,8,SEEK_CUR);
+	for (tmp = 8; tmp < 0x10; tmp++)
+	{
+		unsigned char x;
+		fread(&x,1,1,in);
+		if (x)
+		{
+			fclose(in);
+			return "Invalid data found in header!";
+		}
+	}
 	
 	RI.INES_PRGSize = Header[0];
 	RI.INES_CHRSize = Header[1];
