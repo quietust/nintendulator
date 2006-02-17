@@ -975,8 +975,11 @@ rerun:
 			NES.Scanline = FALSE;
 			ProcessMessages();
 			if (States.NeedLoad)	// load state anywhere
+			{
 				States_LoadState();
-			if (SLnum == 240)
+				continue;
+			}
+			else if (SLnum == 240)
 			{
 #ifdef ENABLE_DEBUGGER
 				if (Debugger.Enabled)
@@ -992,7 +995,7 @@ rerun:
 						ProcessMessages();
 				}
 			}
-			if (SLnum == 241)
+			else if (SLnum == 241)
 				Controllers_UpdateInput();
 		}
 	}	while (!NES.Stop);
