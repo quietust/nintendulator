@@ -586,8 +586,8 @@ LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	case WM_INITDIALOG:
 		dbgVisible = TRUE;
 		SendDlgItemMessage(hDlg,IDC_DEBUGTEXT,EM_SETLIMITTEXT,0,0);
-		DebugText = malloc(8192);
 		DebugLen = 8192;
+		DebugText = malloc(DebugLen * sizeof(TCHAR));
 		return FALSE;
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDCANCEL)
@@ -612,7 +612,7 @@ void	AddDebug (TCHAR *txt)
 	{
 		while (i + j + 2 > DebugLen)
 			DebugLen += 8192;
-		DebugText = realloc(DebugText,DebugLen);
+		DebugText = realloc(DebugText,DebugLen * sizeof(TCHAR));
 	}
 	GetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText,DebugLen);
 	_tcscat(DebugText,txt);
