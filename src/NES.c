@@ -204,6 +204,7 @@ int	NES_FDSLoad (FILE *in)
 		if (feof(in))
 			break;
 		PRG_ROM[(data >> 12) & 0x3FF][data & 0xFFF] = (unsigned char)(data >> 24);
+		clen += 4;
 	}
 	return clen;
 }
@@ -213,7 +214,10 @@ void	NES_SaveSRAM (void)
 	char Filename[MAX_PATH];
 	FILE *SRAMFile;
 	if (!NES.SRAM_Size)
+	{
+		EI.DbgOut("No SRAM to save!");
 		return;
+	}
 	if (RI.ROMType == ROM_FDS)
 		sprintf(Filename,"%s.fsv",States.BaseFilename);
 	else	sprintf(Filename,"%s.sav",States.BaseFilename);
@@ -236,7 +240,10 @@ void	NES_LoadSRAM (void)
 	FILE *SRAMFile;
 	int len;
 	if (!NES.SRAM_Size)
+	{
+		EI.DbgOut("No SRAM to load!");
 		return;
+	}
 	if (RI.ROMType == ROM_FDS)
 		sprintf(Filename,"%s.fsv",States.BaseFilename);
 	else	sprintf(Filename,"%s.sav",States.BaseFilename);
@@ -312,6 +319,7 @@ void	NES_CloseFile (void)
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_GRAYED);
 
+	NES.SRAM_Size = 0;
 	for (i = 0; i < 16; i++)
 	{
 		CPU.PRGPointer[i] = PRG_RAM[0];
@@ -597,7 +605,6 @@ const char *	NES_OpenFileFDS (char *filename)
 	memcpy(&PRG_ROM[0x400],&PRG_ROM[0x000],numSides << 16);
 
 	RI.FDS_NumSides = numSides;
-	NES.SRAM_Size = 1;	// special, so FDS always saves its changes
 
 	NES.PRGMask = ((RI.FDS_NumSides << 4) - 1) & MAX_PRGROM_MASK;
 
@@ -606,6 +613,7 @@ const char *	NES_OpenFileFDS (char *filename)
 
 	EI.DbgOut("FDS file loaded: %s - %s",MI->Description,CompatLevel[MI->Compatibility]);
 	EI.DbgOut("Data length: %i disk side(s)",RI.FDS_NumSides);
+	NES.SRAM_Size = 1;	// special, so FDS always saves changes
 	return NULL;
 }
 
