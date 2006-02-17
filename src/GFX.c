@@ -490,14 +490,14 @@ BOOL	GFX_ImportPalette (TCHAR *filename, BOOL config)
 void	GFX_LoadPalette (int PalNum)
 {
 	const double EmphChanges[8][3] = {
-		{1.000,1.000,1.000},	/* black */
-		{1.239,0.915,0.743},	/* red */
-		{0.794,1.086,0.882},	/* green */
-		{1.019,0.980,0.653},	/* yellow */
-		{0.905,1.026,1.277},	/* blue */
-		{1.023,0.908,0.979},	/* magenta */
-		{0.741,0.987,1.001},	/* cyan */
-		{0.750,0.750,0.750}	/* white */
+		{1.00,1.00,1.00},	/* black */
+		{1.00,0.80,0.81},	/* red */
+		{0.78,0.94,0.66},	/* green */
+		{0.79,0.77,0.63},	/* yellow */
+		{0.82,0.83,1.12},	/* blue */
+		{0.81,0.71,0.87},	/* magenta */
+		{0.68,0.79,0.79},	/* cyan */
+		{0.70,0.70,0.70}	/* white */
 	};
 
 	unsigned int RV, GV, BV;
