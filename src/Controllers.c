@@ -575,6 +575,8 @@ void	Controllers_PlayMovie (BOOL Review)
 
 		MOV_ControllerTypes[3] = 0;	// Reset 'loaded controller state' flag
 
+		Controllers.MovieMode = MOV_PLAY;
+
 		NES_Reset(RESET_HARD);
 
 		if (!States_LoadData(movie,len))
@@ -584,7 +586,6 @@ void	Controllers_PlayMovie (BOOL Review)
 			return;
 		}
 		
-		Controllers.MovieMode = MOV_PLAY;
 		rewind(movie);
 		fseek(movie,16,SEEK_SET);
 		fread(buf,4,1,movie);
@@ -688,8 +689,10 @@ void	Controllers_RecordMovie (BOOL fromState)
 	if (!GetSaveFileName(&ofn))
 		return;
 
-	movie = fopen(MovieName,"w+b");
+	Controllers_OpenConfig();		// Allow user to choose the desired controllers
+	Controllers.MovieMode = MOV_RECORD;	// ...and lock it out until the movie ends
 
+	movie = fopen(MovieName,"w+b");
 	len = 0;
 
 	fwrite("NSS\x1A",1,4,movie);
@@ -698,9 +701,7 @@ void	Controllers_RecordMovie (BOOL fromState)
 	fwrite("NMOV",1,4,movie);
 
 	if (fromState)
-	{
 		States_SaveData(movie);
-	}
 	else
 	{
 		NES_Reset(RESET_HARD);
@@ -710,9 +711,6 @@ void	Controllers_RecordMovie (BOOL fromState)
 	fwrite("NMOV",1,4,movie);
 	fwrite(&len,1,4,movie);
 	
-	Controllers_OpenConfig();		// Allow user to choose the desired controllers
-	Controllers.MovieMode = MOV_RECORD;	// ...and lock it out until the movie ends
-
 	MOV_ControllerTypes[0] = Controllers.Port1.Type;
 	MOV_ControllerTypes[1] = Controllers.Port2.Type;
 	MOV_ControllerTypes[2] = Controllers.ExpPort.Type;
