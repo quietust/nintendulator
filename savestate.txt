@@ -1,0 +1,234 @@
+Nintendulator Save State Format
+ Updated:  January 11, 2006
+---------------------------------------
+
+For simplicity, savestates should only be saved during VBLANK; otherwise,
+the entire video buffer would have to be saved.
+
+Current implementation only saves states during scanline 240.
+
+All multiple-byte variables are stored LSB-first (little endian).
+
+Data types:
+	char[N]  - plain text
+	(u)int8  - (un)signed 8 bit variable
+	(u)int16 - (un)signed 16 bit variable
+	(u)int32 - (un)signed 32 bit variable
+
+-- Filename:
+	<ROM Filename, extension stripped>.NS# for savestates
+	<ROM Filename, extension stripped>.NMV for movies
+
+-- Main File Header:
+
+	Identification	- <char[4] = "NSS",0x1A>
+	Version string	- <char[4] = "0960">
+	Filesize	- <uint32 = filesize, not including this header>
+	Type		- <char[4] = "NSAV" for normal savestate, "NREC"
+			   for movie savestate, "NMOV" for finished movie>
+
+-- Section blocks:
+
+Section block headers are 8 bytes in length.  The first DWORD defines what
+section it is, the second DWORD defines the total size of the section (not
+including the header).
+
+	<char[4] section> <uint32 size>
+
+---- Section "CPUS" - CPU State - Required
+
+        Type:		Description:
+
+	uint8		Program Counter, low byte
+	uint8		Program Counter, high byte
+	uint8		Accumulator
+	uint8		X register
+	uint8		Y register
+	uint8		Stack pointer
+	uint8		Processor status register
+	uint8		Last contents of data bus
+	uint8		TRUE if falling edge detected on /NMI
+	uint8		IRQ flags - D0=FRAME, D1=DPCM, D2=EXTERNAL, D3=DEBUG
+				(FRAME/DPCM are also stored in block "APUS")
+	uint8[0x800]	2KB system RAM
+
+---- Section "PPUS" - PPU State - Required
+
+        Type:		Description:
+
+	uint8[0x1000]	4 KB of name/attribute table RAM
+	uint8[0x100]	256 bytes of sprite RAM
+	uint8[0x20]	32 bytes of palette index RAM
+	uint8		Last value written to $2000
+	uint8		Last value written to $2001
+	uint8		Current contents of $2002
+	uint8		SPR-RAM Address ($2003)
+
+	uint8		Tile X-offset.
+	uint8		Toggle used by $2005 and $2006.
+	uint16		VRAM Address
+	uint16		VRAM Address Latch
+	uint8		VRAM Read Buffer
+	uint8		PPU I/O bus last contents
+
+	uint16		Clock Ticks (0..340) and PAL sub-cycles (upper 4 bits)
+	uint16		Scanline number
+	uint8		Short frame (first scanline 1 tick shorter, NTSC only)
+
+	uint16		External I/O Address
+	uint8		External I/O Value
+	uint8		External I/O Counter (6/4/2 for read, 5/3/1 for write)
+
+	uint8		0 for NTSC, 1 for PAL
+
+---- Section "APUS" - APU State - Required
+
+        Type:		Description:
+
+	uint8		Last value written to $4015, lower 4 bits
+
+	uint8		Last value written to $4001
+	uint16		Square0 frequency
+	uint8		Square0 timer
+	uint8		Square0 duty cycle pointer
+	uint8		Boolean, Square0 envelope(D1)/sweep(D0) reload requests
+	uint8		Square0 envelope counter
+	uint8		Square0 envelope value
+	uint8		Square0 bend counter
+	uint16		Square0 cycles
+	uint8		Last value written to $4000
+
+	uint8		Last value written to $4005
+	uint16		Square1 frequency
+	uint8		Square1 timer
+	uint8		Square1 duty cycle pointer
+	uint8		Boolean, Square1 envelope(D1)/sweep(D0) reload requests
+	uint8		Square1 envelope counter
+	uint8		Square1 envelope value
+	uint8		Square1 bend counter
+	uint16		Square1 cycles
+	uint8		Last value written to $4004
+
+	uint16		Triangle frequency
+	uint8		Triangle timer
+	uint8		Triangle duty cycle pointer
+	uint8		Boolean, linear counter reload request
+	uint8		Triangle linear counter
+	uint16		Triangle cycles
+	uint8		Last value written to $4008
+
+	uint8		Last value written to $400E
+	uint8		Noise timer
+	uint16		Noise duty cycle pointer
+	uint8		Boolean, Noise envelope reload request
+	uint8		Noise envelope counter
+	uint8		Noise  envelope value
+	uint16		Noise cycles
+	uint8		Last value written to $400C
+
+	uint8		Last value written to $4010
+	uint8		Last value written to $4011
+	uint8		Last value written to $4012
+	uint8		Last value written to $4013
+	uint16		DPCM current address
+	uint16		DPCM current length
+	uint8		DPCM shift register
+	uint8		DPCM output mode(D1)/buffer full(D0)
+	uint8		DPCM shift count
+	uint8		DPCM read buffer
+	uint16		DPCM cycles
+	uint16		DPCM length counter
+
+	uint8		Last value written to $4017
+	uint16		Frame counter cycles
+	uint8		Frame counter phase
+
+	uint8		APU-related IRQs (PCM and FRAME, as-is)
+
+---- Section "CTRL" - Controller Data - Optional
+
+        Type:		Description:
+
+	uint32		Four-Score port 1 controller type
+	uint32		Four-Score port 2 controller type
+	uint32		Four-Score port 3 controller type
+	uint32		Four-Score port 4 controller type
+	uint32		Controller port 1 controller type
+	uint32		Controller port 2 controller type
+	uint32		Expansion port controller type
+
+	uint8[...]	Four-Score port 1 state data (length determined by type)
+	uint8[...]	Four-Score port 2 state data (length determined by type)
+	uint8[...]	Four-Score port 3 state data (length determined by type)
+	uint8[...]	Four-Score port 4 state data (length determined by type)
+	uint8[...]	Controller port 1 state data (length determined by type)
+	uint8[...]	Controller port 2 state data (length determined by type)
+	uint8[...]	Expansion port state data (length determined by type)
+
+---- Section "NPRA" - NES PRG RAM State - Optional
+
+        Type:		Description:
+
+	uint8[...]	PRG_RAM data
+
+---- Section "NCRA" - NES CHR RAM State - Optional
+
+        Type:		Description:
+
+	uint8[...]	CHR_RAM data
+
+---- Section "MAPR" - Mapper State - Optional
+
+        Type:		Description:
+
+	uint8[...]	Custom mapper data
+
+---- Section "GENI" - Game Genie State - Optional
+
+        Type:		Description:
+
+	uint8		1 if Game Genie codes are currently active, 0 if not
+	uint8		Game Genie code status (value written to $8000, XORed with 0x7E)
+
+	uint16		Address for code #1
+	uint8		Original value for code #1
+	uint8		New value for code #1	
+
+	uint16		Address for code #2
+	uint8		Original value for code #2
+	uint8		New value for code #2	
+
+	uint16		Address for code #3
+	uint8		Original value for code #3
+	uint8		New value for code #3	
+
+---- Section "DISK" - Mapper State - Optional, only allowed for Famicom Disk System games
+
+        Type:		Description:
+
+	uint32		Number of modified disk bytes
+	uint32[...]	Modified disk bytes: modified data in upper 8 bits, disk offset in lower 16 bits, disk number in remaining 8 bits
+				(data << 24) | (disknum << 16) | (offset)
+
+---- Section "NMOV" - Movie Data - Not allowed in NSAV, required in NREC/NMOV
+							(must be LAST block)
+
+	Type:		Description
+
+	uint8		Controller present in port 0
+	uint8		If CTRL0 == STD_FOURSCORE, bitmask indicating
+				which subcontrollers are used
+			else, Controller present in port 1
+	uint8		Controller present in expansion port
+
+	uint8		Frame size in bytes + 0x00 for NTSC, 0x80 for PAL + 0x40 if Game Genie is active
+
+	uint32		Number of re-records used
+
+	uint32		Length of info field
+	char[...]	Description of the movie, null-terminated (UTF-8)
+
+	uint32		Length of movie data
+	uint8[...]	Movie data
+
+-- EOF
