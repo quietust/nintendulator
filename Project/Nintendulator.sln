@@ -8,22 +8,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "in_nintendulator", "in_nint
 	EndProjectSection
 EndProject
 Global
-	GlobalSection(SourceCodeControl) = preSolution
-		SccNumberOfProjects = 3
-		SccProjectName0 = \u0022$/Nintendulator\u0022,\u0020PBAAAAAA
-		SccLocalPath0 = .
-		SccProvider0 = MSSCCI:Microsoft\u0020Visual\u0020SourceSafe
-		CanCheckoutShared = false
-		SolutionUniqueID = {2567323B-1CA6-4A1A-BCC4-6DAA87F9F39D}
-		SccProjectUniqueName1 = Nintendulator.vcproj
-		SccLocalPath1 = ..
-		CanCheckoutShared = false
-		SccProjectFilePathRelativizedFromConnection1 = Project\\
-		SccProjectUniqueName2 = in_nintendulator.vcproj
-		SccLocalPath2 = ..
-		CanCheckoutShared = false
-		SccProjectFilePathRelativizedFromConnection2 = Project\\
-	EndGlobalSection
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug (ANSI) = Debug (ANSI)
 		Debug (Unicode) = Debug (Unicode)
