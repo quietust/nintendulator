@@ -751,52 +751,140 @@ static	const double Emphasis[8][3] =
 
 static	void	GFX_GenerateNTSC (int hue, int sat)
 {
+/**/
 	const int chroma[12] = {300,330,0,30,60,90,120,150,180,210,240,270};
+/**/
 	const double brightness[2][4] = {{0.40,0.68,1.00,1.00},{-0.12,0.00,0.31,0.72}};
 	const double pi = 3.14159265359;
-
+/*
+	const char phases[12][12] = {
+		{1,1,1,1,1,1,0,0,0,0,0,0},
+		{1,1,1,1,1,0,0,0,0,0,0,1},	// blue
+		{1,1,1,1,0,0,0,0,0,0,1,1},
+		{1,1,1,0,0,0,0,0,0,1,1,1},	// magenta
+		{1,1,0,0,0,0,0,0,1,1,1,1},
+		{1,0,0,0,0,0,0,1,1,1,1,1},	// red
+		{0,0,0,0,0,0,1,1,1,1,1,1},
+		{0,0,0,0,0,1,1,1,1,1,1,0},	// yellow
+		{0,0,0,0,1,1,1,1,1,1,0,0},
+		{0,0,0,1,1,1,1,1,1,0,0,0},	// green
+		{0,0,1,1,1,1,1,1,0,0,0,0},
+		{0,1,1,1,1,1,1,0,0,0,0,0},	// cyan
+	};
+	const char emphasis[8][12] = {
+		{0,0,0,0,0,0,0,0,0,0,0,0},	// none
+		{0,1,1,1,1,1,1,0,0,0,0,0},	// red
+		{1,1,1,0,0,0,0,0,0,1,1,1},	// green
+		{1,1,1,1,1,1,1,0,0,1,1,1},	// yellow
+		{0,0,0,0,0,1,1,1,1,1,1,0},	// blue
+		{0,1,1,1,1,1,1,1,1,1,1,0},	// magenta
+		{1,1,1,0,0,1,1,1,1,1,1,1},	// cyan
+		{1,1,1,1,1,1,1,1,1,1,1,1}	// all
+	};
+*/
 	int x, y, z;
-	for (x = 0; x < 4; x++)
-	{
-		for (z = 0; z < 16; z++)
+/*	for (x = 0; x < 8; x++) 
+	{ */
+		for (y = 0; y < 4; y++)
 		{
-			double Y, I, Q;
-			double R, G, B;
-
-			double H = 0, S = 0;
-
-			if (z == 0)
-				Y = brightness[0][x];
-			else if (z == 13)
-				Y = brightness[1][x];
-			else if (z >= 14)
-				Y = 0;
-			else
+			for (z = 0; z < 16; z++)
 			{
-				H = pi * (chroma[z - 1] + hue) / 180.0;
-				S = (brightness[0][x] - brightness[1][x]) * sat / 100.0; /* (divide by 2, then by 50) */
-				Y = (brightness[0][x] + brightness[1][x]) / 2.0;
-			}
+/*
+				int a, b;
+				double wave[12];
+*/
+				double Y, I, Q;
+				double R, G, B;
 
-			I = S * sin(H);
-			Q = S * cos(H);
+				double H = 0, S = 0;
+/*
+				for (i = 0; i < 12; i++)
+				{
+					if (z == 0)
+						wave[i] = brightness[0][y];
+					else if (z < 13)
+						wave[i] = phases[z-1][i] ? brightness[0][y] : brightness[1][y];
+					else if (z == 13)
+						wave[i] = brightness[1][y];
+					else	wave[i] = 0;
+					if ((emphasis[x][i]) && (z < 14))
+						wave[i] = wave[i] * 0.75 - 0.05;
+				}
 
-			R = Y + 0.956 * I + 0.621 * Q;
-			G = Y - 0.272 * I - 0.647 * Q;
-			B = Y - 1.107 * I + 1.705 * Q;
+				Y = 0.0; S = -1.0; H = 2.0;
+				for (i = 0; i < 12; i++)
+				{
+					if (wave[i] < H)
+						H = wave[i];
+					if (wave[i] > S)
+						S = wave[i];
+					Y += wave[i] / 12.0;
+				}
+				S = (S - H) * sat / 100.0;
+				a = b = 0;
+				for (i = 0; i < 12; i++)
+					if (wave[i] < Y)
+						break;
+				for (; i < 24; i++)
+				{
+					if (wave[i % 12] > Y)
+					{
+						a = i;
+						break;
+					}
+				}
+				for (; i < 24; i++)
+				{
+					if (wave[i % 12] < Y)
+					{
+						b = i - 1;
+						break;
+					}
+				}
+				H = pi * (225+150 - (a + b) * 15.0 + hue) / 180.0;
+*/
+/**/
+				if (z == 0)
+					Y = brightness[0][y];
+				else if (z == 13)
+					Y = brightness[1][y];
+				else if (z >= 14)
+					Y = 0;
+				else
+				{
+					H = pi * (chroma[z - 1] + hue) / 180.0;
+					S = (brightness[0][y] - brightness[1][y]) * sat / 100.0; // (divide by 2, then by 50)
+					Y = (brightness[0][y] + brightness[1][y]) / 2.0;
+				}
+/**/
+				I = S * sin(H);
+				Q = S * cos(H);
 
-			R *= 256;
-			G *= 256;
-			B *= 256;
+				R = Y + 0.956 * I + 0.621 * Q;
+				G = Y - 0.272 * I - 0.647 * Q;
+				B = Y - 1.107 * I + 1.705 * Q;
 
-			for (y = 0; y < 8; y++)
-			{	/* TODO - do color emphasis correctly */
-				Palette[y][(x << 4) | z][0] = (unsigned char)CLIP(R * Emphasis[y][0],0,255);
-				Palette[y][(x << 4) | z][1] = (unsigned char)CLIP(G * Emphasis[y][1],0,255);
-				Palette[y][(x << 4) | z][2] = (unsigned char)CLIP(B * Emphasis[y][2],0,255);
+				R *= 256;
+				G *= 256;
+				B *= 256;
+/*
+				Palette[x][(y << 4) | z][0] = (unsigned char)CLIP(R,0,255);
+				Palette[x][(y << 4) | z][1] = (unsigned char)CLIP(G,0,255);
+				Palette[x][(y << 4) | z][2] = (unsigned char)CLIP(B,0,255);
+*/
+/**/
+				for (x = 0; x < 8; x++)
+				{	// TODO - do color emphasis correctly
+					Palette[x][(y << 4) | z][0] = (unsigned char)CLIP(R * Emphasis[x][0],0,255);
+					Palette[x][(y << 4) | z][1] = (unsigned char)CLIP(G * Emphasis[x][1],0,255);
+					Palette[x][(y << 4) | z][2] = (unsigned char)CLIP(B * Emphasis[x][2],0,255);
+				}
+/**/
 			}
 		}
+/*
 	}
+*/
 }
 
 static	void	GFX_GeneratePAL (int sat)
