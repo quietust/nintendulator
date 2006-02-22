@@ -31,6 +31,7 @@
 #define IDD_STDPORT_SNESCONTROLLER      148
 #define IDD_STDPORT_STDCONTROLLER       149
 #define IDD_STDPORT_ZAPPER              150
+#define IDD_STDPORT_VSZAPPER            151
 #define IDC_ABOUTICON                   1001
 #define IDC_CONT_SPORT1                 1002
 #define IDC_CONT_SPORT2                 1003
@@ -235,7 +236,6 @@
 #define ID_MISC_RESUMEMOVIE             32824
 #define ID_MISC_STOPMOVIE               32825
 #define ID_HELP_ABOUT                   32826
-
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

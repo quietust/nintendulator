@@ -363,6 +363,9 @@
 					RelativePath="..\src\c_s_unconnected.c">
 				</File>
 				<File
+					RelativePath="..\src\c_s_vszapper.c">
+				</File>
+				<File
 					RelativePath="..\src\c_s_zapper.c">
 				</File>
 			</Filter>

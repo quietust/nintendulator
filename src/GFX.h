@@ -70,5 +70,6 @@ void	GFX_SetFrameskip (void);
 void	GFX_PaletteConfig (void);
 void	GFX_GetCursorPos (POINT *);
 void	GFX_SetCursorPos (int,int);
+BOOL	GFX_ZapperHit (int);
 
 #endif /* GFX_H */

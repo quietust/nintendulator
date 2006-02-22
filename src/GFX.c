@@ -421,6 +421,15 @@ enum PALETTE { PALETTE_NTSC, PALETTE_PAL, PALETTE_PC10, PALETTE_VS1, PALETTE_VS2
 
 static unsigned char	Palette[8][64][3];
 
+BOOL	GFX_ZapperHit (int color)
+{
+	int val = 0;
+	val += (int)(Palette[(color >> 6) & 0x7][color & 0x3F][0] * 0.299);
+	val += (int)(Palette[(color >> 6) & 0x7][color & 0x3F][1] * 0.587);
+	val += (int)(Palette[(color >> 6) & 0x7][color & 0x3F][2] * 0.114);
+	return (val >= 0x40);
+}
+
 static const unsigned char Palette_PAL[8][64][3] =
 {
 	{	/* none */
@@ -1199,7 +1208,13 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				GFX.PalettePAL = pal;
 			else	GFX.PaletteNTSC = pal;
 			GFX_LoadPalette(pal);
+			EndDialog(hDlg,0);
+			break;
 		case IDCANCEL:
+			if (ispal)
+				pal = GFX.PalettePAL;
+			else	pal = GFX.PaletteNTSC;
+			GFX_LoadPalette(pal);
 			EndDialog(hDlg,0);
 			break;
 		};

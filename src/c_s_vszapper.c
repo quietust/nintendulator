@@ -29,9 +29,13 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "PPU.h"
 #include "GFX.h"
 
-#define	PosX	Data[0]
-#define	PosY	Data[1]
-#define	Button	Data[2]
+#define	Bits	Data[0]
+#define	BitPtr	Data[1]
+#define	Strobe	Data[2]
+#define	PosX	Data[3]
+#define	PosY	Data[4]
+#define	Button	Data[5]
+
 static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	static POINT pos;
@@ -61,18 +65,40 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 
 static	unsigned char	Read (struct tStdPort *Cont)
 {
-	int x = Cont->PosX, y = Cont->PosY, z = Cont->Button;
-	int WhiteCount = 0;
-	unsigned char Bits = 0x00;
-	int X, Y;
+	unsigned char result;
+	if (Cont->Strobe)
+	{
+		Cont->BitPtr = 0;
+		result = (unsigned char)(Cont->Bits & 1);
+	}
+	else
+	{
+		if (Cont->BitPtr < 8)
+			result = (unsigned char)(Cont->Bits >> Cont->BitPtr++) & 1;
+		else	result = 0;
+	}
+	return result;
+}
+static	void	Write (struct tStdPort *Cont, unsigned char Val)
+{
+	int x = Cont->PosX, y = Cont->PosY;
 
-	if (z)
-		Bits |= 0x10;
+	Cont->Strobe = Val & 1;
+	if (!Cont->Strobe)
+		return;
+		
+	Cont->Bits = 0x10;
+	Cont->BitPtr = 0;
+	if (Cont->Button)
+		Cont->Bits |= 0x80;
 
 	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
-		return Bits | 0x08;
+		return;
 
 	if (PPU.IsRendering && PPU.OnScreen)
+	{
+		int X, Y;
+		int WhiteCount = 0;
 		for (Y = y - 8; Y < y + 8; Y++)
 		{
 			if (Y < 0)
@@ -91,12 +117,9 @@ static	unsigned char	Read (struct tStdPort *Cont)
 					WhiteCount++;
 			}
 		}
-	if (WhiteCount < 64)
-		Bits |= 0x08;
-	return Bits;
-}
-static	void	Write (struct tStdPort *Cont, unsigned char Val)
-{
+		if (WhiteCount >= 64)
+			Cont->Bits |= 0x40;
+	}
 }
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -110,14 +133,14 @@ static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 static	void	Config (struct tStdPort *Cont, HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_ZAPPER,hWnd,ConfigProc,(LPARAM)Cont);
+	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_VSZAPPER,hWnd,ConfigProc,(LPARAM)Cont);
 }
 static	void	Unload (struct tStdPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	StdPort_SetZapper (struct tStdPort *Cont)
+void	StdPort_SetVSZapper (struct tStdPort *Cont)
 {
 	Cont->Read = Read;
 	Cont->Write = Write;
@@ -125,7 +148,7 @@ void	StdPort_SetZapper (struct tStdPort *Cont)
 	Cont->Unload = Unload;
 	Cont->Frame = Frame;
 	Cont->NumButtons = 1;
-	Cont->DataLen = 3;
+	Cont->DataLen = 6;
 	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data[0]));
 	Cont->MovLen = 3;
 	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
@@ -133,7 +156,13 @@ void	StdPort_SetZapper (struct tStdPort *Cont)
 	Cont->PosX = 0;
 	Cont->PosY = 0;
 	Cont->Button = 0;
+	Cont->Bits = 0x10;
+	Cont->BitPtr = 0;
+	Cont->Strobe = 0;
 }
 #undef	Button
 #undef	PosY
 #undef	PosX
+#undef	Strobe
+#undef	BitPtr
+#undef	Bits
