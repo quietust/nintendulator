@@ -74,10 +74,11 @@ static	unsigned char	Read (struct tStdPort *Cont)
 	unsigned char Bits = 0x00;
 	int X, Y;
 
-	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
-		return Bits | 0x08;
 	if (z)
 		Bits |= 0x10;
+
+	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
+		return Bits | 0x08;
 
 	if (PPU.IsRendering && PPU.OnScreen)
 		for (Y = y - 8; Y < y + 8; Y++)
