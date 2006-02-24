@@ -30,6 +30,9 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "AVI.h"
 #include <commctrl.h>
 
+#define	_USE_MATH_DEFINES
+#include <math.h>
+
 struct tGFX GFX;
 
 #define	GFX_Try(action,errormsg)\
@@ -758,14 +761,54 @@ static	const double Emphasis[8][3] =
 
 #define CLIP(x,min,max) (((x) > (max)) ? (max) : (((x) < (min)) ? (min) : (x)))
 
+static	int	getPhase (double *wave)
+{
+	double max = -999, min = 999;
+	double amp, offset;
+	double angle = 0, base;
+	int i, j, k;
+	for (i = 0; i < 12; i++)
+	{
+		if (wave[i] > max)
+			max = wave[i];
+		if (wave[i] < min)
+			min = wave[i];
+	}
+	amp = (max - min) / 2;
+	offset = (max + min) / 2;
+
+	for (k = 0; k < 3; k++)
+	{
+		double error[12], curerror = 0;
+		double segsize = 360;
+		for (i = 0; i <= k; i++)
+			segsize /= 12.0;
+
+		for (j = 0; j < 12; j++)
+		{
+			error[j] = 0;
+			for (i = 0; i < 12; i++)
+				error[j] += fabs((amp * sin((i * 30 + j * segsize + angle) * M_PI / 180.0) + offset) - wave[i]);
+			curerror += error[j];
+		}
+		base = 0;
+		for (j = 0; j < 12; j++)
+		{
+			if (error[j] < curerror)
+			{
+				base = j * segsize;
+				curerror = error[j];
+			}
+		}
+		angle += base;
+	}
+
+	return (int)angle;
+}
+
 static	void	GFX_GenerateNTSC (int hue, int sat)
 {
-/**/
-	const int chroma[12] = {300,330,0,30,60,90,120,150,180,210,240,270};
-/**/
 	const double brightness[2][4] = {{0.40,0.68,1.00,1.00},{-0.12,0.00,0.31,0.72}};
-	const double pi = 3.14159265359;
-/*
 	const char phases[12][12] = {
 		{1,1,1,1,1,1,0,0,0,0,0,0},
 		{1,1,1,1,1,0,0,0,0,0,0,1},	// blue
@@ -790,23 +833,20 @@ static	void	GFX_GenerateNTSC (int hue, int sat)
 		{1,1,1,0,0,1,1,1,1,1,1,1},	// cyan
 		{1,1,1,1,1,1,1,1,1,1,1,1}	// all
 	};
-*/
-	int x, y, z;
-/*	for (x = 0; x < 8; x++) 
-	{ */
+
+	int i, x, y, z;
+	for (x = 0; x < 8; x++) 
+	{
 		for (y = 0; y < 4; y++)
 		{
 			for (z = 0; z < 16; z++)
 			{
-/*
-				int a, b;
 				double wave[12];
-*/
 				double Y, I, Q;
 				double R, G, B;
 
 				double H = 0, S = 0;
-/*
+
 				for (i = 0; i < 12; i++)
 				{
 					if (z == 0)
@@ -817,55 +857,18 @@ static	void	GFX_GenerateNTSC (int hue, int sat)
 						wave[i] = brightness[1][y];
 					else	wave[i] = 0;
 					if ((emphasis[x][i]) && (z < 14))
-						wave[i] = wave[i] * 0.75 - 0.05;
+						wave[i] = wave[i] * 0.79399 - 0.0782838;
 				}
 
-				Y = 0.0; S = -1.0; H = 2.0;
+				Y = 0.0; S = 0;
 				for (i = 0; i < 12; i++)
-				{
-					if (wave[i] < H)
-						H = wave[i];
-					if (wave[i] > S)
-						S = wave[i];
 					Y += wave[i] / 12.0;
-				}
-				S = (S - H) * sat / 100.0;
-				a = b = 0;
 				for (i = 0; i < 12; i++)
-					if (wave[i] < Y)
-						break;
-				for (; i < 24; i++)
-				{
-					if (wave[i % 12] > Y)
-					{
-						a = i;
-						break;
-					}
-				}
-				for (; i < 24; i++)
-				{
-					if (wave[i % 12] < Y)
-					{
-						b = i - 1;
-						break;
-					}
-				}
-				H = pi * (225+150 - (a + b) * 15.0 + hue) / 180.0;
-*/
-/**/
-				if (z == 0)
-					Y = brightness[0][y];
-				else if (z == 13)
-					Y = brightness[1][y];
-				else if (z >= 14)
-					Y = 0;
-				else
-				{
-					H = pi * (chroma[z - 1] + hue) / 180.0;
-					S = (brightness[0][y] - brightness[1][y]) * sat / 100.0; // (divide by 2, then by 50)
-					Y = (brightness[0][y] + brightness[1][y]) / 2.0;
-				}
-/**/
+					S += (wave[i] - Y) * (wave[i] - Y);
+				S = sqrt(S) * sat / 150.0;
+
+				H = M_PI * (270 + getPhase(wave) + hue) / 180.0;
+
 				I = S * sin(H);
 				Q = S * cos(H);
 
@@ -876,24 +879,13 @@ static	void	GFX_GenerateNTSC (int hue, int sat)
 				R *= 256;
 				G *= 256;
 				B *= 256;
-/*
+
 				Palette[x][(y << 4) | z][0] = (unsigned char)CLIP(R,0,255);
 				Palette[x][(y << 4) | z][1] = (unsigned char)CLIP(G,0,255);
 				Palette[x][(y << 4) | z][2] = (unsigned char)CLIP(B,0,255);
-*/
-/**/
-				for (x = 0; x < 8; x++)
-				{	// TODO - do color emphasis correctly
-					Palette[x][(y << 4) | z][0] = (unsigned char)CLIP(R * Emphasis[x][0],0,255);
-					Palette[x][(y << 4) | z][1] = (unsigned char)CLIP(G * Emphasis[x][1],0,255);
-					Palette[x][(y << 4) | z][2] = (unsigned char)CLIP(B * Emphasis[x][2],0,255);
-				}
-/**/
 			}
 		}
-/*
 	}
-*/
 }
 
 static	void	GFX_GeneratePAL (int sat)
