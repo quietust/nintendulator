@@ -864,8 +864,8 @@ static	void	GFX_GenerateNTSC (int hue, int sat)
 				for (i = 0; i < 12; i++)
 					Y += wave[i] / 12.0;
 				for (i = 0; i < 12; i++)
-					S += (wave[i] - Y) * (wave[i] - Y) / 12;
-				S = sqrt(S) * sat / 50.0;
+					S += (wave[i] - Y) * (wave[i] - Y);
+				S = sqrt(S / 12.0) * sat / 50.0;
 
 				H = M_PI * (270 + getPhase(wave) + hue) / 180.0;
 
