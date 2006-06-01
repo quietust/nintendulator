@@ -205,6 +205,9 @@ void	PPU_Reset (void)
 	PPU.Clockticks = 0;
 	PPU.PALsubticks = 0;
 	PPU.SLnum = 241;
+#ifdef	ACCURATE_SPRITES
+	PPU.SprBuff = &PPU.Sprite[256];
+#endif
 	PPU_GetHandlers();
 }
 void	PPU_GetHandlers (void)
@@ -214,6 +217,161 @@ void	PPU_GetHandlers (void)
 	else	PPU_PPUCycle = PPU_NoPPUCycle;
 	PPU_GetGFXPtr();
 }
+
+#ifdef	ACCURATE_SPRITES
+static	int	SpritePtr;
+__inline static void	ProcessSprites (void)
+{
+	static int sprpos, sprnum, spridx, sprsub, sprtmp, sprstate, sprtotal;
+	if (PPU.Clockticks < 64)
+		PPU.Sprite[SpritePtr = 0x100 | (PPU.Clockticks >> 1)] = 0xFF;
+	else if (PPU.Clockticks < 256)
+	{
+		if (PPU.Clockticks == 64)
+		{
+			sprpos = 0x100;
+			sprnum = 0;
+			spridx = (PPU.SprAddr & 0xF8) >> 2;
+			sprsub = 0;
+			sprstate = 0;
+			sprtotal = 0;
+		}
+		switch (sprstate)
+		{
+		case 0:	// evaluate current Y coordinate
+			if (PPU.Clockticks & 1)
+			{
+				PPU.Sprite[SpritePtr = sprpos] = sprtmp;
+				if ((PPU.SLnum >= sprtmp) && (PPU.SLnum <= sprtmp + ((PPU.Reg2000 & 0x20) ? 0xF : 0x7)))
+				{
+					if (sprnum == 0)
+						PPU.Spr0InLine = TRUE;
+					sprstate = 1;	// sprite is in range, fetch the rest of it
+					sprsub = 1;
+					sprpos++;
+					sprtotal++;
+				}
+				else
+				{
+					if (++spridx,++sprnum == 64)
+					{
+						spridx = 0;
+						sprstate = 4;
+					}
+					else if (sprpos == 0x120)
+						sprstate = 2;
+				}
+			}
+			else
+			{
+				if (sprnum == 2)
+					spridx = sprnum;
+				sprtmp = PPU.Sprite[SpritePtr = spridx << 2];
+			}
+			break;
+		case 1:	// Y-coordinate is in range, copy remaining bytes
+			if (PPU.Clockticks & 1)
+			{
+				PPU.Sprite[SpritePtr = sprpos++] = sprtmp;
+				if (sprsub++ == 3)
+				{
+					if (++spridx,++sprnum == 64)
+					{
+						spridx = 0;
+						sprstate = 4;
+					}
+					else if (sprpos == 0x120)
+						sprstate = 2;
+					else	sprstate = 0;
+				}
+			}
+			else	sprtmp = PPU.Sprite[SpritePtr = (spridx << 2) | sprsub];
+			break;
+		case 2:	// exactly 8 sprites detected, go through 'weird' evaluation
+			if (PPU.Clockticks & 1)
+			{
+				SpritePtr = 0x100;	// failed write
+				if ((sprtmp >= PPU.SLnum) && (sprtmp < PPU.SLnum + 7 + ((PPU.Reg2000 & 0x20) >> 2)))
+				{	// 9th sprite found "in range"
+					sprstate = 3;
+					sprsub = 1;
+					sprpos = 1;
+					PPU.Reg2002 |= 0x20;	// set sprite overflow flag
+				}
+				else
+				{
+					sprsub = (sprsub + 1) & 3;
+					if (++spridx,++sprnum == 64)
+					{
+						spridx = 0;
+						sprstate = 4;
+					}
+				}
+			}
+			else	sprtmp = PPU.Sprite[SpritePtr = (spridx << 2) | sprsub];
+			break;
+		case 3:	// 9th sprite detected, fetch next 3 bytes
+			if (PPU.Clockticks & 1)
+			{
+				SpritePtr = 0x100 | sprpos;
+				sprsub = (sprsub + 1) & 3;
+				if (!sprsub)
+					spridx = (spridx + 1) & 63;
+				if (sprpos++ == 3)
+				{
+					if (sprsub == 3)
+						spridx = (spridx + 1) & 63;
+					sprstate = 4;
+				}
+			}
+			else	sprtmp = PPU.Sprite[SpritePtr = (spridx << 2) | sprsub];
+			break;
+		case 4:	// no more sprites to evaluate, thrash until HBLANK
+			if (PPU.Clockticks & 1)
+			{
+				SpritePtr = sprpos;
+				spridx = (spridx + 1) & 63;
+			}
+			else	sprtmp = PPU.Sprite[SpritePtr = spridx << 2];
+			break;
+		}
+	}
+	else if (PPU.Clockticks < 320)
+	{
+		if (PPU.Clockticks == 256)
+			PPU.SprCount = sprtotal * 4;
+		if ((PPU.Clockticks & 7) < 4)
+			SpritePtr = 0x100 | (PPU.Clockticks & 3) | (((PPU.Clockticks - 256) & 0x38) >> 1);
+		else	SpritePtr = 0x103 | (((PPU.Clockticks - 256) & 0x38) >> 1);
+	}
+	else
+	{
+		SpritePtr = 0x100;
+	}
+
+//*** Cycles 0-63: Secondary OAM (32-byte buffer for current sprites on scanline) is initialized to $FF - attempting to read $2004 will return $FF
+//*** Cycles 64-255: Sprite evaluation
+//* On even cycles, data is read from (primary) OAM
+//* On odd cycles, data is written to secondary OAM (unless writes are inhibited, in which case it will read the value in secondary OAM instead)
+//1. Starting at n = 0, read a sprite's Y-coordinate (OAM[n][0], copying it to the next open slot in secondary OAM (unless 8 sprites have been found, in which case the write is ignored).
+//1a. If Y-coordinate is in range, copy remaining bytes of sprite data (OAM[n][1] thru OAM[n][3]) into secondary OAM.
+//2. Increment n
+//2a. If n has overflowed back to zero (all 64 sprites evaluated), go to 4
+//2b. If less than 8 sprites have been found, go to 1
+//2c. If exactly 8 sprites have been found, disable writes to secondary OAM
+//3. Starting at m = 0, evaluate OAM[n][m] as a Y-coordinate.
+//3a. If the value is in range, set the sprite overflow flag in $2002 and read the next 3 entries of OAM (incrementing 'm' after each byte and incrementing 'n' when 'm' overflows); if m = 3, increment n
+//3b. If the value is not in range, increment n AND m (without carry). If n overflows to 0, go to 4; otherwise go to 3
+//4. Attempt (and fail) to copy OAM[n][0] into the next free slot in secondary OAM, and increment n (repeat until HBLANK is reached)
+//*** Cycles 256-319: Sprite fetches (8 sprites total, 8 cycles per sprite)
+//1-4: Read the Y-coordinate, tile number, attributes, and X-coordinate of the selected sprite
+//5-8: Read the X-coordinate of the selected sprite 4 times.
+//* On the first empty sprite slot, read the Y-coordinate of sprite #63 followed by $FF for the remaining 7 cycles
+//* On all subsequent empty sprite slots, read $FF for all 8 reads
+//*** Cycles 320-340: Background render pipeline initialization
+//* Read the first byte in secondary OAM (the Y-coordinate of the first sprite found, sprite #63 if no sprites were found)
+}
+#else
 __inline static	void	DiscoverSprites (void)
 {
 	int SprHeight = 7 | ((PPU.Reg2000 & 0x20) >> 2);
@@ -247,154 +405,7 @@ __inline static	void	DiscoverSprites (void)
 			PPU.Spr0InLine = TRUE;
 	}
 }
-/*
-static	unsigned char	SpritePtr;
-__inline static void	ProcessSprites (void)
-{
-	if (PPU.Clockticks < 64)
-	{
-		static int sprpos;
-		if (PPU.Clockticks == 0)
-			sprpos = 0;
-		PPU.SprBuff[SpritePtr = sprpos] = 0xFF;
-		if (PPU.Clockticks & 1)
-			sprpos++;
-	}
-	else if (PPU.Clockticks < 256)
-	{
-		static int sprpos, sprnum, sprsub, sprtmp, sprstate;
-		if (PPU.Clockticks == 64)
-		{
-			sprpos = 0;
-			sprnum = 0;
-			sprsub = 0;
-			sprstate = 0;
-		}
-		switch (sprstate)
-		{
-		case 0:	// evaluate current Y coordinate
-			if (PPU.Clockticks & 1)
-			{
-				if (sprpos < 0x40)
-					PPU.SprBuff[SpritePtr = sprpos] = sprtmp;
-				if ((sprtmp >= PPU.SLnum) && (sprtmp < PPU.SLnum + 7 + ((PPU.Reg2000 & 0x20) >> 2)))
-				{
-					sprstate = 1;	// sprite is in range, fetch the rest of it
-					sprsub = 1;
-					sprpos++;
-				}
-				else
-				{
-					//
-					if (++sprnum == 64)
-						sprstate = 4;
-					else if (sprpos == 32)
-						sprstate = 2;
-					else	sprstate = 0;
-					//
-				}
-			}
-			else	sprtmp = PPU.Sprite[SpritePtr = sprnum << 2];
-			break;
-		case 1:	// Y-coordinate is in range, copy remaining bytes
-			if (PPU.Clockticks & 1)
-			{
-				PPU.SprBuff[SpritePtr = sprpos++] = sprtmp;
-				if (sprsub++ == 3)
-				{
-					//
-					if (++sprnum == 64)
-						sprstate = 4;
-					else if (sprpos == 32)
-						sprstate = 2;
-					else	sprstate = 0;
-					//
-				}
-			}
-			else	sprtmp = PPU.Sprite[SpritePtr = (sprnum << 2) | sprsub];
-			break;
-		case 2:	// exactly 8 sprites detected, go through 'weird' evaluation
-			if (PPU.Clockticks & 1)
-			{
-				SpritePtr = 0;	// failed write
-				if ((sprtmp >= PPU.SLnum) && (sprtmp < PPU.SLnum + 7 + ((PPU.Reg2000 & 0x20) >> 2)))
-				{	// 9th sprite found "in range"
-					sprstate = 3;
-					sprsub = 1;
-					sprpos = 1;	// set counter
-					PPU.Reg2002 |= 0x20;	// set sprite overflow flag
-				}
-				else
-				{
-					sprsub = (sprsub + 1) & 3;
-					//
-					if (++sprnum == 64)
-						sprstate = 4;
-					//
-				}
-			}
-			else	sprtmp = PPU.Sprite[SpritePtr = (sprnum << 2) | sprsub];
-			break;
-		case 3:	// 9th sprite detected, fetch next 3 bytes
-			if (PPU.Clockticks & 1)
-			{
-				SpritePtr = sprpos;
-				sprsub = (sprsub + 1) & 3;
-				if (!sprsub)
-					sprnum = (sprnum + 1) & 63;
-				if (sprpos++ == 3)
-				{
-					if (sprsub == 3)
-						sprnum = (sprnum + 1) & 63;
-					sprstate = 4;
-				}
-			}
-			else	sprtmp = PPU.Sprite[SpritePtr = (sprnum << 2) | sprsub];
-			break;
-		case 4:	// no more sprites to evaluate, thrash until HBLANK
-			if (PPU.Clockticks & 1)
-			{
-				SpritePtr = 0;
-				sprnum = (sprnum + 1) & 63;
-			}
-			else	sprtmp = PPU.Sprite[SpritePtr = sprnum << 2];
-			break;
-		}
-	}
-	else if (PPU.Clockticks < 320)
-	{
-		if ((PPU.Clockticks & 7) < 4)
-			SpritePtr = (PPU.Clockticks & 3) | (((PPU.Clockticks - 256) & 0x38) >> 1);
-		else	SpritePtr = (((PPU.Clockticks - 256) & 0x38) >> 1) | 3;
-	}
-	else
-	{
-		SpritePtr = 0;
-	}
-
-//*** Cycles 0-63: Secondary OAM (32-byte buffer for current sprites on scanline) is initialized to $FF - attempting to read $2004 will return $FF
-//*** Cycles 64-255: Sprite evaluation
-//* On even cycles, data is read from (primary) OAM
-//* On odd cycles, data is written to secondary OAM (unless writes are inhibited, in which case it will read the value in secondary OAM instead)
-//1. Starting at n = 0, read a sprite's Y-coordinate (OAM[n][0], copying it to the next open slot in secondary OAM (unless 8 sprites have been found, in which case the write is ignored).
-//1a. If Y-coordinate is in range, copy remaining bytes of sprite data (OAM[n][1] thru OAM[n][3]) into secondary OAM.
-//2. Increment n
-//2a. If n has overflowed back to zero (all 64 sprites evaluated), go to 4
-//2b. If less than 8 sprites have been found, go to 1
-//2c. If exactly 8 sprites have been found, disable writes to secondary OAM
-//3. Starting at m = 0, evaluate OAM[n][m] as a Y-coordinate.
-//3a. If the value is in range, set the sprite overflow flag in $2002 and read the next 3 entries of OAM (incrementing 'm' after each byte and incrementing 'n' when 'm' overflows); if m = 3, increment n
-//3b. If the value is not in range, increment n AND m (without carry). If n overflows to 0, go to 4; otherwise go to 3
-//4. Attempt (and fail) to copy OAM[n][0] into the next free slot in secondary OAM, and increment n (repeat until HBLANK is reached)
-//*** Cycles 256-319: Sprite fetches (8 sprites total, 8 cycles per sprite)
-//1-4: Read the Y-coordinate, tile number, attributes, and X-coordinate of the selected sprite
-//5-8: Read the X-coordinate of the selected sprite 4 times.
-//* On the first empty sprite slot, read the Y-coordinate of sprite #63 followed by $FF for the remaining 7 cycles
-//* On all subsequent empty sprite slots, read $FF for all 8 reads
-//*** Cycles 320-340: Background render pipeline initialization
-//* Read the first byte in secondary OAM (the Y-coordinate of the first sprite found, sprite #63 if no sprites were found)
-}
-*/
+#endif
 void	PPU_GetGFXPtr (void)
 {
 	PPU.GfxData = DrawArray;
@@ -510,6 +521,9 @@ __inline static	void	RunNoSkip (int NumTicks)
 	register unsigned char TC;
 
 	register int SprNum;
+#ifdef	ACCURATE_SPRITES
+	register unsigned char SprSL;
+#endif
 	register unsigned char *CurTileData;
 
 	register int i, y;
@@ -520,7 +534,9 @@ __inline static	void	RunNoSkip (int NumTicks)
 		{
 			if (PPU.SLnum < 240)
 			{
+#ifndef	ACCURATE_SPRITES
 				DiscoverSprites();
+#endif
 				ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
 			if (PPU.SLnum == -1)
@@ -565,7 +581,9 @@ __inline static	void	RunNoSkip (int NumTicks)
 		}
 		if (PPU.IsRendering)
 		{
-//			ProcessSprites();
+#ifdef	ACCURATE_SPRITES
+			ProcessSprites();
+#endif
 			if (PPU.Clockticks & 1)
 			{
 				if (PPU.IOMode)
@@ -703,9 +721,16 @@ __inline static	void	RunNoSkip (int NumTicks)
 			case 259:	case 267:	case 275:	case 283:	case 291:	case 299:	case 307:	case 315:
 				SprNum = (PPU.Clockticks >> 1) & 0x1C;
 				TC = PPU.SprBuff[SprNum | 1];
-				if (PPU.Reg2000 & 0x20)
+#ifdef	ACCURATE_SPRITES
+				SprSL = PPU.SLnum - PPU.SprBuff[SprNum];
+ 				if (PPU.Reg2000 & 0x20)
+					PatAddr = ((TC & 0xFE) << 4) | ((TC & 0x01) << 12) | ((SprSL & 7) ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x17 : 0x00) ^ ((SprSL & 0x8) << 1));
+				else	PatAddr = (TC << 4) | ((SprSL & 7) ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((PPU.Reg2000 & 0x08) << 9);
+#else
+ 				if (PPU.Reg2000 & 0x20)
 					PatAddr = ((TC & 0xFE) << 4) | ((TC & 0x01) << 12) | ((PPU.SprBuff[SprNum] & 7) ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x17 : 0x00) ^ ((PPU.SprBuff[SprNum] & 0x8) << 1));
 				else	PatAddr = (TC << 4) | (PPU.SprBuff[SprNum] ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((PPU.Reg2000 & 0x08) << 9);
+#endif
 				break;
 			case 260:	case 268:	case 276:	case 284:	case 292:	case 300:	case 308:	case 316:
 				PPU.RenderAddr = PatAddr;
@@ -731,6 +756,10 @@ __inline static	void	RunNoSkip (int NumTicks)
 				CurTileData = PPU.SprData[SprNum >> 2];
 				((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 				((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
+#ifdef	ACCURATE_SPRITES
+				CurTileData[8] = PPU.SprBuff[SprNum];
+				CurTileData[9] = PPU.SprBuff[SprNum | 1];
+#endif
 				break;
 				/* END SPRITES */
 			case 336:	case 338:
@@ -780,7 +809,11 @@ __inline static	void	RunNoSkip (int NumTicks)
 			if ((PPU.Reg2001 & 0x10) && ((PPU.Clockticks >= 8) || (PPU.Reg2001 & 0x04)))
 				for (y = 0; y < PPU.SprCount; y += 4)
 				{
+#ifdef	ACCURATE_SPRITES
+					register int SprPixel = PPU.Clockticks - PPU.SprData[y >> 2][9];
+#else
 					register int SprPixel = PPU.Clockticks - PPU.SprBuff[y | 3];
+#endif
 					register unsigned char SprDat;
 					if (SprPixel & ~7)
 						continue;
@@ -792,7 +825,11 @@ __inline static	void	RunNoSkip (int NumTicks)
 							PPU.Reg2002 |= 0x40;	/* Sprite 0 hit */
 							PPU.Spr0InLine = FALSE;
 						}
+#ifdef	ACCURATE_SPRITES
+						if (!((TC & 0x3) && (PPU.SprData[y >> 2][8] & 0x20)))
+#else
 						if (!((TC & 0x3) && (PPU.SprBuff[y | 2] & 0x20)))
+#endif
 							TC = SprDat | 0x10;
 						break;
 					}
@@ -828,7 +865,9 @@ __inline static	void	RunSkip (int NumTicks)
 		{
 			if (PPU.SLnum < 240)
 			{
+#ifndef	ACCURATE_SPRITES
 				DiscoverSprites();
+#endif
 				if (PPU.Spr0InLine)
 					ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
@@ -874,7 +913,9 @@ __inline static	void	RunSkip (int NumTicks)
 		}
 		if (PPU.IsRendering)
 		{
-//			ProcessSprites();
+#ifdef	ACCURATE_SPRITES
+			ProcessSprites();
+#endif
 			if (PPU.Clockticks & 1)
 			{
 				if (PPU.IOMode)
@@ -1131,6 +1172,9 @@ static	int	__fastcall	Read2 (void)
 static	int	__fastcall	Read4 (void)
 {
 	if (PPU.IsRendering)
+#ifdef	ACCURATE_SPRITES
+		PPU.ppuLatch = PPU.Sprite[SpritePtr];
+#else
 	{
 		if (PPU.Clockticks < 64)
 			PPU.ppuLatch = 0xFF;
@@ -1142,6 +1186,7 @@ static	int	__fastcall	Read4 (void)
 			PPU.ppuLatch = 0xFF;
 		else	PPU.ppuLatch = PPU.Sprite[0];
 	}
+#endif
 	else	PPU.ppuLatch = PPU.Sprite[PPU.SprAddr];
 	return PPU.ppuLatch;
 }
@@ -1247,7 +1292,7 @@ static	void	__fastcall	Write7 (int Val)
 	if ((PPU.VRAMAddr & 0x3F00) == 0x3F00)
 	{
 		register unsigned char Addr = (unsigned char)PPU.VRAMAddr & 0x1F;
-		register unsigned Val = Val & 0x3F;
+		Val = Val & 0x3F;
 #ifdef ENABLE_DEBUGGER
 		Debugger.PalChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */

@@ -23,6 +23,8 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #ifndef PPU_H
 #define PPU_H
 
+/* #define	ACCURATE_SPRITES	/* enable cycle-accurate sprite evaluation logic */
+
 struct	tPPU
 {
 	FPPURead	ReadHandler[0x10];
@@ -33,7 +35,11 @@ struct	tPPU
 	unsigned char *CHRPointer[0x10];
 	BOOL Writable[0x10];
 
+#ifdef	ACCURATE_SPRITES
+	unsigned char Sprite[0x120];
+#else
 	unsigned char Sprite[0x100];
+#endif
 	unsigned char SprAddr;
 
 	unsigned char Palette[0x20];
@@ -57,10 +63,18 @@ struct	tPPU
 	unsigned char IOMode;	/* Start at 6 for writes, 5 for reads - counts down and eventually hits zero */
 	unsigned char buf2007;
 
+#ifdef	ACCURATE_SPRITES
+	unsigned char *SprBuff;
+#else
 	unsigned char SprBuff[32];
+#endif
 	BOOL Spr0InLine;
 	int SprCount;
+#ifdef	ACCURATE_SPRITES
+	unsigned char SprData[8][10];
+#else
 	unsigned char SprData[8][8];
+#endif
 	unsigned short *GfxData;
 	unsigned char IsPAL;
 	unsigned char PALsubticks;
