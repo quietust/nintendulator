@@ -219,6 +219,7 @@ void	Movie_Play (BOOL Review)
 	EI.DbgOut(_T("Re-record count: %i"),Movie.ReRecords);
 	Movie.Pos = 0;
 	fread(&Movie.Len,4,1,Movie.Data);
+	EI.DbgOut(_T("Length: %i:%02i.%02i"),Movie.Len / 3600, (Movie.Len % 3600) / 60, Movie.Len % 60);
 
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
 	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
