@@ -445,6 +445,13 @@ void	Movie_Stop (void)
 unsigned char	Movie_LoadInput (void)
 {
 	unsigned char Cmd = 0;
+	if (Movie.Pos >= Movie.Len)
+	{
+		if (Movie.Pos == Movie.Len)
+			PrintTitlebar(_T("Movie stopped."));
+		else	PrintTitlebar(_T("Unexpected EOF in movie!"));
+		EndMovie();
+	}
 	if (Controllers.Port1.MovLen)
 		fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,Movie.Data);		Movie.Pos += Controllers.Port1.MovLen;
 	if (Controllers.Port2.MovLen)
@@ -455,13 +462,6 @@ unsigned char	Movie_LoadInput (void)
 	{
 		fread(&Cmd,1,1,Movie.Data);
 		Movie.Pos++;
-	}
-	if (Movie.Pos >= Movie.Len)
-	{
-		if (Movie.Pos == Movie.Len)
-			PrintTitlebar(_T("Movie stopped."));
-		else	PrintTitlebar(_T("Unexpected EOF in movie!"));
-		EndMovie();
 	}
 	return Cmd;
 }
