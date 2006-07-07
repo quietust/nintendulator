@@ -451,17 +451,17 @@ unsigned char	Movie_LoadInput (void)
 		fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,Movie.Data);		Movie.Pos += Controllers.Port2.MovLen;
 	if (Controllers.ExpPort.MovLen)
 		fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,Movie.Data);	Movie.Pos += Controllers.ExpPort.MovLen;
+	if (NES.HasMenu)
+	{
+		fread(&Cmd,1,1,Movie.Data);
+		Movie.Pos++;
+	}
 	if (Movie.Pos >= Movie.Len)
 	{
 		if (Movie.Pos == Movie.Len)
 			PrintTitlebar(_T("Movie stopped."));
 		else	PrintTitlebar(_T("Unexpected EOF in movie!"));
 		EndMovie();
-	}
-	if (NES.HasMenu)
-	{
-		fread(&Cmd,1,1,Movie.Data);
-		Movie.Pos++;
 	}
 	return Cmd;
 }
