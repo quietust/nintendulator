@@ -39,7 +39,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 // Global Variables:
 HINSTANCE	hInst;		// current instance
-HWND		mWnd;		// main window
+HWND		hMainWnd;		// main window
 HMENU		hMenu;		// main window menu
 HACCEL		hAccelTable;	// accelerators
 int		SizeMult;	// size multiplier
@@ -175,13 +175,13 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 	GFX.DirectDraw = NULL;	// gotta do this so we don't paint from nothing
 	hInst = hInstance;
 	hMenu = LoadMenu(hInst,(LPCTSTR)IDR_NINTENDULATOR);
-	if (!(mWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,hMenu,hInstance,NULL)))
+	if (!(hMainWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,hMenu,hInstance,NULL)))
 		return FALSE;
-	ShowWindow(mWnd,nCmdShow);
-	DragAcceptFiles(mWnd,TRUE);
+	ShowWindow(hMainWnd,nCmdShow);
+	DragAcceptFiles(hMainWnd,TRUE);
 
-	hDebug = CreateDialog(hInst,(LPCTSTR)IDD_DEBUG,mWnd,DebugWnd);
-	SetWindowPos(hDebug,mWnd,0,0,0,0,SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOSIZE);
+	hDebug = CreateDialog(hInst,(LPCTSTR)IDD_DEBUG,hMainWnd,DebugWnd);
+	SetWindowPos(hDebug,hMainWnd,0,0,0,0,SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOSIZE);
 
 	NES_Init();
 	return TRUE;
@@ -221,7 +221,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			FileName[0] = 0;
 			ZeroMemory(&ofn,sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
-			ofn.hwndOwner = mWnd;
+			ofn.hwndOwner = hMainWnd;
 			ofn.hInstance = hInst;
 			ofn.lpstrFilter =	_T("All supported files (*.NES, *.UNIF, *.UNF, *.FDS, *.NSF)\0")
 							_T("*.NES;*.UNIF;*.UNF;*.FDS;*.NSF\0")
@@ -263,7 +263,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			FileName[0] = 0;
 			ZeroMemory(&ofn,sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
-			ofn.hwndOwner = mWnd;
+			ofn.hwndOwner = hMainWnd;
 			ofn.hInstance = hInst;
 			ofn.lpstrFilter = _T("iNES ROM Images (*.NES)\0") _T("*.NES\0") _T("\0");
 			ofn.lpstrCustomFilter = NULL;
@@ -321,7 +321,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			while (PPU.SLnum != 240)
 			{
 				if (NES.FrameStep && !NES.GotStep)
-					MessageBox(mWnd,_T("Impossible: savestate is advancing to scanline 240 in framestep mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+					MessageBox(hMainWnd,_T("Impossible: savestate is advancing to scanline 240 in framestep mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 				do
 				{
 #ifdef ENABLE_DEBUGGER
@@ -665,14 +665,14 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		rom = _tfopen(filename,_T("rb"));
 		if (!rom)
 		{
-			MessageBox(mWnd,_T("Unable to open ROM!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Unable to open ROM!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			EndDialog(hDlg,0);
 		}
 		fread(header,16,1,rom);
 		fclose(rom);
 		if (memcmp(header,"NES\x1A",4))
 		{
-			MessageBox(mWnd,_T("Selected file is not an iNES ROM image!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Selected file is not an iNES ROM image!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			EndDialog(hDlg,0);
 		}
 		i = _tcslen(filename)-1;
@@ -804,7 +804,7 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 				fwrite(header,16,1,rom);
 				fclose(rom);
 			}
-			else	MessageBox(mWnd,_T("Failed to open ROM!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			else	MessageBox(hMainWnd,_T("Failed to open ROM!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			// fall through
 		case IDCANCEL:
 			EndDialog(hDlg,0);
@@ -849,7 +849,7 @@ void	UpdateTitlebar (void)
 		_tcscat(titlebar,_T(" - "));
 		_tcscat(titlebar,TitlebarBuffer);
 	}
-	SetWindowText(mWnd,titlebar);
+	SetWindowText(hMainWnd,titlebar);
 }
 void	__cdecl	PrintTitlebar (TCHAR *Text, ...)
 {

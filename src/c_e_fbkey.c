@@ -32,7 +32,7 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 {
 	if (mode & MOV_RECORD)
 	{
-		MessageBox(mWnd,_T("Family Basic Keyboard does not support recording movies!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Family Basic Keyboard does not support recording movies!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		Movie_Stop();
 	}
 }

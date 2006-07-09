@@ -493,7 +493,7 @@ void	MapperInterface_Init (void)
 			ThisDLL->UnloadDLL = (PUnloadMapperDLL)GetProcAddress(ThisDLL->dInst,"UnloadMapperDLL");
 			if ((ThisDLL->LoadDLL) && (ThisDLL->UnloadDLL))
 			{
-				ThisDLL->DI = ThisDLL->LoadDLL(mWnd,&EI,CurrentMapperInterface);
+				ThisDLL->DI = ThisDLL->LoadDLL(hMainWnd,&EI,CurrentMapperInterface);
 				if (ThisDLL->DI)
 				{
 					DbgOut(_T("Added mapper pack %s: '%s' v%X.%X (%04X/%02X/%02X)"), Data.cFileName, ThisDLL->DI->Description, ThisDLL->DI->Version >> 16, ThisDLL->DI->Version & 0xFFFF, ThisDLL->DI->Date >> 16, (ThisDLL->DI->Date >> 8) & 0xFF, ThisDLL->DI->Date & 0xFF);
@@ -509,7 +509,7 @@ void	MapperInterface_Init (void)
 	}
 	free(ThisDLL);
 	if (MapperDLLs == NULL)
-		MessageBox(mWnd,_T("Fatal error: unable to locate any mapper DLLs!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Fatal error: unable to locate any mapper DLLs!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 #else
 	dInst = LoadLibrary("Plugins\\nsf.dll");
 	LoadDLL = (PLoadMapperDLL)GetProcAddress(dInst,"LoadMapperDLL");
@@ -656,7 +656,7 @@ BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
 	}
 	// else more than one found
 	DLLs[num] = NULL;
-	if (DI = (PDLLInfo)DialogBoxParam(hInst,(LPCTSTR)IDD_DLLSELECT,mWnd,DllSelect,(LPARAM)DLLs))
+	if (DI = (PDLLInfo)DialogBoxParam(hInst,(LPCTSTR)IDD_DLLSELECT,hMainWnd,DllSelect,(LPARAM)DLLs))
 	{
 		MI = DI->LoadMapper(ROM);
 		if (MI->Load)

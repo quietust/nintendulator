@@ -284,7 +284,7 @@ void	AVI_End (void)
 {
 	if (!aviout)
 	{
-		MessageBox(mWnd,_T("No AVI capture is currently in progress!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("No AVI capture is currently in progress!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	CloseAvi(aviout);
@@ -307,13 +307,13 @@ void	AVI_Start (void)
 
 	if (aviout)
 	{
-		MessageBox(mWnd,_T("An AVI capture is already in progress!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("An AVI capture is already in progress!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
 	ZeroMemory(&ofn,sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = mWnd;
+	ofn.hwndOwner = hMainWnd;
 	ofn.hInstance = hInst;
 	ofn.lpstrFilter = _T("AVI File (*.AVI)\0") _T("*.AVI\0") _T("\0");
 	ofn.lpstrCustomFilter = NULL;
@@ -362,11 +362,11 @@ void	AVI_Start (void)
 	hbm = CreateDIBSection(NULL,(BITMAPINFO *)&bmih,DIB_RGB_COLORS,&pBits,NULL,0);
 
 	ZeroMemory(&opts,sizeof(opts));
-	if (hr = SetAviVideoCompression(aviout,hbm,&opts,TRUE,mWnd))
+	if (hr = SetAviVideoCompression(aviout,hbm,&opts,TRUE,hMainWnd))
 	{
 		TCHAR msg[256];
 		FormatAviMessage(hr,msg,256);
-		MessageBox(mWnd,msg,_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,msg,_T("Nintendulator"),MB_OK);
 		AVI_End();
 		return;
 	}
@@ -384,7 +384,7 @@ void	AVI_AddVideo (void)
 
 	if (!aviout)
 	{
-		MessageBox(mWnd,_T("Error! AVI frame capture attempted while not recording!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Error! AVI frame capture attempted while not recording!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	bmih.biSize = sizeof(BITMAPINFOHEADER);
@@ -417,7 +417,7 @@ void	AVI_AddVideo (void)
 	{
 		TCHAR msg[256];
 		FormatAviMessage(hr,msg,256);
-		MessageBox(mWnd,msg,_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,msg,_T("Nintendulator"),MB_OK);
 	}
 	DeleteObject(hbm);
 }
@@ -427,13 +427,13 @@ void	AVI_AddAudio (void)
 	HRESULT hr;
 	if (!aviout)
 	{
-		MessageBox(mWnd,_T("Error! AVI audio capture attempted while not recording!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Error! AVI audio capture attempted while not recording!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	if (hr = AddAviAudio(aviout,APU.buffer,735*2))
 	{
 		TCHAR msg[256];
 		FormatAviMessage(hr,msg,256);
-		MessageBox(mWnd,msg,_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,msg,_T("Nintendulator"),MB_OK);
 	}
 }

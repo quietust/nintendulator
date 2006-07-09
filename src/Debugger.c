@@ -99,7 +99,7 @@ enum {
 void	Debugger_Init (void)
 {
 	HFONT tpf;
-	HDC TpHDC = GetDC(mWnd);
+	HDC TpHDC = GetDC(hMainWnd);
 	int nHeight;
 
 	ZeroMemory(Debugger.BreakP,sizeof(Debugger.BreakP));
@@ -113,7 +113,7 @@ void	Debugger_Init (void)
 	Debugger.FontHeight = 10;
 	
 	Debugger.Depth = GetDeviceCaps(TpHDC,BITSPIXEL);
-	ReleaseDC(mWnd,TpHDC);
+	ReleaseDC(hMainWnd,TpHDC);
 
 	TpHDC = GetWindowDC(GetDesktopWindow());
 	
@@ -179,8 +179,8 @@ void	Debugger_SetMode (int NewMode)
 	Debugger.PatChanged = TRUE;
 	
 	if ((Debugger.Enabled) && (SizeMult == 1))	/* window positions will overlap if at 1X size */
-		SetWindowClientArea(mWnd,512,480);
-	else	SetWindowClientArea(mWnd,256 * SizeMult,240 * SizeMult);
+		SetWindowClientArea(hMainWnd,512,480);
+	else	SetWindowClientArea(hMainWnd,256 * SizeMult,240 * SizeMult);
 
 	CPU.WantIRQ &= ~IRQ_DEBUG;
 	if (Debugger.DumpWnd)
@@ -216,35 +216,35 @@ void	Debugger_SetMode (int NewMode)
 
 	if (Debugger.Mode >= 1)
 	{
-		Debugger.PatternWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PATTERN, mWnd, PatternProc);
-		GetWindowRect(mWnd,&rect);
+		Debugger.PatternWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PATTERN, hMainWnd, PatternProc);
+		GetWindowRect(hMainWnd,&rect);
 		SetWindowPos(Debugger.PatternWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.PatternWnd,D_PAT_W,D_PAT_H);
 
-		Debugger.PaletteWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PALETTE, mWnd, PaletteProc);
+		Debugger.PaletteWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PALETTE, hMainWnd, PaletteProc);
 		GetWindowRect(Debugger.PatternWnd,&rect);
 		SetWindowPos(Debugger.PaletteWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.PaletteWnd,D_PAL_W,D_PAL_H);
 
-		Debugger.DumpWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_DUMPS, mWnd, DumpProc);
+		Debugger.DumpWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_DUMPS, hMainWnd, DumpProc);
 		GetWindowRect(Debugger.PatternWnd,&rect);
 		SetWindowPos(Debugger.DumpWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW | SWP_NOSIZE);
 	}
 	if (Debugger.Mode >= 2)
 	{
-		Debugger.NameWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_NAME, mWnd, NameProc);
-		GetWindowRect(mWnd,&rect);
+		Debugger.NameWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_NAME, hMainWnd, NameProc);
+		GetWindowRect(hMainWnd,&rect);
 		SetWindowPos(Debugger.NameWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.NameWnd,D_NAM_W,D_NAM_H);
 	}
 	if (Debugger.Mode >= 3)
 	{
-		Debugger.RegWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_REGISTERS, mWnd, RegProc);
+		Debugger.RegWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_REGISTERS, hMainWnd, RegProc);
 		GetWindowRect(Debugger.NameWnd,&rect);
 		SetWindowPos(Debugger.RegWnd,HWND_TOP,rect.left,rect.bottom,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.RegWnd,D_REG_W,D_REG_H);
 
-		Debugger.TraceWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_TRACE, mWnd, TraceProc);
+		Debugger.TraceWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_TRACE, hMainWnd, TraceProc);
 		GetWindowRect(Debugger.RegWnd,&rect);
 		SetWindowPos(Debugger.TraceWnd,HWND_TOP,rect.right,rect.top,0,0,SWP_SHOWWINDOW);
 		SetWindowClientArea(Debugger.TraceWnd,D_TRC_W,D_TRC_H);
@@ -252,7 +252,7 @@ void	Debugger_SetMode (int NewMode)
 		Debugger_Update();
 	}
 
-	SetFocus(mWnd);
+	SetFocus(hMainWnd);
 }
 
 void	Debugger_StartLogging (void)
@@ -819,7 +819,7 @@ LRESULT CALLBACK TraceProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		{
 			Debugger.BreakP[Debugger.AddrLine[yPos/Debugger.FontHeight]] ^= 1;
 			Debugger_Update();
-			SetFocus(mWnd);
+			SetFocus(hMainWnd);
 		}
 		}break;
 	}

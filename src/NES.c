@@ -46,7 +46,7 @@ static	TCHAR *CompatLevel[COMPAT_NONE] = {_T("Fully supported!"),_T("Mostly supp
 
 void	NES_Init (void)
 {
-	SetWindowPos(mWnd,HWND_TOP,0,0,256,240,SWP_NOZORDER);
+	SetWindowPos(hMainWnd,HWND_TOP,0,0,256,240,SWP_NOZORDER);
 	MapperInterface_Init();
 	APU_Init();
 	GFX_Init();
@@ -82,7 +82,7 @@ void	NES_Release (void)
 	MapperInterface_Release();
 
 	NES_SaveSettings();
-	DestroyWindow(mWnd);
+	DestroyWindow(hMainWnd);
 }
 
 void	NES_OpenFile (TCHAR *filename)
@@ -107,7 +107,7 @@ void	NES_OpenFile (TCHAR *filename)
 
 	if (LoadRet)
 	{
-		MessageBox(mWnd,LoadRet,_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,LoadRet,_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		NES_CloseFile();
 		return;
 	}
@@ -153,7 +153,7 @@ void	NES_OpenFile (TCHAR *filename)
 	EnableMenuItem(hMenu,ID_CPU_SOFTRESET,MF_ENABLED);
 	EnableMenuItem(hMenu,ID_CPU_HARDRESET,MF_ENABLED);
 
-	DrawMenuBar(mWnd);
+	DrawMenuBar(hMainWnd);
 
 #ifdef ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
@@ -1015,7 +1015,7 @@ void	NES_UpdateInterface (void)
 #ifdef ENABLE_DEBUGGER
 	Debugger_SetMode(Debugger.Mode);
 #else
-	SetWindowClientArea(mWnd,256 * SizeMult,240 * SizeMult);
+	SetWindowClientArea(hMainWnd,256 * SizeMult,240 * SizeMult);
 #endif	/* ENABLE_DEBUGGER */
 }
 
@@ -1144,7 +1144,7 @@ void	NES_LoadSettings (void)
 	
 	CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
 
-	SetWindowPos(mWnd,HWND_TOP,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(hMainWnd,HWND_TOP,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
 
 	NES_UpdateInterface();
 }
@@ -1153,7 +1153,7 @@ void	NES_SaveSettings (void)
 {
 	HKEY SettingsBase;
 	RECT wRect;
-	GetWindowRect(mWnd,&wRect);
+	GetWindowRect(hMainWnd,&wRect);
 	if (RegOpenKeyEx(HKEY_CURRENT_USER,_T("SOFTWARE\\Nintendulator\\"),0,KEY_ALL_ACCESS,&SettingsBase))
 		RegCreateKeyEx(HKEY_CURRENT_USER,_T("SOFTWARE\\Nintendulator\\"),0,_T("NintendulatorClass"),REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&SettingsBase,NULL);
 	RegSetValueEx(SettingsBase,_T("SoundEnabled"),0,REG_DWORD,(unsigned char *)&NES.SoundEnabled,4);

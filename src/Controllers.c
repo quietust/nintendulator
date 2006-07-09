@@ -54,7 +54,7 @@ void	StdPort_SetControllerType (struct tStdPort *Cont, int Type)
 	case STD_FOURSCORE:		StdPort_SetFourScore(Cont);		break;
 	case STD_SNESCONTROLLER:	StdPort_SetSnesController(Cont);	break;
 	case STD_VSZAPPER:		StdPort_SetVSZapper(Cont);		break;
-	default:MessageBox(mWnd,_T("Error: selected invalid controller type for standard port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
+	default:MessageBox(hMainWnd,_T("Error: selected invalid controller type for standard port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
 	}
 }
 TCHAR	*StdPort_Mappings[STD_MAX];
@@ -90,7 +90,7 @@ void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
 	case EXP_ALTKEYBOARD:		ExpPort_SetAltKeyboard(Cont);		break;
 	case EXP_FAMTRAINER:		ExpPort_SetFamTrainer(Cont);		break;
 	case EXP_TABLET:		ExpPort_SetTablet(Cont);		break;
-	default:MessageBox(mWnd,_T("Error: selected invalid controller type for expansion port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
+	default:MessageBox(hMainWnd,_T("Error: selected invalid controller type for expansion port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
 	}
 }
 TCHAR	*ExpPort_Mappings[EXP_MAX];
@@ -235,7 +235,7 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 void	Controllers_OpenConfig (void)
 {
 	Controllers_UnAcquire();
-	DialogBox(hInst,(LPCTSTR)IDD_CONTROLLERS,mWnd,ControllerProc);
+	DialogBox(hInst,(LPCTSTR)IDD_CONTROLLERS,hMainWnd,ControllerProc);
 	Controllers_SetDeviceUsed();
 	Controllers_Acquire();
 }
@@ -248,7 +248,7 @@ static	BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 		ItemNum = lpddoi->dwOfs;
 		if ((ItemNum >= 0) && (ItemNum < 256))
 			Controllers.KeyNames[ItemNum] = _tcsdup(lpddoi->tszName);
-		else	MessageBox(mWnd, _T("Error - encountered invalid keyboard key ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		else	MessageBox(hMainWnd, _T("Error - encountered invalid keyboard key ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 	return DIENUM_CONTINUE;
 }
@@ -276,7 +276,7 @@ static	BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi,
 		ItemNum = (lpddoi->dwOfs - ((DWORD)&Controllers.MouseState.rgbButtons - (DWORD)&Controllers.MouseState)) / sizeof(Controllers.MouseState.rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 8))
 			Controllers.ButtonNames[1][ItemNum] = _tcsdup(lpddoi->tszName);
-		else	MessageBox(mWnd, _T("Error - encountered invalid mouse button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		else	MessageBox(hMainWnd, _T("Error - encountered invalid mouse button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 
 	return DIENUM_CONTINUE;
@@ -329,7 +329,7 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 			Controllers.AxisFlags[DevNum] |= 0x80;
 			Controllers.AxisNames[DevNum][AXIS_S1] = _tcsdup(lpddoi->tszName);
 		}
-		else	MessageBox(mWnd, _T("Error - encountered invalid slider ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		else	MessageBox(hMainWnd, _T("Error - encountered invalid slider ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 	if (IsEqualGUID(&lpddoi->guidType,&GUID_POV))
 	{
@@ -339,14 +339,14 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 			Controllers.POVFlags[DevNum] |= 0x01 << ItemNum;
 			Controllers.POVNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
 		}
-		else	MessageBox(mWnd, _T("Error - encountered invalid POV hat ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		else	MessageBox(hMainWnd, _T("Error - encountered invalid POV hat ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 	if (IsEqualGUID(&lpddoi->guidType,&GUID_Button))
 	{
 		ItemNum = (lpddoi->dwOfs - ((DWORD)&Controllers.JoyState[0].rgbButtons - (DWORD)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 128))
 			Controllers.ButtonNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
-		else	MessageBox(mWnd, _T("Error - encountered invalid joystick button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		else	MessageBox(hMainWnd, _T("Error - encountered invalid joystick button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 
 	return DIENUM_CONTINUE;
@@ -361,7 +361,7 @@ static	BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pv
 		DIDEVCAPS caps;
 		if (FAILED(hr = IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[DevNum],&c_dfDIJoystick2)))
 			goto end;
-		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[DevNum],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[DevNum],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 			goto end;
 		caps.dwSize = sizeof(DIDEVCAPS);
 		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(Controllers.DIDevices[DevNum],&caps)))
@@ -392,7 +392,7 @@ static	BOOL	InitKeyboard (void)
 		return FALSE;
 	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[0],&c_dfDIKeyboard)))
 		goto end;
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[0],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[0],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 		goto end;
 
 	caps.dwSize = sizeof(DIDEVCAPS);
@@ -426,7 +426,7 @@ static	BOOL	InitMouse (void)
 		return FALSE;
 	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[1],&c_dfDIMouse2)))
 		goto end;
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[1],mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[1],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 		goto end;
 	caps.dwSize = sizeof(DIDEVCAPS);
 	if (FAILED(IDirectInputDevice7_GetCapabilities(Controllers.DIDevices[1],&caps)))
@@ -484,14 +484,14 @@ void	Controllers_Init (void)
 	
 	if (FAILED(DirectInputCreateEx(hInst,DIRECTINPUT_VERSION,&IID_IDirectInput7,(LPVOID *)&Controllers.DirectInput,NULL)))
 	{
-		MessageBox(mWnd,_T("Unable to initialize DirectInput!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Unable to initialize DirectInput!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
 	if (!InitKeyboard())
-		MessageBox(mWnd,_T("Failed to initialize keyboard!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
+		MessageBox(hMainWnd,_T("Failed to initialize keyboard!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 	if (!InitMouse())
-		MessageBox(mWnd,_T("Failed to initialize mouse!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
+		MessageBox(hMainWnd,_T("Failed to initialize mouse!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 
 	Controllers.NumDevices = 2;	// joysticks start at slot 2
 	IDirectInput7_EnumDevices(Controllers.DirectInput,DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
@@ -732,7 +732,7 @@ int	Controllers_GetConfigButton (HWND hWnd, int DevNum)
 
 	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(dev,hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,_T("Unable to modify device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Unable to modify device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
@@ -800,9 +800,9 @@ waitrelease:
 				goto waitrelease;
 	}
 	IDirectInputDevice7_Unacquire(dev);
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(dev,mWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(dev,hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(mWnd,_T("Unable to restore device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Unable to restore device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 	return Key;

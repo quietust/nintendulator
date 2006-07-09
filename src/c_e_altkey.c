@@ -32,7 +32,7 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 {
 	if (mode & MOV_RECORD)
 	{
-		MessageBox(mWnd,_T("Alternate Famicom Keyboard does not support recording movies!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Alternate Famicom Keyboard does not support recording movies!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		Movie_Stop();
 	}
 }

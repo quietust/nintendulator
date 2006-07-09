@@ -603,7 +603,7 @@ void	APU_WriteReg (int Addr, unsigned char Val)
 						break;
 	case 0x017:	Frame_Write(Val);	break;
 #ifndef	NSFPLAYER
-	default:	MessageBox(mWnd,_T("ERROR: Invalid sound write!"),_T("Nintendulator"),MB_OK);
+	default:	MessageBox(hMainWnd,_T("ERROR: Invalid sound write!"),_T("Nintendulator"),MB_OK);
 #else
 	default:	MessageBox(mod.hMainWindow,"ERROR: Invalid sound write!","in_nintendulator",MB_OK);
 #endif
@@ -634,7 +634,7 @@ unsigned char	APU_Read4015 (void)
 		if (FAILED(action))\
 		{\
 			APU_SoundOFF();\
-			MessageBox(mWnd,errormsg,_T("Nintendulator"),MB_OK | MB_ICONERROR);\
+			MessageBox(hMainWnd,errormsg,_T("Nintendulator"),MB_OK | MB_ICONERROR);\
 			return;\
 		}\
 	}\
@@ -659,7 +659,7 @@ void	APU_SetFPSVars (int FPS)
 	else
 	{
 #ifndef	NSFPLAYER
-		MessageBox(mWnd,_T("Attempted to set indeterminate sound framerate!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Attempted to set indeterminate sound framerate!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 #else
 		MessageBox(mod.hMainWindow,"Attempted to set indeterminate sound framerate!","in_nintendulator",MB_OK | MB_ICONERROR);
 #endif
@@ -726,14 +726,14 @@ void	APU_Create (void)
 	if (FAILED(DirectSoundCreate(NULL,&APU.DirectSound,NULL)))
 	{
 		APU_Release();
-		MessageBox(mWnd,_T("Failed to create DirectSound interface!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Failed to create DirectSound interface!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
-	if (FAILED(IDirectSound_SetCooperativeLevel(APU.DirectSound,mWnd,DSSCL_PRIORITY)))
+	if (FAILED(IDirectSound_SetCooperativeLevel(APU.DirectSound,hMainWnd,DSSCL_PRIORITY)))
 	{
 		APU_Release();
-		MessageBox(mWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -745,7 +745,7 @@ void	APU_Create (void)
 	if (FAILED(IDirectSound_CreateSoundBuffer(APU.DirectSound,&DSBD,&APU.PrimaryBuffer,NULL)))
 	{
 		APU_Release();
-		MessageBox(mWnd,_T("Failed to create primary buffer!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Failed to create primary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -759,13 +759,13 @@ void	APU_Create (void)
 	if (FAILED(IDirectSoundBuffer_SetFormat(APU.PrimaryBuffer,&WFX)))
 	{
 		APU_Release();
-		MessageBox(mWnd,_T("Failed to set output format!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Failed to set output format!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	if (FAILED(IDirectSoundBuffer_Play(APU.PrimaryBuffer,0,0,DSBPLAY_LOOPING)))
 	{
 		APU_Release();
-		MessageBox(mWnd,_T("Failed to start playing primary buffer!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Failed to start playing primary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -776,7 +776,7 @@ void	APU_Create (void)
 	if (FAILED(IDirectSound_CreateSoundBuffer(APU.DirectSound,&DSBD,&APU.Buffer,NULL)))
 	{
 		APU_Release();
-		MessageBox(mWnd,_T("Failed to create secondary buffer!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Failed to create secondary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	EI.DbgOut(_T("Created %iHz %i bit audio buffer, %i frames (%i bytes per frame)"), WFX.nSamplesPerSec, WFX.wBitsPerSample, DSBD.dwBufferBytes / APU.LockSize, APU.LockSize);

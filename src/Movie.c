@@ -67,7 +67,7 @@ void	Movie_Play (BOOL Review)
 
 	if (Movie.Mode)
 	{
-		MessageBox(mWnd,_T("A movie is already open!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("A movie is already open!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
@@ -75,7 +75,7 @@ void	Movie_Play (BOOL Review)
 
 	ZeroMemory(&ofn,sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = mWnd;
+	ofn.hwndOwner = hMainWnd;
 	ofn.hInstance = hInst;
 	ofn.lpstrFilter = _T("Nintendulator Movie (*.NMV)\0") _T("*.NMV\0") _T("\0");
 	ofn.lpstrCustomFilter = NULL;
@@ -103,7 +103,7 @@ void	Movie_Play (BOOL Review)
 	fread(buf,1,4,Movie.Data);
 	if (memcmp(buf,"NSS\x1a",4))
 	{
-		MessageBox(mWnd,_T("Invalid movie file selected!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Invalid movie file selected!"),_T("Nintendulator"),MB_OK);
 		fclose(Movie.Data);
 		return;
 	}
@@ -111,7 +111,7 @@ void	Movie_Play (BOOL Review)
 	fread(buf,1,4,Movie.Data);
 	if ((memcmp(buf,STATES_VERSION,4)) && (memcmp(buf,STATES_BETA,4)) && (memcmp(buf,STATES_PREV,4)))
 	{
-		MessageBox(mWnd,_T("Incorrect movie version!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Incorrect movie version!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
@@ -120,7 +120,7 @@ void	Movie_Play (BOOL Review)
 
 	if (memcmp(buf,"NMOV",4))
 	{
-		MessageBox(mWnd,_T("This is not a valid Nintendulator movie recording!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("This is not a valid Nintendulator movie recording!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
@@ -160,7 +160,7 @@ void	Movie_Play (BOOL Review)
 	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
 	if (!States_LoadData(Movie.Data,len))
 	{
-		MessageBox(mWnd,_T("Failed to load movie!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Failed to load movie!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
@@ -205,7 +205,7 @@ void	Movie_Play (BOOL Review)
 	if (NES.HasMenu)
 		Movie.FrameLen++;
 	if (Movie.FrameLen != (buf[3] & 0x3F))
-		MessageBox(mWnd,_T("The frame size specified in this movie is incorrect! This movie may not play properly!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
+		MessageBox(hMainWnd,_T("The frame size specified in this movie is incorrect! This movie may not play properly!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 
 	fread(&Movie.ReRecords,4,1,Movie.Data);
 	fread(&len,4,1,Movie.Data);
@@ -246,26 +246,26 @@ void	Movie_Record (BOOL fromState)
 
 	if (Movie.Mode)
 	{
-		MessageBox(mWnd,_T("A movie is already open!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("A movie is already open!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
 	if (fromState && (Genie.CodeStat & 0x80))
 	{
-		MessageBox(mWnd,_T("Cannot record a savestate-based movie starting from the Game Genie screen!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("Cannot record a savestate-based movie starting from the Game Genie screen!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
 	NES_Stop();
 	if ((MI) && (MI->Config) && (!NES.HasMenu))
 	{
-		MessageBox(mWnd,_T("This game does not support using the 'Game' menu while recording!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("This game does not support using the 'Game' menu while recording!"),_T("Nintendulator"),MB_OK);
 		EnableMenuItem(hMenu,ID_GAME,MF_GRAYED);
 	}
 
 	ZeroMemory(&ofn,sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = mWnd;
+	ofn.hwndOwner = hMainWnd;
 	ofn.hInstance = hInst;
 	ofn.lpstrFilter = _T("Nintendulator Movie (*.NMV)\0") _T("*.NMV\0") _T("\0");
 	ofn.lpstrCustomFilter = NULL;
@@ -358,7 +358,7 @@ static	void	EndMovie (void)
 {
 	if (!(Movie.Mode))
 	{
-		MessageBox(mWnd,_T("No movie is currently active!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd,_T("No movie is currently active!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 	if (Movie.Mode & MOV_RECORD)
