@@ -133,6 +133,7 @@ void	StdPort_SetZapper (struct tStdPort *Cont)
 	Cont->PosX = 0;
 	Cont->PosY = 0;
 	Cont->Button = 0;
+	GFX_SetFrameskip(-1);
 }
 #undef	Button
 #undef	PosY

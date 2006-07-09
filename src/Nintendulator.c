@@ -370,49 +370,38 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			NES.GotStep = TRUE;
 			break;
 		case ID_PPU_FRAMESKIP_AUTO:
-			if (GFX.aFSkip = !GFX.aFSkip)
-				CheckMenuItem(hMenu,ID_PPU_FRAMESKIP_AUTO,MF_CHECKED);
-			else	CheckMenuItem(hMenu,ID_PPU_FRAMESKIP_AUTO,MF_UNCHECKED);
+			GFX.aFSkip = !GFX.aFSkip;
+			GFX_SetFrameskip(-1);
 			break;
 		case ID_PPU_FRAMESKIP_0:
-			GFX.FSkip = 0;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_0,MF_BYCOMMAND);
+			GFX_SetFrameskip(0);
 			break;
 		case ID_PPU_FRAMESKIP_1:
-			GFX.FSkip = 1;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_1,MF_BYCOMMAND);
+			GFX_SetFrameskip(1);
 			break;
 		case ID_PPU_FRAMESKIP_2:
-			GFX.FSkip = 2;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_2,MF_BYCOMMAND);
+			GFX_SetFrameskip(2);
 			break;
 		case ID_PPU_FRAMESKIP_3:
-			GFX.FSkip = 3;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_3,MF_BYCOMMAND);
+			GFX_SetFrameskip(3);
 			break;
 		case ID_PPU_FRAMESKIP_4:
-			GFX.FSkip = 4;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_4,MF_BYCOMMAND);
+			GFX_SetFrameskip(4);
 			break;
 		case ID_PPU_FRAMESKIP_5:
-			GFX.FSkip = 5;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_5,MF_BYCOMMAND);
+			GFX_SetFrameskip(5);
 			break;
 		case ID_PPU_FRAMESKIP_6:
-			GFX.FSkip = 6;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_6,MF_BYCOMMAND);
+			GFX_SetFrameskip(6);
 			break;
 		case ID_PPU_FRAMESKIP_7:
-			GFX.FSkip = 7;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_7,MF_BYCOMMAND);
+			GFX_SetFrameskip(7);
 			break;
 		case ID_PPU_FRAMESKIP_8:
-			GFX.FSkip = 8;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_8,MF_BYCOMMAND);
+			GFX_SetFrameskip(8);
 			break;
 		case ID_PPU_FRAMESKIP_9:
-			GFX.FSkip = 9;
-			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_9,MF_BYCOMMAND);
+			GFX_SetFrameskip(9);
 			break;
 		case ID_PPU_SIZE_1X:
 			SizeMult = 1;

@@ -24,6 +24,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 #include "Nintendulator.h"
 #include "resource.h"
 #include "MapperInterface.h"
+#include "Controllers.h"
 #include "NES.h"
 #include "GFX.h"
 #include "PPU.h"
@@ -271,7 +272,7 @@ void	GFX_DrawScreen (void)
 				GFX.FSkip++;
 			if ((GFX.FSkip > 0) && (GFX.FPSnum >= (GFX.WantFPS - 1)))
 				GFX.FSkip--;
-			GFX_SetFrameskip();
+			GFX_SetFrameskip(-1);
 		}
 		GFX.aFPScnt = 0;
 		GFX.aFPSnum = 0;
@@ -283,8 +284,21 @@ void	GFX_DrawScreen (void)
 	}
 }
 
-void	GFX_SetFrameskip (void)
+void	GFX_SetFrameskip (int skip)
 {
+	if (skip != -1)
+		GFX.FSkip = skip;
+
+	if ((Controllers.Port1.Type == STD_ZAPPER) || (Controllers.Port1.Type == STD_VSZAPPER) ||
+		(Controllers.Port2.Type == STD_ZAPPER) || (Controllers.Port2.Type == STD_VSZAPPER))
+	{	// if Zapper, force it to zero frameskip, otherwise it won't work
+		GFX.FSkip = 0;
+		GFX.aFSkip = 0;
+	}
+
+	if (GFX.aFSkip)
+		CheckMenuItem(hMenu,ID_PPU_FRAMESKIP_AUTO,MF_CHECKED);
+	else	CheckMenuItem(hMenu,ID_PPU_FRAMESKIP_AUTO,MF_UNCHECKED);
 	switch (GFX.FSkip)
 	{
 	case 0:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_0,MF_BYCOMMAND);	break;

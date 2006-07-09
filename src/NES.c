@@ -1118,16 +1118,13 @@ void	NES_LoadSettings (void)
 	if (NES.SoundEnabled)
 		CheckMenuItem(hMenu, ID_SOUND_ENABLED, MF_CHECKED);
 	
-	if (GFX.aFSkip)
-		CheckMenuItem(hMenu, ID_PPU_FRAMESKIP_AUTO, MF_CHECKED);
-
 	if (NES.AutoRun)
 		CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_CHECKED);
 
 	if (GFX.NTSChue >= 300)		// old hue settings were 300 to 360
 		GFX.NTSChue -= 330;	// new settings are -30 to +30
 
-	GFX_SetFrameskip();
+	GFX_SetFrameskip(-1);
 
 	switch (SizeMult)
 	{

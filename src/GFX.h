@@ -66,7 +66,7 @@ void	GFX_DrawScreen (void);
 void	GFX_Update (void);
 void	GFX_Repaint (void);
 void	GFX_LoadPalette (int);
-void	GFX_SetFrameskip (void);
+void	GFX_SetFrameskip (int);
 void	GFX_PaletteConfig (void);
 void	GFX_GetCursorPos (POINT *);
 void	GFX_SetCursorPos (int,int);
