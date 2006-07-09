@@ -221,15 +221,15 @@ void	Movie_Play (BOOL Review)
 	fread(&Movie.Len,4,1,Movie.Data);
 	EI.DbgOut(_T("Length: %i:%02i.%02i"),Movie.Len / 3600, (Movie.Len % 3600) / 60, Movie.Len % 60);
 
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_STOPMOVIE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_PPU_MODE_NTSC,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_PPU_MODE_PAL,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_GAME,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_GRAYED);
 	if (Controllers.Port1.MovLen)
 		memset(Controllers.Port1.MovData,0,Controllers.Port1.MovLen);
 	if (Controllers.Port2.MovLen)
@@ -260,7 +260,7 @@ void	Movie_Record (BOOL fromState)
 	if ((MI) && (MI->Config) && (!NES.HasMenu))
 	{
 		MessageBox(mWnd,_T("This game does not support using the 'Game' menu while recording!"),_T("Nintendulator"),MB_OK);
-		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
+		EnableMenuItem(hMenu,ID_GAME,MF_GRAYED);
 	}
 
 	ZeroMemory(&ofn,sizeof(ofn));
@@ -344,14 +344,14 @@ void	Movie_Record (BOOL fromState)
 	// TODO - Actually store comment text
 	fwrite(&Movie.Len,4,1,Movie.Data);	// movie data length (this gets filled in later)
 
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_STOPMOVIE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_PPU_MODE_NTSC,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_PPU_MODE_PAL,MF_GRAYED);
 }
 
 static	void	EndMovie (void)
@@ -423,15 +423,15 @@ static	void	EndMovie (void)
 	}
 	ExpPort_SetControllerType(&Controllers.ExpPort,Movie.ControllerTypes[2]);
 	if ((MI) && (MI->Config))
-		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_NTSC,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_PPU_MODE_PAL,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_GAME,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_MISC_STOPMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_PPU_MODE_NTSC,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_PPU_MODE_PAL,MF_ENABLED);
 }
 
 void	Movie_Stop (void)

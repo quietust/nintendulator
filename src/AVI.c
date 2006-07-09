@@ -289,8 +289,8 @@ void	AVI_End (void)
 	}
 	CloseAvi(aviout);
 	aviout = NULL;
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPAVICAPTURE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_STARTAVICAPTURE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_MISC_STOPAVICAPTURE,MF_GRAYED);
 }
 
 void	AVI_Start (void)
@@ -371,8 +371,8 @@ void	AVI_Start (void)
 		return;
 	}
 	DeleteObject(hbm);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STOPAVICAPTURE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_MISC_STARTAVICAPTURE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_STOPAVICAPTURE,MF_ENABLED);
 }
 
 void	AVI_AddVideo (void)

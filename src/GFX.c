@@ -98,6 +98,11 @@ void	GFX_Create (void)
 
 	if (GFX.Fullscreen)
 	{
+		if (dbgVisible)
+			ShowWindow(hDebug,SW_MINIMIZE);
+		SetWindowLong(mWnd,GWL_STYLE,WS_POPUP);
+		SetMenu(mWnd,NULL);
+		ShowWindow(mWnd,SW_MAXIMIZE);
 		if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw, mWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
 		{
 			GFX_Release();
@@ -230,6 +235,15 @@ void	GFX_Release (void)
 	if (GFX.SecondarySurf)	IDirectDrawSurface7_Release(GFX.SecondarySurf);	GFX.SecondarySurf = NULL;
 	if (GFX.PrimarySurf)	IDirectDrawSurface7_Release(GFX.PrimarySurf);	GFX.PrimarySurf = NULL;
 	if (GFX.DirectDraw)	IDirectDraw7_Release(GFX.DirectDraw);		GFX.DirectDraw = NULL;
+	if (GFX.Fullscreen)
+	{
+		SetWindowLong(mWnd,GWL_STYLE,WS_OVERLAPPEDWINDOW);
+		SetMenu(mWnd,hMenu);
+		ShowWindow(mWnd,SW_RESTORE);
+		if (dbgVisible)
+			ShowWindow(hDebug,SW_RESTORE);
+		NES_UpdateInterface();
+	}
 }
 
 void	GFX_DrawScreen (void)
@@ -271,7 +285,6 @@ void	GFX_DrawScreen (void)
 
 void	GFX_SetFrameskip (void)
 {
-	HMENU hMenu = GetMenu(mWnd);
 	switch (GFX.FSkip)
 	{
 	case 0:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_0,MF_BYCOMMAND);	break;
@@ -400,7 +413,7 @@ void	GFX_GetCursorPos (POINT *pos)
 		pos->x = pos->x * 256 / (rect.right - rect.left);
 		pos->y = pos->y * 240 / (rect.bottom - rect.top);
 	}
-	else	pos->x -= 32;	// TODO: make fullscreen work correctly with zapper/tablet
+	else	pos->x -= 32;
 }
 
 void	GFX_SetCursorPos (int x, int y)

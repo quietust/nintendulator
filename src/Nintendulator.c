@@ -40,6 +40,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 // Global Variables:
 HINSTANCE	hInst;		// current instance
 HWND		mWnd;		// main window
+HMENU		hMenu;		// main window menu
 HACCEL		hAccelTable;	// accelerators
 int		SizeMult;	// size multiplier
 TCHAR		ProgPath[MAX_PATH];	// program path
@@ -173,7 +174,8 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 {
 	GFX.DirectDraw = NULL;	// gotta do this so we don't paint from nothing
 	hInst = hInstance;
-	if (!(mWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,LoadMenu(hInst,(LPCTSTR)IDR_NINTENDULATOR),hInstance,NULL)))
+	hMenu = LoadMenu(hInst,(LPCTSTR)IDR_NINTENDULATOR);
+	if (!(mWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,hMenu,hInstance,NULL)))
 		return FALSE;
 	ShowWindow(mWnd,nCmdShow);
 	DragAcceptFiles(mWnd,TRUE);
@@ -197,7 +199,6 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	HMENU MyMenu;
 	HDC hdc;
 	PAINTSTRUCT ps;
 	int wmId, wmEvent;
@@ -210,7 +211,6 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
-		MyMenu = GetMenu(mWnd);
 		// Parse the menu selections:
 		switch (wmId)
 		{
@@ -286,8 +286,8 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_FILE_AUTORUN:
 			NES.AutoRun = !NES.AutoRun;
 			if (NES.AutoRun)
-				CheckMenuItem(MyMenu,ID_FILE_AUTORUN,MF_CHECKED);
-			else	CheckMenuItem(MyMenu,ID_FILE_AUTORUN,MF_UNCHECKED);
+				CheckMenuItem(hMenu,ID_FILE_AUTORUN,MF_CHECKED);
+			else	CheckMenuItem(hMenu,ID_FILE_AUTORUN,MF_UNCHECKED);
 			break;
 
 		case ID_CPU_RUN:
@@ -357,93 +357,93 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_CPU_GAMEGENIE:
 			NES.GameGenie = !NES.GameGenie;
 			if (NES.GameGenie)
-				CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
-			else	CheckMenuItem(MyMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
+				CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
+			else	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 			break;
 		case ID_CPU_FRAMESTEP_ENABLED:
 			NES.FrameStep = !NES.FrameStep;
 			if (NES.FrameStep)
-				CheckMenuItem(MyMenu,ID_CPU_FRAMESTEP_ENABLED,MF_CHECKED);
-			else	CheckMenuItem(MyMenu,ID_CPU_FRAMESTEP_ENABLED,MF_UNCHECKED);
+				CheckMenuItem(hMenu,ID_CPU_FRAMESTEP_ENABLED,MF_CHECKED);
+			else	CheckMenuItem(hMenu,ID_CPU_FRAMESTEP_ENABLED,MF_UNCHECKED);
 			break;
 		case ID_CPU_FRAMESTEP_STEP:
 			NES.GotStep = TRUE;
 			break;
 		case ID_PPU_FRAMESKIP_AUTO:
 			if (GFX.aFSkip = !GFX.aFSkip)
-				CheckMenuItem(MyMenu,ID_PPU_FRAMESKIP_AUTO,MF_CHECKED);
-			else	CheckMenuItem(MyMenu,ID_PPU_FRAMESKIP_AUTO,MF_UNCHECKED);
+				CheckMenuItem(hMenu,ID_PPU_FRAMESKIP_AUTO,MF_CHECKED);
+			else	CheckMenuItem(hMenu,ID_PPU_FRAMESKIP_AUTO,MF_UNCHECKED);
 			break;
 		case ID_PPU_FRAMESKIP_0:
 			GFX.FSkip = 0;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_0,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_0,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FRAMESKIP_1:
 			GFX.FSkip = 1;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_1,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_1,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FRAMESKIP_2:
 			GFX.FSkip = 2;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_2,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_2,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FRAMESKIP_3:
 			GFX.FSkip = 3;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_3,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_3,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FRAMESKIP_4:
 			GFX.FSkip = 4;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_4,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_4,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FRAMESKIP_5:
 			GFX.FSkip = 5;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_5,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_5,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FRAMESKIP_6:
 			GFX.FSkip = 6;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_6,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_6,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FRAMESKIP_7:
 			GFX.FSkip = 7;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_7,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_7,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FRAMESKIP_8:
 			GFX.FSkip = 8;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_8,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_8,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FRAMESKIP_9:
 			GFX.FSkip = 9;
-			CheckMenuRadioItem(MyMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_9,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_9,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_1X:
 			SizeMult = 1;
 			NES_UpdateInterface();
-			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_1X,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_1X,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_2X:
 			SizeMult = 2;
 			NES_UpdateInterface();
-			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_3X:
 			SizeMult = 3;
 			NES_UpdateInterface();
-			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_3X,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_3X,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_4X:
 			SizeMult = 4;
 			NES_UpdateInterface();
-			CheckMenuRadioItem(MyMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);
 			break;
 		case ID_PPU_MODE_NTSC:
 			NES_Stop();
 			NES_SetCPUMode(0);
-			CheckMenuRadioItem(MyMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
 			if (running)	NES_Start(FALSE);
 			break;
 		case ID_PPU_MODE_PAL:
 			NES_Stop();
 			NES_SetCPUMode(1);
-			CheckMenuRadioItem(MyMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
 			if (running)	NES_Start(FALSE);
 			break;
 		case ID_PPU_PALETTE:
@@ -452,32 +452,32 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_PPU_SLOWDOWN_ENABLED:
 			GFX.SlowDown = !GFX.SlowDown;
 			if (GFX.SlowDown)
-				CheckMenuItem(MyMenu,ID_PPU_SLOWDOWN_ENABLED,MF_CHECKED);
-			else	CheckMenuItem(MyMenu,ID_PPU_SLOWDOWN_ENABLED,MF_UNCHECKED);
+				CheckMenuItem(hMenu,ID_PPU_SLOWDOWN_ENABLED,MF_CHECKED);
+			else	CheckMenuItem(hMenu,ID_PPU_SLOWDOWN_ENABLED,MF_UNCHECKED);
 			break;
 		case ID_PPU_SLOWDOWN_2:
 			GFX.SlowRate = 2;
-			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_2,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_2,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_3:
 			GFX.SlowRate = 3;
-			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_3,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_3,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_4:
 			GFX.SlowRate = 4;
-			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_4,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_4,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_5:
 			GFX.SlowRate = 5;
-			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_5,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_5,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_10:
 			GFX.SlowRate = 10;
-			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_10,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_10,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_20:
 			GFX.SlowRate = 20;
-			CheckMenuRadioItem(MyMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_20,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_20,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FULLSCREEN:
 			NES_Stop();
@@ -491,12 +491,12 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (NES.SoundEnabled = !NES.SoundEnabled)
 			{
 				if (running)	APU_SoundON();
-				CheckMenuItem(MyMenu,ID_SOUND_ENABLED,MF_CHECKED);
+				CheckMenuItem(hMenu,ID_SOUND_ENABLED,MF_CHECKED);
 			}
 			else
 			{
 				if (running)	APU_SoundOFF();
-				CheckMenuItem(MyMenu,ID_SOUND_ENABLED,MF_UNCHECKED);
+				CheckMenuItem(hMenu,ID_SOUND_ENABLED,MF_UNCHECKED);
 			}
 			break;
 		case ID_INPUT_SETUP:
@@ -507,19 +507,19 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #ifdef ENABLE_DEBUGGER
 		case ID_DEBUG_LEVEL1:
 			Debugger_SetMode(0);
-			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
 			break;
 		case ID_DEBUG_LEVEL2:
 			Debugger_SetMode(1);
-			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL2,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL2,MF_BYCOMMAND);
 			break;
 		case ID_DEBUG_LEVEL3:
 			Debugger_SetMode(2);
-			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL3,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL3,MF_BYCOMMAND);
 			break;
 		case ID_DEBUG_LEVEL4:
 			Debugger_SetMode(3);
-			CheckMenuRadioItem(MyMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL4,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL4,MF_BYCOMMAND);
 			break;
 		case ID_DEBUG_STATWND:
 			ShowDebug();

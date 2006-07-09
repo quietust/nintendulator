@@ -28,6 +28,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 extern	HINSTANCE	hInst;	/* current instance */
 extern	HWND		mWnd;	/* main window */
+extern	HMENU		hMenu;	/* main window menu */
 extern	HACCEL		hAccelTable;	/* accelerators */
 
 extern	BOOL		MaskKeyboard;	/* mask keyboard accelerators (for when Family Basic Keyboard is active) */

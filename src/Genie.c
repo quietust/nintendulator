@@ -402,8 +402,8 @@ int	Genie_Load (FILE *in)
 	}
 
 	if (NES.GameGenie)
-		CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_CHECKED);
-	else	CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
+		CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
+	else	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
 	Genie_Init();		// reset the I/O handlers
 	if ((MI) && (MI->Reset))

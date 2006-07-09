@@ -46,7 +46,7 @@ static	TCHAR *CompatLevel[COMPAT_NONE] = {_T("Fully supported!"),_T("Mostly supp
 
 void	NES_Init (void)
 {
-	SetWindowPos(mWnd,mWnd,0,0,256,240,SWP_NOZORDER);
+	SetWindowPos(mWnd,HWND_TOP,0,0,256,240,SWP_NOZORDER);
 	MapperInterface_Init();
 	APU_Init();
 	GFX_Init();
@@ -120,38 +120,38 @@ void	NES_OpenFile (TCHAR *filename)
 	{
 		if (MI->Config(CFG_WINDOW,FALSE))
 			NES.HasMenu = TRUE;
-		EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_GAME,MF_ENABLED);
 	}
-	else	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
+	else	EnableMenuItem(hMenu,ID_GAME,MF_GRAYED);
 	NES_LoadSRAM();
 
 	if (RI.ROMType == ROM_NSF)
 	{
 		NES.GameGenie = FALSE;
-		CheckMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_UNCHECKED);
-		EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_GRAYED);
+		CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
+		EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_GRAYED);
 	}
 	else
 	{
-		EnableMenuItem(GetMenu(mWnd),ID_CPU_SAVESTATE,MF_ENABLED);
-		EnableMenuItem(GetMenu(mWnd),ID_CPU_LOADSTATE,MF_ENABLED);
-		EnableMenuItem(GetMenu(mWnd),ID_CPU_PREVSTATE,MF_ENABLED);
-		EnableMenuItem(GetMenu(mWnd),ID_CPU_NEXTSTATE,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_CPU_SAVESTATE,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_CPU_LOADSTATE,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_CPU_PREVSTATE,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_CPU_NEXTSTATE,MF_ENABLED);
 
-		EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_ENABLED);
-		EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_ENABLED);
-		EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_ENABLED);
-		EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_ENABLED);
 
-		EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_ENABLED);
+		EnableMenuItem(hMenu,ID_MISC_STARTAVICAPTURE,MF_ENABLED);
 	}
 
-	EnableMenuItem(GetMenu(mWnd),ID_FILE_CLOSE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_RUN,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_STEP,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_STOP,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_SOFTRESET,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_HARDRESET,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_FILE_CLOSE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_CPU_RUN,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_CPU_STEP,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_CPU_STOP,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_CPU_SOFTRESET,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_CPU_HARDRESET,MF_ENABLED);
 
 	DrawMenuBar(mWnd);
 
@@ -292,25 +292,25 @@ void	NES_CloseFile (void)
 	if (Movie.Mode)
 		Movie_Stop();
 
-	EnableMenuItem(GetMenu(mWnd),ID_GAME,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_GAMEGENIE,MF_ENABLED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_SAVESTATE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_LOADSTATE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_PREVSTATE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_NEXTSTATE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_GAME,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_ENABLED);
+	EnableMenuItem(hMenu,ID_CPU_SAVESTATE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_LOADSTATE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_PREVSTATE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_NEXTSTATE,MF_GRAYED);
 
-	EnableMenuItem(GetMenu(mWnd),ID_FILE_CLOSE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_RUN,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_STEP,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_STOP,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_SOFTRESET,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_CPU_HARDRESET,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_FILE_CLOSE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_RUN,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_STEP,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_STOP,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_SOFTRESET,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_CPU_HARDRESET,MF_GRAYED);
 
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_PLAYMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RESUMEMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDMOVIE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_RECORDSTATE,MF_GRAYED);
-	EnableMenuItem(GetMenu(mWnd),ID_MISC_STARTAVICAPTURE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_GRAYED);
+	EnableMenuItem(hMenu,ID_MISC_STARTAVICAPTURE,MF_GRAYED);
 
 	NES.SRAM_Size = 0;
 	for (i = 0; i < 16; i++)
@@ -793,7 +793,6 @@ const char *	NES_OpenFileNFRF (char *filename)
 */
 void	NES_SetCPUMode (int NewMode)
 {
-	HMENU hMenu = GetMenu(mWnd);
 	if (NewMode == 0)
 	{
 		PPU.IsPAL = FALSE;
@@ -1022,7 +1021,6 @@ void	NES_UpdateInterface (void)
 
 void	NES_LoadSettings (void)
 {
-	HMENU hMenu = GetMenu(mWnd);
 	HKEY SettingsBase;
 	unsigned long Size;	unsigned long Type;
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
@@ -1146,7 +1144,7 @@ void	NES_LoadSettings (void)
 	
 	CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
 
-	SetWindowPos(mWnd,mWnd,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(mWnd,HWND_TOP,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
 
 	NES_UpdateInterface();
 }
