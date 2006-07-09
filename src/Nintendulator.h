@@ -27,7 +27,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 /*#define	CPU_BENCHMARK */
 
 extern	HINSTANCE	hInst;	/* current instance */
-extern	HWND		mWnd;	/* main window */
+extern	HWND		hMainWnd;	/* main window */
 extern	HMENU		hMenu;	/* main window menu */
 extern	HACCEL		hAccelTable;	/* accelerators */
 

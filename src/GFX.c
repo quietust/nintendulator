@@ -40,13 +40,13 @@ struct tGFX GFX;
 	if (FAILED(action))\
 	{\
 		GFX_Release();\
-		MessageBox(mWnd,errormsg _T(", retrying"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);\
+		MessageBox(hMainWnd,errormsg _T(", retrying"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);\
 		GFX.Fullscreen = FALSE;\
 		GFX_Create();\
 		PPU_GetGFXPtr();\
 		if (FAILED(action))\
 		{\
-			MessageBox(mWnd,_T("Error: ") errormsg,_T("Nintendulator"),MB_OK | MB_ICONERROR);\
+			MessageBox(hMainWnd,_T("Error: ") errormsg,_T("Nintendulator"),MB_OK | MB_ICONERROR);\
 			return;\
 		}\
 	}\
@@ -85,14 +85,14 @@ void	GFX_Create (void)
 {
 	if (!QueryPerformanceFrequency(&GFX.ClockFreq))
 	{
-		MessageBox(mWnd,_T("Failed to determine performance counter frequency!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Failed to determine performance counter frequency!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
 	if (FAILED(DirectDrawCreateEx(NULL,(LPVOID *)&GFX.DirectDraw,&IID_IDirectDraw7,NULL)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,_T("Failed to initialize DirectDraw 7"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Failed to initialize DirectDraw 7"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -100,28 +100,28 @@ void	GFX_Create (void)
 	{
 		if (dbgVisible)
 			ShowWindow(hDebug,SW_MINIMIZE);
-		SetWindowLong(mWnd,GWL_STYLE,WS_POPUP);
-		SetMenu(mWnd,NULL);
-		ShowWindow(mWnd,SW_MAXIMIZE);
-		if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw, mWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
+		SetWindowLong(hMainWnd,GWL_STYLE,WS_POPUP);
+		SetMenu(hMainWnd,NULL);
+		ShowWindow(hMainWnd,SW_MAXIMIZE);
+		if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw, hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 		if (FAILED(IDirectDraw7_SetDisplayMode(GFX.DirectDraw, 320, 240, 32, 0, 0)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to set display mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to set display mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
 	else
 	{
-		if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw,mWnd,DDSCL_NORMAL)))
+		if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw,hMainWnd,DDSCL_NORMAL)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to set DirectDraw cooperative level"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to set DirectDraw cooperative level"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
@@ -138,7 +138,7 @@ void	GFX_Create (void)
 		if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.PrimarySurf,NULL)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
@@ -146,7 +146,7 @@ void	GFX_Create (void)
 		if (FAILED(IDirectDrawSurface7_GetAttachedSurface(GFX.PrimarySurf,&GFX.SurfDesc.ddsCaps,&GFX.SecondarySurf)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to get secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to get secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
@@ -158,7 +158,7 @@ void	GFX_Create (void)
 		if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.PrimarySurf,NULL)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
@@ -170,7 +170,7 @@ void	GFX_Create (void)
 		if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.SecondarySurf,NULL)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to create secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to create secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
@@ -180,21 +180,21 @@ void	GFX_Create (void)
 		if (FAILED(IDirectDraw7_CreateClipper(GFX.DirectDraw,0,&GFX.Clipper,NULL)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to create clipper"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to create clipper"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
-		if (FAILED(IDirectDrawClipper_SetHWnd(GFX.Clipper,0,mWnd)))
+		if (FAILED(IDirectDrawClipper_SetHWnd(GFX.Clipper,0,hMainWnd)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to set clipper window"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to set clipper window"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
 		if (FAILED(IDirectDrawSurface7_SetClipper(GFX.PrimarySurf,GFX.Clipper)))
 		{
 			GFX_Release();
-			MessageBox(mWnd,_T("Failed to assign clipper to primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Failed to assign clipper to primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
@@ -205,7 +205,7 @@ void	GFX_Create (void)
 	if (FAILED(IDirectDrawSurface7_GetSurfaceDesc(GFX.SecondarySurf,&GFX.SurfDesc)))
 	{
 		GFX_Release();
-		MessageBox(mWnd,_T("Failed to retrieve surface description"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Failed to retrieve surface description"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -220,7 +220,7 @@ void	GFX_Create (void)
 	case 32:GFX.Depth = 32;		break;
 	default:
 		GFX_Release();
-		MessageBox(mWnd,_T("Invalid bit depth detected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd,_T("Invalid bit depth detected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;			break;
 	}
 
@@ -237,9 +237,9 @@ void	GFX_Release (void)
 	if (GFX.DirectDraw)	IDirectDraw7_Release(GFX.DirectDraw);		GFX.DirectDraw = NULL;
 	if (GFX.Fullscreen)
 	{
-		SetWindowLong(mWnd,GWL_STYLE,WS_OVERLAPPEDWINDOW);
-		SetMenu(mWnd,hMenu);
-		ShowWindow(mWnd,SW_RESTORE);
+		SetWindowLong(hMainWnd,GWL_STYLE,WS_OVERLAPPEDWINDOW);
+		SetMenu(hMainWnd,hMenu);
+		ShowWindow(hMainWnd,SW_RESTORE);
 		if (dbgVisible)
 			ShowWindow(hDebug,SW_RESTORE);
 		NES_UpdateInterface();
@@ -390,10 +390,10 @@ void	GFX_Repaint (void)
 	{
 		RECT rect;
 		POINT pt = {0,0};
-		GetClientRect(mWnd,&rect);
+		GetClientRect(hMainWnd,&rect);
 		if ((rect.right == 0) || (rect.bottom == 0))
 			return;
-		ClientToScreen(mWnd,&pt);
+		ClientToScreen(hMainWnd,&pt);
 		rect.left += pt.x;
 		rect.right += pt.x;
 		rect.top += pt.y;
@@ -408,8 +408,8 @@ void	GFX_GetCursorPos (POINT *pos)
 	if (!GFX.Fullscreen)
 	{
 		RECT rect;
-		ScreenToClient(mWnd,pos);
-		GetClientRect(mWnd,&rect);
+		ScreenToClient(hMainWnd,pos);
+		GetClientRect(hMainWnd,&rect);
 		pos->x = pos->x * 256 / (rect.right - rect.left);
 		pos->y = pos->y * 240 / (rect.bottom - rect.top);
 	}
@@ -424,10 +424,10 @@ void	GFX_SetCursorPos (int x, int y)
 	if (!GFX.Fullscreen)
 	{
 		RECT rect;
-		GetClientRect(mWnd,&rect);
+		GetClientRect(hMainWnd,&rect);
 		pos.x = pos.x * (rect.right - rect.left) / 256;
 		pos.y = pos.y * (rect.bottom - rect.top) / 240;
-		ClientToScreen(mWnd,&pos);
+		ClientToScreen(hMainWnd,&pos);
 	}
 	else	pos.x += 32;
 	SetCursorPos(pos.x, pos.y);
@@ -914,7 +914,7 @@ static	void	GFX_GenerateRGB (int pal)
 		memcpy(Palette,Palette_VS_0003,sizeof(Palette));
 	else if (pal == PALETTE_VS4)
 		memcpy(Palette,Palette_VS_0004,sizeof(Palette));
-	else	MessageBox(mWnd,_T("Illegal palette selected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+	else	MessageBox(hMainWnd,_T("Illegal palette selected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 }
 
 static	BOOL	GFX_ImportPalette (TCHAR *filename, BOOL load)
@@ -979,7 +979,7 @@ void	GFX_LoadPalette (int PalNum)
 	{
 		if (!GFX_ImportPalette(PPU.IsPAL ? GFX.CustPalettePAL : GFX.CustPaletteNTSC, TRUE))
 		{
-			MessageBox(mWnd,_T("Unable to load the specified palette! Reverting to default!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			MessageBox(hMainWnd,_T("Unable to load the specified palette! Reverting to default!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			if (PPU.IsPAL)
 				GFX.PalettePAL = PalNum = PALETTE_PAL;
 			else	GFX.PaletteNTSC = PalNum = PALETTE_NTSC;
@@ -1089,7 +1089,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 			if (!GFX_ImportPalette(extfn, TRUE))
 			{
-				MessageBox(mWnd,_T("Unable to load the specified palette! Reverting to default!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+				MessageBox(hMainWnd,_T("Unable to load the specified palette! Reverting to default!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 				if (ispal)
 					pal = PALETTE_PAL;
 				else	pal = PALETTE_NTSC;
@@ -1290,5 +1290,5 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	GFX_PaletteConfig (void)
 {
-	DialogBox(hInst,(LPCTSTR)IDD_PALETTE,mWnd,PaletteConfigProc);
+	DialogBox(hInst,(LPCTSTR)IDD_PALETTE,hMainWnd,PaletteConfigProc);
 }
