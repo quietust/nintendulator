@@ -629,6 +629,9 @@ void	Controllers_SetDeviceUsed (void)
 	}
 	if ((Controllers.Port1.Type == STD_ARKANOIDPADDLE) || (Controllers.Port2.Type == STD_ARKANOIDPADDLE) || (Controllers.ExpPort.Type == EXP_ARKANOIDPADDLE))
 		Controllers.DeviceUsed[1] = TRUE;
+
+	if ((Controllers.ExpPort.Type == EXP_FAMILYBASICKEYBOARD) || (Controllers.ExpPort.Type == EXP_ALTKEYBOARD))
+		Controllers.DeviceUsed[0] = TRUE;
 }
 
 void	Controllers_Acquire (void)

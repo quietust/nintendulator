@@ -1026,6 +1026,8 @@ void	NES_LoadSettings (void)
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
 	int PosX, PosY;
 
+	Controllers_UnAcquire();
+
 	/* Load Defaults */
 	SizeMult = 1;
 	NES.SoundEnabled = 1;
@@ -1143,6 +1145,7 @@ void	NES_LoadSettings (void)
 
 	SetWindowPos(hMainWnd,HWND_TOP,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
 
+	Controllers_Acquire();
 	NES_UpdateInterface();
 }
 
