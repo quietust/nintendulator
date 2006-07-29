@@ -32,6 +32,7 @@
 #define IDD_STDPORT_STDCONTROLLER       149
 #define IDD_STDPORT_ZAPPER              150
 #define IDD_STDPORT_VSZAPPER            151
+#define IDD_EXPPORT_FBKEY               152
 #define IDC_ABOUTICON                   1001
 #define IDC_CONT_SPORT1                 1002
 #define IDC_CONT_SPORT2                 1003
@@ -245,7 +246,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        151
 #define _APS_NEXT_COMMAND_VALUE         32827
-#define _APS_NEXT_CONTROL_VALUE         1146
+#define _APS_NEXT_CONTROL_VALUE         1147
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif
