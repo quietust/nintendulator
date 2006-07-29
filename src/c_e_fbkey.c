@@ -85,17 +85,13 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 		case 7:	if (Controllers.KeyState[DIK_F1] & 0x80)	result |= 0x02;
 			if (Controllers.KeyState[DIK_ESCAPE] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_Q] & 0x80)		result |= 0x08;
-			if (Controllers.KeyState[DIK_CAPITAL] & 0x80)	result |= 0x10;	/* CTRL */
+			if ((Controllers.KeyState[DIK_LCONTROL] & 0x80) || (Controllers.KeyState[DIK_RCONTROL] & 0x80))
+									result |= 0x10;
 			break;
-		case 8:	if (Controllers.KeyState[DIK_END] & 0x80)	result |= 0x02;	/* CLR */
+		case 8:	if (Controllers.KeyState[DIK_BACK] & 0x80)	result |= 0x02;	/* CLR */
 			if (Controllers.KeyState[DIK_UP] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_RIGHT] & 0x80)	result |= 0x08;
 			if (Controllers.KeyState[DIK_LEFT] & 0x80)	result |= 0x10;
-			break;
-		case 9:	if (Controllers.KeyState[DIK_F8] & 0x80)	result |= 0x02;
-			if (Controllers.KeyState[DIK_RETURN] & 0x80)	result |= 0x04;
-			if (Controllers.KeyState[DIK_LBRACKET] & 0x80)	result |= 0x08;
-			if (Controllers.KeyState[DIK_RBRACKET] & 0x80)	result |= 0x10;
 			break;
 		}
 	}
@@ -103,18 +99,17 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 	{
 		switch (Cont->Scan)
 		{
-		case 0:	if (Controllers.KeyState[DIK_APPS] & 0x80)	result |= 0x02;	/* DIK_KANA for Japanese keyboards */
+		case 0:	if (Controllers.KeyState[DIK_CAPITAL] & 0x80)	result |= 0x02;	/* KANA */
 			if (Controllers.KeyState[DIK_RSHIFT] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_BACKSLASH] & 0x80)	result |= 0x08;
-			if (Controllers.KeyState[DIK_BACK] & 0x80)	result |= 0x10;	/* STOP */
+			if (Controllers.KeyState[DIK_END] & 0x80)	result |= 0x10;	/* STOP */
 			break;
-		case 1:	if (Controllers.KeyState[DIK_RWIN] & 0x80)	result |= 0x02;	/* _ */
+		case 1:	if (Controllers.KeyState[DIK_HOME] & 0x80)	result |= 0x02;	/* _ */
 			if (Controllers.KeyState[DIK_SLASH] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_MINUS] & 0x80)	result |= 0x08;
 			if (Controllers.KeyState[DIK_EQUALS] & 0x80)	result |= 0x10; /* ^ */
 			break;
-		case 2:	if ((Controllers.KeyState[DIK_PERIOD] & 0x80) || (Controllers.KeyState[DIK_RWIN] & 0x80))
-									result |= 0x02;	/* . _ */
+		case 2:	if (Controllers.KeyState[DIK_PERIOD] & 0x80)	result |= 0x02;
 			if (Controllers.KeyState[DIK_COMMA] & 0x80)	result |= 0x04;
 			if (Controllers.KeyState[DIK_P] & 0x80)		result |= 0x08;
 			if (Controllers.KeyState[DIK_0] & 0x80)		result |= 0x10;
@@ -139,28 +134,15 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 			if (Controllers.KeyState[DIK_E] & 0x80)		result |= 0x08;
 			if (Controllers.KeyState[DIK_3] & 0x80)		result |= 0x10;
 			break;
-		case 7:	if ((Controllers.KeyState[DIK_X] & 0x80) && (Controllers.KeyState[DIK_LSHIFT] & 0x80))
-									result |= 0x02;
-			if (Controllers.KeyState[DIK_LWIN] & 0x80)	result |= 0x04;	/* GRPH */
+		case 7:	if (Controllers.KeyState[DIK_LSHIFT] & 0x80)	result |= 0x02;
+			if (Controllers.KeyState[DIK_TAB] & 0x80)	result |= 0x04;	/* GRPH */
 			if (Controllers.KeyState[DIK_1] & 0x80)		result |= 0x08;
 			if (Controllers.KeyState[DIK_2] & 0x80)		result |= 0x10;
 			break;
-		case 8:	if ((Controllers.KeyState[DIK_DOWN] & 0x80) || (Controllers.KeyState[DIK_LSHIFT] & 0x80))
-									result |= 0x02;
-			if ((Controllers.KeyState[DIK_SPACE] & 0x80) || (Controllers.KeyState[DIK_LWIN] & 0x80))
-									result |= 0x04;	/* SPACE or GRPH */
-			if ((Controllers.KeyState[DIK_1] & 0x80) || (Controllers.KeyState[DIK_DELETE] & 0x80))
-									result |= 0x08;
-			if ((Controllers.KeyState[DIK_2] & 0x80) || (Controllers.KeyState[DIK_INSERT] & 0x80))
-									result |= 0x10;
-			break;
-		case 9:	if (Controllers.KeyState[DIK_DOWN] & 0x80)	result |= 0x02;
-			if ((Controllers.KeyState[DIK_SPACE] & 0x80) && (Controllers.KeyState[DIK_LWIN] & 0x80))
-									result |= 0x04;	/* SPACE and GRPH */
-			if ((Controllers.KeyState[DIK_1] & 0x80) && (Controllers.KeyState[DIK_DELETE] & 0x80))
-									result |= 0x08;
-			if ((Controllers.KeyState[DIK_2] & 0x80) && (Controllers.KeyState[DIK_INSERT] & 0x80))
-									result |= 0x10;
+		case 8:	if (Controllers.KeyState[DIK_DOWN] & 0x80)	result |= 0x02;
+			if (Controllers.KeyState[DIK_SPACE] & 0x80)	result |= 0x04;
+			if (Controllers.KeyState[DIK_DELETE] & 0x80)	result |= 0x08;
+			if (Controllers.KeyState[DIK_INSERT] & 0x80)	result |= 0x10;
 			break;
 		}
 	}
@@ -187,10 +169,17 @@ static	void	Write (struct tExpPort *Cont, unsigned char Val)
 		/* tape, not yet implemented */
 	}
 }
+
+static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	Controllers_ParseConfigMessages(hDlg,0,NULL,NULL,NULL,uMsg,wParam,lParam);
+	return FALSE;
+}
 static	void	Config (struct tExpPort *Cont, HWND hWnd)
 {
-	MessageBox(hWnd,_T("No configuration necessary!"),_T("Nintendulator"),MB_OK);
+	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_FBKEY,hWnd,ConfigProc,(LPARAM)Cont);
 }
+
 static	void	Unload (struct tExpPort *Cont)
 {
 	free(Cont->Data);
