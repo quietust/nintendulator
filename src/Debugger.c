@@ -99,6 +99,7 @@ enum {
 void	Debugger_Init (void)
 {
 	HFONT tpf;
+	HPEN pen;
 	HDC TpHDC = GetDC(hMainWnd);
 	int nHeight;
 
@@ -152,6 +153,9 @@ void	Debugger_Init (void)
 	DeleteObject(tpf);
 	SetBkMode(Debugger.RegDC,TRANSPARENT);
 	SetBkMode(Debugger.TraceDC,TRANSPARENT);
+
+	pen = CreatePen(PS_DOT, 0, GetSysColor(COLOR_WINDOWFRAME));
+	SelectObject(Debugger.TraceDC, pen);
 
 	ReleaseDC(GetDesktopWindow(), TpHDC);
 	Debugger.Step = FALSE;
@@ -338,15 +342,15 @@ void	Debugger_DrawTraceLine (unsigned short Addr, short y)
 	DecodeInstruction(Addr,tpc);
 	if (Debugger.BreakP[Addr])
 	{
-		HBRUSH RBrush = CreateSolidBrush(RGB(255,0,0));
 		RECT trect;
 		trect.left = 0;
 		trect.top = y;
 		trect.right = D_TRC_W;
 		trect.bottom = y+Debugger.FontHeight;
-		FillRect(Debugger.TraceDC, &trect, RBrush);
-		DeleteObject(RBrush);
+		FillRect(Debugger.TraceDC, &trect, GetSysColorBrush(COLOR_HIGHLIGHT));
+		SetTextColor(Debugger.TraceDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
 	}
+	else	SetTextColor(Debugger.TraceDC, GetSysColor(COLOR_WINDOWTEXT));
 #ifdef	UNICODE
 	mbstowcs(tps,tpc,64);
 #else
@@ -365,7 +369,6 @@ void	Debugger_Update (void)
 			NES.Stop = TRUE;
 		if (NES.Stop)
 		{
-			HBRUSH WBrush = CreateSolidBrush(0xFFFFFF);
 			RECT trect;
 			TCHAR tps[64];
 			int i, TpVal, CurrY;
@@ -380,14 +383,13 @@ void	Debugger_Update (void)
 			trect.top = 0;
 			trect.right = D_REG_W;
 			trect.bottom = D_REG_H;
-			FillRect(Debugger.RegDC, &trect, WBrush);
+			FillRect(Debugger.RegDC, &trect, GetSysColorBrush(COLOR_WINDOW));
 
 			trect.left = 0;
 			trect.top = 0;
 			trect.right = D_TRC_W;
 			trect.bottom = D_TRC_H;
-			FillRect(Debugger.TraceDC, &trect, WBrush);
-			DeleteObject(WBrush);
+			FillRect(Debugger.TraceDC, &trect, GetSysColorBrush(COLOR_WINDOW));
 
 			_stprintf(tps,_T("PC: %04X"),CPU.PC);	TextOut(Debugger.RegDC,0, 0*Debugger.FontHeight,tps,(int)_tcslen(tps));
 			_stprintf(tps,_T("A: %02X"),CPU.A);	TextOut(Debugger.RegDC,0, 1*Debugger.FontHeight,tps,(int)_tcslen(tps));
