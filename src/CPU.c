@@ -582,21 +582,20 @@ static	__forceinline void	IN_BRK (void)
 	Push(CPU.PCL);
 	CPU_JoinFlags();
 	Push(CPU.P | 0x10);
+	CPU.FI = 1;
 #ifndef NSFPLAYER
 	if (CPU.WantNMI)
 	{
 		CPU.WantNMI = FALSE;
-		CPU.PCL = CPU_MemGet(0xFFFC);
-		CPU.PCH = CPU_MemGet(0xFFFD);
+		CPU.PCL = CPU_MemGet(0xFFFA);
+		CPU.PCH = CPU_MemGet(0xFFFB);
 	}
 	else
 	{
-		CPU.FI = 1;
 		CPU.PCL = CPU_MemGet(0xFFFE);
 		CPU.PCH = CPU_MemGet(0xFFFF);
 	}
 #else
-	CPU.FI = 1;
 	CPU.PCL = CPU_MemGet(0xFFFE);
 	CPU.PCH = CPU_MemGet(0xFFFF);
 #endif
