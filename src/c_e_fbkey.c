@@ -169,21 +169,40 @@ static	void	Write (struct tExpPort *Cont, unsigned char Val)
 		/* tape, not yet implemented */
 	}
 }
-
+static	HWND	ConfigWindow = NULL;
 static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	Controllers_ParseConfigMessages(hDlg,0,NULL,NULL,NULL,uMsg,wParam,lParam);
+	int wmId = LOWORD(wParam);
+	if (uMsg != WM_COMMAND)
+		return FALSE;
+	if (wmId == IDOK)
+	{
+		EndDialog(hDlg,1);
+		ConfigWindow = NULL;
+		return FALSE;
+	}
 	return FALSE;
 }
+
 static	void	Config (struct tExpPort *Cont, HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_FBKEY,hWnd,ConfigProc,(LPARAM)Cont);
+	if (!ConfigWindow)
+	{
+		// use hMainWnd instead of hWnd, so it stays open after closing Controller Config
+		ConfigWindow = CreateDialog(hInst,(LPCTSTR)IDD_EXPPORT_FBKEY,hMainWnd,ConfigProc);
+		SetWindowPos(ConfigWindow,hMainWnd,0,0,0,0,SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+	}
 }
 
 static	void	Unload (struct tExpPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
+	if (ConfigWindow)
+	{
+		DestroyWindow(ConfigWindow);
+		ConfigWindow = NULL;
+	}
 }
 void	ExpPort_SetFamilyBasicKeyboard (struct tExpPort *Cont)
 {
