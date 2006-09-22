@@ -830,7 +830,10 @@ static	int	getPhase (double *wave)
 
 static	void	GFX_GenerateNTSC (int hue, int sat)
 {
-	const double brightness[2][4] = {{0.40,0.68,1.00,1.00},{-0.12,0.00,0.31,0.72}};
+	const double black = 0.519;
+	const double white = 1.443;
+	const double voltage[2][4] = {{1.094,1.506,1.962,1.962},{0.350,0.519,0.962,1.550}};
+
 	const char phases[12][12] = {
 		{1,1,1,1,1,1,0,0,0,0,0,0},
 		{1,1,1,1,1,0,0,0,0,0,0,1},	// blue
@@ -872,14 +875,14 @@ static	void	GFX_GenerateNTSC (int hue, int sat)
 				for (i = 0; i < 12; i++)
 				{
 					if (z == 0)
-						wave[i] = brightness[0][y];
+						wave[i] = voltage[0][y];
 					else if (z < 13)
-						wave[i] = phases[z-1][i] ? brightness[0][y] : brightness[1][y];
+						wave[i] = phases[z-1][i] ? voltage[0][y] : voltage[1][y];
 					else if (z == 13)
-						wave[i] = brightness[1][y];
-					else	wave[i] = 0;
+						wave[i] = voltage[1][y];
+					else	wave[i] = black;
 					if ((emphasis[x][i]) && (z < 14))
-						wave[i] = wave[i] * 0.79399 - 0.0782838;
+						wave[i] = wave[i] * 0.75;
 				}
 
 				Y = 0.0; S = 0;
@@ -887,6 +890,8 @@ static	void	GFX_GenerateNTSC (int hue, int sat)
 					Y += wave[i] / 12.0;
 				for (i = 0; i < 12; i++)
 					S += (wave[i] - Y) * (wave[i] - Y);
+				Y = (Y - black) / white;
+				S = S / white;	// don't remove black offset, since this is already relative
 				S = sqrt(S / 12.0) * sat / 50.0;
 
 				H = M_PI * (270 + getPhase(wave) + hue) / 180.0;
