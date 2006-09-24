@@ -669,6 +669,19 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			MessageBox(hMainWnd,_T("Selected ROM contains iNES 2.0 information, which is not yet supported. Please use a stand-alone editor."),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			EndDialog(hDlg,0);
 		}
+		if ((header[7] & 0x0C) == 0x04)
+		{
+			MessageBox(hMainWnd,_T("Selected ROM appears to have been corrupted by \"DiskDude!\" - cleaning..."),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
+			for (i = 7; i < 16; i++)
+				header[i] = 0;
+		}
+		else if (((header[8] || header[9] || header[10] || header[11] || header[12] || header[13] || header[14] || header[15])) && 
+			(MessageBox(hDlg,_T("Unrecognized data has been detected in the reserved region of this ROM's header! Do you wish to clean it?"),_T("Nintendulator"),MB_YESNO | MB_ICONQUESTION) == IDYES))
+		{
+			for (i = 7; i < 16; i++)
+				header[i] = 0;
+		}
+
 		i = _tcslen(filename)-1;
 		while ((i >= 0) && (filename[i] != _T('\\')))
 			i--;
@@ -789,9 +802,6 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			}
 			break;
 		case IDOK:
-			if (((header[8] || header[9] || header[10] || header[11] || header[12] || header[13] || header[14] || header[15])) && 
-				(MessageBox(hDlg,_T("Garbage data has been detected in this ROM's header! Do you wish to remove it?"),_T("Nintendulator"),MB_YESNO | MB_ICONQUESTION) == IDYES))
-				memset(&header[8],0,8);
 			rom = _tfopen(filename,_T("r+b"));
 			if (rom)
 			{
