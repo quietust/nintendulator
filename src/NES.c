@@ -335,36 +335,50 @@ void	NES_CloseFile (void)
 
 const TCHAR *	NES_OpenFileiNES (TCHAR *filename)
 {
+	int i;
 	FILE *in;
-	unsigned char Header[4];
+	unsigned char Header[16];
 	unsigned long tmp;
 	BOOL p2Found;
 
 	in = _tfopen(filename,_T("rb"));
-	fread(&tmp,4,1,in);
-	if (tmp != MKID('NES\x1A'))
+	fread(Header,1,16,in);
+	if (*(unsigned long *)Header != MKID('NES\x1A'))
 	{
 		fclose(in);
 		return _T("iNES header signature not found!");
 	}
 	RI.Filename = _tcsdup(filename);
 	RI.ROMType = ROM_INES;
-	fread(Header,1,4,in);
-	for (tmp = 8; tmp < 0x10; tmp++)
+	if ((Header[7] & 0x0C) == 0x04)
 	{
-		unsigned char x;
-		fread(&x,1,1,in);
-		if (x)
-		{
-			fclose(in);
-			return _T("Invalid data found in header!");
-		}
+		fclose(in);
+		return _T("Header is corrupted by \"DiskDude!\" - please repair it and try again.");
 	}
-	
-	RI.INES_PRGSize = Header[0];
-	RI.INES_CHRSize = Header[1];
-	RI.INES_MapperNum = ((Header[2] & 0xF0) >> 4) | (Header[3] & 0xF0);
-	RI.INES_Flags = (Header[2] & 0xF) | ((Header[3] & 0xF) << 4);
+
+	if ((Header[7] & 0x0C) == 0x08)
+	{
+		EI.DbgOut(_T("iNES 2.0 ROM image detected - parsing in compatibility mode."));
+		/* TODO - load fields as iNES 2.0 */
+	}
+	else
+	{
+		for (i = 8; i < 0x10; i++)
+			if (Header[i] != 0)
+			{
+				EI.DbgOut(_T("Unrecognized data found at header offset %i - you are recommended to clean this ROM and reload it."));
+				break;
+			}
+		/* TODO - move iNES 1.0 loading stuff from below */
+	}
+
+	RI.INES_PRGSize = Header[4];
+	RI.INES_CHRSize = Header[5];
+	RI.INES_MapperNum = ((Header[6] & 0xF0) >> 4) | (Header[7] & 0xF0);
+	RI.INES_Flags = (Header[6] & 0xF) | ((Header[7] & 0xF) << 4);
+
+	RI.INES2_Extended = FALSE;	// iNES 2 information is not yet parsed
+
 
 	if (RI.INES_Flags & 0x04)
 	{
@@ -393,6 +407,7 @@ const TCHAR *	NES_OpenFileiNES (TCHAR *filename)
 			p2Found = TRUE;
 	if (!p2Found)
 		NES.CHRMask = MAX_CHRROM_MASK;
+
 	
 	if (!MapperInterface_LoadMapper(&RI))
 	{

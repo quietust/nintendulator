@@ -9,12 +9,12 @@
 
 /* Standard header files, used by all mappers */
 
-/* Mapper Interface version (3.6) */
+/* Mapper Interface version (3.7) */
 
 #ifdef UNICODE
-#define	CurrentMapperInterface 0x80030006
+#define	CurrentMapperInterface 0x80030007
 #else
-#define	CurrentMapperInterface 0x00030006
+#define	CurrentMapperInterface 0x00030007
 #endif
 
 /* Function types */
@@ -142,10 +142,16 @@ typedef	struct	ROMInfo
 	{
 		struct
 		{
-			BYTE	INES_MapperNum;
-			BYTE	INES_Flags;	/* byte 6 flags in lower 4 bits, byte 7 flags in upper 4 bits */
-			BYTE	INES_PRGSize;	/* number of 16KB banks */
-			BYTE	INES_CHRSize;	/* number of 8KB banks */
+			WORD	INES_MapperNum;
+			WORD	INES_Flags;	/* byte 6 flags in lower 4 bits, byte 7 flags in upper 4 bits */
+			WORD	INES_PRGSize;	/* number of 16KB banks */
+			WORD	INES_CHRSize;	/* number of 8KB banks */
+			BOOL	INES2_Extended;	/* Denotes presence of iNES 2.0 data */
+			BYTE	INES2_SubMapper;	/* iNES 2.0 - submapper */
+			BYTE	INES2_TVMode;	/* iNES 2.0 - NTSC/PAL indicator */
+			BYTE	INES2_PRGRAM;	/* iNES 2.0 - PRG RAM counts, batteried and otherwise */
+			BYTE	INES2_CHRRAM;	/* iNES 2.0 - CHR RAM counts, batteried and otherwise */
+			BYTE	INES2_VSDATA;	/* iNES 2.0 - VS Unisystem information */
 		};	/* INES */
 		struct
 		{

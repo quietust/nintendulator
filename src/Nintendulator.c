@@ -664,6 +664,11 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			MessageBox(hMainWnd,_T("Selected file is not an iNES ROM image!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			EndDialog(hDlg,0);
 		}
+		if ((header[7] & 0x0C) == 0x08)
+		{
+			MessageBox(hMainWnd,_T("Selected ROM contains iNES 2.0 information, which is not yet supported. Please use a stand-alone editor."),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			EndDialog(hDlg,0);
+		}
 		i = _tcslen(filename)-1;
 		while ((i >= 0) && (filename[i] != _T('\\')))
 			i--;
