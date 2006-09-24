@@ -143,7 +143,7 @@ typedef	struct	ROMInfo
 		struct
 		{
 			WORD	INES_MapperNum;
-			WORD	INES_Flags;	/* byte 6 flags in lower 4 bits, byte 7 flags in upper 4 bits */
+			BYTE	INES_Flags;	/* byte 6 flags in lower 4 bits, byte 7 flags in upper 4 bits */
 			WORD	INES_PRGSize;	/* number of 16KB banks */
 			WORD	INES_CHRSize;	/* number of 8KB banks */
 			BOOL	INES2_Extended;	/* Denotes presence of iNES 2.0 data */
