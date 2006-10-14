@@ -329,7 +329,7 @@ void	GFX_Update (void)
 			if (GFX.Fullscreen)
 			{
 				for (x = 0; x < 32; x++)
-					dst[x] = GFX.Palette32[0x0F];
+					dst[x] = 0;
 				dst += 32;
 			}
 			for (x = 0; x < 256; x++)
@@ -338,7 +338,7 @@ void	GFX_Update (void)
 			{
 				dst += 256;
 				for (x = 0; x < 32; x++)
-					dst[x] = GFX.Palette32[0x0F];
+					dst[x] = 0;
 			}
 			src += 256;
 		}
@@ -352,7 +352,7 @@ void	GFX_Update (void)
 			if (GFX.Fullscreen)
 			{
 				for (x = 0; x < 32; x++)
-					dst[x] = GFX.Palette16[0x0F];
+					dst[x] = 0;
 				dst += 32;
 			}
 			for (x = 0; x < 256; x++)
@@ -361,7 +361,7 @@ void	GFX_Update (void)
 			{
 				dst += 256;
 				for (x = 0; x < 32; x++)
-					dst[x] = GFX.Palette16[0x0F];
+					dst[x] = 0;
 			}
 			src += 256;
 		}
@@ -375,7 +375,7 @@ void	GFX_Update (void)
 			if (GFX.Fullscreen)
 			{
 				for (x = 0; x < 32; x++)
-					dst[x] = GFX.Palette15[0x0F];
+					dst[x] = 0;
 				dst += 32;
 			}
 			for (x = 0; x < 256; x++)
@@ -384,7 +384,7 @@ void	GFX_Update (void)
 			{
 				dst += 256;
 				for (x = 0; x < 32; x++)
-					dst[x] = GFX.Palette15[0x0F];
+					dst[x] = 0;
 			}
 			src += 256;
 		}
