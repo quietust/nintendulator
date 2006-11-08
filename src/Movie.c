@@ -156,6 +156,11 @@ void	Movie_Play (BOOL Review)
 
 	fseek(Movie.Data,16,SEEK_SET);	// seek back to the beginning of the file (past the header)
 
+	// cycle the mapper - special stuff might happen on load that we NEED to perform
+	if (MI->Unload)
+		MI->Unload();
+	if (MI->Load)
+		MI->Load();
 	NES_Reset(RESET_HARD);
 	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
 	if (!States_LoadData(Movie.Data,len))
@@ -305,6 +310,11 @@ void	Movie_Record (BOOL fromState)
 		States_SaveData(Movie.Data);
 	else
 	{
+		// cycle the mapper - special stuff might happen on load that we NEED to perform
+		if (MI->Unload)
+			MI->Unload();
+		if (MI->Load)
+			MI->Load();
 		if (RI.ROMType == ROM_FDS)	// if recording an FDS movie from reset, discard all savedata
 			memcpy(PRG_ROM[0x000],PRG_ROM[0x400],RI.FDS_NumSides << 16);
 		NES_Reset(RESET_HARD);
