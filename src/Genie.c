@@ -327,15 +327,27 @@ void	Genie_Init (void)
 		IsCode[Genie.Code2B - 8]++;
 	if (Genie.CodeStat & 0x40)
 		IsCode[Genie.Code3B - 8]++;
-	if (IsCode[Genie.Code1B - 8] == 1)
-		CPU.ReadHandler[Genie.Code1B] = GenieRead1;
-	else	CPU.ReadHandler[Genie.Code1B] = GenieRead;
-	if (IsCode[Genie.Code2B - 8] == 1)
-		CPU.ReadHandler[Genie.Code2B] = GenieRead2;
-	else	CPU.ReadHandler[Genie.Code2B] = GenieRead;
-	if (IsCode[Genie.Code3B - 8] == 1)
-		CPU.ReadHandler[Genie.Code3B] = GenieRead3;
-	else	CPU.ReadHandler[Genie.Code3B] = GenieRead;
+	if (Genie.CodeStat & 0x10)
+	{
+		if (IsCode[Genie.Code1B - 8] > 1)
+			CPU.ReadHandler[Genie.Code1B] = GenieRead;
+		else 
+			CPU.ReadHandler[Genie.Code1B] = GenieRead1;
+	}
+	if (Genie.CodeStat & 0x20)
+	{
+		if (IsCode[Genie.Code2B - 8] > 1)
+			CPU.ReadHandler[Genie.Code2B] = GenieRead;
+		else 
+			CPU.ReadHandler[Genie.Code2B] = GenieRead2;
+	}
+	if (Genie.CodeStat & 0x40)
+	{
+		if (IsCode[Genie.Code3B - 8] > 1)
+			CPU.ReadHandler[Genie.Code3B] = GenieRead;
+		else 
+			CPU.ReadHandler[Genie.Code3B] = GenieRead3;
+	}
 }
 
 int	Genie_Save (FILE *out)
