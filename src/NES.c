@@ -570,10 +570,10 @@ const TCHAR *	NES_OpenFileUNIF (TCHAR *filename)
 	if (!MapperInterface_LoadMapper(&RI))
 	{
 		static TCHAR err[256];
-		_stprintf(err,_T("UNIF boardset \"") PRINTF_CHAR8 _T("\" not supported!"),RI.UNIF_BoardName);
+		_stprintf(err,_T("UNIF boardset \"%hs\" not supported!"),RI.UNIF_BoardName);
 		return err;
 	}
-	EI.DbgOut(_T("UNIF file loaded: ") PRINTF_CHAR8 _T(" (%s) - %s"),RI.UNIF_BoardName,MI->Description,CompatLevel[MI->Compatibility]);
+	EI.DbgOut(_T("UNIF file loaded: %hs (%s) - %s"),RI.UNIF_BoardName,MI->Description,CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"),PRGsize >> 10,CHRsize >> 10);
 	EI.DbgOut(_T("Battery status: %s"),RI.UNIF_Battery ? _T("present") : _T("not present"));
 	{

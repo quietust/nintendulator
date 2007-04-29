@@ -218,7 +218,7 @@ void	Movie_Play (BOOL Review)
 	{
 		char *desc = malloc(len);
 		fread(desc,len,1,Movie.Data);
-		EI.DbgOut(_T("Description: \"") PRINTF_CHAR8 _T("\""),desc);
+		EI.DbgOut(_T("Description: \"%hs\""),desc);
 		free(desc);
 	}
 	EI.DbgOut(_T("Re-record count: %i"),Movie.ReRecords);

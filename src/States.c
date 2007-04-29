@@ -318,7 +318,7 @@ void	States_LoadState (void)
 	{
 		fclose(in);
 		tpc[4] = 0;
-		PrintTitlebar(_T("Incorrect savestate version (") PRINTF_CHAR8 _T("): %i"), tpc, States.SelSlot);
+		PrintTitlebar(_T("Incorrect savestate version (%hs): %i"), tpc, States.SelSlot);
 		return;
 	}
 	fread(&flen,4,1,in);
@@ -348,7 +348,7 @@ void	States_LoadState (void)
 	{
 		fclose(in);
 		tpc[4] = 0;
-		PrintTitlebar(_T("Selected savestate (%i) has unknown type! (") PRINTF_CHAR8 _T(")"), States.SelSlot, tpc);
+		PrintTitlebar(_T("Selected savestate (%i) has unknown type! (%hs)"), States.SelSlot, tpc);
 		return;
 	}
 
