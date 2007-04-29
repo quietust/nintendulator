@@ -342,6 +342,8 @@ const TCHAR *	NES_OpenFileiNES (TCHAR *filename)
 	BOOL p2Found;
 
 	in = _tfopen(filename,_T("rb"));
+	if (in == NULL)
+		return _T("File not found!");
 	fread(Header,1,16,in);
 	if (*(unsigned long *)Header != MKID('NES\x1A'))
 	{
@@ -434,7 +436,8 @@ const TCHAR *	NES_OpenFileUNIF (TCHAR *filename)
 
 	FILE *in = _tfopen(filename,_T("rb"));
 	if (!in)
-		return FALSE;
+		return _T("File not found!");
+
 	fread(&Signature,4,1,in);
 	if (Signature != MKID('UNIF'))
 	{
@@ -595,6 +598,9 @@ const TCHAR *	NES_OpenFileFDS (TCHAR *filename)
 	int i;
 
 	in = _tfopen(filename,_T("rb"));
+	if (in == NULL)
+		return _T("File not found!");
+
 	fread(&Header,4,1,in);
 	if (Header != MKID('FDS\x1a'))
 	{
@@ -632,6 +638,9 @@ const TCHAR *	NES_OpenFileNSF (TCHAR *filename)
 	int ROMlen;
 
 	in = _tfopen(filename,_T("rb"));
+	if (in == NULL)
+		return _T("File not found!");
+
 	fseek(in,0,SEEK_END);
 	ROMlen = ftell(in) - 128;
 	fseek(in,0,SEEK_SET);
@@ -703,9 +712,9 @@ const char *	NES_OpenFileNFRF (char *filename)
 	BOOL p2Found = FALSE;
 	int p2;
 	FILE *in = fopen(filename,"rb");
+	if (in == NULL)
+		return "File not found!";
 
-	if (!in)
-		return FALSE;
 	fread(&BlockSig,1,4,in);
 	if (BlockSig != MKID('NFRF'))
 	{
