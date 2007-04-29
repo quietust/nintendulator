@@ -68,7 +68,7 @@ void	ShowDebug (void);
 TCHAR	TitlebarBuffer[256];
 int	TitlebarDelay;
 
-int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
 	size_t i;
 	MSG msg;
@@ -92,24 +92,25 @@ int APIENTRY	WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 	if (lpCmdLine[0])
 	{
-		TCHAR *cmdline = _tcsdup(GetCommandLine());
+		// grab a copy of the command line parms - we're gonna need to extract a single filename from it
+		TCHAR *cmdline = _tcsdup(lpCmdLine);
+		// and remember the pointer so we can safely free it at the end
+		TCHAR *bkptr = cmdline;
+
+		// if the filename is in quotes, strip them off (and ignore everything past it)
 		if (cmdline[0] == _T('"'))
-			cmdline = _tcschr(cmdline + 1,'"') + 1;	// EXE filename is enclosed in quotes - skip first char, then past the next quote char
-		else	cmdline = _tcschr(cmdline,' ');	// not in quotes, so just skip to the first space
-
-		while (cmdline[0] == _T(' '))
-			cmdline++;	// skip past any spaces (could be more than one!)
-
-		if (cmdline[0] == _T('"'))	// if the filename is in quotes, strip them off (and ignore everything past it)
 		{
-			cmdline++;		// skip first quote
-			*_tcschr(cmdline,'"') = 0;	// and nullify the second one
+			cmdline++;
+			// yes, it IS possible for the second quote to not exist!
+			if (_tcschr(cmdline,'"'))
+				*_tcschr(cmdline,'"') = 0;
 		}
-		else if (_tcschr(cmdline,' '))	// else just get the filename (and ignore everything past it)
-			*_tcschr(cmdline,' ') = 0;	// nullify the first space found
+		// otherwise just kill everything past the first space
+		else if (_tcschr(cmdline,' '))
+			*_tcschr(cmdline,' ') = 0;
 
 		NES_OpenFile(cmdline);
-		free(cmdline);
+		free(bkptr);	// free up the memory from its original pointer
 	}
 
 	// Main message loop:
