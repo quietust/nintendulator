@@ -350,10 +350,15 @@ static	struct
 	unsigned long Cycles;	// short
 	signed long Pos;
 }	Noise;
-const	unsigned long	NoiseFreq[16] = {
+const	unsigned long	NoiseFreqNTSC[16] = {
 	0x004,0x008,0x010,0x020,0x040,0x060,0x080,0x0A0,
 	0x0CA,0x0FE,0x17C,0x1FC,0x2FA,0x3F8,0x7F2,0xFE4
 };
+const	unsigned long	NoiseFreqPAL[16] = {
+	0x004,0x007,0x00E,0x01E,0x03C,0x058,0x076,0x094,
+	0x0BC,0x0EC,0x162,0x1D8,0x2C4,0x3B0,0x762,0xEC2
+};
+const	unsigned long	*NoiseFreq;
 __inline void	Noise_Write (int Reg, unsigned char Val)
 {
 	switch (Reg)
@@ -527,13 +532,22 @@ static	struct
 	unsigned long Cycles;
 	int Num;
 }	Frame;
+const	int	FrameCyclesNTSC[10] = {
+	7459,7456,7458,7458,7458,
+	7458,7456,7458,7458,7452
+};
+const	int	FrameCyclesPAL[10] = {
+	8315,8314,8312,8314,8314,
+	8314,8314,8312,8314,8312
+};
+const	int	*FrameCycles;
 __inline void	Frame_Write (unsigned char Val)
 {
 	Frame.Bits = Val & 0xC0;
 	Frame.Num = 0;
 	if (Frame.Bits & 0x80)
 		Frame.Cycles = 1;
-	else	Frame.Cycles = APU.QuarterFrameLen;
+	else	Frame.Cycles = FrameCycles[0];
 	if (Frame.Bits & 0x40)
 		CPU.WantIRQ &= ~IRQ_FRAME;
 }
@@ -541,29 +555,47 @@ __inline void	Frame_Run (void)
 {
 	if (!--Frame.Cycles)
 	{
-		Frame.Cycles = APU.QuarterFrameLen;
-		if (Frame.Num < 4)
+		if (Frame.Bits & 0x80)
+		{
+			if (Frame.Num < 4)
+			{
+				Square0_QuarterFrame();
+				Square1_QuarterFrame();
+				Triangle_QuarterFrame();
+				Noise_QuarterFrame();
+				if ((Frame.Num == 0) || (Frame.Num == 2))
+				{
+					Square0_HalfFrame();
+					Square1_HalfFrame();
+					Triangle_HalfFrame();
+					Noise_HalfFrame();
+				}
+			}
+			Frame.Cycles = FrameCycles[Frame.Num+5];
+			Frame.Num++;
+			if (Frame.Num == 5)
+				Frame.Num = 0;
+		}
+		else
 		{
 			Square0_QuarterFrame();
 			Square1_QuarterFrame();
 			Triangle_QuarterFrame();
 			Noise_QuarterFrame();
-			if (( (Frame.Bits & 0x80) && !(Frame.Num & 1)) ||
-			    (!(Frame.Bits & 0x80) &&  (Frame.Num & 1)))
+			if ((Frame.Num == 1) || (Frame.Num == 3))
 			{
 				Square0_HalfFrame();
 				Square1_HalfFrame();
 				Triangle_HalfFrame();
 				Noise_HalfFrame();
 			}
+			if ((Frame.Num == 3) && !(Frame.Bits & 0x40))
+				CPU.WantIRQ |= IRQ_FRAME;
+			Frame.Cycles = FrameCycles[Frame.Num+1];
+			Frame.Num++;
+			if (Frame.Num == 4)
+				Frame.Num = 0;
 		}
-		if ((APU.WantFPS == 60) && (Frame.Num & 1))
-			Frame.Cycles++;
-		if ((Frame.Num == 3) && !(Frame.Bits & 0xC0))
-			CPU.WantIRQ |= IRQ_FRAME;
-		Frame.Num++;
-		if (Frame.Num == ((Frame.Bits & 0x80) ? 5 : 4))
-			Frame.Num = 0;
 	}
 }
 
@@ -646,15 +678,19 @@ void	APU_SetFPSVars (int FPS)
 	APU.WantFPS = FPS;
 	if (APU.WantFPS == 60)
 	{
+		APU.PAL = FALSE;
 		APU.MHz = 1789773;
-		APU.QuarterFrameLen = 7457;
+		NoiseFreq = NoiseFreqNTSC;
 		DPCMFreq = DPCMFreqNTSC;
+		FrameCycles = FrameCyclesNTSC;
 	}
 	else if (APU.WantFPS == 50)
 	{
+		APU.PAL = TRUE;
 		APU.MHz = 1662607;
-		APU.QuarterFrameLen = 8313;
+		NoiseFreq = NoiseFreqPAL;
 		DPCMFreq = DPCMFreqPAL;
+		FrameCycles = FrameCyclesPAL;
 	}
 	else
 	{
@@ -700,11 +736,11 @@ void	APU_Init (void)
 #endif
 	APU.WantFPS		= 0;
 	APU.MHz			= 1;
+	APU.PAL			= FALSE;
 #ifndef	NSFPLAYER
 	APU.LockSize		= 0;
 	APU.buflen		= 0;
 #endif
-	APU.QuarterFrameLen	= 0;
 	APU.Cycles		= 0;
 	APU.BufPos		= 0;
 #ifndef	NSFPLAYER

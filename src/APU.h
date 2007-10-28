@@ -49,7 +49,7 @@ struct	tAPU
 
 	unsigned char		WantFPS;
 	unsigned long		MHz;
-	unsigned long		QuarterFrameLen;
+	BOOL			PAL;
 #ifndef NSFPLAYER
 	unsigned long		LockSize;
 #endif /* NSFPLAYER */
