@@ -407,8 +407,15 @@ static	void	EndMovie (void)
 		// TODO - truncate the file to this point
 	}
 	fclose(Movie.Data);
+
+	if (Movie.Mode & MOV_PLAY)
+		EI.DbgOut(_T("Movie playback stopped."));
+	if (Movie.Mode & MOV_RECORD)
+		EI.DbgOut(_T("Movie recording stopped."));
+
 	Movie.Mode = 0;
 
+	// Restore controller types to whatever was configured prior to movie playback
 	if (Movie.ControllerTypes[0] == STD_FOURSCORE)
 	{
 		if (Movie.ControllerTypes[1] & 0x01)
