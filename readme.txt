@@ -91,7 +91,7 @@ Version History
       the "ClockTicks" state variable.
    Added preliminary code (currently disabled) to accurately emulate
       the sprite evaluation process.
-   Adjusted the initial VRAM addres load to occur at cycle 304 on
+   Adjusted the initial VRAM address load to occur at cycle 304 on
       scanline -1.
    Delayed VRAM address horizontal component reload until cycle 257.
    Fixed a bug in Sprite 0 Hit handling during frameskip.
@@ -119,7 +119,7 @@ Version History
 - APU:
    Fixed behaviour of square channel pitch bends (silences properly in
       Mega Man games, Codemasters intros, etc.)
-   Fixed behaviour pf square/noise channel volume envelope
+   Fixed behaviour of square/noise channel volume envelope
    Fixed behaviour of triangle channel linear counter
    Rewrote DPCM IRQ code to work correctly
    Adjusted DPCM sample fetch to take up to 4 cycles
