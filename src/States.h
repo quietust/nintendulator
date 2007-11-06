@@ -30,7 +30,6 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 struct tStates
 {
 	TCHAR BaseFilename[MAX_PATH];
-	BOOL NeedSave, NeedLoad;
 	int SelSlot;
 };
 

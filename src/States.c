@@ -43,8 +43,6 @@ void	States_Init (void)
 	TCHAR tmp[MAX_PATH];
 	_stprintf(tmp,_T("%sSaves"),ProgPath);
 	States.SelSlot = 0;
-	States.NeedSave = FALSE;
-	States.NeedLoad = FALSE;
 	CreateDirectory(tmp,NULL);	// attempt to create Saves dir (if it exists, it fails silently)
 }
 
@@ -189,8 +187,6 @@ void	States_SaveState (void)
 	int flen;
 	FILE *out;
 
-	States.NeedSave = FALSE;
-
 	if (Genie.CodeStat & 0x80)
 	{
 		PrintTitlebar(_T("Cannot save state at the Game Genie code entry screen!"));
@@ -295,8 +291,6 @@ void	States_LoadState (void)
 	char tpc[5];
 	FILE *in;
 	int flen;
-
-	States.NeedLoad = FALSE;
 
 	_stprintf(tps,_T("%s.ns%i"),States.BaseFilename,States.SelSlot);
 	in = _tfopen(tps,_T("rb"));
