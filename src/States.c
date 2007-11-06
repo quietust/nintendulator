@@ -256,17 +256,11 @@ BOOL	States_LoadData (FILE *in, int flen)
 			if ((MI) && (MI->SaveLoad))
 			{
 				int len = MI->SaveLoad(STATE_SIZE,0,NULL);
-				char *tpmi = malloc(len);
+				unsigned char *tpmi = malloc(len);
 				fread(tpmi,1,len,in);			//	CUST	uint8[...]	Custom mapper data
 				MI->SaveLoad(STATE_LOAD,0,tpmi);
 				free(tpmi);
 				clen -= len;
-			}
-			else	clen = 1;	// ack! we shouldn't have a MAPR block here!
-			if (clen != 0)
-			{
-				clen = 0;	// need to handle this HERE and not below
-				SSOK = FALSE;	// since we didn't read past the end of the chunk
 			}
 		}
 		else if (!memcmp(csig,"NMOV",4))
