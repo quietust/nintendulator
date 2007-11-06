@@ -434,6 +434,7 @@ int	PPU_Save (FILE *out)
 {
 	int clen = 0;
 	unsigned short tps;
+	unsigned char tpc;
 	fwrite(PPU_VRAM,1,0x1000,out);	clen += 0x1000;	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
 	fwrite(PPU.Sprite,1,0x100,out);	clen += 0x100;	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
 	fwrite(PPU.Palette,1,0x20,out);	clen += 0x20;	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
@@ -463,7 +464,8 @@ int	PPU_Save (FILE *out)
 	fwrite(&PPU.IOVal,1,1,out);	clen++;		//	IOVAL	uint8		External I/O Value
 	fwrite(&PPU.IOMode,1,1,out);	clen++;		//	IOMOD	uint8		External I/O Mode/Counter
 
-	fwrite(&PPU.IsPAL,1,1,out);	clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
+	tpc = (unsigned char)PPU.IsPAL;
+	fwrite(&tpc,1,1,out);		clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
 	return clen;
 }
 
@@ -471,6 +473,7 @@ int	PPU_Load (FILE *in)
 {
 	int clen = 0;
 	unsigned short tps;
+	unsigned char tpc;
 	fread(PPU_VRAM,1,0x1000,in);	clen += 0x1000;	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
 	fread(PPU.Sprite,1,0x100,in);	clen += 0x100;	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
 	fread(PPU.Palette,1,0x20,in);	clen += 0x20;	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
@@ -502,7 +505,8 @@ int	PPU_Load (FILE *in)
 	fread(&PPU.IOVal,1,1,in);	clen++;		//	IOVAL	uint8		External I/O Value
 	fread(&PPU.IOMode,1,1,in);	clen++;		//	IOMOD	uint8		External I/O Mode/Counter
 
-	fread(&PPU.IsPAL,1,1,in);	clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
+	fread(&tpc,1,1,in);		clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
+	PPU.IsPAL = tpc;
 
 	PPU.IsRendering = PPU.OnScreen = FALSE;
 	PPU.ColorEmphasis = (PPU.Reg2001 & 0xE0) << 1;

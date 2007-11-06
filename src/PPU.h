@@ -76,7 +76,7 @@ struct	tPPU
 	unsigned char SprData[8][8];
 #endif
 	unsigned short *GfxData;
-	unsigned char IsPAL;
+	BOOL IsPAL;
 	unsigned char PALsubticks;
 };
 extern	struct	tPPU	PPU;
