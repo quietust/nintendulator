@@ -576,6 +576,11 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+	case WM_SYSCOMMAND:
+		// disallow screen saver while emulating (doesn't work if password protected)
+		if (running && (((wParam & 0xFFF0) == SC_SCREENSAVE) || ((wParam & 0xFFF0) == SC_MONITORPOWER)))
+			return 0;
+		// else fall through
 	default:
 		return DefWindowProc(hWnd,message,wParam,lParam);
 		break;
