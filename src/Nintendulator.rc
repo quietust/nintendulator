@@ -115,6 +115,7 @@ BEGIN
             MENUITEM "1/2&0 (5%)",                  ID_PPU_SLOWDOWN_20
         END
         MENUITEM "F&ullscreen\tAlt+Enter",      ID_PPU_FULLSCREEN
+        MENUITEM "S&canlines",                  ID_PPU_SCANLINES
     END
     POPUP "&Sound"
     BEGIN

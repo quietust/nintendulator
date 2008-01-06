@@ -32,7 +32,7 @@ struct tGFX
 	unsigned short Palette16[512];
 	unsigned long Palette32[512];
 	char Depth;
-	BOOL Fullscreen;
+	BOOL Fullscreen, Scanlines;
 
 	LARGE_INTEGER ClockFreq;
 	LARGE_INTEGER LastClockVal;
@@ -63,6 +63,8 @@ void	GFX_Init (void);
 void	GFX_Create (void);
 void	GFX_Release (void);
 void	GFX_DrawScreen (void);
+void	GFX_Draw1x (void);
+void	GFX_Draw2x (void);
 void	GFX_Update (void);
 void	GFX_Repaint (void);
 void	GFX_LoadPalette (int);

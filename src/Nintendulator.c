@@ -477,6 +477,17 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (running)
 				NES_Start(FALSE);
 			break;
+		case ID_PPU_SCANLINES:
+			NES_Stop();
+			GFX_Release();
+			GFX.Scanlines = !GFX.Scanlines;
+			GFX_Create();
+			if (running)
+				NES_Start(FALSE);
+			if (GFX.Scanlines)
+				CheckMenuItem(hMenu,ID_PPU_SCANLINES,MF_CHECKED);
+			else	CheckMenuItem(hMenu,ID_PPU_SCANLINES,MF_UNCHECKED);
+			break;
 		case ID_SOUND_ENABLED:
 			if (NES.SoundEnabled = !NES.SoundEnabled)
 			{

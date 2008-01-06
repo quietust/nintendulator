@@ -1082,19 +1082,20 @@ void	NES_LoadSettings (void)
 	RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase);
 	Size = 4;
 	RegQueryValueEx(SettingsBase,_T("SoundEnabled"),0,&Type,(unsigned char *)&NES.SoundEnabled,&Size);
-	RegQueryValueEx(SettingsBase,_T("SizeMult")    ,0,&Type,(unsigned char *)&SizeMult   ,&Size);
-	RegQueryValueEx(SettingsBase,_T("FSkip")       ,0,&Type,(unsigned char *)&GFX.FSkip  ,&Size);
-	RegQueryValueEx(SettingsBase,_T("aFSkip")      ,0,&Type,(unsigned char *)&GFX.aFSkip ,&Size);
-	RegQueryValueEx(SettingsBase,_T("PPUMode")     ,0,&Type,(unsigned char *)&PPU.IsPAL  ,&Size);
-	RegQueryValueEx(SettingsBase,_T("AutoRun")     ,0,&Type,(unsigned char *)&NES.AutoRun,&Size);
-	RegQueryValueEx(SettingsBase,_T("PosX")        ,0,&Type,(unsigned char *)&PosX       ,&Size);
-	RegQueryValueEx(SettingsBase,_T("PosY")        ,0,&Type,(unsigned char *)&PosY       ,&Size);
+	RegQueryValueEx(SettingsBase,_T("SizeMult")    ,0,&Type,(unsigned char *)&SizeMult        ,&Size);
+	RegQueryValueEx(SettingsBase,_T("FSkip")       ,0,&Type,(unsigned char *)&GFX.FSkip       ,&Size);
+	RegQueryValueEx(SettingsBase,_T("aFSkip")      ,0,&Type,(unsigned char *)&GFX.aFSkip      ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PPUMode")     ,0,&Type,(unsigned char *)&PPU.IsPAL       ,&Size);
+	RegQueryValueEx(SettingsBase,_T("AutoRun")     ,0,&Type,(unsigned char *)&NES.AutoRun     ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PosX")        ,0,&Type,(unsigned char *)&PosX            ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PosY")        ,0,&Type,(unsigned char *)&PosY            ,&Size);
+	RegQueryValueEx(SettingsBase,_T("Scanlines")   ,0,&Type,(unsigned char *)&GFX.Scanlines   ,&Size);
 
-	RegQueryValueEx(SettingsBase,_T("PaletteNTSC") ,0,&Type,(unsigned char *)&GFX.PaletteNTSC,&Size);
-	RegQueryValueEx(SettingsBase,_T("PalettePAL")  ,0,&Type,(unsigned char *)&GFX.PalettePAL ,&Size);
-	RegQueryValueEx(SettingsBase,_T("NTSChue")     ,0,&Type,(unsigned char *)&GFX.NTSChue    ,&Size);
-	RegQueryValueEx(SettingsBase,_T("NTSCsat")     ,0,&Type,(unsigned char *)&GFX.NTSCsat    ,&Size);
-	RegQueryValueEx(SettingsBase,_T("PALsat")      ,0,&Type,(unsigned char *)&GFX.PALsat     ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PaletteNTSC") ,0,&Type,(unsigned char *)&GFX.PaletteNTSC ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PalettePAL")  ,0,&Type,(unsigned char *)&GFX.PalettePAL  ,&Size);
+	RegQueryValueEx(SettingsBase,_T("NTSChue")     ,0,&Type,(unsigned char *)&GFX.NTSChue     ,&Size);
+	RegQueryValueEx(SettingsBase,_T("NTSCsat")     ,0,&Type,(unsigned char *)&GFX.NTSCsat     ,&Size);
+	RegQueryValueEx(SettingsBase,_T("PALsat")      ,0,&Type,(unsigned char *)&GFX.PALsat      ,&Size);
 
 	RegQueryValueEx(SettingsBase,_T("UDLR"),0,&Type,(unsigned char *)&Controllers.EnableOpposites,&Size);
 
@@ -1188,6 +1189,7 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,_T("AutoRun")     ,0,REG_DWORD,(unsigned char *)&NES.AutoRun     ,4);
 	RegSetValueEx(SettingsBase,_T("PosX")        ,0,REG_DWORD,(unsigned char *)&wRect.left      ,4);
 	RegSetValueEx(SettingsBase,_T("PosY")        ,0,REG_DWORD,(unsigned char *)&wRect.top       ,4);
+	RegSetValueEx(SettingsBase,_T("Scanlines")   ,0,REG_DWORD,(unsigned char *)&GFX.Scanlines   ,4);
 
 	RegSetValueEx(SettingsBase,_T("PaletteNTSC") ,0,REG_DWORD,(unsigned char *)&GFX.PaletteNTSC ,4);
 	RegSetValueEx(SettingsBase,_T("PalettePAL")  ,0,REG_DWORD,(unsigned char *)&GFX.PalettePAL  ,4);

@@ -114,7 +114,7 @@ void	GFX_Create (void)
 			MessageBox(hMainWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
-		if (FAILED(IDirectDraw7_SetDisplayMode(GFX.DirectDraw, 320, 240, 32, 0, 0)))
+		if (FAILED(IDirectDraw7_SetDisplayMode(GFX.DirectDraw, 640, 480, 32, 0, 0)))
 		{
 			GFX_Release();
 			MessageBox(hMainWnd,_T("Failed to set display mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
@@ -167,8 +167,16 @@ void	GFX_Create (void)
 			return;
 		}
 
-		GFX.SurfDesc.dwWidth = 256;
-		GFX.SurfDesc.dwHeight = 240;
+		if (GFX.Scanlines)
+		{
+			GFX.SurfDesc.dwWidth = 512;
+			GFX.SurfDesc.dwHeight = 480;
+		}
+		else
+		{
+			GFX.SurfDesc.dwWidth = 256;
+			GFX.SurfDesc.dwHeight = 240;
+		}
 		GFX.SurfDesc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
 		GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
@@ -229,8 +237,8 @@ void	GFX_Create (void)
 		return;			break;
 	}
 
-	GFX_Update();
 	GFX_LoadPalette(PPU.IsPAL ? GFX.PalettePAL : GFX.PaletteNTSC);
+	GFX_Update();
 	EI.DbgOut(_T("Successfully created %ix%i %i-bit display surface (%s)"), GFX.SurfDesc.dwWidth, GFX.SurfDesc.dwHeight, GFX.Depth, GFX.Fullscreen ? _T("fullscreen") : _T("windowed"));
 }
 
@@ -318,56 +326,83 @@ void	GFX_SetFrameskip (int skip)
 	}
 }
 
-void	GFX_Update (void)
+void	GFX_Draw2x (void)
 {
 	register unsigned short *src = DrawArray;
-	if (!GFX.DirectDraw)
-		return;
-	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),_T("Failed to lock secondary surface"))
 	if (GFX.Depth == 32)
 	{
 		int x, y;
-		for (y = 0; y < 240; y++)
+		for (y = 0; y < 480; y++)
 		{
 			register unsigned long *dst = (unsigned long *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
 			if (GFX.Fullscreen)
 			{
-				for (x = 0; x < 32; x++)
-					dst[x] = 0;
-				dst += 32;
+				for (x = 0; x < 64; x++)
+					*dst++ = 0;
 			}
-			for (x = 0; x < 256; x++)
-				dst[x] = GFX.Palette32[src[x]];
+			if (GFX.Scanlines && (y & 1))
+			{
+				for (x = 0; x < 256; x++)
+				{
+					*dst++ = 0;
+					*dst++ = 0;
+				}
+				src += 256;
+			}
+			else
+			{
+				for (x = 0; x < 256; x++)
+				{
+					*dst++ = GFX.Palette32[*src];
+					*dst++ = GFX.Palette32[*src];
+					src++;
+				}
+			}
 			if (GFX.Fullscreen)
 			{
-				dst += 256;
-				for (x = 0; x < 32; x++)
-					dst[x] = 0;
+				for (x = 0; x < 64; x++)
+					*dst++ = 0;
 			}
-			src += 256;
+			if (!(y & 1))
+				src -= 256;
 		}
 	}
 	else if (GFX.Depth == 16)
 	{
 		int x, y;
-		for (y = 0; y < 240; y++)
+		for (y = 0; y < 480; y++)
 		{
 			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
 			if (GFX.Fullscreen)
 			{
-				for (x = 0; x < 32; x++)
-					dst[x] = 0;
-				dst += 32;
+				for (x = 0; x < 64; x++)
+					*dst++ = 0;
 			}
-			for (x = 0; x < 256; x++)
-				dst[x] = GFX.Palette16[src[x]];
+			if (GFX.Scanlines && (y & 1))
+			{
+				for (x = 0; x < 256; x++)
+				{
+					*dst++ = 0;
+					*dst++ = 0;
+				}
+				src += 256;
+			}
+			else
+			{
+				for (x = 0; x < 256; x++)
+				{
+					*dst++ = GFX.Palette16[*src];
+					*dst++ = GFX.Palette16[*src];
+					src++;
+				}
+			}
 			if (GFX.Fullscreen)
 			{
-				dst += 256;
-				for (x = 0; x < 32; x++)
-					dst[x] = 0;
+				for (x = 0; x < 64; x++)
+					*dst++ = 0;
 			}
-			src += 256;
+			if (!(y & 1))
+				src -= 256;
 		}
 	}
 	else
@@ -378,21 +413,83 @@ void	GFX_Update (void)
 			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
 			if (GFX.Fullscreen)
 			{
-				for (x = 0; x < 32; x++)
-					dst[x] = 0;
-				dst += 32;
+				for (x = 0; x < 64; x++)
+					*dst++ = 0;
 			}
-			for (x = 0; x < 256; x++)
-				dst[x] = GFX.Palette15[src[x]];
+			if (GFX.Scanlines && (y & 1))
+			{
+				for (x = 0; x < 256; x++)
+				{
+					*dst++ = 0;
+					*dst++ = 0;
+				}
+				src += 256;
+			}
+			else
+			{
+				for (x = 0; x < 256; x++)
+				{
+					*dst++ = GFX.Palette15[*src];
+					*dst++ = GFX.Palette15[*src];
+					src++;
+				}
+			}
 			if (GFX.Fullscreen)
 			{
-				dst += 256;
-				for (x = 0; x < 32; x++)
-					dst[x] = 0;
+				for (x = 0; x < 64; x++)
+					*dst++ = 0;
 			}
-			src += 256;
+			if (!(y & 1))
+				src -= 256;
 		}
 	}
+}
+
+void	GFX_Draw1x (void)
+{
+	register unsigned short *src = DrawArray;
+	if (GFX.Depth == 32)
+	{
+		int x, y;
+		for (y = 0; y < 240; y++)
+		{
+			register unsigned long *dst = (unsigned long *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			for (x = 0; x < 256; x++)
+				*dst++ = GFX.Palette32[*src++];
+		}
+	}
+	else if (GFX.Depth == 16)
+	{
+		int x, y;
+		for (y = 0; y < 240; y++)
+		{
+			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			for (x = 0; x < 256; x++)
+				*dst++ = GFX.Palette16[*src++];
+		}
+	}
+	else
+	{
+		int x, y;
+		for (y = 0; y < 240; y++)
+		{
+			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			for (x = 0; x < 256; x++)
+				*dst++ = GFX.Palette15[*src++];
+		}
+	}
+}
+
+void	GFX_Update (void)
+{
+	if (!GFX.DirectDraw)
+		return;
+	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),_T("Failed to lock secondary surface"))
+
+	if (GFX.Fullscreen || GFX.Scanlines)
+		GFX_Draw2x();
+	else	GFX_Draw1x();
+
 	GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),_T("Failed to unlock secondary surface"))
 	GFX_Repaint();
 }
@@ -423,7 +520,13 @@ void	GFX_Repaint (void)
 void	GFX_GetCursorPos (POINT *pos)
 {
 	GetCursorPos(pos);
-	if (!GFX.Fullscreen)
+	if (GFX.Fullscreen)
+	{
+		pos->x /= 2;
+		pos->y /= 2;
+		pos->x -= 32;
+	}
+	else
 	{
 		RECT rect;
 		ScreenToClient(hMainWnd,pos);
@@ -431,7 +534,7 @@ void	GFX_GetCursorPos (POINT *pos)
 		pos->x = pos->x * 256 / (rect.right - rect.left);
 		pos->y = pos->y * 240 / (rect.bottom - rect.top);
 	}
-	else	pos->x -= 32;
+	
 }
 
 void	GFX_SetCursorPos (int x, int y)
