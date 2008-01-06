@@ -59,6 +59,9 @@ void	NES_Init (void)
 	Debugger_SetMode(0);
 #endif	/* ENABLE_DEBUGGER */
 	NES_LoadSettings();
+
+	GFX_Create();
+
 	NES_CloseFile();
 
 	NES.Running = FALSE;
@@ -1076,7 +1079,7 @@ void	NES_LoadSettings (void)
 
 	NES.FrameStep = FALSE;
 	Path_ROM[0] = Path_NMV[0] = Path_AVI[0] = Path_PAL[0] = 0;
-	
+
 	/* End Defaults */
 
 	RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase);
@@ -1141,10 +1144,10 @@ void	NES_LoadSettings (void)
 	Controllers_SetDeviceUsed();
 
 	RegCloseKey(SettingsBase);
-	
+
 	if (NES.SoundEnabled)
 		CheckMenuItem(hMenu, ID_SOUND_ENABLED, MF_CHECKED);
-	
+
 	if (NES.AutoRun)
 		CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_CHECKED);
 
@@ -1162,10 +1165,13 @@ void	NES_LoadSettings (void)
 	case 4:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);	break;
 	}
 
+	if (GFX.Scanlines)
+		CheckMenuItem(hMenu, ID_PPU_SCANLINES, MF_CHECKED);
+
 	if (PPU.IsPAL)
 		NES_SetCPUMode(1);
 	else	NES_SetCPUMode(0);
-	
+
 	CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
 
 	SetWindowPos(hMainWnd,HWND_TOP,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
@@ -1213,7 +1219,7 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,_T("FSPort3T"),0,REG_DWORD,(unsigned char *)&Controllers.FSPort3.Type,sizeof(Controllers.FSPort3.Type));
 	RegSetValueEx(SettingsBase,_T("FSPort4T"),0,REG_DWORD,(unsigned char *)&Controllers.FSPort4.Type,sizeof(Controllers.FSPort4.Type));
 	RegSetValueEx(SettingsBase,_T("ExpPortT"),0,REG_DWORD,(unsigned char *)&Controllers.ExpPort.Type,sizeof(Controllers.ExpPort.Type));
-	
+
 	RegSetValueEx(SettingsBase,_T("Port1D")  ,0,REG_BINARY,(unsigned char *)Controllers.Port1.Buttons  ,sizeof(Controllers.Port1.Buttons));
 	RegSetValueEx(SettingsBase,_T("Port2D")  ,0,REG_BINARY,(unsigned char *)Controllers.Port2.Buttons  ,sizeof(Controllers.Port2.Buttons));
 	RegSetValueEx(SettingsBase,_T("FSPort1D"),0,REG_BINARY,(unsigned char *)Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));

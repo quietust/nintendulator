@@ -83,7 +83,6 @@ void	GFX_Init (void)
 	GFX.NTSCsat = 50;
 	GFX.PALsat = 50;
 	GFX.Fullscreen = FALSE;
-	GFX_Create();
 }
 
 void	GFX_Create (void)
