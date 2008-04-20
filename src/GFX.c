@@ -555,14 +555,12 @@ void	GFX_SetCursorPos (int x, int y)
 
 enum PALETTE { PALETTE_NTSC, PALETTE_PAL, PALETTE_PC10, PALETTE_VS1, PALETTE_VS2, PALETTE_VS3, PALETTE_VS4, PALETTE_EXT, PALETTE_MAX };
 
-static unsigned char	Palette[8][64][3];
-
 BOOL	GFX_ZapperHit (int color)
 {
 	int val = 0;
-	val += (int)(Palette[(color >> 6) & 0x7][color & 0x3F][0] * 0.299);
-	val += (int)(Palette[(color >> 6) & 0x7][color & 0x3F][1] * 0.587);
-	val += (int)(Palette[(color >> 6) & 0x7][color & 0x3F][2] * 0.114);
+	val += (int)(GFX.RawPalette[(color >> 6) & 0x7][color & 0x3F][0] * 0.299);
+	val += (int)(GFX.RawPalette[(color >> 6) & 0x7][color & 0x3F][1] * 0.587);
+	val += (int)(GFX.RawPalette[(color >> 6) & 0x7][color & 0x3F][2] * 0.114);
 	return (val >= 0x40);
 }
 
@@ -1013,9 +1011,9 @@ static	void	GFX_GenerateNTSC (int hue, int sat)
 				G *= 256;
 				B *= 256;
 
-				Palette[x][(y << 4) | z][0] = (unsigned char)CLIP(R,0,255);
-				Palette[x][(y << 4) | z][1] = (unsigned char)CLIP(G,0,255);
-				Palette[x][(y << 4) | z][2] = (unsigned char)CLIP(B,0,255);
+				GFX.RawPalette[x][(y << 4) | z][0] = (unsigned char)CLIP(R,0,255);
+				GFX.RawPalette[x][(y << 4) | z][1] = (unsigned char)CLIP(G,0,255);
+				GFX.RawPalette[x][(y << 4) | z][2] = (unsigned char)CLIP(B,0,255);
 			}
 		}
 	}
@@ -1023,22 +1021,22 @@ static	void	GFX_GenerateNTSC (int hue, int sat)
 
 static	void	GFX_GeneratePAL (int sat)
 {
-	memcpy(Palette,Palette_PAL,sizeof(Palette));
+	memcpy(GFX.RawPalette,Palette_PAL,sizeof(GFX.RawPalette));
 	/* todo - implement */
 }
 
 static	void	GFX_GenerateRGB (int pal)
 {
 	if (pal == PALETTE_PC10)
-		memcpy(Palette,Palette_PC10,sizeof(Palette));
+		memcpy(GFX.RawPalette,Palette_PC10,sizeof(GFX.RawPalette));
 	else if (pal == PALETTE_VS1)
-		memcpy(Palette,Palette_VS_0001,sizeof(Palette));
+		memcpy(GFX.RawPalette,Palette_VS_0001,sizeof(GFX.RawPalette));
 	else if (pal == PALETTE_VS2)
-		memcpy(Palette,Palette_VS_0002,sizeof(Palette));
+		memcpy(GFX.RawPalette,Palette_VS_0002,sizeof(GFX.RawPalette));
 	else if (pal == PALETTE_VS3)
-		memcpy(Palette,Palette_VS_0003,sizeof(Palette));
+		memcpy(GFX.RawPalette,Palette_VS_0003,sizeof(GFX.RawPalette));
 	else if (pal == PALETTE_VS4)
-		memcpy(Palette,Palette_VS_0004,sizeof(Palette));
+		memcpy(GFX.RawPalette,Palette_VS_0004,sizeof(GFX.RawPalette));
 	else	MessageBox(hMainWnd,_T("Illegal palette selected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 }
 
@@ -1066,9 +1064,9 @@ static	BOOL	GFX_ImportPalette (TCHAR *filename, BOOL load)
 		{
 			for (i = 0; i < 64; i++)
 			{
-				fread(&Palette[j][i][0],1,1,pal);
-				fread(&Palette[j][i][1],1,1,pal);
-				fread(&Palette[j][i][2],1,1,pal);
+				fread(&GFX.RawPalette[j][i][0],1,1,pal);
+				fread(&GFX.RawPalette[j][i][1],1,1,pal);
+				fread(&GFX.RawPalette[j][i][2],1,1,pal);
 			}
 		}
 	}
@@ -1077,14 +1075,14 @@ static	BOOL	GFX_ImportPalette (TCHAR *filename, BOOL load)
 		fseek(pal,0,SEEK_SET);
 		for (i = 0; i < 64; i++)
 		{
-			fread(&Palette[0][i][0],1,1,pal);
-			fread(&Palette[0][i][1],1,1,pal);
-			fread(&Palette[0][i][2],1,1,pal);
+			fread(&GFX.RawPalette[0][i][0],1,1,pal);
+			fread(&GFX.RawPalette[0][i][1],1,1,pal);
+			fread(&GFX.RawPalette[0][i][2],1,1,pal);
 			for (j = 1; j < 8; j++)
 			{
-				Palette[j][i][0] = (unsigned char)CLIP(Palette[0][i][0] * Emphasis[j][0],0,255);
-				Palette[j][i][1] = (unsigned char)CLIP(Palette[0][i][1] * Emphasis[j][1],0,255);
-				Palette[j][i][2] = (unsigned char)CLIP(Palette[0][i][2] * Emphasis[j][2],0,255);
+				GFX.RawPalette[j][i][0] = (unsigned char)CLIP(GFX.RawPalette[0][i][0] * Emphasis[j][0],0,255);
+				GFX.RawPalette[j][i][1] = (unsigned char)CLIP(GFX.RawPalette[0][i][1] * Emphasis[j][1],0,255);
+				GFX.RawPalette[j][i][2] = (unsigned char)CLIP(GFX.RawPalette[0][i][2] * Emphasis[j][2],0,255);
 			}
 		}
 	}
@@ -1114,9 +1112,9 @@ void	GFX_LoadPalette (int PalNum)
 
 	for (i = 0; i < 0x200; i++)
 	{
-		RV = Palette[i >> 6][i & 0x3F][0];
-		GV = Palette[i >> 6][i & 0x3F][1];
-		BV = Palette[i >> 6][i & 0x3F][2];
+		RV = GFX.RawPalette[i >> 6][i & 0x3F][0];
+		GV = GFX.RawPalette[i >> 6][i & 0x3F][1];
+		BV = GFX.RawPalette[i >> 6][i & 0x3F][2];
 
 		GFX.Palette15[i] = ((RV << 7) & 0x7C00) | ((GV << 2) & 0x03E0) | (BV >> 3);
 		GFX.Palette16[i] = ((RV << 8) & 0xF800) | ((GV << 3) & 0x07E0) | (BV >> 3);
@@ -1393,7 +1391,7 @@ LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					((IsDlgButtonChecked(hDlg,IDC_PAL_ER) == BST_CHECKED) ? 0x1 : 0x0) |
 					((IsDlgButtonChecked(hDlg,IDC_PAL_EG) == BST_CHECKED) ? 0x2 : 0x0) |
 					((IsDlgButtonChecked(hDlg,IDC_PAL_EB) == BST_CHECKED) ? 0x4 : 0x0);
-				unsigned int R = Palette[emp][i][0], G = Palette[emp][i][1], B = Palette[emp][i][2];
+				unsigned int R = GFX.RawPalette[emp][i][0], G = GFX.RawPalette[emp][i][1], B = GFX.RawPalette[emp][i][2];
 				brush = CreateSolidBrush(RGB(R,G,B));
 				GetWindowRect(dlgitem,&rect);
 				rect.top -= wcl.y + wrect.top;

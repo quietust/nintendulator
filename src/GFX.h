@@ -28,6 +28,7 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 struct tGFX
 {
+	unsigned char RawPalette[8][64][3];
 	unsigned short Palette15[512];
 	unsigned short Palette16[512];
 	unsigned long Palette32[512];
