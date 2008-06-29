@@ -367,8 +367,7 @@ const TCHAR *	NES_OpenFileiNES (TCHAR *filename)
 	RI.INES_MapperNum = ((Header[6] & 0xF0) >> 4) | (Header[7] & 0xF0);
 	RI.INES_Flags = (Header[6] & 0xF) | ((Header[7] & 0xF) << 4);
 
-	RI.INES2_Extended = FALSE;	// iNES 2 information is not yet parsed
-
+	RI.INES_Version = 1;	// iNES 2 information is not yet parsed
 
 	if (RI.INES_Flags & 0x04)
 	{

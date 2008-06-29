@@ -1,20 +1,19 @@
-/*
- * Nintendulator Mapper Interface
+/* Nintendulator Mapper Interface
+ * Copyright (C) 2002-2008 QMT Productions
+ *
+ * $URL$
+ * $Id$
  */
 
-/* So this file only gets included once */
-
-#ifndef MAPPERINTERFACE_H
-#define MAPPERINTERFACE_H
-
-/* Standard header files, used by all mappers */
+#ifndef	MAPPERINTERFACE_H
+#define	MAPPERINTERFACE_H
 
 /* Mapper Interface version (3.7) */
 
 #ifdef UNICODE
-#define	CurrentMapperInterface 0x80030007
+#define	CurrentMapperInterface	0x80030007
 #else
-#define	CurrentMapperInterface 0x00030007
+#define	CurrentMapperInterface	0x00030007
 #endif
 
 /* Function types */
@@ -97,7 +96,6 @@ typedef	struct	EmulatorInterface
 	void		(MAPINT *StatusOut)		(TCHAR *,...);	/* Echo text on status bar */
 /* Data fields */
 	unsigned char *	OpenBus;			/* pointer to last value on the CPU data bus */
-	
 }	TEmulatorInterface, *PEmulatorInterface;
 typedef	const	TEmulatorInterface	CTEmulatorInterface, *CPEmulatorInterface;
 
@@ -120,17 +118,17 @@ typedef	struct	MapperInfo
 
 /* Mapper Functions */
 	void		(MAPINT *Load)		(void);
-	void		(MAPINT *Reset)	(RESET_TYPE);
+	void		(MAPINT *Reset)	(RESET_TYPE);		/* ResetType */
 	void		(MAPINT *Unload)	(void);
 	void		(MAPINT *CPUCycle)	(void);
-	void		(MAPINT *PPUCycle)	(int,int,int,int);
-	int		(MAPINT *SaveLoad)	(STATE_TYPE,int,unsigned char *);
-	int		(MAPINT *GenSound)	(int);
-	unsigned char	(MAPINT *Config)	(CFG_TYPE,unsigned char);
+	void		(MAPINT *PPUCycle)	(int,int,int,int);	/* Address, Scanline, Cycle, IsRendering */
+	int		(MAPINT *SaveLoad)	(STATE_TYPE,int,unsigned char *);	/* Mode, Offset, Data */
+	int		(MAPINT *GenSound)	(int);			/* Cycles */
+	unsigned char	(MAPINT *Config)	(CFG_TYPE,unsigned char);	/* Mode, Data */
 }	TMapperInfo, *PMapperInfo;
 typedef	const	TMapperInfo	CTMapperInfo, *CPMapperInfo;
 
-/* DLL Information Structure:- Contains general information about the mapper DLL */
+/* ROM Information Structure:- Contains information about the ROM currently loaded */
 
 typedef	enum	{ ROM_INES, ROM_UNIF, ROM_FDS, ROM_NSF, ROM_UNDEFINED } ROM_TYPE;
 
@@ -146,7 +144,7 @@ typedef	struct	ROMInfo
 			BYTE	INES_Flags;	/* byte 6 flags in lower 4 bits, byte 7 flags in upper 4 bits */
 			WORD	INES_PRGSize;	/* number of 16KB banks */
 			WORD	INES_CHRSize;	/* number of 8KB banks */
-			BOOL	INES2_Extended;	/* Denotes presence of iNES 2.0 data */
+			BYTE	INES_Version;	/* 1 for standard .NES, 2 Denotes presence of iNES 2.0 data */
 			BYTE	INES2_SubMapper;	/* iNES 2.0 - submapper */
 			BYTE	INES2_TVMode;	/* iNES 2.0 - NTSC/PAL indicator */
 			BYTE	INES2_PRGRAM;	/* iNES 2.0 - PRG RAM counts, batteried and otherwise */
@@ -192,7 +190,7 @@ typedef	struct	ROMInfo
 }	TROMInfo, *PROMInfo;
 typedef	const	TROMInfo	CTROMInfo, *CPROMInfo;
 
-/* DLL Information Structure:- Contains general information about the mapper DLL */
+/* DLL Information Structure - Contains general information about the mapper DLL */
 
 typedef	struct	DLLInfo
 {
@@ -216,4 +214,4 @@ void	MapperInterface_Release (void);
 BOOL	MapperInterface_LoadMapper (CPROMInfo ROM);
 void	MapperInterface_UnloadMapper (void);
 
-#endif /* MAPPERINTERFACE_H */
+#endif	/* MAPPERINTERFACE_H */
