@@ -25,6 +25,9 @@ http://www.gnu.org/copyleft/gpl.html#SEC1
 
 #ifdef ENABLE_DEBUGGER
 
+#define DEBUG_TRACELINES 13
+#define DEBUG_MEMLINES 8
+
 struct tDebugger
 {
 	BOOL	Enabled;
@@ -34,40 +37,29 @@ struct tDebugger
 
 	BOOL	Logging, Step;
 
-	int	FontWidth, FontHeight;
-
 	int	Depth;
 
-	int	PatPalBase;
+	int	Palette, Nametable;
 
 	HDC	PaletteDC;	/* Palette */
 	HWND	PaletteWnd;
 	HBITMAP	PaletteBMP;
-	unsigned char PaletteArray[(256*32)*4];
 
 	HDC	PatternDC;	/* Pattern tables */
 	HWND	PatternWnd;
 	HBITMAP	PatternBMP;
-	unsigned char PatternArray[(256*128)*4];
 
-	HDC	NameDC;		/* Nametables */
+	HDC	NameDC;		/* Nametable */
 	HWND	NameWnd;
 	HBITMAP	NameBMP;
-	unsigned char NameArray[(512*480)*4];
 
-	HDC	TraceDC;	/* Trace window */
-	HWND	TraceWnd;
-	HBITMAP	TraceBMP;
+	HWND	CPUWnd;
+	HWND	PPUWnd;
 
-	HDC	RegDC;		/* Registers */
-	HWND	RegWnd;
-	HBITMAP	RegBMP;
+	unsigned char	BreakP[0x10000];
+	int	TraceOffset;	/* -1 to center on PC, otherwise center on TraceOffset */
+	int	MemOffset;
 
-	int	AddrLine[64];
-	BOOL	BreakP[0x10000];
-	int	TraceOffset;		/* -1 to center on PC, otherwise center on TraceOffset */
-
-	HWND	DumpWnd;
 	FILE	*LogFile;
 };
 
@@ -77,7 +69,6 @@ void	Debugger_Init (void);
 void	Debugger_Release (void);
 void	Debugger_SetMode(int NewMode);
 void	Debugger_Update (void);
-void	Debugger_UpdateGraphics (void);
 void	Debugger_AddInst (void);
 
 #endif	/* ENABLE_DEBUGGER */

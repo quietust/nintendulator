@@ -218,8 +218,9 @@ static	__inline void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
 	PPU.CHRPointer[Bank] = CHR_ROM[Val & NES.CHRMask];
 	PPU.Writable[Bank] = FALSE;
 #ifdef ENABLE_DEBUGGER
-	Debugger.PatChanged = TRUE;
-	Debugger.NTabChanged = TRUE;
+	if (Bank & 8)
+		Debugger.NTabChanged = TRUE;
+	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 #endif
 }
@@ -268,8 +269,9 @@ static	__inline void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
 	PPU.CHRPointer[Bank] = CHR_RAM[Val & 0x1F];
 	PPU.Writable[Bank] = TRUE;
 #ifdef ENABLE_DEBUGGER
-	Debugger.PatChanged = TRUE;
-	Debugger.NTabChanged = TRUE;
+	if (Bank & 8)
+		Debugger.NTabChanged = TRUE;
+	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 #endif
 }
@@ -318,7 +320,9 @@ static	__inline void	MAPINT	SetCHR_NT1 (int Bank, int Val)
 	PPU.CHRPointer[Bank] = PPU_VRAM[Val & 3];
 	PPU.Writable[Bank] = TRUE;
 #ifdef ENABLE_DEBUGGER
-	Debugger.NTabChanged = TRUE;
+	if (Bank & 8)
+		Debugger.NTabChanged = TRUE;
+	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 #endif
 }
@@ -350,8 +354,9 @@ static	void	MAPINT	SetCHR_Ptr1 (int Bank, unsigned char *Data, BOOL Writable)
 	PPU.CHRPointer[Bank] = Data;
 	PPU.Writable[Bank] = Writable;
 #ifdef ENABLE_DEBUGGER
-	Debugger.PatChanged = TRUE;
-	Debugger.NTabChanged = TRUE;
+	if (Bank & 8)
+		Debugger.NTabChanged = TRUE;
+	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 #endif
 }
@@ -362,8 +367,9 @@ static	void	MAPINT	SetCHR_OB1 (int Bank)
 	PPU.CHRPointer[Bank] = PPU_OpenBus;
 	PPU.Writable[Bank] = FALSE;
 #ifdef ENABLE_DEBUGGER
-	Debugger.PatChanged = TRUE;
-	Debugger.NTabChanged = TRUE;
+	if (Bank & 8)
+		Debugger.NTabChanged = TRUE;
+	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 #endif
 }

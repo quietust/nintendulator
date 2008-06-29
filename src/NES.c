@@ -911,9 +911,6 @@ void	NES_Reset (RESET_TYPE ResetType)
 			MI->Reset(RESET_SOFT);
 		break;
 	}
-#ifdef ENABLE_DEBUGGER
-	Debugger.TraceOffset = -1;
-#endif	/* ENABLE_DEBUGGER */
 	APU_Reset();
 	CPU_Reset();
 	PPU_Reset();
@@ -953,10 +950,6 @@ DWORD	WINAPI	NES_Thread (void *param)
 	EI.DbgOut(_T("10 seconds emulated in %lu milliseconds"),(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
 #else
 
-#ifdef ENABLE_DEBUGGER
-	Debugger.TraceOffset = -1;
-#endif	/* ENABLE_DEBUGGER */
-
 	if ((!NES.Stop) && (NES.SoundEnabled))
 		APU_SoundON();	// don't turn on sound if we're only stepping 1 instruction
 
@@ -987,7 +980,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 			{
 #ifdef ENABLE_DEBUGGER
 				if (Debugger.Enabled)
-					Debugger_UpdateGraphics();
+					Debugger_Update();
 #endif	/* ENABLE_DEBUGGER */
 				if (NES.FrameStep)	// if we pause during emulation
 				{	// it'll get caught down here at scanline 240
@@ -1039,11 +1032,7 @@ void	NES_MapperConfig (void)
 
 void	NES_UpdateInterface (void)
 {
-#ifdef ENABLE_DEBUGGER
-	Debugger_SetMode(Debugger.Mode);
-#else
 	SetWindowClientArea(hMainWnd,256 * SizeMult,240 * SizeMult);
-#endif	/* ENABLE_DEBUGGER */
 }
 
 void	NES_LoadSettings (void)
