@@ -144,6 +144,9 @@ static	__forceinline void	DoNMI (void)
 
 	CPU.PCL = CPU_MemGet(0xFFFA);
 	CPU.PCH = CPU_MemGet(0xFFFB);
+#ifdef ENABLE_DEBUGGER
+	CPU.GotInterrupt = INTERRUPT_NMI;
+#endif /* ENABLE_DEBUGGER */
 }
 #endif
 static	__forceinline void	DoIRQ (void)
@@ -158,6 +161,9 @@ static	__forceinline void	DoIRQ (void)
 
 	CPU.PCL = CPU_MemGet(0xFFFE);
 	CPU.PCH = CPU_MemGet(0xFFFF);
+#ifdef ENABLE_DEBUGGER
+	CPU.GotInterrupt = INTERRUPT_IRQ;
+#endif /* ENABLE_DEBUGGER */
 }
 
 void	CPU_GetHandlers (void)
@@ -193,6 +199,9 @@ void	CPU_Reset (void)
 
 	CPU.PCL = CPU_MemGet(0xFFFC);
 	CPU.PCH = CPU_MemGet(0xFFFD);
+#ifdef ENABLE_DEBUGGER
+	CPU.GotInterrupt = INTERRUPT_RST;
+#endif /* ENABLE_DEBUGGER */
 }
 
 #ifndef NSFPLAYER
@@ -584,6 +593,9 @@ static	__forceinline void	IN_BRK (void)
 	CPU.PCL = CPU_MemGet(0xFFFE);
 	CPU.PCH = CPU_MemGet(0xFFFF);
 #endif
+#ifdef ENABLE_DEBUGGER
+	CPU.GotInterrupt = INTERRUPT_BRK;
+#endif /* ENABLE_DEBUGGER */
 }
 static	__forceinline void	IN_CLC (void) {	__asm	mov CPU.FC,0	}
 static	__forceinline void	IN_CLD (void) {	__asm	mov CPU.FD,0	}
@@ -1191,4 +1203,7 @@ case 0xE3:AM_INX();  IV_ISB();break;case 0xF3:AM_INYW(); IV_ISB();break;case 0xE
 #endif
 	if (LastIRQ)
 		DoIRQ();
+#ifdef ENABLE_DEBUGGER
+	else	CPU.GotInterrupt = 0;
+#endif /* ENABLE_DEBUGGER */
 }

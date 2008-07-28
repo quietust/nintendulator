@@ -1140,6 +1140,39 @@ BEGIN
     SCROLLBAR       IDC_DEBUG_TRACE_SCROLL,414,176,10,108,SBS_VERT
 END
 
+IDD_BREAKPOINT DIALOGEX 0, 0, 116, 143
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Add/Edit Breakpoint"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Address",IDC_STATIC,4,4,108,64
+    GROUPBOX        "Operation",IDC_STATIC,4,73,108,43
+    CONTROL         "Execution",IDC_BREAK_EXEC,"Button",BS_AUTORADIOBUTTON,
+                    12,16,60,8
+    CONTROL         "Read",IDC_BREAK_READ,"Button",BS_AUTORADIOBUTTON,12,28,
+                    60,8
+    CONTROL         "Write",IDC_BREAK_WRITE,"Button",BS_AUTORADIOBUTTON,12,
+                    40,60,8
+    CONTROL         "Access",IDC_BREAK_ACCESS,"Button",BS_AUTORADIOBUTTON,12,
+                    52,60,8
+    CONTROL         "Opcode",IDC_BREAK_OPCODE,"Button",BS_AUTORADIOBUTTON,12,
+                    84,39,8
+    CONTROL         "NMI",IDC_BREAK_NMI,"Button",BS_AUTORADIOBUTTON,12,100,
+                    28,8
+    CONTROL         "IRQ",IDC_BREAK_IRQ,"Button",BS_AUTORADIOBUTTON,44,100,
+                    28,8
+    CONTROL         "BRK",IDC_BREAK_BRK,"Button",BS_AUTORADIOBUTTON,76,100,
+                    28,8
+    LTEXT           "From",IDC_STATIC,76,16,28,8
+    EDITTEXT        IDC_BREAK_ADDR1,76,24,28,12,ES_UPPERCASE
+    LTEXT           "To",IDC_STATIC,76,40,28,8
+    EDITTEXT        IDC_BREAK_ADDR2,76,48,28,12,ES_UPPERCASE
+    EDITTEXT        IDC_BREAK_OPNUM,76,84,20,12,ES_UPPERCASE
+    DEFPUSHBUTTON   "OK",IDOK,4,124,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,62,124,50,14
+END
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -1824,6 +1857,39 @@ BEGIN
         HORZGUIDE, 268
         HORZGUIDE, 272
         HORZGUIDE, 284
+    END
+
+    IDD_BREAKPOINT, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 112
+        VERTGUIDE, 4
+        VERTGUIDE, 12
+        VERTGUIDE, 40
+        VERTGUIDE, 44
+        VERTGUIDE, 72
+        VERTGUIDE, 76
+        VERTGUIDE, 104
+        VERTGUIDE, 112
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 139
+        HORZGUIDE, 16
+        HORZGUIDE, 24
+        HORZGUIDE, 28
+        HORZGUIDE, 36
+        HORZGUIDE, 40
+        HORZGUIDE, 48
+        HORZGUIDE, 52
+        HORZGUIDE, 60
+        HORZGUIDE, 68
+        HORZGUIDE, 73
+        HORZGUIDE, 84
+        HORZGUIDE, 92
+        HORZGUIDE, 96
+        HORZGUIDE, 100
+        HORZGUIDE, 108
+        HORZGUIDE, 116
+        HORZGUIDE, 124
     END
 END
 #endif    // APSTUDIO_INVOKED

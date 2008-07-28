@@ -15,6 +15,13 @@ union SplitReg { unsigned long Full; unsigned char Segment[4]; };
 #define	IRQ_EXTERNAL	0x04
 #define	IRQ_DEBUG	0x08
 
+#ifdef ENABLE_DEBUGGER
+#define	INTERRUPT_NMI	1
+#define	INTERRUPT_RST	2
+#define	INTERRUPT_IRQ	3
+#define	INTERRUPT_BRK	4
+#endif /* ENABLE_DEBUGGER */
+
 struct tCPU
 {
 	FCPURead	ReadHandler[0x10];
@@ -27,6 +34,9 @@ struct tCPU
 #endif /* NSFPLAYER */
 	unsigned char WantIRQ;
 	unsigned char PCMCycles;
+#ifdef ENABLE_DEBUGGER
+	unsigned char GotInterrupt;
+#endif /* ENABLE_DEBUGGER */
 
 	unsigned char A, X, Y, SP, P;
 	unsigned char FC, FZ, FI, FD, FV, FN;

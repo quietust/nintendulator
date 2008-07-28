@@ -29,6 +29,7 @@
 #define IDD_STDPORT_STDCONTROLLER       146
 #define IDD_STDPORT_ZAPPER              147
 #define IDD_STDPORT_VSZAPPER            148
+#define IDD_BREAKPOINT                  149
 #define IDC_ABOUTICON                   1001
 #define IDC_CONT_SPORT1                 1002
 #define IDC_CONT_SPORT2                 1003
@@ -252,6 +253,17 @@
 #define IDC_DEBUG_PPU_NT1               1221
 #define IDC_DEBUG_PPU_NT2               1222
 #define IDC_DEBUG_PPU_NT3               1223
+#define IDC_BREAK_EXEC                  1224
+#define IDC_BREAK_READ                  1225
+#define IDC_BREAK_WRITE                 1226
+#define IDC_BREAK_ACCESS                1227
+#define IDC_BREAK_OPCODE                1228
+#define IDC_BREAK_NMI                   1229
+#define IDC_BREAK_IRQ                   1230
+#define IDC_BREAK_BRK                   1231
+#define IDC_BREAK_ADDR1                 1232
+#define IDC_BREAK_ADDR2                 1233
+#define IDC_BREAK_OPNUM                 1234
 #define ID_FILE_OPEN                    32768
 #define ID_FILE_CLOSE                   32769
 #define ID_FILE_HEADER                  32770
@@ -319,9 +331,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        149
+#define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         32828
-#define _APS_NEXT_CONTROL_VALUE         1224
+#define _APS_NEXT_CONTROL_VALUE         1235
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

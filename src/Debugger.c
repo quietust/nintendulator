@@ -29,13 +29,13 @@ enum ADDRMODE { IMP, ACC, IMM, ADR, ABS, IND, REL, ABX, ABY, ZPG, ZPX, ZPY, INX,
 
 enum ADDRMODE TraceAddrMode[256] =
 {
-	IMM, INX, ERR, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, ACC, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX, 
-	ADR, INX, ERR, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, ACC, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX, 
-	IMP, INX, ERR, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, ACC, IMM, ADR, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX, 
-	IMP, INX, ERR, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, ACC, IMM, IND, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX, 
-	IMM, INX, IMM, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, IMP, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPY, ZPY, IMP, ABY, IMP, ABY, ABX, ABX, ABY, ABY, 
-	IMM, INX, IMM, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, IMP, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPY, ZPY, IMP, ABY, IMP, ABY, ABX, ABX, ABY, ABY, 
-	IMM, INX, IMM, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, IMP, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX, 
+	IMM, INX, ERR, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, ACC, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX,
+	ADR, INX, ERR, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, ACC, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX,
+	IMP, INX, ERR, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, ACC, IMM, ADR, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX,
+	IMP, INX, ERR, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, ACC, IMM, IND, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX,
+	IMM, INX, IMM, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, IMP, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPY, ZPY, IMP, ABY, IMP, ABY, ABX, ABX, ABY, ABY,
+	IMM, INX, IMM, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, IMP, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPY, ZPY, IMP, ABY, IMP, ABY, ABX, ABX, ABY, ABY,
+	IMM, INX, IMM, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, IMP, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX,
 	IMM, INX, IMM, INX, ZPG, ZPG, ZPG, ZPG, IMP, IMM, IMP, IMM, ABS, ABS, ABS, ABS, REL, INY, ERR, INY, ZPX, ZPX, ZPX, ZPX, IMP, ABY, IMP, ABY, ABX, ABX, ABX, ABX
 };
 
@@ -43,22 +43,47 @@ unsigned char AddrBytes[NUM_ADDR_MODES] = {1, 1, 2, 3, 3, 3, 2, 3, 3, 2, 2, 2, 2
 
 char TraceArr[256][5] =
 {
-	" BRK", " ORA", "*HLT", "*SLO", "*NOP", " ORA", " ASL", "*SLO", " PHP", " ORA", " ASL", " ???", "*NOP", " ORA", " ASL", "*SLO", 
-	" BPL", " ORA", "*HLT", "*SLO", "*NOP", " ORA", " ASL", "*SLO", " CLC", " ORA", "*NOP", "*SLO", "*NOP", " ORA", " ASL", "*SLO", 
-	" JSR", " AND", "*HLT", "*RLA", " BIT", " AND", " ROL", "*RLA", " PLP", " AND", " ROL", " ???", " BIT", " AND", " ROL", "*RLA", 
-	" BMI", " AND", "*HLT", "*RLA", "*NOP", " AND", " ROL", "*RLA", " SEC", " AND", "*NOP", "*RLA", "*NOP", " AND", " ROL", "*RLA", 
-	" RTI", " EOR", "*HLT", "*SRE", "*NOP", " EOR", " LSR", "*SRE", " PHA", " EOR", " LSR", " ???", " JMP", " EOR", " LSR", "*SRE", 
-	" BVC", " EOR", "*HLT", "*SRE", "*NOP", " EOR", " LSR", "*SRE", " CLI", " EOR", "*NOP", "*SRE", "*NOP", " EOR", " LSR", "*SRE", 
-	" RTS", " ADC", "*HLT", "*RRA", "*NOP", " ADC", " ROR", "*RRA", " PLA", " ADC", " ROR", " ???", " JMP", " ADC", " ROR", "*RRA", 
-	" BVS", " ADC", "*HLT", "*RRA", "*NOP", " ADC", " ROR", "*RRA", " SEI", " ADC", "*NOP", "*RRA", "*NOP", " ADC", " ROR", "*RRA", 
-	"*NOP", " STA", "*NOP", "*SAX", " STY", " STA", " STX", "*SAX", " DEY", "*NOP", " TXA", " ???", " STY", " STA", " STX", "*SAX", 
-	" BCC", " STA", "*HLT", " ???", " STY", " STA", " STX", "*SAX", " TYA", " STA", " TXS", " ???", " ???", " STA", " ???", " ???", 
-	" LDY", " LDA", " LDX", "*LAX", " LDY", " LDA", " LDX", "*LAX", " TAY", " LDA", " TAX", " ???", " LDY", " LDA", " LDX", "*LAX", 
-	" BCS", " LDA", "*HLT", "*LAX", " LDY", " LDA", " LDX", "*LAX", " CLV", " LDA", " TSX", " ???", " LDY", " LDA", " LDX", "*LAX", 
-	" CPY", " CMP", "*NOP", "*DCP", " CPY", " CMP", " DEC", "*DCP", " INY", " CMP", " DEX", " ???", " CPY", " CMP", " DEC", "*DCP", 
-	" BNE", " CMP", "*HLT", "*DCP", "*NOP", " CMP", " DEC", "*DCP", " CLD", " CMP", "*NOP", "*DCP", "*NOP", " CMP", " DEC", "*DCP", 
-	" CPX", " SBC", "*NOP", "*ISB", " CPX", " SBC", " INC", "*ISB", " INX", " SBC", " NOP", "*SBC", " CPX", " SBC", " INC", "*ISB", 
+	" BRK", " ORA", "*HLT", "*SLO", "*NOP", " ORA", " ASL", "*SLO", " PHP", " ORA", " ASL", " ???", "*NOP", " ORA", " ASL", "*SLO",
+	" BPL", " ORA", "*HLT", "*SLO", "*NOP", " ORA", " ASL", "*SLO", " CLC", " ORA", "*NOP", "*SLO", "*NOP", " ORA", " ASL", "*SLO",
+	" JSR", " AND", "*HLT", "*RLA", " BIT", " AND", " ROL", "*RLA", " PLP", " AND", " ROL", " ???", " BIT", " AND", " ROL", "*RLA",
+	" BMI", " AND", "*HLT", "*RLA", "*NOP", " AND", " ROL", "*RLA", " SEC", " AND", "*NOP", "*RLA", "*NOP", " AND", " ROL", "*RLA",
+	" RTI", " EOR", "*HLT", "*SRE", "*NOP", " EOR", " LSR", "*SRE", " PHA", " EOR", " LSR", " ???", " JMP", " EOR", " LSR", "*SRE",
+	" BVC", " EOR", "*HLT", "*SRE", "*NOP", " EOR", " LSR", "*SRE", " CLI", " EOR", "*NOP", "*SRE", "*NOP", " EOR", " LSR", "*SRE",
+	" RTS", " ADC", "*HLT", "*RRA", "*NOP", " ADC", " ROR", "*RRA", " PLA", " ADC", " ROR", " ???", " JMP", " ADC", " ROR", "*RRA",
+	" BVS", " ADC", "*HLT", "*RRA", "*NOP", " ADC", " ROR", "*RRA", " SEI", " ADC", "*NOP", "*RRA", "*NOP", " ADC", " ROR", "*RRA",
+	"*NOP", " STA", "*NOP", "*SAX", " STY", " STA", " STX", "*SAX", " DEY", "*NOP", " TXA", " ???", " STY", " STA", " STX", "*SAX",
+	" BCC", " STA", "*HLT", " ???", " STY", " STA", " STX", "*SAX", " TYA", " STA", " TXS", " ???", " ???", " STA", " ???", " ???",
+	" LDY", " LDA", " LDX", "*LAX", " LDY", " LDA", " LDX", "*LAX", " TAY", " LDA", " TAX", " ???", " LDY", " LDA", " LDX", "*LAX",
+	" BCS", " LDA", "*HLT", "*LAX", " LDY", " LDA", " LDX", "*LAX", " CLV", " LDA", " TSX", " ???", " LDY", " LDA", " LDX", "*LAX",
+	" CPY", " CMP", "*NOP", "*DCP", " CPY", " CMP", " DEC", "*DCP", " INY", " CMP", " DEX", " ???", " CPY", " CMP", " DEC", "*DCP",
+	" BNE", " CMP", "*HLT", "*DCP", "*NOP", " CMP", " DEC", "*DCP", " CLD", " CMP", "*NOP", "*DCP", "*NOP", " CMP", " DEC", "*DCP",
+	" CPX", " SBC", "*NOP", "*ISB", " CPX", " SBC", " INC", "*ISB", " INX", " SBC", " NOP", "*SBC", " CPX", " SBC", " INC", "*ISB",
 	" BEQ", " SBC", "*HLT", "*ISB", "*NOP", " SBC", " INC", "*ISB", " SED", " SBC", "*NOP", "*ISB", "*NOP", " SBC", " INC", "*ISB"
+};
+
+#define	BRK_NA (0)
+#define	BRK_RD (DEBUG_BREAK_READ)
+#define	BRK_WR (DEBUG_BREAK_WRITE)
+#define	BRK_RW (DEBUG_BREAK_READ | DEBUG_BREAK_WRITE)
+
+unsigned char TraceIO[256] =
+{
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RW, BRK_RW,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_RD, BRK_WR, BRK_RD, BRK_WR, BRK_WR, BRK_WR, BRK_WR, BRK_WR, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_WR, BRK_WR, BRK_WR, BRK_WR,
+	BRK_NA, BRK_WR, BRK_NA, BRK_RD, BRK_WR, BRK_WR, BRK_WR, BRK_WR, BRK_NA, BRK_WR, BRK_NA, BRK_RD, BRK_RD, BRK_WR, BRK_RD, BRK_RD,
+	BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD,
+	BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
+	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW
 };
 
 enum {
@@ -113,7 +138,8 @@ void	Debugger_Init (void)
 	Debugger.CPUWnd = NULL;
 	Debugger.PPUWnd = NULL;
 
-	ZeroMemory(Debugger.BreakP, sizeof(Debugger.BreakP));
+	ZeroMemory(Debugger.BPcache, sizeof(Debugger.BPcache));
+	Debugger.Breakpoints = NULL;
 	Debugger.TraceOffset = -1;
 
 	Debugger.LogFile = NULL;
@@ -195,7 +221,9 @@ unsigned char DebugMemPPU (unsigned long Addr)
 	else	return 0xFF;
 }
 
-void	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
+// Decodes an instruction into plain text, suitable for displaying in the debugger or writing to a logfile
+// Returns the effective address for usage with breakpoints
+unsigned short	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 {
 	unsigned char OpData[3] = {DebugMemCPU(Addr), 0, 0};
 	unsigned short Operand = 0, MidAddr = 0, EffectiveAddr = 0;
@@ -312,6 +340,7 @@ void	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 		default :	_tcscpy(str2, _T(""));																								break;
 		}
 	}
+	return EffectiveAddr;
 }
 
 void	Debugger_UpdateCPU (void)
@@ -321,10 +350,25 @@ void	Debugger_UpdateCPU (void)
 	unsigned short Addr;
 	SCROLLINFO sinfo;
 
-	// if we hit a breakpoint or chose "Step", stop emulation
-	if (Debugger.BreakP[CPU.PC] || Debugger.Step)
+	// if we chose "Step", stop emulation
+	if (Debugger.Step)
 		NES.Stop = TRUE;
-	// if emulation hasn't stopped, then don't bother updating the window
+	// check for breakpoints
+	{
+		// PC has execution breakpoint
+		if (Debugger.BPcache[CPU.PC] & DEBUG_BREAK_EXEC)
+			NES.Stop = TRUE;
+		// I/O break
+		Addr = DecodeInstruction((unsigned short)CPU.PC, NULL, NULL);
+		TpVal = DebugMemCPU((unsigned short)CPU.PC);
+		// read opcode, effective address has read breakpoint
+		if ((TraceIO[TpVal] & DEBUG_BREAK_READ) && (Debugger.BPcache[Addr] & DEBUG_BREAK_READ))
+			NES.Stop = TRUE;
+		// write opcode, effective address has write breakpoint
+		if ((TraceIO[TpVal] & DEBUG_BREAK_WRITE) && (Debugger.BPcache[Addr] & DEBUG_BREAK_WRITE))
+			NES.Stop = TRUE;
+	}
+	// if emulation wasn't stopped, don't bother updating the dialog
 	if (!NES.Stop)
 		return;
 
