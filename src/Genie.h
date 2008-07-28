@@ -28,4 +28,4 @@ void	Genie_Init (void);
 int	Genie_Save (FILE *);
 int	Genie_Load (FILE *);
 
-#endif /* GENIE_H */
+#endif	/* !GENIE_H */

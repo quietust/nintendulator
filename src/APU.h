@@ -5,21 +5,21 @@
  * $Id$
  */
 
-#ifndef APU_H
+#ifndef	APU_H
 #define APU_H
 
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 
 #define DIRECTSOUND_VERSION 0x0700
 #include <mmsystem.h>
 #include <dsound.h>
-#endif
+#endif	/* !NSFPLAYER */
 
 struct	tAPU
 {
 	int			Cycles;
 	int			BufPos;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	unsigned long		next_pos;
 	BOOL			isEnabled;
 
@@ -30,38 +30,38 @@ struct	tAPU
 	short			*buffer;
 	int			buflen;
 	BYTE			Regs[0x18];
-#endif /* NSFPLAYER */
+#endif	/* !NSFPLAYER */
 
 	unsigned char		WantFPS;
 	unsigned long		MHz;
 	BOOL			PAL;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	unsigned long		LockSize;
-#endif /* NSFPLAYER */
+#endif	/* !NSFPLAYER */
 };
 extern struct tAPU APU;
 
 void	APU_Init		(void);
 void	APU_Create		(void);
 void	APU_Release		(void);
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 int	APU_Save		(FILE *);
 int	APU_Load		(FILE *);
 void	APU_SoundOFF		(void);
 void	APU_SoundON		(void);
-#endif /* NSFPLAYER */
+#endif	/* !NSFPLAYER */
 void	APU_Reset		(void);
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 void	APU_Config		(HWND);
-#endif /* NSFPLAYER */
+#endif	/* !NSFPLAYER */
 void	APU_Run			(void);
 void	APU_SetFPS		(int);
 void	APU_WriteReg		(int,unsigned char);
 unsigned char	APU_Read4015	(void);
 
-#ifdef NSFPLAYER
+#ifdef	NSFPLAYER
 extern	short	sample_pos;
 extern	BOOL	sample_ok;
-#endif /* NSFPLAYER */
+#endif	/* NSFPLAYER */
 
-#endif /* APU_H */
+#endif	/* !APU_H */

@@ -5,12 +5,12 @@
  * $Id$
  */
 
-#ifdef NSFPLAYER
+#ifdef	NSFPLAYER
 # include "in_nintendulator.h"
 # include "MapperInterface.h"
 # include "CPU.h"
 # include "APU.h"
-#else
+#else	/* !NSFPLAYER */
 # include "stdafx.h"
 # include "Nintendulator.h"
 # include "MapperInterface.h"
@@ -19,7 +19,7 @@
 # include "PPU.h"
 # include "APU.h"
 # include "Controllers.h"
-#endif
+#endif	/* NSFPLAYER */
 
 struct tCPU CPU;
 unsigned char CPU_RAM[0x800];
@@ -54,17 +54,17 @@ static	BOOL LastIRQ;
 
 static	__forceinline void	RunCycle (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	LastNMI = CPU.WantNMI;
-#endif
+#endif	/* !NSFPLAYER */
 	LastIRQ = CPU.WantIRQ && !CPU.FI;
 	CPU_CPUCycle();
 #ifndef	CPU_BENCHMARK
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	PPU_Run();
-#endif
+#endif	/* !NSFPLAYER */
 	APU_Run();
-#endif
+#endif	/* !CPU_BENCHMARK */
 }
 #define	CPU_MemGetCode	CPU_MemGet
 unsigned char	__fastcall	CPU_MemGet (unsigned int Addr)
@@ -131,7 +131,7 @@ void	CPU_SplitFlags (void)
 		setc	CPU.FN
 	}
 }
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 static	__forceinline void	DoNMI (void)
 {
 	CPU_MemGetCode(CPU.PC);
@@ -144,11 +144,11 @@ static	__forceinline void	DoNMI (void)
 
 	CPU.PCL = CPU_MemGet(0xFFFA);
 	CPU.PCH = CPU_MemGet(0xFFFB);
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	CPU.GotInterrupt = INTERRUPT_NMI;
-#endif /* ENABLE_DEBUGGER */
+#endif	/* ENABLE_DEBUGGER */
 }
-#endif
+#endif	/* !NSFPLAYER */
 static	__forceinline void	DoIRQ (void)
 {
 	CPU_MemGetCode(CPU.PC);
@@ -161,9 +161,9 @@ static	__forceinline void	DoIRQ (void)
 
 	CPU.PCL = CPU_MemGet(0xFFFE);
 	CPU.PCH = CPU_MemGet(0xFFFF);
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	CPU.GotInterrupt = INTERRUPT_IRQ;
-#endif /* ENABLE_DEBUGGER */
+#endif	/* ENABLE_DEBUGGER */
 }
 
 void	CPU_GetHandlers (void)
@@ -199,12 +199,12 @@ void	CPU_Reset (void)
 
 	CPU.PCL = CPU_MemGet(0xFFFC);
 	CPU.PCH = CPU_MemGet(0xFFFD);
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	CPU.GotInterrupt = INTERRUPT_RST;
-#endif /* ENABLE_DEBUGGER */
+#endif	/* ENABLE_DEBUGGER */
 }
 
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 int	CPU_Save (FILE *out)
 {
 	int clen = 0;
@@ -241,7 +241,7 @@ int	CPU_Load (FILE *in)
 	fread(CPU_RAM,1,0x800,in);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
 	return clen;
 }
-#endif
+#endif	/* !NSFPLAYER */
 
 int	MAPINT	CPU_ReadRAM (int Bank, int Addr)
 {
@@ -258,17 +258,17 @@ int	MAPINT	CPU_Read4k (int Bank, int Addr)
 	switch (Addr)
 	{
 	case 0x015:	return APU_Read4015();						break;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	case 0x016:	return (CPU.LastRead & 0xC0) |
 			(Controllers.Port1.Read(&Controllers.Port1) & 0x19) |
 			(Controllers.ExpPort.Read1(&Controllers.ExpPort) & 0x1F);	break;
 	case 0x017:	return (CPU.LastRead & 0xC0) |
 			(Controllers.Port2.Read(&Controllers.Port2) & 0x19) |
 			(Controllers.ExpPort.Read2(&Controllers.ExpPort) & 0x1F);	break;
-#else
+#else	/* NSFPLAYER */
 	case 0x016:
 	case 0x017:	return (CPU.LastRead & 0xC0);					break;
-#endif
+#endif	/* !NSFPLAYER */
 	default:	return CPU.LastRead;						break;
 	}
 }
@@ -288,9 +288,9 @@ void	MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
 	case 0x014:	for (i = 0; i < 0x100; i++)
 				CPU_MemSet(0x2004,CPU_MemGet((Val << 8) | i));
 			CPU_MemGet(CPU.PC);	break;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	case 0x016:	Controllers_Write(Val);	break;
-#endif
+#endif	/* !NSFPLAYER */
 	}
 }
 
@@ -577,7 +577,7 @@ static	__forceinline void	IN_BRK (void)
 	CPU_JoinFlags();
 	Push(CPU.P | 0x10);
 	CPU.FI = 1;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	if (CPU.WantNMI)
 	{
 		CPU.WantNMI = FALSE;
@@ -589,13 +589,13 @@ static	__forceinline void	IN_BRK (void)
 		CPU.PCL = CPU_MemGet(0xFFFE);
 		CPU.PCH = CPU_MemGet(0xFFFF);
 	}
-#else
+#else	/* NSFPLAYER */
 	CPU.PCL = CPU_MemGet(0xFFFE);
 	CPU.PCH = CPU_MemGet(0xFFFF);
-#endif
-#ifdef ENABLE_DEBUGGER
+#endif	/* !NSFPLAYER */
+#ifdef	ENABLE_DEBUGGER
 	CPU.GotInterrupt = INTERRUPT_BRK;
-#endif /* ENABLE_DEBUGGER */
+#endif	/* ENABLE_DEBUGGER */
 }
 static	__forceinline void	IN_CLC (void) {	__asm	mov CPU.FC,0	}
 static	__forceinline void	IN_CLD (void) {	__asm	mov CPU.FD,0	}
@@ -997,10 +997,10 @@ static	__forceinline void	IV_UNK (void)
 static	__forceinline void	IV_HLT (void)
 {
 	EI.DbgOut(_T("Invalid opcode $%02X (HLT) encountered at $%04X; CPU locked"),Opcode,OpAddr);
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	MessageBox(hMainWnd, _T("Bad opcode, CPU locked"), _T("Nintendulator"), MB_OK);
 	NES.Stop = TRUE;
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	__forceinline void	IV_NOP (void)
 {
@@ -1193,17 +1193,17 @@ case 0xE3:AM_INX();  IV_ISB();break;case 0xF3:AM_INYW(); IV_ISB();break;case 0xE
 	}
 	DPCM_Fetch();
 
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	if (LastNMI)
 	{
 		DoNMI();
 		CPU.WantNMI = FALSE;
 	}
 	else
-#endif
+#endif	/* !NSFPLAYER */
 	if (LastIRQ)
 		DoIRQ();
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	else	CPU.GotInterrupt = 0;
-#endif /* ENABLE_DEBUGGER */
+#endif	/* ENABLE_DEBUGGER */
 }

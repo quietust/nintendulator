@@ -98,4 +98,4 @@ void	Controllers_ConfigButton (int *,int,HWND,BOOL);
 BOOL	Controllers_IsPressed (int);
 void	Controllers_ParseConfigMessages (HWND,int,int *,int *,int *,UINT,WPARAM,LPARAM);
 
-#endif /* CONTROLLERS_H */
+#endif	/* !CONTROLLERS_H */

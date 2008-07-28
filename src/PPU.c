@@ -163,7 +163,7 @@ void	MAPINT	PPU_BusWriteCHR (int Bank, int Addr, int Val)
 {
 	if (!PPU.Writable[Bank])
 		return;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 	PPU.CHRPointer[Bank][Addr] = Val;
@@ -173,7 +173,7 @@ void	MAPINT	PPU_BusWriteNT (int Bank, int Addr, int Val)
 {
 	if (!PPU.Writable[Bank])
 		return;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 	PPU.CHRPointer[Bank][Addr] = Val;
@@ -192,7 +192,7 @@ void	PPU_Reset (void)
 	PPU.SLnum = 241;
 #ifdef	ACCURATE_SPRITES
 	PPU.SprBuff = &PPU.Sprite[256];
-#endif
+#endif	/* ACCURATE_SPRITES */
 	PPU_GetHandlers();
 }
 void	PPU_GetHandlers (void)
@@ -356,7 +356,7 @@ __inline static void	ProcessSprites (void)
 //*** Cycles 320-340: Background render pipeline initialization
 //* Read the first byte in secondary OAM (the Y-coordinate of the first sprite found, sprite #63 if no sprites were found)
 }
-#else
+#else	/* !ACCURATE_SPRITES */
 __inline static	void	DiscoverSprites (void)
 {
 	int SprHeight = 7 | ((PPU.Reg2000 & 0x20) >> 2);
@@ -390,7 +390,7 @@ __inline static	void	DiscoverSprites (void)
 			PPU.Spr0InLine = TRUE;
 	}
 }
-#endif
+#endif	/* ACCURATE_SPRITES */
 void	PPU_GetGFXPtr (void)
 {
 	PPU.GfxData = DrawArray;
@@ -512,7 +512,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 	register int SprNum;
 #ifdef	ACCURATE_SPRITES
 	register unsigned char SprSL;
-#endif
+#endif	/* ACCURATE_SPRITES */
 	register unsigned char *CurTileData;
 
 	register int i, y;
@@ -525,7 +525,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			{
 #ifndef	ACCURATE_SPRITES
 				DiscoverSprites();
-#endif
+#endif	/* !ACCURATE_SPRITES */
 				ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
 			if (PPU.SLnum == -1)
@@ -572,7 +572,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 		{
 #ifdef	ACCURATE_SPRITES
 			ProcessSprites();
-#endif
+#endif	/* ACCURATE_SPRITES */
 			if (PPU.Clockticks & 1)
 			{
 				if (PPU.IOMode)
@@ -715,11 +715,11 @@ __inline static	void	RunNoSkip (int NumTicks)
  				if (PPU.Reg2000 & 0x20)
 					PatAddr = ((TC & 0xFE) << 4) | ((TC & 0x01) << 12) | ((SprSL & 7) ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x17 : 0x00) ^ ((SprSL & 0x8) << 1));
 				else	PatAddr = (TC << 4) | ((SprSL & 7) ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((PPU.Reg2000 & 0x08) << 9);
-#else
+#else	/* !ACCURATE_SPRITES */
  				if (PPU.Reg2000 & 0x20)
 					PatAddr = ((TC & 0xFE) << 4) | ((TC & 0x01) << 12) | ((PPU.SprBuff[SprNum] & 7) ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x17 : 0x00) ^ ((PPU.SprBuff[SprNum] & 0x8) << 1));
 				else	PatAddr = (TC << 4) | (PPU.SprBuff[SprNum] ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((PPU.Reg2000 & 0x08) << 9);
-#endif
+#endif	/* ACCURATE_SPRITES */
 				break;
 			case 260:	case 268:	case 276:	case 284:	case 292:	case 300:	case 308:	case 316:
 				PPU.RenderAddr = PatAddr;
@@ -748,7 +748,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 #ifdef	ACCURATE_SPRITES
 				CurTileData[8] = PPU.SprBuff[SprNum];
 				CurTileData[9] = PPU.SprBuff[SprNum | 1];
-#endif
+#endif	/* ACCURATE_SPRITES */
 				break;
 				/* END SPRITES */
 			case 336:	case 338:
@@ -800,9 +800,9 @@ __inline static	void	RunNoSkip (int NumTicks)
 				{
 #ifdef	ACCURATE_SPRITES
 					register int SprPixel = PPU.Clockticks - PPU.SprData[y >> 2][9];
-#else
+#else	/* !ACCURATE_SPRITES */
 					register int SprPixel = PPU.Clockticks - PPU.SprBuff[y | 3];
-#endif
+#endif	/* ACCURATE_SPRITES */
 					register unsigned char SprDat;
 					if (SprPixel & ~7)
 						continue;
@@ -816,9 +816,9 @@ __inline static	void	RunNoSkip (int NumTicks)
 						}
 #ifdef	ACCURATE_SPRITES
 						if (!((TC & 0x3) && (PPU.SprData[y >> 2][8] & 0x20)))
-#else
+#else	/* !ACCURATE_SPRITES */
 						if (!((TC & 0x3) && (PPU.SprBuff[y | 2] & 0x20)))
-#endif
+#endif	/* ACCURATE_SPRITES */
 							TC = SprDat | 0x10;
 						break;
 					}
@@ -833,7 +833,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 #ifdef	SHORQ
 			if (CPU.WantIRQ)
 				PalIndex ^= 0x80;
-#endif /* SHORQ */
+#endif	/* SHORQ */
 			*PPU.GfxData = PalIndex;
 			PPU.GfxData++;
 		}
@@ -856,7 +856,7 @@ __inline static	void	RunSkip (int NumTicks)
 			{
 #ifndef	ACCURATE_SPRITES
 				DiscoverSprites();
-#endif
+#endif	/* !ACCURATE_SPRITES */
 				if (PPU.Spr0InLine)
 					ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
@@ -904,7 +904,7 @@ __inline static	void	RunSkip (int NumTicks)
 		{
 #ifdef	ACCURATE_SPRITES
 			ProcessSprites();
-#endif
+#endif	/* ACCURATE_SPRITES */
 			if (PPU.Clockticks & 1)
 			{
 				if (PPU.IOMode)
@@ -1163,7 +1163,7 @@ static	int	__fastcall	Read4 (void)
 	if (PPU.IsRendering)
 #ifdef	ACCURATE_SPRITES
 		PPU.ppuLatch = PPU.Sprite[SpritePtr];
-#else
+#else	/* !ACCURATE_SPRITES */
 	{
 		if (PPU.Clockticks < 64)
 			PPU.ppuLatch = 0xFF;
@@ -1175,7 +1175,7 @@ static	int	__fastcall	Read4 (void)
 			PPU.ppuLatch = 0xFF;
 		else	PPU.ppuLatch = PPU.Sprite[0];
 	}
-#endif
+#endif	/* ACCURATE_SPRITES */
 	else	PPU.ppuLatch = PPU.Sprite[PPU.SprAddr];
 	return PPU.ppuLatch;
 }
@@ -1210,7 +1210,7 @@ static	void	__fastcall	Write0 (int Val)
 	PPU.Reg2000 = Val;
 	PPU.IntReg &= 0x73FF;
 	PPU.IntReg |= (Val & 3) << 10;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 }
@@ -1282,7 +1282,7 @@ static	void	__fastcall	Write7 (int Val)
 	{
 		register unsigned char Addr = (unsigned char)PPU.VRAMAddr & 0x1F;
 		Val = Val & 0x3F;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 		Debugger.PalChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 		PPU.Palette[Addr] = Val;

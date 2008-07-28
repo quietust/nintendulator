@@ -10,7 +10,7 @@
 # include "MapperInterface.h"
 # include "APU.h"
 # include "CPU.h"
-#else
+#else	/* !NSFPLAYER */
 # include "stdafx.h"
 # include "Nintendulator.h"
 # include "MapperInterface.h"
@@ -19,7 +19,7 @@
 # include "CPU.h"
 # include "PPU.h"
 # include "AVI.h"
-#endif
+#endif	/* NSFPLAYER */
 
 #define	SOUND_FILTERING
 
@@ -30,7 +30,7 @@ struct tAPU APU;
 #define	BITS		16
 #define	FRAMEBUF	4
 const	unsigned int	LOCK_SIZE = FREQ * (BITS / 8);
-#endif
+#endif	/* !NSFPLAYER */
 
 const	unsigned char	LengthCounts[32] = {
 	0x0A,0xFE,
@@ -589,7 +589,7 @@ void	APU_WriteReg (int Addr, unsigned char Val)
 #ifndef	NSFPLAYER
 	if (Addr < 0x018)
 		APU.Regs[Addr] = Val;
-#endif
+#endif	/* !NSFPLAYER */
 	switch (Addr)
 	{
 	case 0x000:	Square0_Write(0,Val);	break;
@@ -621,9 +621,9 @@ void	APU_WriteReg (int Addr, unsigned char Val)
 	case 0x017:	Frame_Write(Val);	break;
 #ifndef	NSFPLAYER
 	default:	MessageBox(hMainWnd,_T("ERROR: Invalid sound write!"),_T("Nintendulator"),MB_OK);
-#else
+#else	/* NSFPLAYER */
 	default:	MessageBox(mod.hMainWindow,"ERROR: Invalid sound write!","in_nintendulator",MB_OK);
-#endif
+#endif	/* !NSFPLAYER */
 						break;
 	}
 }
@@ -656,7 +656,7 @@ unsigned char	APU_Read4015 (void)
 		}\
 	}\
 }
-#endif
+#endif	/* !NSFPLAYER */
 
 void	APU_SetFPSVars (int FPS)
 {
@@ -681,9 +681,9 @@ void	APU_SetFPSVars (int FPS)
 	{
 #ifndef	NSFPLAYER
 		MessageBox(hMainWnd,_T("Attempted to set indeterminate sound framerate!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-#else
+#else	/* NSFPLAYER */
 		MessageBox(mod.hMainWindow,"Attempted to set indeterminate sound framerate!","in_nintendulator",MB_OK | MB_ICONERROR);
-#endif
+#endif	/* !NSFPLAYER */
 		return;
 	}
 #ifndef	NSFPLAYER
@@ -692,7 +692,7 @@ void	APU_SetFPSVars (int FPS)
 	if (APU.buffer)
 		free(APU.buffer);
 	APU.buffer = (short *)malloc(APU.LockSize);
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 void	APU_SetFPS (int FPS)
@@ -700,13 +700,13 @@ void	APU_SetFPS (int FPS)
 #ifndef	NSFPLAYER
 	BOOL Enabled = APU.isEnabled;
 	APU_Release();
-#endif
+#endif	/* !NSFPLAYER */
 	APU_SetFPSVars(FPS);
 #ifndef	NSFPLAYER
 	APU_Create();
 	if (Enabled)
 		APU_SoundON();
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 void	APU_Init (void)
@@ -718,19 +718,19 @@ void	APU_Init (void)
 	APU.Buffer		= NULL;
 	APU.buffer		= NULL;
 	APU.isEnabled		= FALSE;
-#endif
+#endif	/* !NSFPLAYER */
 	APU.WantFPS		= 0;
 	APU.MHz			= 1;
 	APU.PAL			= FALSE;
 #ifndef	NSFPLAYER
 	APU.LockSize		= 0;
 	APU.buflen		= 0;
-#endif
+#endif	/* !NSFPLAYER */
 	APU.Cycles		= 0;
 	APU.BufPos		= 0;
 #ifndef	NSFPLAYER
 	APU.next_pos		= 0;
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 void	APU_Create (void)
@@ -738,7 +738,7 @@ void	APU_Create (void)
 #ifndef	NSFPLAYER
 	DSBUFFERDESC DSBD;
 	WAVEFORMATEX WFX;
-#endif
+#endif	/* !NSFPLAYER */
 
 	if (!APU.WantFPS)
 		APU_SetFPSVars(60);
@@ -801,7 +801,7 @@ void	APU_Create (void)
 		return;
 	}
 	EI.DbgOut(_T("Created %iHz %i bit audio buffer, %i frames (%i bytes per frame)"), WFX.nSamplesPerSec, WFX.wBitsPerSample, DSBD.dwBufferBytes / APU.LockSize, APU.LockSize);
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 void	APU_Release (void)
@@ -818,14 +818,14 @@ void	APU_Release (void)
 		IDirectSoundBuffer_Release(APU.PrimaryBuffer);
 	}								APU.PrimaryBuffer = NULL;
 	if (APU.DirectSound)	IDirectSound_Release(APU.DirectSound);	APU.DirectSound = NULL;
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 void	APU_Reset  (void)
 {
 #ifndef	NSFPLAYER
 	ZeroMemory(APU.Regs,0x18);
-#endif
+#endif	/* !NSFPLAYER */
 	ZeroMemory(&Frame,sizeof(Frame));
 	ZeroMemory(&Square0,sizeof(Square0));
 	ZeroMemory(&Square1,sizeof(Square1));
@@ -1039,10 +1039,10 @@ int	APU_Load (FILE *in)
 	
 	return clen;
 }
-#else
+#else	/* NSFPLAYER */
 short	sample_pos = 0;
 BOOL	sample_ok = FALSE;
-#endif
+#endif	/* !NSFPLAYER */
 
 void	APU_Run (void)
 {
@@ -1077,11 +1077,11 @@ void	APU_Run (void)
 			APU.next_pos = (APU.next_pos + 1) % FRAMEBUF;
 		}
 	}
-#else
+#else	/* NSFPLAYER */
 	int NewBufPos = SAMPLERATE * ++APU.Cycles / APU.MHz;
 	if (NewBufPos == SAMPLERATE)	/* we've generated 1 second, so we can reset our counters now */
 		APU.Cycles = NewBufPos = 0;
-#endif
+#endif	/* !NSFPLAYER */
 	Frame_Run();
 	Square0_Run();
 	Square1_Run();
@@ -1091,7 +1091,7 @@ void	APU_Run (void)
 
 #ifdef	SOUND_FILTERING
 	samppos += Square0.Pos + Square1.Pos + Triangle.Pos + Noise.Pos + DPCM.Pos;
-#endif
+#endif	/* SOUND_FILTERING */
 	sampcycles++;
 	
 	if (NewBufPos != APU.BufPos)
@@ -1099,9 +1099,9 @@ void	APU_Run (void)
 		APU.BufPos = NewBufPos;
 #ifdef	SOUND_FILTERING
 		samppos = (samppos << 6) / sampcycles;
-#else
+#else	/* !SOUND_FILTERING */
 		samppos = (Square0.Pos + Square1.Pos + Triangle.Pos + Noise.Pos + DPCM.Pos) << 6;
-#endif
+#endif	/* SOUND_FILTERING */
 		if ((MI) && (MI->GenSound))
 			samppos += MI->GenSound(sampcycles);
 		if (samppos < -0x8000)
@@ -1110,10 +1110,10 @@ void	APU_Run (void)
 			samppos = 0x7FFF;
 #ifndef	NSFPLAYER
 		APU.buffer[APU.BufPos] = samppos;
-#else
+#else	/* NSFPLAYER */
 		sample_pos = samppos;
 		sample_ok = TRUE;
-#endif
+#endif	/* !NSFPLAYER */
 		samppos = sampcycles = 0;
 	}
 }

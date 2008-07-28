@@ -60,4 +60,4 @@ void	GFX_GetCursorPos (POINT *);
 void	GFX_SetCursorPos (int,int);
 BOOL	GFX_ZapperHit (int);
 
-#endif /* GFX_H */
+#endif	/* !GFX_H */

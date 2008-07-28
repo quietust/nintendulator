@@ -326,7 +326,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					MessageBox(hMainWnd,_T("Impossible: savestate is advancing to scanline 240 in framestep mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 				do
 				{
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 					if (Debugger.Enabled)
 						Debugger_AddInst();
 #endif	/* ENABLE_DEBUGGER */
@@ -334,7 +334,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				} while (!NES.Scanline);
 				NES.Scanline = FALSE;
 			}
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 			if (Debugger.Enabled)
 				Debugger_Update();
 #endif	/* ENABLE_DEBUGGER */
@@ -506,7 +506,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Controllers_OpenConfig();
 			if (running)	NES_Start(FALSE);
 			break;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 		case ID_DEBUG_LEVEL1:
 			Debugger_SetMode(0);
 			CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);

@@ -21,8 +21,8 @@
  * $Id$
  */
 
-#ifndef __IN_NINTENDULATOR_H__
-#define __IN_NINTENDULATOR_H__
+#ifndef	IN_NINTENDULATOR_H
+#define	IN_NINTENDULATOR_H
 
 #include <windows.h>
 #include <tchar.h>	// this is needed for the CPU and other stuff to build
@@ -206,4 +206,4 @@ extern	In_Module	mod;
 extern	In_Module mod;
 extern	char sample_buffer[576*NCH*(BPS/8)*2]; // sample buffer
 
-#endif /* __IN_NINTENDULATOR_H__ */
+#endif /* IN_NINTENDULATOR_H */

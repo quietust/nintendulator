@@ -19,7 +19,7 @@
 #include "Genie.h"
 #include "States.h"
 
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 
 struct tDebugger Debugger;
 

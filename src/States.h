@@ -28,4 +28,4 @@ BOOL	States_LoadData (FILE *, int);
 void	States_SaveState (void);
 void	States_LoadState (void);
 
-#endif /* STATES_H */
+#endif	/* !STATES_H */

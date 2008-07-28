@@ -22,9 +22,9 @@ struct	tPPU
 
 #ifdef	ACCURATE_SPRITES
 	unsigned char Sprite[0x120];
-#else
+#else	/* !ACCURATE_SPRITES */
 	unsigned char Sprite[0x100];
-#endif
+#endif	/* ACCURATE_SPRITES */
 	unsigned char SprAddr;
 
 	unsigned char Palette[0x20];
@@ -50,16 +50,16 @@ struct	tPPU
 
 #ifdef	ACCURATE_SPRITES
 	unsigned char *SprBuff;
-#else
+#else	/* !ACCURATE_SPRITES */
 	unsigned char SprBuff[32];
-#endif
+#endif	/* ACCURATE_SPRITES */
 	BOOL Spr0InLine;
 	int SprCount;
 #ifdef	ACCURATE_SPRITES
 	unsigned char SprData[8][10];
-#else
+#else	/* !ACCURATE_SPRITES */
 	unsigned char SprData[8][8];
-#endif
+#endif	/* ACCURATE_SPRITES */
 	unsigned short *GfxData;
 	BOOL IsPAL;
 	unsigned char PALsubticks;
@@ -83,4 +83,4 @@ int	MAPINT	PPU_BusRead (int,int);
 void	MAPINT	PPU_BusWriteCHR (int,int,int);
 void	MAPINT	PPU_BusWriteNT (int,int,int);
 
-#endif /* PPU_H */
+#endif	/* !PPU_H */

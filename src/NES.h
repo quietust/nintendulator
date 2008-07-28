@@ -56,4 +56,4 @@ void	NES_LoadSettings (void);
 void	NES_SaveSettings (void);
 void	NES_MapperConfig (void);
 
-#endif /* NES_H */
+#endif	/* !NES_H */

@@ -35,12 +35,12 @@ void	NES_Init (void)
 	MapperInterface_Init();
 	APU_Init();
 	GFX_Init();
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	Debugger_Init();
 #endif	/* ENABLE_DEBUGGER */
 	States_Init();
 	Controllers_Init();
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	Debugger_SetMode(0);
 #endif	/* ENABLE_DEBUGGER */
 	NES_LoadSettings();
@@ -143,7 +143,7 @@ void	NES_OpenFile (TCHAR *filename)
 
 	DrawMenuBar(hMainWnd);
 
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
 	Debugger.PalChanged = TRUE;
 	Debugger.PatChanged = TRUE;
@@ -899,7 +899,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 	CPU_Reset();
 	PPU_Reset();
 	CPU.WantNMI = FALSE;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	if (Debugger.Enabled)
 		Debugger_Update();
 #endif	/* ENABLE_DEBUGGER */
@@ -932,7 +932,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 	QueryPerformanceCounter(&ClockVal2);
 
 	EI.DbgOut(_T("10 seconds emulated in %lu milliseconds"),(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
-#else
+#else	/* !CPU_BENCHMARK */
 
 	if ((!NES.Stop) && (NES.SoundEnabled))
 		APU_SoundON();	// don't turn on sound if we're only stepping 1 instruction
@@ -948,12 +948,12 @@ DWORD	WINAPI	NES_Thread (void *param)
 	
 	while (!NES.Stop)
 	{
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 		if (Debugger.Enabled)
 			Debugger_AddInst();
 #endif	/* ENABLE_DEBUGGER */
 		CPU_ExecOp();
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 		if (Debugger.Enabled)
 			Debugger_Update();
 #endif	/* ENABLE_DEBUGGER */
@@ -962,7 +962,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 			NES.Scanline = FALSE;
 			if (PPU.SLnum == 240)
 			{
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 				if (Debugger.Enabled)
 					Debugger_Update();
 #endif	/* ENABLE_DEBUGGER */

@@ -10,11 +10,11 @@
 
 /* Mapper Interface version (3.7) */
 
-#ifdef UNICODE
+#ifdef	UNICODE
 #define	CurrentMapperInterface	0x80030007
-#else
+#else	/* !UNICODE */
 #define	CurrentMapperInterface	0x00030007
-#endif
+#endif	/* UNICODE */
 
 /* Function types */
 
@@ -214,4 +214,4 @@ void	MapperInterface_Release (void);
 BOOL	MapperInterface_LoadMapper (CPROMInfo ROM);
 void	MapperInterface_UnloadMapper (void);
 
-#endif	/* MAPPERINTERFACE_H */
+#endif	/* !MAPPERINTERFACE_H */

@@ -8,7 +8,7 @@
 #ifndef DEBUGGER_H
 #define DEBUGGER_H
 
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 
 #define DEBUG_TRACELINES 13
 #define DEBUG_MEMLINES 8
@@ -74,6 +74,6 @@ void	Debugger_SetMode(int NewMode);
 void	Debugger_Update (void);
 void	Debugger_AddInst (void);
 
-#endif	/* ENABLE_DEBUGGER */
+#endif	/* !ENABLE_DEBUGGER */
 
-#endif /* DEBUGGER_H */
+#endif	/* !DEBUGGER_H */

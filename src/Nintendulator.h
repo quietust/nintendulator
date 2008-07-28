@@ -54,4 +54,4 @@ extern	void	__cdecl	PrintTitlebar (TCHAR *Text, ...);
 extern	void		AddDebug (TCHAR *txt);
 
 
-#endif /* NINTENDULATOR_H */
+#endif	/* !NINTENDULATOR_H */

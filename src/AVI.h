@@ -16,4 +16,4 @@ void AVI_AddVideo(void);
 void AVI_AddAudio(void);
 void AVI_End(void);
 
-#endif /* AVI_H */
+#endif	/* !AVI_H */

@@ -34,4 +34,4 @@ void		Movie_SaveInput	(unsigned char);
 int		Movie_Save	(FILE *);
 int		Movie_Load	(FILE *);
 
-#endif /* MOVIE_H */
+#endif	/* !MOVIE_H */

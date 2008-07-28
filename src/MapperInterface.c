@@ -5,11 +5,11 @@
  * $Id$
  */
 
-#ifdef NSFPLAYER
+#ifdef	NSFPLAYER
 # include "in_nintendulator.h"
 # include "MapperInterface.h"
 # include "CPU.h"
-#else
+#else	/* !NSFPLAYER */
 # include "stdafx.h"
 # include "Nintendulator.h"
 # include "resource.h"
@@ -19,22 +19,22 @@
 # include "PPU.h"
 # include "GFX.h"
 # include "Debugger.h"
-#endif
+#endif	/* NSFPLAYER */
 
 TEmulatorInterface	EI;
 TROMInfo		RI;
 
 PDLLInfo		DI;
 CPMapperInfo		MI;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 CPMapperInfo		MI2;
-#endif
+#endif	/* !NSFPLAYER */
 
-#ifdef NSFPLAYER
+#ifdef	NSFPLAYER
 HINSTANCE		dInst;
 PLoadMapperDLL		LoadDLL;
 PUnloadMapperDLL	UnloadDLL;
-#else
+#else	/* !NSFPLAYER */
 struct	tMapperDLL
 {
 	HINSTANCE		dInst;
@@ -43,7 +43,7 @@ struct	tMapperDLL
 	PUnloadMapperDLL	UnloadDLL;
 	struct	tMapperDLL *	Next;
 } *MapperDLLs = NULL;
-#endif
+#endif	/* NSFPLAYER */
 
 /******************************************************************************/
 
@@ -66,31 +66,31 @@ static	FCPURead	MAPINT	GetCPUReadHandler (int Page)
 
 static	void	MAPINT	SetPPUWriteHandler (int Page, FPPUWrite New)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	PPU.WriteHandler[Page] = New;
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	void	MAPINT	SetPPUReadHandler (int Page, FPPURead New)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	PPU.ReadHandler[Page] = New;
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	FPPUWrite	MAPINT	GetPPUWriteHandler (int Page)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	return PPU.WriteHandler[Page];
-#else
+#else	/* NSFPLAYER */
 	return NULL;
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	FPPURead	MAPINT	GetPPUReadHandler (int Page)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	return PPU.ReadHandler[Page];
-#else
+#else	/* NSFPLAYER */
 	return NULL;
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 /******************************************************************************/
@@ -197,17 +197,17 @@ static	void	MAPINT	SetPRG_OB4 (int Bank)	/* Open bus */
 
 static	__inline void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	if (!NES.CHRMask)
 		return;
 	PPU.CHRPointer[Bank] = CHR_ROM[Val & NES.CHRMask];
 	PPU.Writable[Bank] = FALSE;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger.NTabChanged = TRUE;
 	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	void	MAPINT	SetCHR_ROM2 (int Bank, int Val)
 {
@@ -237,28 +237,28 @@ static	void	MAPINT	SetCHR_ROM8 (int Bank, int Val)
 }
 static	int	MAPINT	GetCHR_ROM1 (int Bank)	/* -1 if no ROM mapped */
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	int tpi = (int)((PPU.CHRPointer[Bank] - CHR_ROM[0]) >> 10);
 	if ((tpi < 0) || (tpi > NES.CHRMask)) return -1;
 	else return tpi;
-#else
+#else	/* NSFPLAYER */
 	return -1;
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 /******************************************************************************/
 
 static	__inline void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	PPU.CHRPointer[Bank] = CHR_RAM[Val & 0x1F];
 	PPU.Writable[Bank] = TRUE;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger.NTabChanged = TRUE;
 	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	void	MAPINT	SetCHR_RAM2 (int Bank, int Val)
 {
@@ -288,142 +288,142 @@ static	void	MAPINT	SetCHR_RAM8 (int Bank, int Val)
 }
 static	int	MAPINT	GetCHR_RAM1 (int Bank)	/* -1 if no ROM mapped */
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	int tpi = (int)((PPU.CHRPointer[Bank] - CHR_RAM[0]) >> 10);
 	if ((tpi < 0) || (tpi > MAX_CHRRAM_MASK)) return -1;
 	else return tpi;
-#else
+#else	/* NSFPLAYER */
 	return -1;
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 /******************************************************************************/
 
 static	__inline void	MAPINT	SetCHR_NT1 (int Bank, int Val)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	PPU.CHRPointer[Bank] = PPU_VRAM[Val & 3];
 	PPU.Writable[Bank] = TRUE;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger.NTabChanged = TRUE;
 	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	int	MAPINT	GetCHR_NT1 (int Bank)	/* -1 if no ROM mapped */
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	int tpi = (int)((PPU.CHRPointer[Bank] - PPU_VRAM[0]) >> 10);
 	if ((tpi < 0) || (tpi > 4)) return -1;
 	else return tpi;
-#else
+#else	/* NSFPLAYER */
 	return -1;
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 /******************************************************************************/
 
 static	unsigned char *	MAPINT	GetCHR_Ptr1 (int Bank)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	return PPU.CHRPointer[Bank];
-#else
+#else	/* NSFPLAYER */
 	return NULL;
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 static	void	MAPINT	SetCHR_Ptr1 (int Bank, unsigned char *Data, BOOL Writable)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	PPU.CHRPointer[Bank] = Data;
 	PPU.Writable[Bank] = Writable;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger.NTabChanged = TRUE;
 	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 static	void	MAPINT	SetCHR_OB1 (int Bank)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	PPU.CHRPointer[Bank] = PPU_OpenBus;
 	PPU.Writable[Bank] = FALSE;
-#ifdef ENABLE_DEBUGGER
+#ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger.NTabChanged = TRUE;
 	else	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 /******************************************************************************/
 
 static	void	MAPINT	Mirror_H (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	SetCHR_NT1(0x8,0);	SetCHR_NT1(0xC,0);
 	SetCHR_NT1(0x9,0);	SetCHR_NT1(0xD,0);
 	SetCHR_NT1(0xA,1);	SetCHR_NT1(0xE,1);
 	SetCHR_NT1(0xB,1);	SetCHR_NT1(0xF,1);
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	void	MAPINT	Mirror_V (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	SetCHR_NT1(0x8,0);	SetCHR_NT1(0xC,0);
 	SetCHR_NT1(0x9,1);	SetCHR_NT1(0xD,1);
 	SetCHR_NT1(0xA,0);	SetCHR_NT1(0xE,0);
 	SetCHR_NT1(0xB,1);	SetCHR_NT1(0xF,1);
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	void	MAPINT	Mirror_4 (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	SetCHR_NT1(0x8,0);	SetCHR_NT1(0xC,0);
 	SetCHR_NT1(0x9,1);	SetCHR_NT1(0xD,1);
 	SetCHR_NT1(0xA,2);	SetCHR_NT1(0xE,2);
 	SetCHR_NT1(0xB,3);	SetCHR_NT1(0xF,3);
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	void	MAPINT	Mirror_S0 (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	SetCHR_NT1(0x8,0);	SetCHR_NT1(0xC,0);
 	SetCHR_NT1(0x9,0);	SetCHR_NT1(0xD,0);
 	SetCHR_NT1(0xA,0);	SetCHR_NT1(0xE,0);
 	SetCHR_NT1(0xB,0);	SetCHR_NT1(0xF,0);
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	void	MAPINT	Mirror_S1 (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	SetCHR_NT1(0x8,1);	SetCHR_NT1(0xC,1);
 	SetCHR_NT1(0x9,1);	SetCHR_NT1(0xD,1);
 	SetCHR_NT1(0xA,1);	SetCHR_NT1(0xE,1);
 	SetCHR_NT1(0xB,1);	SetCHR_NT1(0xF,1);
-#endif
+#endif	/* !NSFPLAYER */
 }
 static	void	MAPINT	Mirror_Custom (int M1, int M2, int M3, int M4)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	SetCHR_NT1(0x8,M1);	SetCHR_NT1(0xC,M1);
 	SetCHR_NT1(0x9,M2);	SetCHR_NT1(0xD,M2);
 	SetCHR_NT1(0xA,M3);	SetCHR_NT1(0xE,M3);
 	SetCHR_NT1(0xB,M4);	SetCHR_NT1(0xF,M4);
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 /******************************************************************************/
 
 static	void	MAPINT	Set_SRAMSize (int Size)	/* Sets the size of the SRAM (in bytes) and clears PRG_RAM */
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	NES.SRAM_Size = Size;
 	memset(PRG_RAM,0,sizeof(PRG_RAM));
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 /******************************************************************************/
@@ -437,33 +437,33 @@ static	void	MAPINT	SetIRQ (int IRQstate)
 
 static	void	MAPINT	DbgOut (TCHAR *text, ...)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	static TCHAR txt[1024];
 	va_list marker;
 	va_start(marker,text);
 	_vstprintf(txt,text,marker);
 	va_end(marker);
 	AddDebug(txt);
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 static	void	MAPINT	StatusOut (TCHAR *text, ...)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	static TCHAR txt[1024];
 	va_list marker;
 	va_start(marker,text);
 	_vstprintf(txt,text,marker);
 	va_end(marker);
 	PrintTitlebar(txt);
-#endif
+#endif	/* !NSFPLAYER */
 }
 
 /******************************************************************************/
 
 void	MapperInterface_Init (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	WIN32_FIND_DATA Data;
 	HANDLE Handle;
 	struct tMapperDLL *ThisDLL;
@@ -501,13 +501,13 @@ void	MapperInterface_Init (void)
 	free(ThisDLL);
 	if (MapperDLLs == NULL)
 		MessageBox(hMainWnd,_T("Fatal error: unable to locate any mapper DLLs!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-#else
+#else	/* NSFPLAYER */
 	dInst = LoadLibrary("Plugins\\nsf.dll");
 	LoadDLL = (PLoadMapperDLL)GetProcAddress(dInst,"LoadMapperDLL");
 	UnloadDLL = (PUnloadMapperDLL)GetProcAddress(dInst,"UnloadMapperDLL");
 	if ((!LoadDLL) || (!UnloadDLL) || (!(DI = LoadDLL(mod.hMainWindow,&EI,CurrentMapperInterface))))
 		MessageBox(mod.hMainWindow,"Fatal error: unable to locate NSF player mapper DLL!","in_nintendulator",MB_OK | MB_ICONERROR);
-#endif
+#endif	/* !NSFPLAYER */
 	memset(&EI,0,sizeof(EI));
 	memset(&RI,0,sizeof(RI));
 	EI.SetCPUWriteHandler = SetCPUWriteHandler;
@@ -558,12 +558,12 @@ void	MapperInterface_Init (void)
 	EI.StatusOut = StatusOut;
 	EI.OpenBus = &CPU.LastRead;
 	MI = NULL;
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	MI2 = NULL;
-#endif
+#endif	/* !NSFPLAYER */
 }
 
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 LRESULT CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static PDLLInfo *DLLs;
@@ -603,11 +603,11 @@ LRESULT CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 	}
 	return FALSE;
 }
-#endif
+#endif	/* !NSFPLAYER */
 
 BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	PDLLInfo *DLLs;
 	int num = 1;
 	struct tMapperDLL *ThisDLL = MapperDLLs;
@@ -656,12 +656,12 @@ BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
 		return TRUE;
 	}
 	free(DLLs);
-#else
+#else	/* NSFPLAYER */
 	if (!DI)
 		return FALSE;
 	if (MI = DI->LoadMapper(ROM))
 		return TRUE;
-#endif
+#endif	/* !NSFPLAYER */
 	return FALSE;
 }
 
@@ -679,13 +679,13 @@ void	MapperInterface_UnloadMapper (void)
 			DI->UnloadMapper();
 #ifndef	NSFPLAYER
 		DI = NULL;
-#endif
+#endif	/* !NSFPLAYER */
 	}
 }
 
 void	MapperInterface_Release (void)
 {
-#ifndef NSFPLAYER
+#ifndef	NSFPLAYER
 	struct tMapperDLL *ThisDLL = MapperDLLs;
 	while (ThisDLL)
 	{
@@ -695,9 +695,9 @@ void	MapperInterface_Release (void)
 		free(ThisDLL);
 		ThisDLL = MapperDLLs;
 	}
-#else
+#else	/* NSFPLAYER */
 	DI = NULL;
 	UnloadDLL();
 	FreeLibrary(dInst);
-#endif
+#endif	/* !NSFPLAYER */
 }
