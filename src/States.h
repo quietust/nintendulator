@@ -8,9 +8,9 @@
 #ifndef STATES_H
 #define STATES_H
 
-#define	STATES_VERSION	"0960"
-#define	STATES_BETA	"0955"
-#define	STATES_PREV	"0950"
+#define	STATES_VERSION	"0965"
+#define	STATES_BETA	"0965"
+#define	STATES_PREV	"0960"
 
 struct tStates
 {
