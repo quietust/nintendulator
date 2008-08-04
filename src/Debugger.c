@@ -101,6 +101,7 @@ LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void	Debugger_StartLogging (void);
 void	Debugger_StopLogging (void);
+void	Debugger_CacheBreakpoints (void);
 
 void	Debugger_Init (void)
 {
@@ -138,17 +139,22 @@ void	Debugger_Init (void)
 	Debugger.CPUWnd = NULL;
 	Debugger.PPUWnd = NULL;
 
-	ZeroMemory(Debugger.BPcache, sizeof(Debugger.BPcache));
 	Debugger.Breakpoints = NULL;
 	Debugger.TraceOffset = -1;
 
 	Debugger.LogFile = NULL;
+	Debugger_CacheBreakpoints();
 }
 
 void	Debugger_Release (void)
 {
 	Debugger_StopLogging();
 	Debugger_SetMode(0);
+	while (Debugger.Breakpoints != NULL)
+	{
+		Debugger.Breakpoints = Debugger.Breakpoints->next;
+		free(Debugger.Breakpoints->prev);
+	}
 }
 
 void	Debugger_SetMode (int NewMode)
@@ -221,8 +227,8 @@ unsigned char DebugMemPPU (unsigned long Addr)
 	else	return 0xFF;
 }
 
-// Decodes an instruction into plain text, suitable for displaying in the debugger or writing to a logfile
-// Returns the effective address for usage with breakpoints
+/* Decodes an instruction into plain text, suitable for displaying in the debugger or writing to a logfile
+ * Returns the effective address for usage with breakpoints */
 unsigned short	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 {
 	unsigned char OpData[3] = {DebugMemCPU(Addr), 0, 0};
@@ -294,7 +300,7 @@ unsigned short	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 		Operand = Addr+2+(signed char)OpData[1];
 		break;
 	}
-	// Use this for outputting to debug logfile
+	/* Use this for outputting to debug logfile */
 	if (str1)
 	{
 		switch (TraceAddrMode[DebugMemCPU(Addr)])
@@ -317,7 +323,7 @@ unsigned short	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 		default:	strcpy(str1, "                                             ");																			break;
 		}
 	}
-	// Use this for outputting to the debugger's Trace pane
+	/* Use this for outputting to the debugger's Trace pane */
 	if (str2)
 	{
 		switch (TraceAddrMode[DebugMemCPU(Addr)])
@@ -350,25 +356,25 @@ void	Debugger_UpdateCPU (void)
 	unsigned short Addr;
 	SCROLLINFO sinfo;
 
-	// if we chose "Step", stop emulation
+	/* if we chose "Step", stop emulation */
 	if (Debugger.Step)
 		NES.Stop = TRUE;
-	// check for breakpoints
+	/* check for breakpoints */
 	{
-		// PC has execution breakpoint
+		/* PC has execution breakpoint */
 		if (Debugger.BPcache[CPU.PC] & DEBUG_BREAK_EXEC)
 			NES.Stop = TRUE;
-		// I/O break
+		/* I/O break */
 		Addr = DecodeInstruction((unsigned short)CPU.PC, NULL, NULL);
 		TpVal = DebugMemCPU((unsigned short)CPU.PC);
-		// read opcode, effective address has read breakpoint
+		/* read opcode, effective address has read breakpoint */
 		if ((TraceIO[TpVal] & DEBUG_BREAK_READ) && (Debugger.BPcache[Addr] & DEBUG_BREAK_READ))
 			NES.Stop = TRUE;
-		// write opcode, effective address has write breakpoint
+		/* write opcode, effective address has write breakpoint */
 		if ((TraceIO[TpVal] & DEBUG_BREAK_WRITE) && (Debugger.BPcache[Addr] & DEBUG_BREAK_WRITE))
 			NES.Stop = TRUE;
 	}
-	// if emulation wasn't stopped, don't bother updating the dialog
+	/* if emulation wasn't stopped, don't bother updating the dialog */
 	if (!NES.Stop)
 		return;
 
@@ -447,7 +453,7 @@ void	Debugger_UpdateCPU (void)
 		SetDlgItemText(Debugger.CPUWnd, PPUPages[i], tps);
 	}
 
-	// update trace window - turn off redraw
+	/* update trace window - turn off redraw */
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, WM_SETREDRAW, FALSE, 0);
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, LB_RESETCONTENT, 0, 0);
 
@@ -467,11 +473,11 @@ void	Debugger_UpdateCPU (void)
 		SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, LB_ADDSTRING, 0, (LPARAM)tps);
 		Addr += AddrBytes[TraceAddrMode[DebugMemCPU(Addr)]];
 	}
-	// re-enable redraw just before we set the selection
+	/* re-enable redraw just before we set the selection */
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, WM_SETREDRAW, TRUE, 0);
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, LB_SETCURSEL, TpVal, 0);
 
-	// update memory window - turn off redraw
+	/* update memory window - turn off redraw */
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_MEM_LIST, WM_SETREDRAW, FALSE, 0);
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_MEM_LIST, LB_RESETCONTENT, 0, 0);
 
@@ -486,7 +492,7 @@ void	Debugger_UpdateCPU (void)
 		SetScrollInfo(GetDlgItem(Debugger.CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		for (i = 0; i < DEBUG_MEMLINES; i++)
 		{
-			// past the end?
+			/* past the end? */
 			if ((Debugger.MemOffset + i) * 0x10 >= 0x10000)
 				break;
 			_stprintf(tps, _T("%04X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
@@ -521,7 +527,7 @@ void	Debugger_UpdateCPU (void)
 		SetScrollInfo(GetDlgItem(Debugger.CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		for (i = 0; i < DEBUG_MEMLINES; i++)
 		{
-			// past the end?
+			/* past the end? */
 			if ((Debugger.MemOffset + i) * 0x10 >= 0x4000)
 				break;
 			_stprintf(tps, _T("%04X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
@@ -556,7 +562,7 @@ void	Debugger_UpdateCPU (void)
 		SetScrollInfo(GetDlgItem(Debugger.CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		for (i = 0; i < DEBUG_MEMLINES; i++)
 		{
-			// past the end?
+			/* past the end? */
 			if ((Debugger.MemOffset + i) * 0x10 >= 0x100)
 				break;
 			_stprintf(tps, _T("%02X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
@@ -590,7 +596,7 @@ void	Debugger_UpdateCPU (void)
 		SetScrollInfo(GetDlgItem(Debugger.CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		for (i = 0; i < DEBUG_MEMLINES; i++)
 		{
-			// past the end?
+			/* past the end? */
 			if ((Debugger.MemOffset + i) * 0x10 >= 0x20)
 				break;
 			_stprintf(tps, _T("%02X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
@@ -615,7 +621,7 @@ void	Debugger_UpdateCPU (void)
 		}
 	}
 
-	// re-enable redraw now that we're done drawing it
+	/* re-enable redraw now that we're done drawing it */
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_MEM_LIST, WM_SETREDRAW, TRUE, 0);
 	inUpdate = FALSE;
 }
@@ -642,7 +648,7 @@ void	Debugger_UpdatePPU (void)
 	if (Debugger.PalChanged)
 	{
 		int x, y;
-		// updating palette also makes pattern table and nametable dirty
+		/* updating palette also makes pattern table and nametable dirty */
 		Debugger.PatChanged = TRUE;
 		Debugger.NTabChanged = TRUE;
 		for (x = 0; x < 16; x++)
@@ -673,7 +679,7 @@ void	Debugger_UpdatePPU (void)
 		unsigned char byte0, byte1;
 		BITMAPINFO bmi;
 
-		// updating pattern table also makes nametable dirty
+		/* updating pattern table also makes nametable dirty */
 		Debugger.NTabChanged = TRUE;
 
 		pal[0] = PPU.Palette[0];
@@ -826,6 +832,241 @@ void	Debugger_DumpPPU (void)
 	fclose(out);
 }
 
+void	Debugger_CacheBreakpoints (void)
+{
+	int i;
+	struct tBreakpoint *bp = Debugger.Breakpoints;
+	ZeroMemory(Debugger.BPcache, sizeof(Debugger.BPcache));
+	while (bp != NULL)
+	{
+		if (bp->enabled)
+		{
+			for (i = bp->addr_start; i <= bp->addr_end; i++)
+				Debugger.BPcache[i] |= bp->type;
+		}
+		bp = bp->next;
+	}
+}
+
+LRESULT CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	int wmId, wmEvent;
+	TCHAR tpc[8];
+	static struct tBreakpoint *bp = NULL;
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		bp = (struct tBreakpoint *)lParam;
+		if (bp != NULL)
+		{
+			switch (bp->type)
+			{
+			case DEBUG_BREAK_EXEC:
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_EXEC);
+				break;
+			case DEBUG_BREAK_READ:
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_READ);
+				break;
+			case DEBUG_BREAK_WRITE:
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_WRITE);
+				break;
+			case DEBUG_BREAK_READ | DEBUG_BREAK_WRITE:
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_ACCESS);
+				break;
+			case DEBUG_BREAK_OPCODE:
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_OPCODE);
+				break;
+			case DEBUG_BREAK_NMI:
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_NMI);
+				break;
+			case DEBUG_BREAK_IRQ:
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_IRQ);
+				break;
+			case DEBUG_BREAK_BRK:
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_BRK);
+				break;
+			}
+			switch (bp->type)
+			{
+			case DEBUG_BREAK_EXEC:
+			case DEBUG_BREAK_READ:
+			case DEBUG_BREAK_WRITE:
+			case DEBUG_BREAK_READ | DEBUG_BREAK_WRITE:
+				_stprintf(tpc, _T("%04X"), bp->addr_start);
+				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, tpc);
+				if (bp->addr_start == bp->addr_end)
+					SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
+				else
+				{
+					_stprintf(tpc, _T("%04X"), bp->addr_end);
+					SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, tpc);
+				}
+				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+				break;
+			case DEBUG_BREAK_OPCODE:
+				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
+				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
+				_stprintf(tpc, _T("%02X"), bp->opcode);
+				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, tpc);
+				break;
+			case DEBUG_BREAK_NMI:
+			case DEBUG_BREAK_IRQ:
+			case DEBUG_BREAK_BRK:
+				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
+				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
+				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+				break;
+			}
+			CheckDlgButton(hwndDlg, IDC_BREAK_ENABLED, (bp->enabled) ? BST_CHECKED : BST_UNCHECKED);
+		}
+		else
+		{
+			CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_EXEC);
+			SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
+			SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
+			SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+			CheckDlgButton(hwndDlg, IDC_BREAK_ENABLED, BST_CHECKED);
+		}
+		return FALSE;
+	case WM_COMMAND:
+		wmId    = LOWORD(wParam); 
+		wmEvent = HIWORD(wParam); 
+
+		switch (wmId)
+		{
+		case IDC_BREAK_EXEC:
+		case IDC_BREAK_READ:
+		case IDC_BREAK_WRITE:
+		case IDC_BREAK_ACCESS:
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), TRUE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+			break;
+		case IDC_BREAK_OPCODE:
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), TRUE);
+			break;
+		case IDC_BREAK_NMI:
+		case IDC_BREAK_IRQ:
+		case IDC_BREAK_BRK:
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+			break;
+
+		case IDOK:
+			{
+				int addr1, addr2, opcode, type, enabled;
+				TCHAR desc[32];
+				GetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, tpc, 5);
+				addr1 = _tcstol(tpc, NULL, 16);
+				GetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, tpc, 5);
+				addr2 = _tcstol(tpc, NULL, 16);
+				if (!_tcslen(tpc))
+					addr2 = addr1;
+				GetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, tpc, 3);
+				opcode = _tcstol(tpc, NULL, 16);
+				enabled = (IsDlgButtonChecked(hwndDlg, IDC_BREAK_ENABLED) == BST_CHECKED);
+
+				type = 0;
+				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_EXEC) == BST_CHECKED)
+				{
+					type = DEBUG_BREAK_EXEC;
+					_stprintf(desc, _T("Exec: %04X-%04X"), addr1, addr2);
+				}
+				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_READ) == BST_CHECKED)
+				{
+					type = DEBUG_BREAK_READ;
+					_stprintf(desc, _T("Read: %04X-%04X"), addr1, addr2);
+				}
+				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_WRITE) == BST_CHECKED)
+				{
+					type = DEBUG_BREAK_WRITE;
+					_stprintf(desc, _T("Write: %04X-%04X"), addr1, addr2);
+				}
+				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_ACCESS) == BST_CHECKED)
+				{
+					type = DEBUG_BREAK_READ | DEBUG_BREAK_WRITE;
+					_stprintf(desc, _T("Access: %04X-%04X"), addr1, addr2);
+				}
+				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_OPCODE) == BST_CHECKED)
+				{
+					type = DEBUG_BREAK_OPCODE;
+					_stprintf(desc, _T("Opcode: %02X"), opcode);
+				}
+				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_NMI) == BST_CHECKED)
+				{
+					type = DEBUG_BREAK_NMI;
+					_stprintf(desc, _T("NMI"), opcode);
+				}
+				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_IRQ) == BST_CHECKED)
+				{
+					type = DEBUG_BREAK_IRQ;
+					_stprintf(desc, _T("IRQ"), opcode);
+				}
+				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_BRK) == BST_CHECKED)
+				{
+					type = DEBUG_BREAK_BRK;
+					_stprintf(desc, _T("BRK"), opcode);
+				}
+				if (enabled)
+					_tcscat(desc, _T(" (+)"));
+				else	_tcscat(desc, _T(" (-)"));
+
+				if (type & (DEBUG_BREAK_EXEC | DEBUG_BREAK_READ | DEBUG_BREAK_WRITE))
+				{
+					if ((addr1 < 0x0000) || (addr1 > 0xFFFF) ||
+						(addr2 < 0x0000) || (addr2 > 0xFFFF) ||
+						(addr1 > addr2))
+					{
+						MessageBox(hwndDlg, _T("Invalid address range specified!"), _T("Breakpoint"), MB_ICONERROR);
+						break;
+					}
+				}
+				if (type & (DEBUG_BREAK_OPCODE))
+				{
+					if ((opcode < 0x00) || (opcode > 0xFF))
+					{
+						MessageBox(hwndDlg, _T("Invalid opcode specified!"), _T("Breakpoint"), MB_ICONERROR);
+						break;
+					}
+				}
+				if (bp == NULL)
+				{
+					bp = (struct tBreakpoint *)malloc(sizeof(struct tBreakpoint));
+					if (bp == NULL)
+					{
+						MessageBox(hwndDlg, _T("Failed to add breakpoint!"), _T("Breakpoint"), MB_ICONERROR);
+						EndDialog(hwndDlg, (INT_PTR)NULL);
+						break;
+					}
+					bp->next = Debugger.Breakpoints;
+					bp->prev = NULL;
+					if (bp->next != NULL)
+						bp->next->prev = bp;
+					Debugger.Breakpoints = bp;
+				}
+				bp->type = type;
+				bp->opcode = opcode;
+				bp->enabled = enabled;
+				bp->addr_start = addr1;
+				bp->addr_end = addr2;
+				_tcscpy(bp->desc, desc);
+			}
+			EndDialog(hwndDlg, (INT_PTR)bp);
+			break;
+		case IDCANCEL:
+			EndDialog(hwndDlg, (INT_PTR)NULL);
+			break;
+		}
+		break;
+	}
+	return FALSE;
+
+}
+
 LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
@@ -835,6 +1076,7 @@ LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	/* const */ int trace_tabs[3] = {25, 60, 80};	// Win9x requires these to be in writable memory
 	TCHAR tpc[8];
 	SCROLLINFO sinfo;
+	struct tBreakpoint *bp;
 
 	switch (uMsg)
 	{
@@ -866,6 +1108,12 @@ LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetScrollInfo(GetDlgItem(hwndDlg, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		CheckRadioButton(hwndDlg, IDC_DEBUG_MEM_CPU, IDC_DEBUG_MEM_PAL, IDC_DEBUG_MEM_CPU);
 
+		bp = Debugger.Breakpoints;
+		while (bp != NULL)
+		{
+			SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+			bp = bp->next;
+		}
 		return FALSE;
 	case WM_PAINT:
 		hdc = BeginPaint(hwndDlg, &ps);
@@ -981,6 +1229,108 @@ LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else	CPU.FC = 0;
 			CPU_JoinFlags();
 			Debugger_UpdateCPU();
+			break;
+
+		case IDC_DEBUG_BREAK_LIST:
+			// only enable Edit/Delete when there's a selection
+			if (SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCURSEL, 0, 0) == -1)
+			{
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
+			}
+			else
+			{
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), TRUE);
+			}
+			break;
+		case IDC_DEBUG_BREAK_ADD:
+			bp = (struct tBreakpoint *)DialogBoxParam(hInst, (LPCTSTR)IDD_BREAKPOINT, hwndDlg, BreakpointProc, (LPARAM)NULL);
+			// if user cancels, nothing was added
+			if (bp == NULL)
+				break;
+			// add it to the breakpoint listbox
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+			// then recache the breakpoints
+			Debugger_CacheBreakpoints();
+			break;
+		case IDC_DEBUG_BREAK_EDIT:
+			{
+				TCHAR *str;
+				int line, len;
+
+				// get the selected breakpoint's description
+				line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCURSEL, 0, 0);
+				if (line == -1)
+					break;
+				len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXTLEN, line, 0);
+				str = malloc((len + 1) * sizeof(TCHAR));
+				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXT, line, (LPARAM)str);
+
+				// try to find it in the breakpoint list
+				bp = Debugger.Breakpoints;
+				while (bp != NULL)
+				{
+					if (!_tcscmp(bp->desc, str))
+						break;
+					bp = bp->next;
+				}
+				free(str);
+				// extra sanity check
+				if (bp == NULL)
+					break;
+
+				// then open the editor on it
+				bp = (struct tBreakpoint *)DialogBoxParam(hInst, (LPCTSTR)IDD_BREAKPOINT, hwndDlg, BreakpointProc, (LPARAM)bp);
+				// if user cancels, nothing was changed
+				if (bp == NULL)
+					break;
+				// update breakpoint description
+				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
+				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+				// then recache the breakpoints
+				Debugger_CacheBreakpoints();
+			}
+			break;
+		case IDC_DEBUG_BREAK_DELETE:
+			{
+				TCHAR *str;
+				int line, len;
+
+				// get the selected breakpoint's description
+				line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCURSEL, 0, 0);
+				if (line == -1)
+					break;
+				len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXTLEN, line, 0);
+				str = malloc((len + 1) * sizeof(TCHAR));
+				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXT, line, (LPARAM)str);
+
+				// try to find it in the breakpoint list
+				bp = Debugger.Breakpoints;
+				while (bp != NULL)
+				{
+					if (!_tcscmp(bp->desc, str))
+						break;
+					bp = bp->next;
+				}
+				free(str);
+				// extra sanity check
+				if (bp == NULL)
+					break;
+
+				// and take it out of the list
+				if (bp->prev != NULL)
+					bp->prev->next = bp->next;
+				else	Debugger.Breakpoints = bp->next;
+				if (bp->next != NULL)
+					bp->next->prev = bp->prev;
+				free(bp);
+				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
+				// then recache the breakpoints
+				Debugger_CacheBreakpoints();
+			}
 			break;
 
 		case IDC_DEBUG_CONT_RUN:

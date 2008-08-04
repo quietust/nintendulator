@@ -25,9 +25,12 @@
 
 struct tBreakpoint
 {
+	TCHAR desc[32];
 	unsigned short addr_start, addr_end;
+	unsigned char opcode;
 	unsigned char type;
-	struct tBreakpoint *next;
+	unsigned char enabled;
+	struct tBreakpoint *prev, *next;
 };
 
 struct tDebugger
