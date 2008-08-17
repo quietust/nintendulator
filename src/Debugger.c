@@ -373,6 +373,19 @@ void	Debugger_UpdateCPU (void)
 		/* write opcode, effective address has write breakpoint */
 		if ((TraceIO[TpVal] & DEBUG_BREAK_WRITE) && (Debugger.BPcache[Addr] & DEBUG_BREAK_WRITE))
 			NES.Stop = TRUE;
+		/* opcode breakpoint */
+		if (Debugger.BPcache[0x10000 | TpVal] & DEBUG_BREAK_OPCODE)
+			NES.Stop = TRUE;
+		/* interrupt breakpoints */
+		if ((CPU.GotInterrupt == INTERRUPT_NMI) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_NMI))
+			NES.Stop = TRUE;
+/*		if ((CPU.GotInterrupt == INTERRUPT_RST) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_RST))
+			NES.Stop = TRUE;*/
+		if ((CPU.GotInterrupt == INTERRUPT_IRQ) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_IRQ))
+			NES.Stop = TRUE;
+		if ((CPU.GotInterrupt == INTERRUPT_BRK) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_BRK))
+			NES.Stop = TRUE;
+
 	}
 	/* if emulation wasn't stopped, don't bother updating the dialog */
 	if (!NES.Stop)
@@ -835,16 +848,21 @@ void	Debugger_DumpPPU (void)
 void	Debugger_CacheBreakpoints (void)
 {
 	int i;
-	struct tBreakpoint *bp = Debugger.Breakpoints;
+	struct tBreakpoint *bp;
 	ZeroMemory(Debugger.BPcache, sizeof(Debugger.BPcache));
-	while (bp != NULL)
+	for (bp = Debugger.Breakpoints; bp != NULL; bp = bp->next)
 	{
-		if (bp->enabled)
+		if (!bp->enabled)
+			continue;
+		if (bp->type & (DEBUG_BREAK_EXEC | DEBUG_BREAK_READ | DEBUG_BREAK_WRITE))
 		{
 			for (i = bp->addr_start; i <= bp->addr_end; i++)
 				Debugger.BPcache[i] |= bp->type;
 		}
-		bp = bp->next;
+		if (bp->type & DEBUG_BREAK_OPCODE)
+			Debugger.BPcache[0x10000 | bp->opcode] |= bp->type;
+		if (bp->type & (DEBUG_BREAK_NMI | DEBUG_BREAK_IRQ | DEBUG_BREAK_BRK))
+			Debugger.BPcache[0x10100] |= bp->type;
 	}
 }
 
@@ -903,12 +921,18 @@ LRESULT CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, tpc);
 				}
 				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
 				break;
 			case DEBUG_BREAK_OPCODE:
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
 				_stprintf(tpc, _T("%02X"), bp->opcode);
 				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, tpc);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), TRUE);
 				break;
 			case DEBUG_BREAK_NMI:
 			case DEBUG_BREAK_IRQ:
@@ -916,6 +940,9 @@ LRESULT CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
 				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
 				break;
 			}
 			CheckDlgButton(hwndDlg, IDC_BREAK_ENABLED, (bp->enabled) ? BST_CHECKED : BST_UNCHECKED);
@@ -927,6 +954,9 @@ LRESULT CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
 			SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
 			CheckDlgButton(hwndDlg, IDC_BREAK_ENABLED, BST_CHECKED);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), TRUE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
 		}
 		return FALSE;
 	case WM_COMMAND:

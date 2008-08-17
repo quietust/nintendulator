@@ -1148,7 +1148,7 @@ CAPTION "Add/Edit Breakpoint"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Address",IDC_STATIC,4,20,108,64
-    GROUPBOX        "Operation",IDC_STATIC,4,88,108,43,WS_DISABLED
+    GROUPBOX        "Operation",IDC_STATIC,4,88,108,43
     CONTROL         "Execution",IDC_BREAK_EXEC,"Button",BS_AUTORADIOBUTTON,
                     12,32,60,8
     CONTROL         "Read",IDC_BREAK_READ,"Button",BS_AUTORADIOBUTTON,12,44,
@@ -1157,19 +1157,19 @@ BEGIN
                     57,60,8
     CONTROL         "Access",IDC_BREAK_ACCESS,"Button",BS_AUTORADIOBUTTON,12,
                     68,60,8
-    CONTROL         "Opcode",IDC_BREAK_OPCODE,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,12,100,39,8
-    CONTROL         "NMI",IDC_BREAK_NMI,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,12,116,28,8
-    CONTROL         "IRQ",IDC_BREAK_IRQ,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,44,116,28,8
-    CONTROL         "BRK",IDC_BREAK_BRK,"Button",BS_AUTORADIOBUTTON | 
-                    WS_DISABLED,76,116,28,8
+    CONTROL         "Opcode",IDC_BREAK_OPCODE,"Button",BS_AUTORADIOBUTTON,12,
+                    100,39,8
+    CONTROL         "NMI",IDC_BREAK_NMI,"Button",BS_AUTORADIOBUTTON,12,116,
+                    28,8
+    CONTROL         "IRQ",IDC_BREAK_IRQ,"Button",BS_AUTORADIOBUTTON,44,116,
+                    28,8
+    CONTROL         "BRK",IDC_BREAK_BRK,"Button",BS_AUTORADIOBUTTON,76,116,
+                    28,8
     LTEXT           "From",IDC_STATIC,76,32,28,8
     EDITTEXT        IDC_BREAK_ADDR1,76,40,28,12,ES_UPPERCASE
     LTEXT           "To",IDC_STATIC,76,57,28,8
     EDITTEXT        IDC_BREAK_ADDR2,76,65,28,12,ES_UPPERCASE
-    EDITTEXT        IDC_BREAK_OPNUM,76,100,20,12,ES_UPPERCASE | WS_DISABLED
+    EDITTEXT        IDC_BREAK_OPNUM,76,100,20,12,ES_UPPERCASE
     DEFPUSHBUTTON   "OK",IDOK,4,136,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,62,136,50,14
     CONTROL         "Enable Breakpoint",IDC_BREAK_ENABLED,"Button",

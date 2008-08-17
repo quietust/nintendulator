@@ -223,7 +223,7 @@ void	GFX_Create (void)
 
 	GFX_LoadPalette(PPU.IsPAL ? GFX.PalettePAL : GFX.PaletteNTSC);
 	GFX_Update();
-	EI.DbgOut(_T("Successfully created %ix%i %i-bit display surface (%s)"), GFX.SurfDesc.dwWidth, GFX.SurfDesc.dwHeight, GFX.Depth, GFX.Fullscreen ? _T("fullscreen") : _T("windowed"));
+	EI.DbgOut(_T("Created %ix%i %i-bit display surface (%s)"), GFX.SurfDesc.dwWidth, GFX.SurfDesc.dwHeight, GFX.Depth, GFX.Fullscreen ? _T("fullscreen") : _T("windowed"));
 }
 
 void	GFX_Release (void)

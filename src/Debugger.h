@@ -17,11 +17,11 @@
 #define	DEBUG_BREAK_EXEC	0x01
 #define	DEBUG_BREAK_READ	0x02
 #define	DEBUG_BREAK_WRITE	0x04
-#define	DEBUG_BREAK_OPCODE	0x08	/* unused */
+#define	DEBUG_BREAK_OPCODE	0x08
 #define	DEBUG_BREAK_NMI		0x10
-#define	DEBUG_BREAK_RST		0x20	/* unused */
-#define	DEBUG_BREAK_IRQ		0x40
-#define	DEBUG_BREAK_BRK		0x80
+#define	DEBUG_BREAK_IRQ		0x20
+#define	DEBUG_BREAK_BRK		0x40
+/* #define	DEBUG_BREAK_RST		0x80	/* unused */
 
 struct tBreakpoint
 {
@@ -65,7 +65,7 @@ struct tDebugger
 	int	MemOffset;
 
 	FILE	*LogFile;
-	unsigned char	BPcache[0x10000];
+	unsigned char	BPcache[0x10101];
 	struct tBreakpoint *Breakpoints;
 };
 
