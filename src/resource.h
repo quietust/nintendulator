@@ -264,6 +264,7 @@
 #define IDC_BREAK_ADDR1                 1232
 #define IDC_BREAK_ADDR2                 1233
 #define IDC_BREAK_OPNUM                 1234
+#define IDC_BREAK_ENABLED               1235
 #define ID_FILE_OPEN                    32768
 #define ID_FILE_CLOSE                   32769
 #define ID_FILE_HEADER                  32770
@@ -333,7 +334,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         32828
-#define _APS_NEXT_CONTROL_VALUE         1235
+#define _APS_NEXT_CONTROL_VALUE         1236
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif
