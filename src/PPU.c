@@ -525,6 +525,8 @@ __inline static	void	RunNoSkip (int NumTicks)
 			{
 #ifndef	ACCURATE_SPRITES
 				DiscoverSprites();
+#else	/* ACCURATE_SPRITES */
+				PPU.Spr0InLine = FALSE;
 #endif	/* !ACCURATE_SPRITES */
 				ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
@@ -856,6 +858,8 @@ __inline static	void	RunSkip (int NumTicks)
 			{
 #ifndef	ACCURATE_SPRITES
 				DiscoverSprites();
+#else	/* ACCURATE_SPRITES */
+				PPU.Spr0InLine = FALSE;
 #endif	/* !ACCURATE_SPRITES */
 				if (PPU.Spr0InLine)
 					ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
