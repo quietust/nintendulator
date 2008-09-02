@@ -38,6 +38,7 @@ struct	tAPU
 #ifndef	NSFPLAYER
 	unsigned long		LockSize;
 #endif	/* !NSFPLAYER */
+	int			InternalClock;
 };
 extern struct tAPU APU;
 

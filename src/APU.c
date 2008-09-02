@@ -533,6 +533,8 @@ __inline void	Frame_Write (unsigned char Val)
 	if (Frame.Bits & 0x80)
 		Frame.Cycles = 1;
 	else	Frame.Cycles = FrameCycles[0];
+	if (APU.InternalClock & 1)
+		Frame.Cycles++;
 	if (Frame.Bits & 0x40)
 		CPU.WantIRQ &= ~IRQ_FRAME;
 }
@@ -847,6 +849,7 @@ void	APU_Reset  (void)
 	Frame.Cycles = 1;
 	Frame.Bits = 0;	// technically correct behavior, though some demos may not like it
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
+	APU.InternalClock = 0;
 }
 
 #ifndef	NSFPLAYER
@@ -1082,6 +1085,7 @@ void	APU_Run (void)
 	if (NewBufPos == SAMPLERATE)	/* we've generated 1 second, so we can reset our counters now */
 		APU.Cycles = NewBufPos = 0;
 #endif	/* !NSFPLAYER */
+	APU.InternalClock++;
 	Frame_Run();
 	Square0_Run();
 	Square1_Run();
