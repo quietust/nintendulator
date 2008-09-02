@@ -61,29 +61,29 @@ char TraceArr[256][5] =
 	" BEQ", " SBC", "*HLT", "*ISB", "*NOP", " SBC", " INC", "*ISB", " SED", " SBC", "*NOP", "*ISB", "*NOP", " SBC", " INC", "*ISB"
 };
 
-#define	BRK_NA (0)
-#define	BRK_RD (DEBUG_BREAK_READ)
-#define	BRK_WR (DEBUG_BREAK_WRITE)
-#define	BRK_RW (DEBUG_BREAK_READ | DEBUG_BREAK_WRITE)
+#define	BP_NA (0)
+#define	BP_RD (DEBUG_BREAK_READ)
+#define	BP_WR (DEBUG_BREAK_WRITE)
+#define	BP_RW (DEBUG_BREAK_READ | DEBUG_BREAK_WRITE)
 
 unsigned char TraceIO[256] =
 {
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RW, BRK_RW,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_RD, BRK_WR, BRK_RD, BRK_WR, BRK_WR, BRK_WR, BRK_WR, BRK_WR, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_WR, BRK_WR, BRK_WR, BRK_WR,
-	BRK_NA, BRK_WR, BRK_NA, BRK_RD, BRK_WR, BRK_WR, BRK_WR, BRK_WR, BRK_NA, BRK_WR, BRK_NA, BRK_RD, BRK_RD, BRK_WR, BRK_RD, BRK_RD,
-	BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RD, BRK_RD,
-	BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RD, BRK_RD, BRK_RD, BRK_RW, BRK_RW,
-	BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW, BRK_NA, BRK_RD, BRK_NA, BRK_RW, BRK_RD, BRK_RD, BRK_RW, BRK_RW
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_NA, BP_RD, BP_RW, BP_RW,
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_RD, BP_WR, BP_RD, BP_WR, BP_WR, BP_WR, BP_WR, BP_WR, BP_NA, BP_RD, BP_NA, BP_RD, BP_WR, BP_WR, BP_WR, BP_WR,
+	BP_NA, BP_WR, BP_NA, BP_RD, BP_WR, BP_WR, BP_WR, BP_WR, BP_NA, BP_WR, BP_NA, BP_RD, BP_RD, BP_WR, BP_RD, BP_RD,
+	BP_RD, BP_RD, BP_RD, BP_RD, BP_RD, BP_RD, BP_RD, BP_RD, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RD, BP_RD,
+	BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RD, BP_RD, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RD, BP_RD,
+	BP_RD, BP_RD, BP_RD, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_RD, BP_RD, BP_RD, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW
 };
 
 enum {
@@ -159,32 +159,43 @@ void	Debugger_Release (void)
 
 void	Debugger_SetMode (int NewMode)
 {
+	RECT wRect;
+	GetWindowRect(hMainWnd,&wRect);
+
 	Debugger.Mode = NewMode;
 	Debugger.Enabled = (Debugger.Mode > 0) ? TRUE : FALSE;
 
-	if ((Debugger.Mode & 1) && !Debugger.CPUWnd)
+	if ((Debugger.Mode & DEBUG_MODE_CPU) && !Debugger.CPUWnd)
 	{
 		Debugger.CPUWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_CPU, hMainWnd, CPUProc);
-		SetWindowPos(Debugger.CPUWnd, hMainWnd, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
+		SetWindowPos(Debugger.CPUWnd, hMainWnd, wRect.right, wRect.top, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
 	}
-	else if (!(Debugger.Mode & 1) && Debugger.CPUWnd)
+	else if (!(Debugger.Mode & DEBUG_MODE_CPU) && Debugger.CPUWnd)
 	{
 		DestroyWindow(Debugger.CPUWnd);
 		Debugger.CPUWnd = NULL;
 	}
-	if ((Debugger.Mode & 2) && !Debugger.PPUWnd)
+	if ((Debugger.Mode & DEBUG_MODE_PPU) && !Debugger.PPUWnd)
 	{
 		Debugger.PPUWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PPU, hMainWnd, PPUProc);
-		SetWindowPos(Debugger.PPUWnd, hMainWnd, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
+		SetWindowPos(Debugger.PPUWnd, hMainWnd, wRect.left, wRect.bottom, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
 		Debugger.NTabChanged = TRUE;
 		Debugger.PalChanged = TRUE;
 		Debugger.PatChanged = TRUE;
 	}
-	else if (!(Debugger.Mode & 2) && Debugger.PPUWnd)
+	else if (!(Debugger.Mode & DEBUG_MODE_PPU) && Debugger.PPUWnd)
 	{
 		DestroyWindow(Debugger.PPUWnd);
 		Debugger.PPUWnd = NULL;
 	}
+
+	if (Debugger.Mode & DEBUG_MODE_CPU)
+		CheckMenuItem(hMenu,ID_DEBUG_CPU,MF_CHECKED);
+	else	CheckMenuItem(hMenu,ID_DEBUG_CPU,MF_UNCHECKED);
+	if (Debugger.Mode & DEBUG_MODE_PPU)
+		CheckMenuItem(hMenu,ID_DEBUG_PPU,MF_CHECKED);
+	else	CheckMenuItem(hMenu,ID_DEBUG_PPU,MF_UNCHECKED);
+
 	Debugger_Update();
 	SetFocus(hMainWnd);
 }
@@ -220,10 +231,12 @@ unsigned char DebugMemCPU (unsigned short Addr)
 	else	return 0xFF;
 }
 
-unsigned char DebugMemPPU (unsigned long Addr)
+unsigned char DebugMemPPU (unsigned short Addr)
 {
-	if (PPU.CHRPointer != NULL)
-		return PPU.CHRPointer[(Addr & 0x1C00) >> 10][Addr & 0x03FF];
+	int Bank = (Addr >> 10) & 0xF;
+	FPPURead Read = PPU.ReadHandler[Bank];
+	if (Read == PPU_BusRead)
+		return Read(Bank, Addr & 0x3FF);
 	else	return 0xFF;
 }
 
@@ -797,9 +810,9 @@ void	Debugger_UpdatePPU (void)
 
 void	Debugger_Update (void)
 {
-	if (Debugger.Mode & 1)
+	if (Debugger.Mode & DEBUG_MODE_CPU)
 		Debugger_UpdateCPU();
-	if (Debugger.Mode & 2)
+	if (Debugger.Mode & DEBUG_MODE_PPU)
 		Debugger_UpdatePPU();
 }
 
@@ -1432,7 +1445,7 @@ LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case IDCANCEL:
-			Debugger_SetMode(Debugger.Mode & 2);
+			Debugger_SetMode(Debugger.Mode & ~DEBUG_MODE_CPU);
 			break;
 		}
 		break;
@@ -1576,7 +1589,7 @@ LRESULT CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Debugger_Update();
 			break;
 		case IDCANCEL:
-			Debugger_SetMode(Debugger.Mode & 1);
+			Debugger_SetMode(Debugger.Mode & ~DEBUG_MODE_PPU);
 			break;
 		}
 		break;

@@ -507,21 +507,11 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (running)	NES_Start(FALSE);
 			break;
 #ifdef	ENABLE_DEBUGGER
-		case ID_DEBUG_LEVEL1:
-			Debugger_SetMode(0);
-			CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
+		case ID_DEBUG_CPU:
+			Debugger_SetMode(Debugger.Mode ^ DEBUG_MODE_CPU);
 			break;
-		case ID_DEBUG_LEVEL2:
-			Debugger_SetMode(1);
-			CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL2,MF_BYCOMMAND);
-			break;
-		case ID_DEBUG_LEVEL3:
-			Debugger_SetMode(2);
-			CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL3,MF_BYCOMMAND);
-			break;
-		case ID_DEBUG_LEVEL4:
-			Debugger_SetMode(3);
-			CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL4,MF_BYCOMMAND);
+		case ID_DEBUG_PPU:
+			Debugger_SetMode(Debugger.Mode ^ DEBUG_MODE_PPU);
 			break;
 		case ID_DEBUG_STATWND:
 			ShowDebug();

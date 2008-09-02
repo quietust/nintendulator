@@ -127,12 +127,10 @@ BEGIN
     END
     POPUP "&Debug"
     BEGIN
-        MENUITEM "Level &1 (None)\tCtrl+F1",    ID_DEBUG_LEVEL1
-        MENUITEM "Level 2 (Pattern Tables)\tCtrl+F2", ID_DEBUG_LEVEL2
-        MENUITEM "Level &3 (Nametables)\tCtrl+F3", ID_DEBUG_LEVEL3
-        MENUITEM "Level &4 (Disassembly)\tCtrl+F4", ID_DEBUG_LEVEL4
+        MENUITEM "Dis&assembly\tCtrl+F1",       ID_DEBUG_CPU
+        MENUITEM "&Video\tCtrl+F2",             ID_DEBUG_PPU
         MENUITEM SEPARATOR
-        MENUITEM "Status Window",               ID_DEBUG_STATWND
+        MENUITEM "S&tatus Window",              ID_DEBUG_STATWND
     END
     MENUITEM "&Game",                       ID_GAME, GRAYED
     POPUP "&Misc"
@@ -173,10 +171,8 @@ BEGIN
     VK_F4,          ID_CPU_SOFTRESET,       VIRTKEY, NOINVERT
     VK_F2,          ID_CPU_STEP,            VIRTKEY, SHIFT, NOINVERT
     VK_F3,          ID_CPU_STOP,            VIRTKEY, NOINVERT
-    VK_F1,          ID_DEBUG_LEVEL1,        VIRTKEY, CONTROL, NOINVERT
-    VK_F2,          ID_DEBUG_LEVEL2,        VIRTKEY, CONTROL, NOINVERT
-    VK_F3,          ID_DEBUG_LEVEL3,        VIRTKEY, CONTROL, NOINVERT
-    VK_F4,          ID_DEBUG_LEVEL4,        VIRTKEY, CONTROL, NOINVERT
+    VK_F1,          ID_DEBUG_CPU,           VIRTKEY, CONTROL, NOINVERT
+    VK_F2,          ID_DEBUG_PPU,           VIRTKEY, CONTROL, NOINVERT
     "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
     VK_RETURN,      ID_PPU_FULLSCREEN,      VIRTKEY, ALT, NOINVERT
     VK_TAB,         ID_PPU_SLOWDOWN_ENABLED, VIRTKEY, NOINVERT

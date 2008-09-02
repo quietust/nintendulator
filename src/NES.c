@@ -1145,8 +1145,6 @@ void	NES_LoadSettings (void)
 		NES_SetCPUMode(1);
 	else	NES_SetCPUMode(0);
 
-	CheckMenuRadioItem(hMenu,ID_DEBUG_LEVEL1,ID_DEBUG_LEVEL4,ID_DEBUG_LEVEL1,MF_BYCOMMAND);
-
 	SetWindowPos(hMainWnd,HWND_TOP,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
 
 	Controllers_Acquire();

@@ -311,20 +311,18 @@
 #define ID_PPU_SCANLINES                32811
 #define ID_SOUND_ENABLED                32812
 #define ID_INPUT_SETUP                  32813
-#define ID_DEBUG_LEVEL1                 32814
-#define ID_DEBUG_LEVEL2                 32815
-#define ID_DEBUG_LEVEL3                 32816
-#define ID_DEBUG_LEVEL4                 32817
-#define ID_DEBUG_STATWND                32818
-#define ID_GAME                         32819
-#define ID_MISC_STARTAVICAPTURE         32820
-#define ID_MISC_STOPAVICAPTURE          32821
-#define ID_MISC_PLAYMOVIE               32822
-#define ID_MISC_RECORDMOVIE             32823
-#define ID_MISC_RECORDSTATE             32824
-#define ID_MISC_RESUMEMOVIE             32825
-#define ID_MISC_STOPMOVIE               32826
-#define ID_HELP_ABOUT                   32827
+#define ID_DEBUG_CPU                    32814
+#define ID_DEBUG_PPU                    32815
+#define ID_DEBUG_STATWND                32816
+#define ID_GAME                         32817
+#define ID_MISC_STARTAVICAPTURE         32818
+#define ID_MISC_STOPAVICAPTURE          32819
+#define ID_MISC_PLAYMOVIE               32820
+#define ID_MISC_RECORDMOVIE             32821
+#define ID_MISC_RECORDSTATE             32822
+#define ID_MISC_RESUMEMOVIE             32823
+#define ID_MISC_STOPMOVIE               32824
+#define ID_HELP_ABOUT                   32825
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -333,7 +331,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         32828
+#define _APS_NEXT_COMMAND_VALUE         32826
 #define _APS_NEXT_CONTROL_VALUE         1236
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
