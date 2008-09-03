@@ -52,6 +52,7 @@ void	MAPINT	CPU_NoCPUCycle (void) { }
 static	BOOL LastNMI;
 static	BOOL LastIRQ;
 
+extern	void	DPCM_Fetch (void);
 static	__forceinline void	RunCycle (void)
 {
 #ifndef	NSFPLAYER
@@ -70,9 +71,29 @@ static	__forceinline void	RunCycle (void)
 unsigned char	__fastcall	CPU_MemGet (unsigned int Addr)
 {
 	static int buf;
+	if (CPU.PCMCycles)
+	{
+		int PCMCycles = CPU.PCMCycles;
+		CPU.PCMCycles = 0;
+		if ((Addr == 0x4016) || (Addr == 0x4017))
+		{
+			// Consecutive controller port reads from this are treated as one
+			if (PCMCycles--)
+				CPU_MemGet(Addr);
+			while (--PCMCycles)
+				RunCycle();
+		}
+		else
+		{
+			// but other addresses see multiple reads as expected
+			while (--PCMCycles)
+				CPU_MemGet(Addr);
+		}
+		DPCM_Fetch();
+	}
+
 	RunCycle();
-//	if (CPU.PCMCycles == 4)		// if the first thing it hit was a read, then flag it so we do the full 4 reads
-//		CPU.PCMCycles = 16;	// otherwise, do nothing - this could've been an interrupt, which finishes with reads
+
 	if (CPU.ReadHandler[(Addr >> 12) & 0xF] == CPU_ReadPRG)
 	{
 		if (CPU.Readable[(Addr >> 12) & 0xF])
@@ -1148,7 +1169,6 @@ static	__forceinline void	IV_SBC (void)
 	}
 }
 
-extern	void	DPCM_Fetch (void);
 void	CPU_ExecOp (void)
 {
 	Opcode = CPU_MemGetCode(OpAddr = CPU.PC++);
@@ -1191,7 +1211,6 @@ case 0xA3:AM_INX();  IV_LAX();break;case 0xB3:AM_INY();  IV_LAX();break;case 0xA
 case 0xC3:AM_INX();  IV_DCP();break;case 0xD3:AM_INYW(); IV_DCP();break;case 0xCB:AM_IMM();  IV_UNK();break;case 0xDB:AM_ABYW(); IV_DCP();break;case 0xC7:AM_ZPG();  IV_DCP();break;case 0xD7:AM_ZPX();  IV_DCP();break;case 0xCF:AM_ABS();  IV_DCP();break;case 0xDF:AM_ABXW(); IV_DCP();break;
 case 0xE3:AM_INX();  IV_ISB();break;case 0xF3:AM_INYW(); IV_ISB();break;case 0xEB:AM_IMM();  IV_SBC();break;case 0xFB:AM_ABYW(); IV_ISB();break;case 0xE7:AM_ZPG();  IV_ISB();break;case 0xF7:AM_ZPX();  IV_ISB();break;case 0xEF:AM_ABS();  IV_ISB();break;case 0xFF:AM_ABXW(); IV_ISB();break;
 	}
-	DPCM_Fetch();
 
 #ifndef	NSFPLAYER
 	if (LastNMI)

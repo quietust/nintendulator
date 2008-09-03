@@ -476,7 +476,7 @@ __inline void	DPCM_Run (void)
 		if (!--DPCM.outbits)
 		{
 			DPCM.outbits = 8;
-			if (DPCM.buffull)
+			if (DPCM.buffull && DPCM.LengthCtr)
 			{
 				DPCM.outmode = TRUE;
 				DPCM.shiftreg = DPCM.buffer;
@@ -490,12 +490,7 @@ __inline void	DPCM_Run (void)
 
 void	DPCM_Fetch (void)
 {
-	if (DPCM.buffull || !DPCM.LengthCtr)
-		return;
-//	if (CPU.PCMCycles > 4)		// handle first-cycle-is-read
-//		CPU.PCMCycles = 4;
-	while (CPU.PCMCycles--)
-		DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
+	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
 	DPCM.buffull = TRUE;
 	if (++DPCM.CurAddr == 0x10000)
 		DPCM.CurAddr = 0x8000;
@@ -846,6 +841,9 @@ void	APU_Reset  (void)
 	Noise.Cycles = 1;
 	Noise.EnvCtr = 1;
 	DPCM.Cycles = 1;
+	DPCM.buffull = TRUE;
+	DPCM.outmode = FALSE;
+	DPCM.outbits = 8;
 	Frame.Cycles = 1;
 	Frame.Bits = 0;	// technically correct behavior, though some demos may not like it
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
