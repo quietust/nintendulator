@@ -261,6 +261,7 @@ __inline static void	ProcessSprites (void)
 				PPU.Sprite[SpritePtr = sprpos++] = sprtmp;
 				if (sprsub++ == 3)
 				{
+					sprsub = 0;
 					if (++spridx,++sprnum == 64)
 					{
 						spridx = 0;
@@ -277,7 +278,7 @@ __inline static void	ProcessSprites (void)
 			if (PPU.Clockticks & 1)
 			{
 				SpritePtr = 0x100;	// failed write
-				if ((sprtmp >= PPU.SLnum) && (sprtmp < PPU.SLnum + 7 + ((PPU.Reg2000 & 0x20) >> 2)))
+				if ((PPU.SLnum >= sprtmp) && (PPU.SLnum <= sprtmp + ((PPU.Reg2000 & 0x20) ? 0xF : 0x7)))
 				{	// 9th sprite found "in range"
 					sprstate = 3;
 					sprsub = 1;
