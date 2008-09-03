@@ -207,7 +207,7 @@ void	PPU_GetHandlers (void)
 static	int	SpritePtr;
 __inline static void	ProcessSprites (void)
 {
-	static int sprpos, sprnum, spridx, sprsub, sprtmp, sprstate, sprtotal;
+	static int sprpos, sprnum, spridx, sprsub, sprtmp, sprstate, sprtotal, sprzero;
 	if (PPU.Clockticks < 64)
 		PPU.Sprite[SpritePtr = 0x100 | (PPU.Clockticks >> 1)] = 0xFF;
 	else if (PPU.Clockticks < 256)
@@ -220,6 +220,7 @@ __inline static void	ProcessSprites (void)
 			sprsub = 0;
 			sprstate = 0;
 			sprtotal = 0;
+			sprzero = FALSE;
 		}
 		switch (sprstate)
 		{
@@ -230,7 +231,7 @@ __inline static void	ProcessSprites (void)
 				if ((PPU.SLnum >= sprtmp) && (PPU.SLnum <= sprtmp + ((PPU.Reg2000 & 0x20) ? 0xF : 0x7)))
 				{
 					if (sprnum == 0)
-						PPU.Spr0InLine = TRUE;
+						sprzero = TRUE;
 					sprstate = 1;	// sprite is in range, fetch the rest of it
 					sprsub = 1;
 					sprpos++;
@@ -251,7 +252,7 @@ __inline static void	ProcessSprites (void)
 			{
 				if (sprnum == 2)
 					spridx = sprnum;
-				sprtmp = PPU.Sprite[SpritePtr = spridx << 2];
+				sprtmp = PPU.Sprite[SpritePtr = (spridx << 2)];
 			}
 			break;
 		case 1:	// Y-coordinate is in range, copy remaining bytes
@@ -324,7 +325,10 @@ __inline static void	ProcessSprites (void)
 	else if (PPU.Clockticks < 320)
 	{
 		if (PPU.Clockticks == 256)
+		{
 			PPU.SprCount = sprtotal * 4;
+			PPU.Spr0InLine = sprzero;
+		}
 		if ((PPU.Clockticks & 7) < 4)
 			SpritePtr = 0x100 | (PPU.Clockticks & 3) | (((PPU.Clockticks - 256) & 0x38) >> 1);
 		else	SpritePtr = 0x103 | (((PPU.Clockticks - 256) & 0x38) >> 1);
@@ -525,8 +529,6 @@ __inline static	void	RunNoSkip (int NumTicks)
 			{
 #ifndef	ACCURATE_SPRITES
 				DiscoverSprites();
-#else	/* ACCURATE_SPRITES */
-				PPU.Spr0InLine = FALSE;
 #endif	/* !ACCURATE_SPRITES */
 				ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
 			}
@@ -858,8 +860,6 @@ __inline static	void	RunSkip (int NumTicks)
 			{
 #ifndef	ACCURATE_SPRITES
 				DiscoverSprites();
-#else	/* ACCURATE_SPRITES */
-				PPU.Spr0InLine = FALSE;
 #endif	/* !ACCURATE_SPRITES */
 				if (PPU.Spr0InLine)
 					ZeroMemory(PPU.TileData,sizeof(PPU.TileData));
