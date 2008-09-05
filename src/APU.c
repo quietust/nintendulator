@@ -32,6 +32,14 @@ struct tAPU APU;
 const	unsigned int	LOCK_SIZE = FREQ * (BITS / 8);
 #endif	/* !NSFPLAYER */
 
+static	struct
+{
+	unsigned char Square0_wavehold, Square0_timer1, Square0_timer2;
+	unsigned char Square1_wavehold, Square1_timer1, Square1_timer2;
+	unsigned char Triangle_wavehold, Triangle_timer1, Triangle_timer2;
+	unsigned char Noise_wavehold, Noise_timer1, Noise_timer2;
+}	Race;
+
 const	unsigned char	LengthCounts[32] = {
 	0x0A,0xFE,
 	0x14,0x02,
@@ -83,7 +91,7 @@ __inline void	Square0_Write (int Reg, unsigned char Val)
 	{
 	case 0:	Square0.volume = Val & 0xF;
 		Square0.envelope = Val & 0x10;
-		Square0.wavehold = Val & 0x20;
+		Race.Square0_wavehold = Val & 0x20;
 		Square0.duty = (Val >> 6) & 0x3;
 		Square0.Vol = Square0.envelope ? Square0.volume : Square0.Envelope;
 		break;
@@ -99,7 +107,10 @@ __inline void	Square0_Write (int Reg, unsigned char Val)
 	case 3:	Square0.freq &= 0xFF;
 		Square0.freq |= (Val & 0x7) << 8;
 		if (Square0.Enabled)
-			Square0.Timer = LengthCounts[(Val >> 3) & 0x1F];
+		{
+			Race.Square0_timer1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race.Square0_timer2 = Square0.Timer;
+		}
 		Square0.CurD = 0;
 		Square0.EnvClk = TRUE;
 		break;
@@ -109,6 +120,7 @@ __inline void	Square0_Write (int Reg, unsigned char Val)
 	}
 	Square0_CheckActive();
 }
+
 __inline void	Square0_Run (void)
 {
 	if (!--Square0.Cycles)
@@ -169,7 +181,7 @@ __inline void	Square1_Write (int Reg, unsigned char Val)
 	{
 	case 0:	Square1.volume = Val & 0xF;
 		Square1.envelope = Val & 0x10;
-		Square1.wavehold = Val & 0x20;
+		Race.Square1_wavehold = Val & 0x20;
 		Square1.duty = (Val >> 6) & 0x3;
 		Square1.Vol = Square1.envelope ? Square1.volume : Square1.Envelope;
 		break;
@@ -185,7 +197,10 @@ __inline void	Square1_Write (int Reg, unsigned char Val)
 	case 3:	Square1.freq &= 0xFF;
 		Square1.freq |= (Val & 0x7) << 8;
 		if (Square1.Enabled)
-			Square1.Timer = LengthCounts[(Val >> 3) & 0x1F];
+		{
+			Race.Square1_timer1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race.Square1_timer2 = Square1.Timer;
+		}
 		Square1.CurD = 0;
 		Square1.EnvClk = TRUE;
 		break;
@@ -273,7 +288,7 @@ __inline void	Triangle_Write (int Reg, unsigned char Val)
 	switch (Reg)
 	{
 	case 0:	Triangle.linear = Val & 0x7F;
-		Triangle.wavehold = (Val >> 7) & 0x1;
+		Race.Triangle_wavehold = (Val >> 7) & 0x1;
 		break;
 	case 2:	Triangle.freq &= 0x700;
 		Triangle.freq |= Val;
@@ -281,7 +296,10 @@ __inline void	Triangle_Write (int Reg, unsigned char Val)
 	case 3:	Triangle.freq &= 0xFF;
 		Triangle.freq |= (Val & 0x7) << 8;
 		if (Triangle.Enabled)
-			Triangle.Timer = LengthCounts[(Val >> 3) & 0x1F];
+		{
+			Race.Triangle_timer1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race.Triangle_timer2 = Triangle.Timer;
+		}
 		Triangle.LinClk = TRUE;
 		break;
 	case 4:	if (!(Triangle.Enabled = Val ? TRUE : FALSE))
@@ -350,7 +368,7 @@ __inline void	Noise_Write (int Reg, unsigned char Val)
 	{
 	case 0:	Noise.volume = Val & 0x0F;
 		Noise.envelope = Val & 0x10;
-		Noise.wavehold = Val & 0x20;
+		Race.Noise_wavehold = Val & 0x20;
 		Noise.Vol = Noise.envelope ? Noise.volume : Noise.Envelope;
 		if (Noise.Timer)
 			Noise.Pos = ((Noise.CurD & 0x4000) ? -2 : 2) * Noise.Vol;
@@ -359,7 +377,10 @@ __inline void	Noise_Write (int Reg, unsigned char Val)
 		Noise.datatype = Val & 0x80;
 		break;
 	case 3:	if (Noise.Enabled)
-			Noise.Timer = LengthCounts[(Val >> 3) & 0x1F];
+		{
+			Race.Noise_timer1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race.Noise_timer2 = Noise.Timer;
+		}
 		Noise.EnvClk = TRUE;
 		break;
 	case 4:	if (!(Noise.Enabled = Val ? TRUE : FALSE))
@@ -512,24 +533,22 @@ static	struct
 	unsigned long Cycles;
 	int Num;
 }	Frame;
-const	int	FrameCyclesNTSC[10] = {
-	7459,7456,7458,7458,7458,
-	7458,7456,7458,7458,7452
-};
-const	int	FrameCyclesPAL[10] = {
-	8315,8314,8312,8314,8314,
-	8314,8314,8312,8314,8312
-};
-const	int	*FrameCycles;
+const	int	FrameCyclesNTSC_0[7] = { 7459,7456,7458,7457,1,1,7457 };
+const	int	FrameCyclesNTSC_1[6] = { 1,7458,7456,7458,7456,7454 };
+const	int	FrameCyclesPAL_0[7] = { 8315,8314,8312,8313,1,1,8313 };
+const	int	FrameCyclesPAL_1[6] = { 1,8314,8314,8312,8314,8312 };
+const	int	*FrameCycles_0;
+const	int	*FrameCycles_1;
 __inline void	Frame_Write (unsigned char Val)
 {
 	Frame.Bits = Val & 0xC0;
 	Frame.Num = 0;
 	if (Frame.Bits & 0x80)
-		Frame.Cycles = 1;
-	else	Frame.Cycles = FrameCycles[0];
+		Frame.Cycles = FrameCycles_1[0];
+	else	Frame.Cycles = FrameCycles_0[0];
 	if (APU.InternalClock & 1)
-		Frame.Cycles++;
+		Frame.Cycles += 2;
+	else	Frame.Cycles++;
 	if (Frame.Bits & 0x40)
 		CPU.WantIRQ &= ~IRQ_FRAME;
 }
@@ -553,29 +572,32 @@ __inline void	Frame_Run (void)
 					Noise_HalfFrame();
 				}
 			}
-			Frame.Cycles = FrameCycles[Frame.Num+5];
+			Frame.Cycles = FrameCycles_1[Frame.Num + 1];
 			Frame.Num++;
 			if (Frame.Num == 5)
 				Frame.Num = 0;
 		}
 		else
 		{
-			Square0_QuarterFrame();
-			Square1_QuarterFrame();
-			Triangle_QuarterFrame();
-			Noise_QuarterFrame();
-			if ((Frame.Num == 1) || (Frame.Num == 3))
+			if ((Frame.Num == 0) || (Frame.Num == 1) || (Frame.Num == 2) ||(Frame.Num == 4))
+			{
+				Square0_QuarterFrame();
+				Square1_QuarterFrame();
+				Triangle_QuarterFrame();
+				Noise_QuarterFrame();
+			}
+			if ((Frame.Num == 1) || (Frame.Num == 4))
 			{
 				Square0_HalfFrame();
 				Square1_HalfFrame();
 				Triangle_HalfFrame();
 				Noise_HalfFrame();
 			}
-			if ((Frame.Num == 3) && !(Frame.Bits & 0x40))
+			if (((Frame.Num == 3) || (Frame.Num == 4) || (Frame.Num == 5)) && !(Frame.Bits & 0x40))
 				CPU.WantIRQ |= IRQ_FRAME;
-			Frame.Cycles = FrameCycles[Frame.Num+1];
+			Frame.Cycles = FrameCycles_0[Frame.Num + 1];
 			Frame.Num++;
-			if (Frame.Num == 4)
+			if (Frame.Num == 6)
 				Frame.Num = 0;
 		}
 	}
@@ -638,6 +660,41 @@ unsigned char	APU_Read4015 (void)
 	return result;
 }
 
+void	APU_Race (void)
+{
+	Square0.wavehold = Race.Square0_wavehold;
+	if (Race.Square0_timer1)
+	{
+		if (Square0.Timer == Race.Square0_timer2)
+			Square0.Timer = Race.Square0_timer1;
+		Race.Square0_timer1 = 0;
+	}
+
+	Square1.wavehold = Race.Square1_wavehold;
+	if (Race.Square1_timer1)
+	{
+		if (Square1.Timer == Race.Square1_timer2)
+			Square1.Timer = Race.Square1_timer1;
+		Race.Square1_timer1 = 0;
+	}
+
+	Triangle.wavehold = Race.Triangle_wavehold;
+	if (Race.Triangle_timer1)
+	{
+		if (Triangle.Timer == Race.Triangle_timer2)
+			Triangle.Timer = Race.Triangle_timer1;
+		Race.Triangle_timer1 = 0;
+	}
+
+	Noise.wavehold = Race.Noise_wavehold;
+	if (Race.Noise_timer1)
+	{
+		if (Noise.Timer == Race.Noise_timer2)
+			Noise.Timer = Race.Noise_timer1;
+		Race.Noise_timer1 = 0;
+	}
+}
+
 #ifndef	NSFPLAYER
 #define	APU_Try(action,errormsg)\
 {\
@@ -664,7 +721,8 @@ void	APU_SetFPSVars (int FPS)
 		APU.MHz = 1789773;
 		NoiseFreq = NoiseFreqNTSC;
 		DPCMFreq = DPCMFreqNTSC;
-		FrameCycles = FrameCyclesNTSC;
+		FrameCycles_0 = FrameCyclesNTSC_0;
+		FrameCycles_1 = FrameCyclesNTSC_1;
 	}
 	else if (APU.WantFPS == 50)
 	{
@@ -672,7 +730,8 @@ void	APU_SetFPSVars (int FPS)
 		APU.MHz = 1662607;
 		NoiseFreq = NoiseFreqPAL;
 		DPCMFreq = DPCMFreqPAL;
-		FrameCycles = FrameCyclesPAL;
+		FrameCycles_0 = FrameCyclesPAL_0;
+		FrameCycles_1 = FrameCyclesPAL_1;
 	}
 	else
 	{
@@ -842,10 +901,8 @@ void	APU_Reset  (void)
 	Noise.EnvCtr = 1;
 	DPCM.Cycles = 1;
 	DPCM.buffull = TRUE;
-	DPCM.outmode = FALSE;
 	DPCM.outbits = 8;
-	Frame.Cycles = 1;
-	Frame.Bits = 0;	// technically correct behavior, though some demos may not like it
+	Frame.Cycles = FrameCycles_0[0];
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 	APU.InternalClock = 0;
 }
@@ -1085,6 +1142,7 @@ void	APU_Run (void)
 #endif	/* !NSFPLAYER */
 	APU.InternalClock++;
 	Frame_Run();
+	APU_Race();
 	Square0_Run();
 	Square1_Run();
 	Triangle_Run();
