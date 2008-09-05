@@ -30,6 +30,8 @@
 #define IDD_STDPORT_ZAPPER              147
 #define IDD_STDPORT_VSZAPPER            148
 #define IDD_BREAKPOINT                  149
+#define IDD_MOVIE_RECORD                150
+#define IDD_MOVIE_PLAY                  151
 #define IDC_ABOUTICON                   1001
 #define IDC_CONT_SPORT1                 1002
 #define IDC_CONT_SPORT2                 1003
@@ -265,6 +267,23 @@
 #define IDC_BREAK_ADDR2                 1233
 #define IDC_BREAK_OPNUM                 1234
 #define IDC_BREAK_ENABLED               1235
+#define IDC_MOVIE_RECORD_FILE           1236
+#define IDC_MOVIE_RECORD_BROWSE         1237
+#define IDC_MOVIE_RECORD_DESCRIPTION    1238
+#define IDC_MOVIE_RECORD_CONT_CONFIG    1239
+#define IDC_MOVIE_RECORD_CONT_PORT1     1240
+#define IDC_MOVIE_RECORD_CONT_PORT2     1241
+#define IDC_MOVIE_RECORD_CONT_EXPPORT   1242
+#define IDC_MOVIE_RECORD_RESET          1243
+#define IDC_MOVIE_RECORD_CURRENT        1244
+#define IDC_MOVIE_PLAY_FILE             1245
+#define IDC_MOVIE_PLAY_BROWSE           1246
+#define IDC_MOVIE_PLAY_DESCRIPTION      1247
+#define IDC_MOVIE_PLAY_LENGTH           1248
+#define IDC_MOVIE_PLAY_FRAMES           1249
+#define IDC_MOVIE_PLAY_RERECORDS        1250
+#define IDC_MOVIE_PLAY_TVMODE           1251
+#define IDC_MOVIE_PLAY_RESUME           1252
 #define ID_FILE_OPEN                    32768
 #define ID_FILE_CLOSE                   32769
 #define ID_FILE_HEADER                  32770
@@ -319,10 +338,8 @@
 #define ID_MISC_STOPAVICAPTURE          32819
 #define ID_MISC_PLAYMOVIE               32820
 #define ID_MISC_RECORDMOVIE             32821
-#define ID_MISC_RECORDSTATE             32822
-#define ID_MISC_RESUMEMOVIE             32823
-#define ID_MISC_STOPMOVIE               32824
-#define ID_HELP_ABOUT                   32825
+#define ID_MISC_STOPMOVIE               32822
+#define ID_HELP_ABOUT                   32823
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -330,9 +347,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         32826
-#define _APS_NEXT_CONTROL_VALUE         1236
+#define _APS_NEXT_RESOURCE_VALUE        152
+#define _APS_NEXT_COMMAND_VALUE         32824
+#define _APS_NEXT_CONTROL_VALUE         1253
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

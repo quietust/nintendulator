@@ -19,6 +19,7 @@ struct tMovie
 	unsigned char	ControllerTypes[4];
 	int		ReRecords;
 	TCHAR		Filename[MAX_PATH];
+	TCHAR *		Description;
 	int		Len;
 	int		Pos;
 	int		FrameLen;
@@ -26,8 +27,8 @@ struct tMovie
 extern struct tMovie Movie;
 
 void		Movie_ShowFrame	(void);
-void		Movie_Play	(BOOL);
-void		Movie_Record	(BOOL);
+void		Movie_Play	(void);
+void		Movie_Record	(void);
 void		Movie_Stop	(void);
 unsigned char	Movie_LoadInput	(void);
 void		Movie_SaveInput	(unsigned char);

@@ -21,7 +21,7 @@ struct	tMovie	Movie;
 
 void	Movie_FindBlock (void)
 {
-	unsigned char buf[5];
+	char buf[4];
 	int len;
 
 	rewind(Movie.Data);
@@ -44,11 +44,152 @@ void	Movie_ShowFrame (void)
 		EI.StatusOut(_T("Frame %i"),Movie.Pos / Movie.FrameLen);
 }
 
-void	Movie_Play (BOOL Review)
+LRESULT	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	unsigned char buf[5];
+	char buf[4];
+	TCHAR str[64];
 	OPENFILENAME ofn;
+	TCHAR filename[MAX_PATH] = {0};
 	int len;
+	int wmId, wmEvent;
+	BOOL resume;
+	unsigned char tvmode;
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		return TRUE;
+		break;
+	case WM_COMMAND:
+		wmId    = LOWORD(wParam); 
+		wmEvent = HIWORD(wParam); 
+		switch (wmId)
+		{
+		case IDC_MOVIE_PLAY_BROWSE:
+			ZeroMemory(&ofn,sizeof(ofn));
+			ofn.lStructSize = sizeof(ofn);
+			ofn.hwndOwner = hDlg;
+			ofn.hInstance = hInst;
+			ofn.lpstrFilter = _T("Nintendulator Movie (*.NMV)\0") _T("*.NMV\0") _T("\0");
+			ofn.lpstrCustomFilter = NULL;
+			ofn.nFilterIndex = 1;
+			ofn.lpstrFile = filename;
+			ofn.nMaxFile = MAX_PATH;
+			ofn.lpstrFileTitle = NULL;
+			ofn.nMaxFileTitle = 0;
+			ofn.lpstrInitialDir = Path_NMV;
+			ofn.Flags = OFN_FILEMUSTEXIST;
+			ofn.lpstrDefExt = NULL;
+			ofn.lCustData = 0;
+			ofn.lpfnHook = NULL;
+			ofn.lpTemplateName = NULL;
+
+			if (!GetOpenFileName(&ofn))
+				break;
+
+			_tcscpy(Path_NMV,filename);
+			Path_NMV[ofn.nFileOffset-1] = 0;
+
+			Movie.Data = _tfopen(filename, _T("rb"));
+			if (Movie.Data == NULL)
+			{
+				MessageBox(hDlg, _T("Unable to open movie file!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+				break;
+			}
+
+			fread(buf, 1, 4, Movie.Data);
+			if (memcmp(buf, "NSS\x1a", 4))
+			{
+				MessageBox(hDlg, _T("Invalid movie file selected!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+				fclose(Movie.Data);
+				break;
+			}
+
+			fread(buf, 1, 4, Movie.Data);
+			if ((memcmp(buf, STATES_VERSION, 4)) && (memcmp(buf, STATES_BETA, 4)) && (memcmp(buf, STATES_PREV, 4)))
+			{
+				MessageBox(hDlg, _T("Incorrect movie version!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+				fclose(Movie.Data);
+				break;
+			}
+
+			fseek(Movie.Data, 4, SEEK_CUR);
+			fread(buf, 1, 4, Movie.Data);
+			if (memcmp(buf, "NMOV", 4))
+			{
+				MessageBox(hDlg, _T("This is not a valid Nintendulator movie file!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+				fclose(Movie.Data);
+				break;
+			}
+			SetDlgItemText(hDlg, IDC_MOVIE_PLAY_FILE, filename);
+
+			Movie_FindBlock();
+			fseek(Movie.Data, 3, SEEK_CUR);
+			fread(&tvmode, 1, 1, Movie.Data);
+			if (tvmode & 0x80)
+				SetDlgItemText(hDlg, IDC_MOVIE_PLAY_TVMODE, _T("PAL"));
+			else	SetDlgItemText(hDlg, IDC_MOVIE_PLAY_TVMODE, _T("NTSC"));
+			fread(&Movie.ReRecords, 4, 1, Movie.Data);
+			SetDlgItemInt(hDlg, IDC_MOVIE_PLAY_RERECORDS, Movie.ReRecords, FALSE);
+			fread(&len, 4, 1, Movie.Data);
+			if (len)
+			{
+				char *desc = malloc(len);
+				int len2;
+				fread(desc, len, 1, Movie.Data);
+#ifdef	UNICODE
+				// Windows 9x doesn't support this function natively
+				len2 = MultiByteToWideChar(CP_UTF8, 0, desc, len, NULL, 0);
+				Movie.Description = malloc(len2 * sizeof(TCHAR));
+				if (Movie.Description)
+				{
+					MultiByteToWideChar(CP_UTF8, 0, desc, len, Movie.Description, len2);
+					SetDlgItemText(hDlg, IDC_MOVIE_PLAY_DESCRIPTION, Movie.Description);
+					free(Movie.Description);
+					Movie.Description = NULL;
+				}
+#else	/* !UNICODE */
+				len2 = 0;
+#endif	/* UNICODE */
+				free(desc);
+			}
+			fread(&Movie.Len, 4, 1, Movie.Data);
+			SetDlgItemInt(hDlg, IDC_MOVIE_PLAY_FRAMES, Movie.Len, FALSE);
+			_stprintf(str, _T("Length: %i:%02i.%02i"), Movie.Len / 3600, (Movie.Len % 3600) / 60, Movie.Len % 60);
+			SetDlgItemText(hDlg, IDC_MOVIE_PLAY_LENGTH, str);
+
+			fclose(Movie.Data);
+			Movie.Data = NULL;
+			break;
+		case IDOK:
+			GetDlgItemText(hDlg, IDC_MOVIE_PLAY_FILE, Movie.Filename, MAX_PATH);
+			resume = IsDlgButtonChecked(hDlg, IDC_MOVIE_PLAY_RESUME);
+			if (resume == BST_CHECKED)
+				Movie.Data = _tfopen(Movie.Filename, _T("r+b"));
+			else	Movie.Data = _tfopen(Movie.Filename, _T("rb"));
+			if (Movie.Data)
+			{
+				if (resume)
+					EndDialog(hDlg, 2);
+				else	EndDialog(hDlg, 1);
+			}
+			else	MessageBox(hDlg, _T("Unable to open movie file!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+			break;
+		case IDCANCEL:
+			EndDialog(hDlg, 0);
+			break;
+		};
+		break;
+	}
+
+	return FALSE;
+}
+
+void	Movie_Play (void)
+{
+	BOOL resume = FALSE, running = NES.Running;
+	int ret, len;
+	char buf[4];
 
 	if (Movie.Mode)
 	{
@@ -58,54 +199,37 @@ void	Movie_Play (BOOL Review)
 
 	NES_Stop();
 
-	ZeroMemory(&ofn,sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = hMainWnd;
-	ofn.hInstance = hInst;
-	ofn.lpstrFilter = _T("Nintendulator Movie (*.NMV)\0") _T("*.NMV\0") _T("\0");
-	ofn.lpstrCustomFilter = NULL;
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFile = Movie.Filename;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = Path_NMV;
-	ofn.Flags = OFN_FILEMUSTEXIST;
-	ofn.lpstrDefExt = NULL;
-	ofn.lCustData = 0;
-	ofn.lpfnHook = NULL;
-	ofn.lpTemplateName = NULL;
-
-	if (!GetOpenFileName(&ofn))
-		return;
-
-	_tcscpy(Path_NMV,Movie.Filename);
-	Path_NMV[ofn.nFileOffset-1] = 0;
-
-	if (Review)
-		Movie.Data = _tfopen(Movie.Filename,_T("r+b"));
-	else	Movie.Data = _tfopen(Movie.Filename,_T("rb"));
-	fread(buf,1,4,Movie.Data);
-	if (memcmp(buf,"NSS\x1a",4))
+	ret = DialogBox(hInst, (LPCTSTR)IDD_MOVIE_PLAY, hMainWnd, MoviePlayProc);
+	if (ret == 0)
 	{
-		MessageBox(hMainWnd,_T("Invalid movie file selected!"),_T("Nintendulator"),MB_OK);
+		if (running)
+			NES_Start(FALSE);
+		return;
+	}
+	if (ret == 2)
+		resume = TRUE;
+
+	fread(buf, 1, 4, Movie.Data);
+	if (memcmp(buf, "NSS\x1a", 4))
+	{
+		MessageBox(hMainWnd, _T("Invalid movie file selected!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
 
-	fread(buf,1,4,Movie.Data);
-	if ((memcmp(buf,STATES_VERSION,4)) && (memcmp(buf,STATES_BETA,4)) && (memcmp(buf,STATES_PREV,4)))
+	fread(buf, 1, 4, Movie.Data);
+	if ((memcmp(buf, STATES_VERSION, 4)) && (memcmp(buf, STATES_BETA, 4)) && (memcmp(buf, STATES_PREV, 4)))
 	{
-		MessageBox(hMainWnd,_T("Incorrect movie version!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd, _T("Incorrect movie version!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
-	fread(&len,4,1,Movie.Data);
-	fread(buf,1,4,Movie.Data);
+	fread(&len, 4, 1, Movie.Data);
+	fread(buf, 1, 4, Movie.Data);
 
-	if (memcmp(buf,"NMOV",4))
+	if (memcmp(buf, "NMOV", 4))
 	{
-		MessageBox(hMainWnd,_T("This is not a valid Nintendulator movie recording!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd, _T("This is not a valid Nintendulator movie recording!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
@@ -130,16 +254,16 @@ void	Movie_Play (BOOL Review)
 	NES.SRAM_Size = 0;		// when messing with movies, don't save SRAM
 
 	if (RI.ROMType == ROM_FDS)	// when playing FDS movies, discard savedata; if there is savestate data, we'll be reloading it
-		memcpy(PRG_ROM[0x000],PRG_ROM[0x400],RI.FDS_NumSides << 16);
+		memcpy(PRG_ROM[0x000], PRG_ROM[0x400], RI.FDS_NumSides << 16);
 
 	Movie_FindBlock();		// SPECIAL - seek to NMOV block
-	fread(buf,4,1,Movie.Data);	// to see if Game Genie is used or not
+	fread(buf, 4, 1, Movie.Data);	// to see if Game Genie is used or not
 
 	if (buf[3] & 0x40)		// we need to check this BEFORE reset so we can possibly swap in the menu
 		NES.GameGenie = TRUE;	// this bit ONLY gets set for reset-based movies
 	else	NES.GameGenie = FALSE;	// if it starts from a savestate, it's already in the game (and we load the GENI block)
 
-	fseek(Movie.Data,16,SEEK_SET);	// seek back to the beginning of the file (past the header)
+	fseek(Movie.Data, 16, SEEK_SET);	// seek back to the beginning of the file (past the header)
 
 	// cycle the mapper - special stuff might happen on load that we NEED to perform
 	if (MI->Unload)
@@ -148,46 +272,46 @@ void	Movie_Play (BOOL Review)
 		MI->Load();
 	NES_Reset(RESET_HARD);
 	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
-	if (!States_LoadData(Movie.Data,len))
+	if (!States_LoadData(Movie.Data, len))
 	{
-		MessageBox(hMainWnd,_T("Failed to load movie!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd, _T("Failed to load movie!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		fclose(Movie.Data);
 		return;
 	}
 
 	Movie.Mode = MOV_PLAY;
-	if (Review)
+	if (resume)
 		Movie.Mode |= MOV_REVIEW;
 	
 	Movie_FindBlock();
 
-	fread(buf,1,4,Movie.Data);
+	fread(buf, 1, 4, Movie.Data);
 
 	if (!Movie.ControllerTypes[3])	// ONLY parse this if we did NOT encounter a controller state block
 	{				// otherwise, it would mess up the original states of the controllers
 		if (buf[0] == STD_FOURSCORE)
 		{
 			if (buf[1] & 0x01)
-				StdPort_SetControllerType(&Controllers.FSPort1,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort1,STD_UNCONNECTED);
+				StdPort_SetControllerType(&Controllers.FSPort1, STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers.FSPort1, STD_UNCONNECTED);
 			if (buf[1] & 0x02)
-				StdPort_SetControllerType(&Controllers.FSPort2,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort2,STD_UNCONNECTED);
+				StdPort_SetControllerType(&Controllers.FSPort2, STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers.FSPort2, STD_UNCONNECTED);
 			if (buf[1] & 0x04)
-				StdPort_SetControllerType(&Controllers.FSPort3,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort3,STD_UNCONNECTED);
+				StdPort_SetControllerType(&Controllers.FSPort3, STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers.FSPort3, STD_UNCONNECTED);
 			if (buf[1] & 0x08)
-				StdPort_SetControllerType(&Controllers.FSPort4,STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort4,STD_UNCONNECTED);
-			StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-			StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+				StdPort_SetControllerType(&Controllers.FSPort4, STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers.FSPort4, STD_UNCONNECTED);
+			StdPort_SetControllerType(&Controllers.Port1, STD_FOURSCORE);
+			StdPort_SetControllerType(&Controllers.Port2, STD_FOURSCORE);
 		}
 		else
 		{
-			StdPort_SetControllerType(&Controllers.Port1,buf[0]);
-			StdPort_SetControllerType(&Controllers.Port2,buf[1]);
+			StdPort_SetControllerType(&Controllers.Port1, buf[0]);
+			StdPort_SetControllerType(&Controllers.Port2, buf[1]);
 		}
-		ExpPort_SetControllerType(&Controllers.ExpPort,buf[2]);
+		ExpPort_SetControllerType(&Controllers.ExpPort, buf[2]);
 	}
 	NES_SetCPUMode(buf[3] >> 7);	// Set to NTSC or PAL
 
@@ -195,101 +319,200 @@ void	Movie_Play (BOOL Review)
 	if (NES.HasMenu)
 		Movie.FrameLen++;
 	if (Movie.FrameLen != (buf[3] & 0x3F))
-		MessageBox(hMainWnd,_T("The frame size specified in this movie is incorrect! This movie may not play properly!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
+		MessageBox(hMainWnd, _T("The frame size specified in this movie is incorrect! This movie may not play properly!"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 
-	fread(&Movie.ReRecords,4,1,Movie.Data);
-	fread(&len,4,1,Movie.Data);
+	fread(&Movie.ReRecords, 4, 1, Movie.Data);
+	fread(&len, 4, 1, Movie.Data);
 	if (len)
 	{
 		char *desc = malloc(len);
-		fread(desc,len,1,Movie.Data);
-		EI.DbgOut(_T("Description: \"%hs\""),desc);
+		int len2;
+		fread(desc, len, 1, Movie.Data);
+#ifdef	UNICODE
+		len2 = MultiByteToWideChar(CP_UTF8, 0, desc, len, NULL, 0);
+		Movie.Description = malloc(len2 * sizeof(TCHAR));
+		if (Movie.Description)
+		{
+			MultiByteToWideChar(CP_UTF8, 0, desc, len, Movie.Description, len2);
+			EI.DbgOut(_T("Description: \"%s\""), Movie.Description);
+			free(Movie.Description);
+			Movie.Description = NULL;
+		}
+#else	/* !UNICODE */
+		len2 = 0;
+#endif	 /* UNICODE */
 		free(desc);
 	}
-	EI.DbgOut(_T("Re-record count: %i"),Movie.ReRecords);
+	EI.DbgOut(_T("Re-record count: %i"), Movie.ReRecords);
 	Movie.Pos = 0;
-	fread(&Movie.Len,4,1,Movie.Data);
-	EI.DbgOut(_T("Length: %i:%02i.%02i"),Movie.Len / 3600, (Movie.Len % 3600) / 60, Movie.Len % 60);
+	fread(&Movie.Len, 4, 1, Movie.Data);
+	EI.DbgOut(_T("Length: %i:%02i.%02i"), Movie.Len / 3600, (Movie.Len % 3600) / 60, Movie.Len % 60);
 
-	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_STOPMOVIE,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_PPU_MODE_NTSC,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_PPU_MODE_PAL,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_GAME,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_GRAYED);
+	EnableMenuItem(hMenu, ID_MISC_PLAYMOVIE, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_MISC_RECORDMOVIE, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_MISC_STOPMOVIE, MF_ENABLED);
+	EnableMenuItem(hMenu, ID_PPU_MODE_NTSC, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_MODE_PAL, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_GAME, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_GRAYED);
 	if (Controllers.Port1.MovLen)
-		memset(Controllers.Port1.MovData,0,Controllers.Port1.MovLen);
+		memset(Controllers.Port1.MovData, 0, Controllers.Port1.MovLen);
 	if (Controllers.Port2.MovLen)
-		memset(Controllers.Port2.MovData,0,Controllers.Port2.MovLen);
+		memset(Controllers.Port2.MovData, 0, Controllers.Port2.MovLen);
 	if (Controllers.ExpPort.MovLen)
-		memset(Controllers.ExpPort.MovData,0,Controllers.ExpPort.MovLen);
+		memset(Controllers.ExpPort.MovData, 0, Controllers.ExpPort.MovLen);
 }
 
-void	Movie_Record (BOOL fromState)
+LRESULT	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	OPENFILENAME ofn;
-	int len;
-	unsigned char x;
+	TCHAR filename[MAX_PATH] = {0};
+	int wmId, wmEvent;
+	int error;
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, StdPort_Mappings[Controllers.Port1.Type]);
+		if (Controllers.Port1.Type == STD_FOURSCORE)
+		{
+			TCHAR conts[16] = {0};
+			if (Controllers.FSPort1.Type)
+				_tcscat(conts, _T(",1"));
+			if (Controllers.FSPort2.Type)
+				_tcscat(conts, _T(",2"));
+			if (Controllers.FSPort3.Type)
+				_tcscat(conts, _T(",3"));
+			if (Controllers.FSPort4.Type)
+				_tcscat(conts, _T(",4"));
+			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, &conts[1]);
+		}
+		else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, StdPort_Mappings[Controllers.Port2.Type]);
+		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, ExpPort_Mappings[Controllers.ExpPort.Type]);
+		CheckRadioButton(hDlg, IDC_MOVIE_RECORD_RESET, IDC_MOVIE_RECORD_CURRENT, IDC_MOVIE_RECORD_RESET);
+#ifdef	UNICODE
+		EnableWindow(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION), FALSE);
+#endif	/* UNICODE*/
+		return TRUE;
+		break;
+	case WM_COMMAND:
+		wmId    = LOWORD(wParam); 
+		wmEvent = HIWORD(wParam); 
+		switch (wmId)
+		{
+		case IDC_MOVIE_RECORD_BROWSE:
+			ZeroMemory(&ofn, sizeof(ofn));
+			ofn.lStructSize = sizeof(ofn);
+			ofn.hwndOwner = hDlg;
+			ofn.hInstance = hInst;
+			ofn.lpstrFilter = _T("Nintendulator Movie (*.NMV)\0") _T("*.NMV\0") _T("\0");
+			ofn.lpstrCustomFilter = NULL;
+			ofn.nFilterIndex = 1;
+			ofn.lpstrFile = filename;
+			ofn.nMaxFile = MAX_PATH;
+			ofn.lpstrFileTitle = NULL;
+			ofn.nMaxFileTitle = 0;
+			ofn.lpstrInitialDir = Path_NMV;
+			ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+			ofn.lpstrDefExt = _T("NMV");
+			ofn.lCustData = 0;
+			ofn.lpfnHook = NULL;
+			ofn.lpTemplateName = NULL;
+
+			if (!GetSaveFileName(&ofn))
+			{
+				error = CommDlgExtendedError();
+				break;
+			}
+
+			_tcscpy(Path_NMV, filename);
+			Path_NMV[ofn.nFileOffset-1] = 0;
+			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_FILE, filename);
+			break;
+		case IDC_MOVIE_RECORD_CONT_CONFIG:
+			Controllers_OpenConfig();
+			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, StdPort_Mappings[Controllers.Port1.Type]);
+			if (Controllers.Port1.Type == STD_FOURSCORE)
+			{
+				TCHAR conts[16] = {0};
+				if (Controllers.FSPort1.Type)
+					_tcscat(conts, _T(",1"));
+				if (Controllers.FSPort2.Type)
+					_tcscat(conts, _T(",2"));
+				if (Controllers.FSPort3.Type)
+					_tcscat(conts, _T(",3"));
+				if (Controllers.FSPort4.Type)
+					_tcscat(conts, _T(",4"));
+				SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, &conts[1]);
+			}
+			else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, StdPort_Mappings[Controllers.Port2.Type]);
+			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, ExpPort_Mappings[Controllers.ExpPort.Type]);
+			break;
+		case IDOK:
+			GetDlgItemText(hDlg, IDC_MOVIE_RECORD_FILE, Movie.Filename, MAX_PATH);
+			Movie.Data = _tfopen(Movie.Filename, _T("w+b"));
+			if (Movie.Data)
+			{
+				int len = GetWindowTextLength(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION)) + 1;
+#ifdef	UNICODE
+				Movie.Description = malloc(len * sizeof(TCHAR));
+				if (Movie.Description)
+					GetDlgItemText(hDlg, IDC_MOVIE_RECORD_DESCRIPTION, Movie.Description, len);
+#else	/* !UNICODE */
+				Movie.Description = NULL;
+#endif	/* UNICODE */
+				if (IsDlgButtonChecked(hDlg, IDC_MOVIE_RECORD_CURRENT))
+					EndDialog(hDlg, 2);
+				else	EndDialog(hDlg, 1);
+			}
+			else	MessageBox(hDlg, _T("Unable to create movie file!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+			break;
+		case IDCANCEL:
+			EndDialog(hDlg, 0);
+			break;
+		};
+		break;
+	}
+
+	return FALSE;
+}
+
+void	Movie_Record (void)
+{
+	BOOL fromState = FALSE, running = NES.Running;
+	int ret, len, x;
 
 	if (Movie.Mode)
 	{
-		MessageBox(hMainWnd,_T("A movie is already open!"),_T("Nintendulator"),MB_OK);
-		return;
-	}
-
-	if (fromState && (Genie.CodeStat & 0x80))
-	{
-		MessageBox(hMainWnd,_T("Cannot record a savestate-based movie starting from the Game Genie screen!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd, _T("A movie is already open!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
 
 	NES_Stop();
-	if ((MI) && (MI->Config) && (!NES.HasMenu))
+
+	ret = DialogBox(hInst, (LPCTSTR)IDD_MOVIE_RECORD, hMainWnd, MovieRecordProc);
+	if (ret == 0)
 	{
-		MessageBox(hMainWnd,_T("This game does not support using the 'Game' menu while recording!"),_T("Nintendulator"),MB_OK);
-		EnableMenuItem(hMenu,ID_GAME,MF_GRAYED);
-	}
-
-	ZeroMemory(&ofn,sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = hMainWnd;
-	ofn.hInstance = hInst;
-	ofn.lpstrFilter = _T("Nintendulator Movie (*.NMV)\0") _T("*.NMV\0") _T("\0");
-	ofn.lpstrCustomFilter = NULL;
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFile = Movie.Filename;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = Path_NMV;
-	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-	ofn.lpstrDefExt = _T("NMV");
-	ofn.lCustData = 0;
-	ofn.lpfnHook = NULL;
-	ofn.lpTemplateName = NULL;
-
-	if (!GetSaveFileName(&ofn))
+		if (running)
+			NES_Start(FALSE);
 		return;
+	}
+	if (ret == 2)
+		fromState = TRUE;
 
-	_tcscpy(Path_NMV,Movie.Filename);
-	Path_NMV[ofn.nFileOffset-1] = 0;
-
-	Controllers_OpenConfig();	// Allow user to choose the desired controllers
-
-	Movie.Data = _tfopen(Movie.Filename,_T("w+b"));
+	if ((MI) && (MI->Config) && (!NES.HasMenu))
+		EnableMenuItem(hMenu, ID_GAME, MF_GRAYED);
+	
 	len = 0;
 	Movie.ReRecords = 0;
 	Movie.Pos = Movie.Len = 0;
 
 	NES.SRAM_Size = 0;		// when messing with movies, don't save SRAM
 
-	fwrite("NSS\x1A",1,4,Movie.Data);
-	fwrite(STATES_VERSION,1,4,Movie.Data);
-	fwrite(&len,1,4,Movie.Data);
-	fwrite("NMOV",1,4,Movie.Data);
+	fwrite("NSS\x1A", 1, 4, Movie.Data);
+	fwrite(STATES_VERSION, 1, 4, Movie.Data);
+	fwrite(&len, 1, 4, Movie.Data);
+	fwrite("NMOV", 1, 4, Movie.Data);
 
 	if (fromState)
 		States_SaveData(Movie.Data);
@@ -301,14 +524,14 @@ void	Movie_Record (BOOL fromState)
 		if (MI->Load)
 			MI->Load();
 		if (RI.ROMType == ROM_FDS)	// if recording an FDS movie from reset, discard all savedata
-			memcpy(PRG_ROM[0x000],PRG_ROM[0x400],RI.FDS_NumSides << 16);
+			memcpy(PRG_ROM[0x000], PRG_ROM[0x400], RI.FDS_NumSides << 16);
 		NES_Reset(RESET_HARD);
 	}
 	// save savestate BEFORE enabling recording, so we don't try to re-save the NMOV block
 	Movie.Mode = MOV_RECORD;
 
-	fwrite("NMOV",1,4,Movie.Data);
-	fwrite(&len,1,4,Movie.Data);
+	fwrite("NMOV", 1, 4, Movie.Data);
+	fwrite(&len, 1, 4, Movie.Data);
 	
 	Movie.ControllerTypes[0] = Controllers.Port1.Type;
 	Movie.ControllerTypes[1] = Controllers.Port2.Type;
@@ -322,7 +545,7 @@ void	Movie_Record (BOOL fromState)
 		if (Controllers.FSPort3.Type)	Movie.ControllerTypes[1] |= 0x04;
 		if (Controllers.FSPort4.Type)	Movie.ControllerTypes[1] |= 0x08;
 	}
-	fwrite(Movie.ControllerTypes,1,3,Movie.Data);
+	fwrite(Movie.ControllerTypes, 1, 3, Movie.Data);
 	x = PPU.IsPAL ? 0x80 : 0x00;
 	Movie.FrameLen = 0;
 	Movie.FrameLen += Controllers.Port1.MovLen;
@@ -333,20 +556,42 @@ void	Movie_Record (BOOL fromState)
 	x |= Movie.FrameLen;
 	if (NES.GameGenie && !fromState)	// set Game Genie bit only if recording from reset
 		x |= 0x40;			// - otherwise we can just detect it from the GENI block
-	fwrite(&x,1,1,Movie.Data);		// frame size, NTSC/PAL, Game Genie
-	fwrite(&Movie.ReRecords,4,1,Movie.Data);// rerecord count
-	fwrite(&len,4,1,Movie.Data);		// comment length
-	// TODO - Actually store comment text
-	fwrite(&Movie.Len,4,1,Movie.Data);	// movie data length (this gets filled in later)
+	fwrite(&x, 1, 1, Movie.Data);		// frame size, NTSC/PAL, Game Genie
+	fwrite(&Movie.ReRecords, 4, 1, Movie.Data);// rerecord count
+#ifdef	UNICODE
+	if (Movie.Description)
+	{
+		char *desc;
+		len = WideCharToMultiByte(CP_UTF8, 0, Movie.Description, -1, NULL, 0, NULL, NULL);
+		desc = malloc(len);
+		WideCharToMultiByte(CP_UTF8, 0, Movie.Description, -1, desc, len, NULL, NULL);
+		fwrite(&len, 4, 1, Movie.Data);		// comment length
+		fwrite(desc, len, 1, Movie.Data);	// comment data
+		free(desc);
+	}
+	else
+	{
+		len = 0;
+		fwrite(&len, 4, 1, Movie.Data);		// no comment
+	}
+#else	/* !UNICODE */
+	len = 0;
+	fwrite(&len, 4, 1, Movie.Data);		// no comment
+#endif	/* UNICODE */
+	fwrite(&Movie.Len, 4, 1, Movie.Data);	// movie data length (this gets filled in later)
 
-	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_STOPMOVIE,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_PPU_MODE_NTSC,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_PPU_MODE_PAL,MF_GRAYED);
+	EnableMenuItem(hMenu, ID_MISC_PLAYMOVIE, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_MISC_RECORDMOVIE, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_MISC_STOPMOVIE, MF_ENABLED);
+	EnableMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_MODE_NTSC, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_MODE_PAL, MF_GRAYED);
+
+	if (Movie.Description)
+	{
+		free(Movie.Description);	// don't need this anymore
+		Movie.Description = NULL;
+	}
 }
 
 static	void	EndMovie (void)
@@ -427,9 +672,7 @@ static	void	EndMovie (void)
 	if ((MI) && (MI->Config))
 		EnableMenuItem(hMenu,ID_GAME,MF_ENABLED);
 	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_ENABLED);
 	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_ENABLED);
 	EnableMenuItem(hMenu,ID_MISC_STOPMOVIE,MF_GRAYED);
 	EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_ENABLED);
 	EnableMenuItem(hMenu,ID_PPU_MODE_NTSC,MF_ENABLED);

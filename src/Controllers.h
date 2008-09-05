@@ -31,6 +31,7 @@ struct tStdPort
 };
 enum	STDCONT_TYPE	{ STD_UNCONNECTED, STD_STDCONTROLLER, STD_ZAPPER, STD_ARKANOIDPADDLE, STD_POWERPAD, STD_FOURSCORE, STD_SNESCONTROLLER, STD_VSZAPPER, STD_MAX };
 void	StdPort_SetControllerType (struct tStdPort *,int);
+extern const TCHAR	*StdPort_Mappings[STD_MAX];
 
 struct tExpPort
 {
@@ -50,6 +51,7 @@ struct tExpPort
 };
 enum	EXPCONT_TYPE	{ EXP_UNCONNECTED, EXP_FAMI4PLAY, EXP_ARKANOIDPADDLE, EXP_FAMILYBASICKEYBOARD, EXP_ALTKEYBOARD, EXP_FAMTRAINER, EXP_TABLET, EXP_MAX };
 void	ExpPort_SetControllerType (struct tExpPort *,int);
+extern const TCHAR	*ExpPort_Mappings[EXP_MAX];
 
 enum	JOY_AXIS	{ AXIS_X, AXIS_Y, AXIS_Z, AXIS_RX, AXIS_RY, AXIS_RZ, AXIS_S0, AXIS_S1 };
 

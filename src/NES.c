@@ -127,9 +127,7 @@ void	NES_OpenFile (TCHAR *filename)
 		EnableMenuItem(hMenu,ID_CPU_NEXTSTATE,MF_ENABLED);
 
 		EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_ENABLED);
-		EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_ENABLED);
 		EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_ENABLED);
-		EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_ENABLED);
 
 		EnableMenuItem(hMenu,ID_MISC_STARTAVICAPTURE,MF_ENABLED);
 	}
@@ -295,9 +293,7 @@ void	NES_CloseFile (void)
 	EnableMenuItem(hMenu,ID_CPU_HARDRESET,MF_GRAYED);
 
 	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_RESUMEMOVIE,MF_GRAYED);
 	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_RECORDSTATE,MF_GRAYED);
 	EnableMenuItem(hMenu,ID_MISC_STARTAVICAPTURE,MF_GRAYED);
 
 	NES.SRAM_Size = 0;

@@ -527,16 +527,10 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			AVI_End();
 			break;
 		case ID_MISC_PLAYMOVIE:
-			Movie_Play(FALSE);
+			Movie_Play();
 			break;
 		case ID_MISC_RECORDMOVIE:
-			Movie_Record(FALSE);
-			break;
-		case ID_MISC_RECORDSTATE:
-			Movie_Record(TRUE);
-			break;
-		case ID_MISC_RESUMEMOVIE:
-			Movie_Play(TRUE);
+			Movie_Record();
 			break;
 		case ID_MISC_STOPMOVIE:
 			Movie_Stop();

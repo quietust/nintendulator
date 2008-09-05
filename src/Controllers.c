@@ -42,7 +42,7 @@ void	StdPort_SetControllerType (struct tStdPort *Cont, int Type)
 	default:MessageBox(hMainWnd,_T("Error: selected invalid controller type for standard port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
 	}
 }
-TCHAR	*StdPort_Mappings[STD_MAX];
+const TCHAR	*StdPort_Mappings[STD_MAX];
 void	StdPort_SetMappings (void)
 {
 	StdPort_Mappings[STD_UNCONNECTED] = _T("Unconnected");
@@ -78,7 +78,7 @@ void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
 	default:MessageBox(hMainWnd,_T("Error: selected invalid controller type for expansion port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
 	}
 }
-TCHAR	*ExpPort_Mappings[EXP_MAX];
+const TCHAR	*ExpPort_Mappings[EXP_MAX];
 void	ExpPort_SetMappings (void)
 {
 	ExpPort_Mappings[EXP_UNCONNECTED] = _T("Unconnected");
@@ -99,7 +99,6 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
-		StdPort_SetMappings();
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_RESETCONTENT,0,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_RESETCONTENT,0,0);
 		for (i = 0; i < STD_MAX; i++)
@@ -110,7 +109,6 @@ LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers.Port1.Type,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.Port2.Type,0);
 
-		ExpPort_SetMappings();
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_RESETCONTENT,0,0);
 		for (i = 0; i < EXP_MAX; i++)
 			SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)ExpPort_Mappings[i]);
@@ -450,6 +448,9 @@ void	Controllers_Init (void)
 		memset(Controllers.POVNames[i],0,sizeof(Controllers.POVNames[i]));
 	}
 	memset(Controllers.KeyNames,0,sizeof(Controllers.KeyNames));
+
+	StdPort_SetMappings();
+	ExpPort_SetMappings();
 
 	ZeroMemory(Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
 	ZeroMemory(Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));

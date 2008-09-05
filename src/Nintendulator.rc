@@ -140,9 +140,7 @@ BEGIN
         , GRAYED
         MENUITEM SEPARATOR
         MENUITEM "P&lay Movie...",              ID_MISC_PLAYMOVIE
-        MENUITEM "&Record Movie from Reset...", ID_MISC_RECORDMOVIE
-        MENUITEM "&Record Movie from Current State...", ID_MISC_RECORDSTATE
-        MENUITEM "Resu&me Movie...",            ID_MISC_RESUMEMOVIE
+        MENUITEM "&Record Movie...",            ID_MISC_RECORDMOVIE
         MENUITEM "Sto&p Movie",                 ID_MISC_STOPMOVIE, GRAYED
     END
     POPUP "&Help"
@@ -1172,6 +1170,68 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,12,4,92,12
 END
 
+IDD_MOVIE_RECORD DIALOGEX 0, 0, 256, 103
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Record Movie"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,152,84,48,16
+    PUSHBUTTON      "Cancel",IDCANCEL,204,84,48,16
+    LTEXT           "Movie File:",IDC_STATIC,4,4,40,12
+    EDITTEXT        IDC_MOVIE_RECORD_FILE,48,4,152,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...",IDC_MOVIE_RECORD_BROWSE,204,4,48,12
+    LTEXT           "Description:",IDC_STATIC,4,20,40,12
+    EDITTEXT        IDC_MOVIE_RECORD_DESCRIPTION,48,20,204,12,ES_AUTOHSCROLL
+    CONTROL         "Hard Reset",IDC_MOVIE_RECORD_RESET,"Button",
+                    BS_AUTORADIOBUTTON,156,48,92,8
+    CONTROL         "Current State",IDC_MOVIE_RECORD_CURRENT,"Button",
+                    BS_AUTORADIOBUTTON,156,60,92,8
+    PUSHBUTTON      "Configure...",IDC_MOVIE_RECORD_CONT_CONFIG,48,84,56,12
+    GROUPBOX        "Controllers",IDC_STATIC,4,36,144,64
+    GROUPBOX        "Record from...",IDC_STATIC,152,36,100,44
+    LTEXT           "Port 1:",IDC_STATIC,8,48,36,8
+    LTEXT           "Port 2:",IDC_STATIC,8,60,36,8
+    LTEXT           "Expansion:",IDC_STATIC,8,72,36,8
+    EDITTEXT        IDC_MOVIE_RECORD_CONT_PORT1,48,48,96,12,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER
+    EDITTEXT        IDC_MOVIE_RECORD_CONT_PORT2,48,60,96,12,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER
+    EDITTEXT        IDC_MOVIE_RECORD_CONT_EXPPORT,48,72,96,12,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER
+END
+
+IDD_MOVIE_PLAY DIALOGEX 0, 0, 256, 87
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Play Movie"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,152,68,48,16
+    PUSHBUTTON      "Cancel",IDCANCEL,204,68,48,16
+    LTEXT           "Movie File:",IDC_STATIC,4,4,40,12
+    EDITTEXT        IDC_MOVIE_PLAY_FILE,48,4,152,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...",IDC_MOVIE_PLAY_BROWSE,204,4,48,12
+    LTEXT           "Description:",IDC_STATIC,4,20,40,12
+    EDITTEXT        IDC_MOVIE_PLAY_DESCRIPTION,48,20,204,12,ES_AUTOHSCROLL | 
+                    ES_READONLY
+    LTEXT           "Frames:",IDC_STATIC,4,48,40,11
+    EDITTEXT        IDC_MOVIE_PLAY_FRAMES,48,48,100,12,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER
+    LTEXT           "Rerecords:",IDC_STATIC,4,59,40,13
+    EDITTEXT        IDC_MOVIE_PLAY_RERECORDS,48,59,100,13,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER
+    EDITTEXT        IDC_MOVIE_PLAY_LENGTH,48,36,100,12,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER
+    LTEXT           "Length:",IDC_STATIC,4,36,40,12
+    LTEXT           "TV Mode:",IDC_STATIC,152,36,48,12
+    EDITTEXT        IDC_MOVIE_PLAY_TVMODE,204,36,48,12,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER
+    CONTROL         "Resume recording on savestate load",
+                    IDC_MOVIE_PLAY_RESUME,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,4,72,144,12
+END
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -1891,6 +1951,61 @@ BEGIN
         HORZGUIDE, 124
         HORZGUIDE, 131
         HORZGUIDE, 136
+    END
+
+    IDD_MOVIE_RECORD, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 252
+        VERTGUIDE, 8
+        VERTGUIDE, 44
+        VERTGUIDE, 48
+        VERTGUIDE, 104
+        VERTGUIDE, 144
+        VERTGUIDE, 148
+        VERTGUIDE, 152
+        VERTGUIDE, 156
+        VERTGUIDE, 200
+        VERTGUIDE, 204
+        VERTGUIDE, 248
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 99
+        HORZGUIDE, 16
+        HORZGUIDE, 20
+        HORZGUIDE, 32
+        HORZGUIDE, 36
+        HORZGUIDE, 48
+        HORZGUIDE, 56
+        HORZGUIDE, 60
+        HORZGUIDE, 68
+        HORZGUIDE, 72
+        HORZGUIDE, 80
+        HORZGUIDE, 84
+        HORZGUIDE, 96
+    END
+
+    IDD_MOVIE_PLAY, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 252
+        VERTGUIDE, 44
+        VERTGUIDE, 48
+        VERTGUIDE, 148
+        VERTGUIDE, 152
+        VERTGUIDE, 200
+        VERTGUIDE, 204
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 83
+        HORZGUIDE, 16
+        HORZGUIDE, 20
+        HORZGUIDE, 32
+        HORZGUIDE, 36
+        HORZGUIDE, 48
+        HORZGUIDE, 52
+        HORZGUIDE, 59
+        HORZGUIDE, 64
+        HORZGUIDE, 68
+        HORZGUIDE, 72
     END
 END
 #endif    // APSTUDIO_INVOKED
