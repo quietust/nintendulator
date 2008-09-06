@@ -50,15 +50,12 @@ struct tDebugger
 	int	Palette, Nametable;
 
 	HDC	PaletteDC;	/* Palette */
-	HWND	PaletteWnd;
 	HBITMAP	PaletteBMP;
 
 	HDC	PatternDC;	/* Pattern tables */
-	HWND	PatternWnd;
 	HBITMAP	PatternBMP;
 
 	HDC	NameDC;		/* Nametable */
-	HWND	NameWnd;
 	HBITMAP	NameBMP;
 
 	HWND	CPUWnd;

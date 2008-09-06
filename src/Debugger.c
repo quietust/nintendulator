@@ -118,6 +118,7 @@ void	Debugger_Init (void)
 	Debugger.Step = FALSE;
 
 	Debugger.Palette = 0;
+	Debugger.Nametable = 0;
 
 	TpHDC = GetWindowDC(GetDesktopWindow());
 
@@ -141,6 +142,7 @@ void	Debugger_Init (void)
 
 	Debugger.Breakpoints = NULL;
 	Debugger.TraceOffset = -1;
+	Debugger.MemOffset = 0;
 
 	Debugger.LogFile = NULL;
 	Debugger_CacheBreakpoints();
@@ -1534,6 +1536,9 @@ LRESULT CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (uMsg)
 	{
+	case WM_INITDIALOG:
+		CheckRadioButton(hwndDlg, IDC_DEBUG_PPU_NT0, IDC_DEBUG_PPU_NT3, dbgRadio[Debugger.Nametable]);
+		return FALSE;
 	case WM_DRAWITEM:
 		lpDrawItem = (LPDRAWITEMSTRUCT)lParam;
 		switch (lpDrawItem->CtlID)
