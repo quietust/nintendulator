@@ -568,11 +568,13 @@ __inline static	void	RunNoSkip (int NumTicks)
 			{
 				PPU.SLnum = -1;
 				PPU.ShortSL = !PPU.ShortSL;
-				PPU.Reg2002 = 0;
 				if (PPU.Reg2001 & 0x18)
 					PPU.IsRendering = TRUE;
 			}
 		}
+		// VBL flag gets cleared a cycle late
+		else if ((PPU.SLnum == -1) && (PPU.Clockticks == 1))
+			PPU.Reg2002 = 0;
 		if (PPU.IsRendering)
 		{
 #ifdef	ACCURATE_SPRITES
@@ -867,7 +869,7 @@ __inline static	void	RunSkip (int NumTicks)
 			}
 			if (PPU.SLnum == -1)
 			{
-				if ((PPU.ShortSL) && (!PPU.IsPAL))
+				if ((PPU.ShortSL) && (PPU.IsRendering) && (!PPU.IsPAL))
 					EndSLTicks = 340;
 				else	EndSLTicks = 341;
 			}
@@ -900,11 +902,13 @@ __inline static	void	RunSkip (int NumTicks)
 			{
 				PPU.SLnum = -1;
 				PPU.ShortSL = !PPU.ShortSL;
-				PPU.Reg2002 = 0;
 				if (PPU.Reg2001 & 0x18)
 					PPU.IsRendering = TRUE;
 			}
 		}
+		// VBL flag gets cleared a cycle late
+		else if ((PPU.SLnum == -1) && (PPU.Clockticks == 1))
+			PPU.Reg2002 = 0;
 		if (PPU.IsRendering)
 		{
 #ifdef	ACCURATE_SPRITES
@@ -1160,6 +1164,14 @@ static	int	__fastcall	Read2 (void)
 	tmp = PPU.Reg2002 | (PPU.ppuLatch & 0x1F);
 	if (tmp & 0x80)
 		PPU.Reg2002 &= 0x60;
+	// race conditions
+	if (PPU.SLnum == 241)
+	{
+		if ((PPU.Clockticks == 0))
+			tmp &= ~0x80;
+		if (PPU.Clockticks < 3)
+			CPU.WantNMI = FALSE;
+	}
 	return PPU.ppuLatch = tmp;
 }
 
@@ -1212,6 +1224,9 @@ static	void	__fastcall	Write0 (int Val)
 {
 	if ((Val & 0x80) && !(PPU.Reg2000 & 0x80) && (PPU.Reg2002 & 0x80))
 		CPU.WantNMI = TRUE;
+	// race condition
+	if ((PPU.SLnum == 241) && !(Val & 0x80) && (PPU.Clockticks < 3))
+		CPU.WantNMI = FALSE;
 	PPU.Reg2000 = Val;
 	PPU.IntReg &= 0x73FF;
 	PPU.IntReg |= (Val & 3) << 10;
