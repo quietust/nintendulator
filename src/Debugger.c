@@ -1181,12 +1181,8 @@ LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetScrollInfo(GetDlgItem(hwndDlg, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		CheckRadioButton(hwndDlg, IDC_DEBUG_MEM_CPU, IDC_DEBUG_MEM_PAL, IDC_DEBUG_MEM_CPU);
 
-		bp = Debugger.Breakpoints;
-		while (bp != NULL)
-		{
-			SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
-			bp = bp->next;
-		}
+		for (bp = Debugger.Breakpoints; bp != NULL; bp = bp->next)
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
 		return FALSE;
 	case WM_PAINT:
 		hdc = BeginPaint(hwndDlg, &ps);
