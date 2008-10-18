@@ -2036,7 +2036,7 @@ BEGIN
             VALUE "FileDescription", "Nintendulator"
             VALUE "FileVersion", "0, 9, 6, 5"
             VALUE "InternalName", "Nintendulator"
-            VALUE "LegalCopyright", "Copyright © 2002-2006"
+            VALUE "LegalCopyright", "Copyright © 2002-2008 QMT Productions"
             VALUE "OriginalFilename", "Nintendulator.exe"
             VALUE "ProductName", "Nintendulator"
             VALUE "ProductVersion", "0, 9, 6, 5"
