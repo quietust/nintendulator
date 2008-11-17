@@ -221,8 +221,8 @@ void	GFX_Create (void)
 		return;			break;
 	}
 
+	// this will automatically call GFX_Update()
 	GFX_LoadPalette(PPU.IsPAL ? GFX.PalettePAL : GFX.PaletteNTSC);
-	GFX_Update();
 	EI.DbgOut(_T("Created %ix%i %i-bit display surface (%s)"), GFX.SurfDesc.dwWidth, GFX.SurfDesc.dwHeight, GFX.Depth, GFX.Fullscreen ? _T("fullscreen") : _T("windowed"));
 }
 
@@ -1105,6 +1105,9 @@ void	GFX_LoadPalette (int PalNum)
 		GFX.Palette16[i] = ((RV << 8) & 0xF800) | ((GV << 3) & 0x07E0) | (BV >> 3);
 		GFX.Palette32[i] = (RV << 16) | (GV << 8) | BV;
 	}
+	// redraw the screen with the new palette, but only if emulation isn't active
+	if (!NES.Running)
+		GFX_Update();
 }
 #undef CLIP
 
