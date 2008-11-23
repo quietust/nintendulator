@@ -26,7 +26,6 @@
 				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile="$(IntDir)/in_nintendulator.pch"
 				AssemblerOutput="2"
 				AssemblerListingLocation="$(IntDir)/"
 				ObjectFile="$(IntDir)/"
@@ -38,12 +37,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dsound.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile="$(OutDir)/in_nintendulator.dll"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/in_nintendulator.pdb"
-				SubSystem="2"
 				ImportLibrary="$(OutDir)/in_nintendulator.lib"
 				TargetMachine="1"/>
 			<Tool
@@ -86,18 +84,13 @@
 			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="0"
-				OptimizeForWindowsApplication="TRUE"
 				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;IN_NINTENDULATOR_EXPORTS;NSFPLAYER"
 				StringPooling="TRUE"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="FALSE"
-				PrecompiledHeaderFile="$(IntDir)/in_nintendulator.pch"
 				AssemblerOutput="2"
 				AssemblerListingLocation="$(IntDir)/"
 				ObjectFile="$(IntDir)/"
@@ -110,8 +103,8 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile="$(OutDir)/in_nintendulator.dll"
+				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				SubSystem="2"
 				ImportLibrary="$(OutDir)/in_nintendulator.lib"
 				TargetMachine="1"/>
 			<Tool
