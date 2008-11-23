@@ -23,7 +23,6 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				OptimizeForProcessor="2"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
@@ -33,8 +32,7 @@
 				AssemblerListingLocation="$(IntDir)/"
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName="$(IntDir)/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				WarningLevel="4"
 				DebugInformationFormat="4"
 				CallingConvention="1"
 				CompileAs="1"/>
@@ -44,7 +42,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib"
 				OutputFile="$(OutDir)/Nintendulator.exe"
-				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/Nintendulator.pdb"
@@ -91,11 +88,9 @@
 			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="0"
 				OptimizeForWindowsApplication="TRUE"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
@@ -107,8 +102,7 @@
 				AssemblerListingLocation="$(IntDir)/"
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName="$(IntDir)/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				WarningLevel="4"
 				CallingConvention="1"
 				CompileAs="1"/>
 			<Tool
@@ -117,7 +111,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib"
 				OutputFile="$(OutDir)/Nintendulator.exe"
-				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				SubSystem="2"
 				EntryPointSymbol=""
@@ -163,7 +156,6 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				OptimizeForProcessor="2"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
@@ -173,8 +165,7 @@
 				AssemblerListingLocation="$(IntDir)/"
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName="$(IntDir)/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				WarningLevel="4"
 				DebugInformationFormat="4"
 				CallingConvention="1"
 				CompileAs="1"/>
@@ -184,7 +175,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib"
 				OutputFile="$(OutDir)/Nintendulator.exe"
-				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/Nintendulator.pdb"
@@ -231,11 +221,9 @@
 			WholeProgramOptimization="TRUE">
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
 				GlobalOptimizations="TRUE"
 				InlineFunctionExpansion="1"
 				FavorSizeOrSpeed="1"
-				OptimizeForProcessor="0"
 				OptimizeForWindowsApplication="TRUE"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				StringPooling="TRUE"
@@ -247,8 +235,7 @@
 				AssemblerListingLocation="$(IntDir)/"
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName="$(IntDir)/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				WarningLevel="4"
 				CallingConvention="1"
 				CompileAs="1"/>
 			<Tool
@@ -257,7 +244,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib"
 				OutputFile="$(OutDir)/Nintendulator.exe"
-				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				SubSystem="2"
 				TargetMachine="1"/>

@@ -100,12 +100,12 @@ unsigned char	__fastcall	CPU_MemGet (unsigned int Addr)
 			buf = CPU.PRGPointer[(Addr >> 12) & 0xF][Addr & 0xFFF];
 		else	buf = -1;
 		if (buf != -1)
-			CPU.LastRead = buf;
+			CPU.LastRead = (unsigned char)buf;
 		return CPU.LastRead;
 	}
 	buf = CPU.ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF,Addr & 0xFFF);
 	if (buf != -1)
-		CPU.LastRead = buf;
+		CPU.LastRead = (unsigned char)buf;
 	return CPU.LastRead;
 }
 void	__fastcall	CPU_MemSet (unsigned int Addr, unsigned char Val)
@@ -271,7 +271,7 @@ int	MAPINT	CPU_ReadRAM (int Bank, int Addr)
 
 void	MAPINT	CPU_WriteRAM (int Bank, int Addr, int Val)
 {
-	CPU_RAM[Addr & 0x07FF] = Val;
+	CPU_RAM[Addr & 0x07FF] = (unsigned char)Val;
 }
 
 int	MAPINT	CPU_Read4k (int Bank, int Addr)
@@ -305,12 +305,12 @@ void	MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
 	case 0x00C:case 0x00D:case 0x00E:case 0x00F:
 	case 0x010:case 0x011:case 0x012:case 0x013:
 	case 0x015:case 0x017:
-			APU_WriteReg(Addr,Val);	break;
+			APU_WriteReg(Addr,(unsigned char)Val);	break;
 	case 0x014:	for (i = 0; i < 0x100; i++)
 				CPU_MemSet(0x2004,CPU_MemGet((Val << 8) | i));
 			CPU_MemGet(CPU.PC);	break;
 #ifndef	NSFPLAYER
-	case 0x016:	Controllers_Write(Val);	break;
+	case 0x016:	Controllers_Write((unsigned char)Val);	break;
 #endif	/* !NSFPLAYER */
 	}
 }
@@ -325,7 +325,7 @@ int	MAPINT	CPU_ReadPRG (int Bank, int Addr)
 void	MAPINT	CPU_WritePRG (int Bank, int Addr, int Val)
 {
 	if (CPU.Writable[Bank])
-		CPU.PRGPointer[Bank][Addr] = Val;
+		CPU.PRGPointer[Bank][Addr] = (unsigned char)Val;
 }
 
 static	__forceinline void	AM_IMP (void)
@@ -434,21 +434,21 @@ static	__forceinline void	AM_ZPX (void)
 	CalcAddr = CPU_MemGetCode(CPU.PC++);
 	FixPC();
 	CPU_MemGet(CalcAddr);
-	CalcAddrL += CPU.X;
+	CalcAddrL = CalcAddrL + CPU.X;
 }
 static	__forceinline void	AM_ZPY (void)
 {
 	CalcAddr = CPU_MemGetCode(CPU.PC++);
 	FixPC();
 	CPU_MemGet(CalcAddr);
-	CalcAddrL += CPU.Y;
+	CalcAddrL = CalcAddrL + CPU.Y;
 }
 static	__forceinline void	AM_INX (void)
 {
 	TmpAddr = CPU_MemGetCode(CPU.PC++);
 	FixPC();
 	CPU_MemGet(TmpAddr);
-	TmpAddrL += CPU.X;
+	TmpAddrL = TmpAddrL + CPU.X;
 	CalcAddrL = CPU_MemGet(TmpAddr);
 	TmpAddrL++;
 	CalcAddrH = CPU_MemGet(TmpAddr);

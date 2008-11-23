@@ -347,7 +347,8 @@ void	AVI_Start (void)
 	hbm = CreateDIBSection(NULL,(BITMAPINFO *)&bmih,DIB_RGB_COLORS,&pBits,NULL,0);
 
 	ZeroMemory(&opts,sizeof(opts));
-	if (hr = SetAviVideoCompression(aviout,hbm,&opts,TRUE,hMainWnd))
+	hr = SetAviVideoCompression(aviout,hbm,&opts,TRUE,hMainWnd);
+	if (hr)
 	{
 		TCHAR msg[256];
 		FormatAviMessage(hr,msg,256);
@@ -397,8 +398,8 @@ void	AVI_AddVideo (void)
 			src += x;
 		}
 	}
-	
-	if (hr = AddAviFrame(aviout,hbm))
+	hr = AddAviFrame(aviout,hbm);
+	if (hr)
 	{
 		TCHAR msg[256];
 		FormatAviMessage(hr,msg,256);
@@ -415,7 +416,8 @@ void	AVI_AddAudio (void)
 		MessageBox(hMainWnd,_T("Error! AVI audio capture attempted while not recording!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
-	if (hr = AddAviAudio(aviout,APU.buffer,735*2))
+	hr = AddAviAudio(aviout,APU.buffer,735*2);
+	if (hr)
 	{
 		TCHAR msg[256];
 		FormatAviMessage(hr,msg,256);

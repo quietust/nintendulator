@@ -32,7 +32,7 @@ struct	tAPU
 	BYTE			Regs[0x18];
 #endif	/* !NSFPLAYER */
 
-	unsigned char		WantFPS;
+	int			WantFPS;
 	unsigned long		MHz;
 	BOOL			PAL;
 #ifndef	NSFPLAYER

@@ -31,8 +31,7 @@
 				AssemblerListingLocation="$(IntDir)/"
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName="$(IntDir)/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				WarningLevel="4"
 				DebugInformationFormat="4"
 				CompileAs="1"/>
 			<Tool
@@ -41,10 +40,10 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dsound.lib"
 				OutputFile="$(OutDir)/in_nintendulator.dll"
-				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/in_nintendulator.pdb"
+				SubSystem="2"
 				ImportLibrary="$(OutDir)/in_nintendulator.lib"
 				TargetMachine="1"/>
 			<Tool
@@ -103,8 +102,7 @@
 				AssemblerListingLocation="$(IntDir)/"
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName="$(IntDir)/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				WarningLevel="4"
 				CompileAs="1"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -112,7 +110,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile="$(OutDir)/in_nintendulator.dll"
-				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/in_nintendulator.lib"

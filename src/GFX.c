@@ -1101,8 +1101,8 @@ void	GFX_LoadPalette (int PalNum)
 		GV = GFX.RawPalette[i >> 6][i & 0x3F][1];
 		BV = GFX.RawPalette[i >> 6][i & 0x3F][2];
 
-		GFX.Palette15[i] = ((RV << 7) & 0x7C00) | ((GV << 2) & 0x03E0) | (BV >> 3);
-		GFX.Palette16[i] = ((RV << 8) & 0xF800) | ((GV << 3) & 0x07E0) | (BV >> 3);
+		GFX.Palette15[i] = (unsigned short)(((RV << 7) & 0x7C00) | ((GV << 2) & 0x03E0) | (BV >> 3));
+		GFX.Palette16[i] = (unsigned short)(((RV << 8) & 0xF800) | ((GV << 3) & 0x07E0) | (BV >> 3));
 		GFX.Palette32[i] = (RV << 16) | (GV << 8) | BV;
 	}
 	// redraw the screen with the new palette, but only if emulation isn't active
@@ -1136,7 +1136,7 @@ void	UpdatePalette (HWND hDlg, int pal)
 		EnableWindow(GetDlgItem(hDlg,IDC_PAL_SAT),TRUE);
 
 		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETPOS,TRUE,-15);
-		SetDlgItemInt(hDlg,IDC_PAL_HUE,-15,TRUE);
+		SetDlgItemInt(hDlg,IDC_PAL_HUE,(UINT)-15,TRUE);
 		SendDlgItemMessage(hDlg,IDC_PAL_SATSLIDER,TBM_SETPOS,TRUE,psat);
 		SetDlgItemInt(hDlg,IDC_PAL_SAT,psat,FALSE);
 	}
@@ -1164,7 +1164,7 @@ void	UpdatePalette (HWND hDlg, int pal)
 	RedrawWindow(hDlg,NULL,NULL,RDW_INVALIDATE);
 }
 
-LRESULT	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const int paltable[PALETTE_MAX] = {IDC_PAL_NTSC,IDC_PAL_PAL,IDC_PAL_PC10,IDC_PAL_VS1,IDC_PAL_VS2,IDC_PAL_VS3,IDC_PAL_VS4,IDC_PAL_EXT};
 	const int PalEntries[64] = {

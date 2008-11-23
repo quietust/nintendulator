@@ -192,7 +192,7 @@ int play(char *fn)
 	NES_Reset();	// NSF loaded successfully, reset the NES
 			// and start it running
 	killPlayThread = FALSE;
-	thread_handle = (HANDLE) CreateThread(NULL,0,(LPTHREAD_START_ROUTINE) PlayThread,NULL,0,&thread_id);
+	thread_handle = (HANDLE) CreateThread(NULL,0,(LPTHREAD_START_ROUTINE) PlayThread,NULL,0,(LPDWORD)&thread_id);
 	return 0;
 }
 
@@ -320,7 +320,7 @@ DWORD	WINAPI	PlayThread (void *param)
 		}
 	}
 	ExitThread(0);
-	return 0;
+//	return 0;
 }
 
 In_Module mod = 

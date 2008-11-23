@@ -97,8 +97,8 @@ enum {
 	D_NAM_H = 240
 };
 
-LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void	Debugger_StartLogging (void);
 void	Debugger_StopLogging (void);
 void	Debugger_CacheBreakpoints (void);
@@ -169,7 +169,7 @@ void	Debugger_SetMode (int NewMode)
 
 	if ((Debugger.Mode & DEBUG_MODE_CPU) && !Debugger.CPUWnd)
 	{
-		Debugger.CPUWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_CPU, hMainWnd, CPUProc);
+		Debugger.CPUWnd = CreateDialog(hInst, (LPCTSTR)IDD_DEBUGGER_CPU, hMainWnd, CPUProc);
 		SetWindowPos(Debugger.CPUWnd, hMainWnd, wRect.right, wRect.top, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
 	}
 	else if (!(Debugger.Mode & DEBUG_MODE_CPU) && Debugger.CPUWnd)
@@ -179,7 +179,7 @@ void	Debugger_SetMode (int NewMode)
 	}
 	if ((Debugger.Mode & DEBUG_MODE_PPU) && !Debugger.PPUWnd)
 	{
-		Debugger.PPUWnd = CreateDialog(hInst, (LPCTSTR) IDD_DEBUGGER_PPU, hMainWnd, PPUProc);
+		Debugger.PPUWnd = CreateDialog(hInst, (LPCTSTR)IDD_DEBUGGER_PPU, hMainWnd, PPUProc);
 		SetWindowPos(Debugger.PPUWnd, hMainWnd, wRect.left, wRect.bottom, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
 		Debugger.NTabChanged = TRUE;
 		Debugger.PalChanged = TRUE;
@@ -229,7 +229,7 @@ unsigned char DebugMemCPU (unsigned short Addr)
 	int Bank = (Addr >> 12) & 0xF;
 	FCPURead Read = CPU.ReadHandler[Bank];
 	if ((Read == CPU_ReadRAM) || (Read == CPU_ReadPRG) || (Read == GenieRead) || (Read == GenieRead1) || (Read == GenieRead2) || (Read == GenieRead3))
-		return Read(Bank, Addr & 0xFFF);
+		return (unsigned char)Read(Bank, Addr & 0xFFF);
 	else	return 0xFF;
 }
 
@@ -238,7 +238,7 @@ unsigned char DebugMemPPU (unsigned short Addr)
 	int Bank = (Addr >> 10) & 0xF;
 	FPPURead Read = PPU.ReadHandler[Bank];
 	if (Read == PPU_BusRead)
-		return Read(Bank, Addr & 0x3FF);
+		return (unsigned char)Read(Bank, Addr & 0x3FF);
 	else	return 0xFF;
 }
 
@@ -246,8 +246,9 @@ unsigned char DebugMemPPU (unsigned short Addr)
  * Returns the effective address for usage with breakpoints */
 unsigned short	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 {
-	unsigned char OpData[3] = {DebugMemCPU(Addr), 0, 0};
+	unsigned char OpData[3] = {0, 0, 0};
 	unsigned short Operand = 0, MidAddr = 0, EffectiveAddr = 0;
+	OpData[0] = DebugMemCPU(Addr);
 	switch (TraceAddrMode[OpData[0]])
 	{
 	case IND:
@@ -499,7 +500,7 @@ void	Debugger_UpdateCPU (void)
 			TpVal = i;
 		DecodeInstruction(Addr, NULL, tps);
 		SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, LB_ADDSTRING, 0, (LPARAM)tps);
-		Addr += AddrBytes[TraceAddrMode[DebugMemCPU(Addr)]];
+		Addr = Addr + AddrBytes[TraceAddrMode[DebugMemCPU(Addr)]];
 	}
 	/* re-enable redraw just before we set the selection */
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, WM_SETREDRAW, TRUE, 0);
@@ -525,22 +526,22 @@ void	Debugger_UpdateCPU (void)
 				break;
 			_stprintf(tps, _T("%04X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
 				(Debugger.MemOffset + i) * 0x10,
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x0),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x1),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x2),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x3),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x4),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x5),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x6),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x7),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x8),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0x9),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0xA),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0xB),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0xC),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0xD),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0xE),
-				DebugMemCPU((Debugger.MemOffset + i) * 0x10 + 0xF));
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x0)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x1)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x2)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x3)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x4)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x5)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x6)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x7)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x8)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x9)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xA)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xB)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xC)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xD)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xE)),
+				DebugMemCPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xF)));
 			SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_MEM_LIST, LB_ADDSTRING, 0, (LPARAM)tps);
 		}
 	}
@@ -560,22 +561,22 @@ void	Debugger_UpdateCPU (void)
 				break;
 			_stprintf(tps, _T("%04X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
 				(Debugger.MemOffset + i) * 0x10,
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x0),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x1),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x2),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x3),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x4),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x5),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x6),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x7),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x8),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0x9),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0xA),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0xB),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0xC),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0xD),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0xE),
-				DebugMemPPU((Debugger.MemOffset + i) * 0x10 + 0xF));
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x0)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x1)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x2)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x3)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x4)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x5)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x6)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x7)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x8)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0x9)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xA)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xB)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xC)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xD)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xE)),
+				DebugMemPPU((unsigned short)((Debugger.MemOffset + i) * 0x10 + 0xF)));
 			SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_MEM_LIST, LB_ADDSTRING, 0, (LPARAM)tps);
 		}
 	}
@@ -724,8 +725,8 @@ void	Debugger_UpdatePPU (void)
 					for (sy = 0; sy < 8; sy++)
 					{
 						ptr = (((y << 3) + sy) << 8) + (t << 7) + (x << 3);
-						byte0 = DebugMemPPU(MemAddr);
-						byte1 = DebugMemPPU(MemAddr+8);
+						byte0 = DebugMemPPU((unsigned short)MemAddr);
+						byte1 = DebugMemPPU((unsigned short)(MemAddr + 8));
 						for (sx = 0; sx < 8; sx++)
 						{
 							color = pal[((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6)];
@@ -775,8 +776,8 @@ void	Debugger_UpdatePPU (void)
 				for (py = 0; py < 8; py ++)
 				{
 					ptr = (TileY << 11) | (py << 8) | (TileX << 3);
-					byte0 = DebugMemPPU(MemAddr);
-					byte1 = DebugMemPPU(MemAddr+8);
+					byte0 = DebugMemPPU((unsigned short)MemAddr);
+					byte1 = DebugMemPPU((unsigned short)(MemAddr + 8));
 					for (px = 0; px < 8; px ++)
 					{
 						color = ((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6);
@@ -881,7 +882,7 @@ void	Debugger_CacheBreakpoints (void)
 	}
 }
 
-LRESULT CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	TCHAR tpc[8];
@@ -1121,11 +1122,11 @@ LRESULT CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 						bp->next->prev = bp;
 					Debugger.Breakpoints = bp;
 				}
-				bp->type = type;
-				bp->opcode = opcode;
-				bp->enabled = enabled;
-				bp->addr_start = addr1;
-				bp->addr_end = addr2;
+				bp->type = (unsigned char)type;
+				bp->opcode = (unsigned char)opcode;
+				bp->enabled = (unsigned char)enabled;
+				bp->addr_start = (unsigned short)addr1;
+				bp->addr_end = (unsigned short)addr2;
 				_tcscpy(bp->desc, desc);
 			}
 			EndDialog(hwndDlg, (INT_PTR)bp);
@@ -1140,7 +1141,7 @@ LRESULT CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 
 }
 
-LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
 	HDC hdc;
@@ -1566,7 +1567,7 @@ LRESULT CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-LRESULT CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	LPDRAWITEMSTRUCT lpDrawItem;

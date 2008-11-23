@@ -60,10 +60,10 @@ TCHAR	szWindowClass[MAX_LOADSTRING];	// The title bar text
 // Foward declarations of functions included in this code module:
 ATOM			MyRegisterClass(HINSTANCE hInstance);
 BOOL			InitInstance(HINSTANCE, int);
-LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK	DebugWnd(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK	InesHeader(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK	DebugWnd(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK	InesHeader(HWND, UINT, WPARAM, LPARAM);
 void	ShowDebug (void);
 
 TCHAR	TitlebarBuffer[256];
@@ -177,7 +177,8 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 	GFX.DirectDraw = NULL;	// gotta do this so we don't paint from nothing
 	hInst = hInstance;
 	hMenu = LoadMenu(hInst,(LPCTSTR)IDR_NINTENDULATOR);
-	if (!(hMainWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,hMenu,hInstance,NULL)))
+	hMainWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,hMenu,hInstance,NULL);
+	if (!hMainWnd)
 		return FALSE;
 	ShowWindow(hMainWnd,nCmdShow);
 	DragAcceptFiles(hMainWnd,TRUE);
@@ -199,7 +200,7 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY	- post a quit message and return
 //
 //
-LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
 	PAINTSTRUCT ps;
@@ -490,14 +491,17 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else	CheckMenuItem(hMenu,ID_PPU_SCANLINES,MF_UNCHECKED);
 			break;
 		case ID_SOUND_ENABLED:
-			if (NES.SoundEnabled = !NES.SoundEnabled)
+			NES.SoundEnabled = !NES.SoundEnabled;
+			if (NES.SoundEnabled)
 			{
-				if (running)	APU_SoundON();
+				if (running)
+					APU_SoundON();
 				CheckMenuItem(hMenu,ID_SOUND_ENABLED,MF_CHECKED);
 			}
 			else
 			{
-				if (running)	APU_SoundOFF();
+				if (running)
+					APU_SoundOFF();
 				CheckMenuItem(hMenu,ID_SOUND_ENABLED,MF_UNCHECKED);
 			}
 			break;
@@ -573,7 +577,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
@@ -592,7 +596,7 @@ LRESULT CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 static TCHAR *DebugText;
 static int DebugLen;
-LRESULT CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
@@ -642,7 +646,7 @@ void	ShowDebug (void)
 	ShowWindow(hDebug,SW_SHOW);
 }
 
-LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static TCHAR *filename;
 	static char header[16];
@@ -729,20 +733,20 @@ LRESULT CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			i = GetDlgItemInt(hDlg,IDC_INES_PRG,NULL,FALSE);
 			if ((i < 0) || (i > 255))
 				SetDlgItemInt(hDlg,IDC_INES_PRG,i = 0,FALSE);
-			header[4] = i & 0xFF;
+			header[4] = (char)(i & 0xFF);
 			break;
 		case IDC_INES_CHR:
 			i = GetDlgItemInt(hDlg,IDC_INES_CHR,NULL,FALSE);
 			if ((i < 0) || (i > 255))
 				SetDlgItemInt(hDlg,IDC_INES_CHR,i = 0,FALSE);
-			header[5] = i & 0xFF;
+			header[5] = (char)(i & 0xFF);
 			break;
 		case IDC_INES_MAP:
 			i = GetDlgItemInt(hDlg,IDC_INES_MAP,NULL,FALSE);
 			if ((i < 0) || (i > 255))
 				SetDlgItemInt(hDlg,IDC_INES_MAP,i = 0,FALSE);
-			header[6] = (header[6] & 0x0F) | ((i & 0x0F) << 4);
-			header[7] = (header[7] & 0x0F) | (i & 0xF0);
+			header[6] = (char)((header[6] & 0x0F) | ((i & 0x0F) << 4));
+			header[7] = (char)((header[7] & 0x0F) | (i & 0xF0));
 			break;
 		case IDC_INES_BATT:
 			if (IsDlgButtonChecked(hDlg,IDC_INES_BATT))

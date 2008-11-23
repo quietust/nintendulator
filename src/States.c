@@ -52,7 +52,8 @@ void	States_SetSlot (int Slot)
 	FILE *tmp;
 	States.SelSlot = Slot;
 	_stprintf(tpchr,_T("%s.ns%i"),States.BaseFilename,Slot);
-	if (tmp = _tfopen(tpchr,_T("rb")))
+	tmp = _tfopen(tpchr,_T("rb"));
+	if (tmp)
 	{
 		fclose(tmp);
 		PrintTitlebar(_T("State Selected: %i (occupied)"), Slot);
@@ -145,7 +146,7 @@ int	States_SaveData (FILE *out)
 		else	clen = 0;
 		if (clen)
 		{
-			char *tpmi = malloc(clen);
+			unsigned char *tpmi = malloc(clen);
 			MI->SaveLoad(STATE_SAVE,0,tpmi);
 			fwrite("MAPR",1,4,out);		flen += 4;
 			fwrite(&clen,1,4,out);		flen += 4;

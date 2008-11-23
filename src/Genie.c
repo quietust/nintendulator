@@ -222,7 +222,7 @@ void	MAPINT	GenieWrite (int Bank, int Addr, int Val)
 	switch (Addr)
 	{
 	case 0:	if (Val & 1)
-			Genie.CodeStat = 0x80 | (Val ^ 0x7E);
+			Genie.CodeStat = (unsigned char)(0x80 | (Val ^ 0x7E));
 		else
 		{
 			Genie.CodeStat &= 0x7F;
@@ -341,20 +341,20 @@ int	Genie_Save (FILE *out)
 	unsigned char val;
 	unsigned short addr;
 		//Data
-	val = NES.GameGenie;				fwrite(&val,1,1,out);	clen++;
-	val = Genie.CodeStat;				fwrite(&val,1,1,out);	clen++;
+	val = (unsigned char)NES.GameGenie;				fwrite(&val,1,1,out);	clen++;
+	val = Genie.CodeStat;						fwrite(&val,1,1,out);	clen++;
 
-	addr = (Genie.Code1B << 12) | Genie.Code1A;	fwrite(&addr,2,1,out);	clen += 2;
-	val = Genie.Code1O;				fwrite(&val,1,1,out);	clen++;
-	val = Genie.Code1V;				fwrite(&val,1,1,out);	clen++;
+	addr = (unsigned short)((Genie.Code1B << 12) | Genie.Code1A);	fwrite(&addr,2,1,out);	clen += 2;
+	val = (unsigned char)Genie.Code1O;				fwrite(&val,1,1,out);	clen++;
+	val = (unsigned char)Genie.Code1V;				fwrite(&val,1,1,out);	clen++;
 
-	addr = (Genie.Code2B << 12) | Genie.Code2A;	fwrite(&addr,2,1,out);	clen += 2;
-	val = Genie.Code2O;				fwrite(&val,1,1,out);	clen++;
-	val = Genie.Code2V;				fwrite(&val,1,1,out);	clen++;
+	addr = (unsigned short)((Genie.Code2B << 12) | Genie.Code2A);	fwrite(&addr,2,1,out);	clen += 2;
+	val = (unsigned char)Genie.Code2O;				fwrite(&val,1,1,out);	clen++;
+	val = (unsigned char)Genie.Code2V;				fwrite(&val,1,1,out);	clen++;
 
-	addr = (Genie.Code3B << 12) | Genie.Code3A;	fwrite(&addr,2,1,out);	clen += 2;
-	val = Genie.Code3O;				fwrite(&val,1,1,out);	clen++;
-	val = Genie.Code3V;				fwrite(&val,1,1,out);	clen++;
+	addr = (unsigned short)((Genie.Code3B << 12) | Genie.Code3A);	fwrite(&addr,2,1,out);	clen += 2;
+	val = (unsigned char)Genie.Code3O;				fwrite(&val,1,1,out);	clen++;
+	val = (unsigned char)Genie.Code3V;				fwrite(&val,1,1,out);	clen++;
 
 	return clen;
 }

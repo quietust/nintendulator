@@ -44,7 +44,7 @@ void	Movie_ShowFrame (void)
 		EI.StatusOut(_T("Frame %i"),Movie.Pos / Movie.FrameLen);
 }
 
-LRESULT	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	char buf[4];
 	TCHAR str[64];
@@ -234,9 +234,9 @@ void	Movie_Play (void)
 		return;
 	}
 
-	Movie.ControllerTypes[0] = Controllers.Port1.Type;
-	Movie.ControllerTypes[1] = Controllers.Port2.Type;
-	Movie.ControllerTypes[2] = Controllers.ExpPort.Type;
+	Movie.ControllerTypes[0] = (unsigned char)Controllers.Port1.Type;
+	Movie.ControllerTypes[1] = (unsigned char)Controllers.Port2.Type;
+	Movie.ControllerTypes[2] = (unsigned char)Controllers.ExpPort.Type;
 
 	if (Controllers.Port1.Type == STD_FOURSCORE)
 	{
@@ -363,7 +363,7 @@ void	Movie_Play (void)
 		memset(Controllers.ExpPort.MovData, 0, Controllers.ExpPort.MovLen);
 }
 
-LRESULT	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	OPENFILENAME ofn;
 	TCHAR filename[MAX_PATH] = {0};
@@ -453,12 +453,13 @@ LRESULT	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			Movie.Data = _tfopen(Movie.Filename, _T("w+b"));
 			if (Movie.Data)
 			{
-				int len = GetWindowTextLength(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION)) + 1;
 #ifdef	UNICODE
+				int len = GetWindowTextLength(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION)) + 1;
 				Movie.Description = malloc(len * sizeof(TCHAR));
 				if (Movie.Description)
 					GetDlgItemText(hDlg, IDC_MOVIE_RECORD_DESCRIPTION, Movie.Description, len);
 #else	/* !UNICODE */
+				// Non-Unicode version currently cannot display movie description
 				Movie.Description = NULL;
 #endif	/* UNICODE */
 				if (IsDlgButtonChecked(hDlg, IDC_MOVIE_RECORD_CURRENT))
@@ -533,9 +534,9 @@ void	Movie_Record (void)
 	fwrite("NMOV", 1, 4, Movie.Data);
 	fwrite(&len, 1, 4, Movie.Data);
 	
-	Movie.ControllerTypes[0] = Controllers.Port1.Type;
-	Movie.ControllerTypes[1] = Controllers.Port2.Type;
-	Movie.ControllerTypes[2] = Controllers.ExpPort.Type;
+	Movie.ControllerTypes[0] = (unsigned char)Controllers.Port1.Type;
+	Movie.ControllerTypes[1] = (unsigned char)Controllers.Port2.Type;
+	Movie.ControllerTypes[2] = (unsigned char)Controllers.ExpPort.Type;
 
 	if (Movie.ControllerTypes[0] == STD_FOURSCORE)
 	{

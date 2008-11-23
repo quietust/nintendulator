@@ -122,7 +122,7 @@ static	void	Write (struct tStdPort *Cont, unsigned char Val)
 	Port1->Write(Port1,Val);
 	Port2->Write(Port2,Val);
 }
-static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	switch (uMsg)

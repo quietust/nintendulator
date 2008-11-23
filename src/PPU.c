@@ -166,7 +166,7 @@ void	MAPINT	PPU_BusWriteCHR (int Bank, int Addr, int Val)
 #ifdef	ENABLE_DEBUGGER
 	Debugger.PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
-	PPU.CHRPointer[Bank][Addr] = Val;
+	PPU.CHRPointer[Bank][Addr] = (unsigned char)Val;
 }
 
 void	MAPINT	PPU_BusWriteNT (int Bank, int Addr, int Val)
@@ -176,7 +176,7 @@ void	MAPINT	PPU_BusWriteNT (int Bank, int Addr, int Val)
 #ifdef	ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
-	PPU.CHRPointer[Bank][Addr] = Val;
+	PPU.CHRPointer[Bank][Addr] = (unsigned char)Val;
 }
 
 void	PPU_Reset (void)
@@ -227,7 +227,7 @@ __inline static void	ProcessSprites (void)
 		case 0:	// evaluate current Y coordinate
 			if (PPU.Clockticks & 1)
 			{
-				PPU.Sprite[SpritePtr = sprpos] = sprtmp;
+				PPU.Sprite[SpritePtr = sprpos] = (unsigned char)sprtmp;
 				if ((PPU.SLnum >= sprtmp) && (PPU.SLnum <= sprtmp + ((PPU.Reg2000 & 0x20) ? 0xF : 0x7)))
 				{
 					if (sprnum == 0)
@@ -258,7 +258,7 @@ __inline static void	ProcessSprites (void)
 		case 1:	// Y-coordinate is in range, copy remaining bytes
 			if (PPU.Clockticks & 1)
 			{
-				PPU.Sprite[SpritePtr = sprpos++] = sprtmp;
+				PPU.Sprite[SpritePtr = sprpos++] = (unsigned char)sprtmp;
 				if (sprsub++ == 3)
 				{
 					sprsub = 0;
@@ -484,7 +484,7 @@ int	PPU_Load (FILE *in)
 
 	fread(&tps,2,1,in);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340) with PAL subticks stored in upper 4 bits
 	PPU.Clockticks = tps & 0xFFF;
-	PPU.PALsubticks = tps >> 12;
+	PPU.PALsubticks = (unsigned char)(tps >> 12);
 
 	fread(&tps,2,1,in);		clen += 2;	//	SLNUM	uint16		Scanline number
 	PPU.SLnum = tps;
@@ -584,13 +584,13 @@ __inline static	void	RunNoSkip (int NumTicks)
 			{
 				if (PPU.IOMode)
 				{
-					RenderData[(PPU.Clockticks >> 1) & 3] = rand() & 0xFF;
+					RenderData[(PPU.Clockticks >> 1) & 3] = (unsigned char)rand();
 					if (PPU.IOMode == 2)
 						PPU.WriteHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF,PPU.IOVal = RenderData[(PPU.Clockticks >> 1) & 3]);
 				}
 				else if (PPU.ReadHandler[PPU.RenderAddr >> 10] == PPU_BusRead)
 					RenderData[(PPU.Clockticks >> 1) & 3] = PPU.CHRPointer[PPU.RenderAddr >> 10][PPU.RenderAddr & 0x3FF];
-				else	RenderData[(PPU.Clockticks >> 1) & 3] = PPU.ReadHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF);
+				else	RenderData[(PPU.Clockticks >> 1) & 3] = (unsigned char)PPU.ReadHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF);
 			}
 			switch (PPU.Clockticks)
 			{
@@ -718,7 +718,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				SprNum = (PPU.Clockticks >> 1) & 0x1C;
 				TC = PPU.SprBuff[SprNum | 1];
 #ifdef	ACCURATE_SPRITES
-				SprSL = PPU.SLnum - PPU.SprBuff[SprNum];
+				SprSL = (unsigned char)(PPU.SLnum - PPU.SprBuff[SprNum]);
  				if (PPU.Reg2000 & 0x20)
 					PatAddr = ((TC & 0xFE) << 4) | ((TC & 0x01) << 12) | ((SprSL & 7) ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x17 : 0x00) ^ ((SprSL & 0x8) << 1));
 				else	PatAddr = (TC << 4) | ((SprSL & 7) ^ ((PPU.SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((PPU.Reg2000 & 0x08) << 9);
@@ -789,7 +789,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				{
 					if (PPU.ReadHandler[addr >> 10] == PPU_BusRead)
 						PPU.buf2007 = PPU.CHRPointer[addr >> 10][addr & 0x3FF];
-					else	PPU.buf2007 = PPU.ReadHandler[addr >> 10](addr >> 10,addr & 0x3FF);
+					else	PPU.buf2007 = (unsigned char)PPU.ReadHandler[addr >> 10](addr >> 10,addr & 0x3FF);
 				}
 			}
 			PPU.IOMode -= 2;
@@ -841,7 +841,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			if (CPU.WantIRQ)
 				PalIndex ^= 0x80;
 #endif	/* SHORQ */
-			*PPU.GfxData = PalIndex;
+			*PPU.GfxData = (unsigned short)PalIndex;
 			PPU.GfxData++;
 		}
 	}
@@ -918,13 +918,13 @@ __inline static	void	RunSkip (int NumTicks)
 			{
 				if (PPU.IOMode)
 				{
-					RenderData[(PPU.Clockticks >> 1) & 3] = rand() & 0xFF;
+					RenderData[(PPU.Clockticks >> 1) & 3] = (unsigned char)rand();
 					if (PPU.IOMode == 2)
 						PPU.WriteHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF,PPU.IOVal = RenderData[(PPU.Clockticks >> 1) & 3]);
 				}
 				else if (PPU.ReadHandler[PPU.RenderAddr >> 10] == PPU_BusRead)
 					RenderData[(PPU.Clockticks >> 1) & 3] = PPU.CHRPointer[PPU.RenderAddr >> 10][PPU.RenderAddr & 0x3FF];
-				else	RenderData[(PPU.Clockticks >> 1) & 3] = PPU.ReadHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF);
+				else	RenderData[(PPU.Clockticks >> 1) & 3] = (unsigned char)PPU.ReadHandler[PPU.RenderAddr >> 10](PPU.RenderAddr >> 10,PPU.RenderAddr & 0x3FF);
 			}
 			switch (PPU.Clockticks)
 			{
@@ -1114,7 +1114,7 @@ __inline static	void	RunSkip (int NumTicks)
 				{
 					if (PPU.ReadHandler[addr >> 10] == PPU_BusRead)
 						PPU.buf2007 = PPU.CHRPointer[addr >> 10][addr & 0x3FF];
-					else	PPU.buf2007 = PPU.ReadHandler[addr >> 10](addr >> 10,addr & 0x3FF);
+					else	PPU.buf2007 = (unsigned char)PPU.ReadHandler[addr >> 10](addr >> 10,addr & 0x3FF);
 				}
 			}
 			PPU.IOMode -= 2;
@@ -1227,7 +1227,7 @@ static	void	__fastcall	Write0 (int Val)
 	// race condition
 	if ((PPU.SLnum == 241) && !(Val & 0x80) && (PPU.Clockticks < 3))
 		CPU.WantNMI = FALSE;
-	PPU.Reg2000 = Val;
+	PPU.Reg2000 = (unsigned char)Val;
 	PPU.IntReg &= 0x73FF;
 	PPU.IntReg |= (Val & 3) << 10;
 #ifdef	ENABLE_DEBUGGER
@@ -1237,7 +1237,7 @@ static	void	__fastcall	Write0 (int Val)
 
 static	void	__fastcall	Write1 (int Val)
 {
-	PPU.Reg2001 = Val;
+	PPU.Reg2001 = (unsigned char)Val;
 	if ((Val & 0x18) && (PPU.SLnum < 240))
 		PPU.IsRendering = TRUE;
 	else	PPU.IsRendering = FALSE;
@@ -1251,7 +1251,7 @@ static	void	__fastcall	Write2 (int Val)
 
 static	void	__fastcall	Write3 (int Val)
 {
-	PPU.SprAddr = Val;
+	PPU.SprAddr = (unsigned char)Val;
 }
 
 static	void	__fastcall	Write4 (int Val)
@@ -1260,7 +1260,7 @@ static	void	__fastcall	Write4 (int Val)
 		Val = 0xFF;
 	if ((PPU.SprAddr & 0x03) == 0x02)
 		Val &= 0xE3;
-	PPU.Sprite[PPU.SprAddr++] = Val;
+	PPU.Sprite[PPU.SprAddr++] = (unsigned char)Val;
 }
 
 static	void	__fastcall	Write5 (int Val)
@@ -1269,7 +1269,7 @@ static	void	__fastcall	Write5 (int Val)
 	{
 		PPU.IntReg &= 0x7FE0;
 		PPU.IntReg |= (Val & 0xF8) >> 3;
-		PPU.IntX = Val & 7;
+		PPU.IntX = (unsigned char)(Val & 7);
 	}
 	else
 	{
@@ -1305,14 +1305,14 @@ static	void	__fastcall	Write7 (int Val)
 #ifdef	ENABLE_DEBUGGER
 		Debugger.PalChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
-		PPU.Palette[Addr] = Val;
+		PPU.Palette[Addr] = (unsigned char)Val;
 		if (!(Addr & 0x3))
-			PPU.Palette[Addr ^ 0x10] = Val;
+			PPU.Palette[Addr ^ 0x10] = (unsigned char)Val;
 	}
 	else
 	{
 		PPU.IOAddr = PPU.VRAMAddr & 0x3FFF;
-		PPU.IOVal = Val;
+		PPU.IOVal = (unsigned char)Val;
 		PPU.IOMode = 6;
 	}
 	if (PPU.Reg2000 & 0x04)
@@ -1324,6 +1324,6 @@ static	void	__fastcall	Write7 (int Val)
 void	MAPINT	PPU_IntWrite (int Bank, int Addr, int Val)
 {
 	static void (__fastcall *funcs[8])(int) = {Write0,Write1,Write2,Write3,Write4,Write5,Write6,Write7};
-	PPU.ppuLatch = Val;
+	PPU.ppuLatch = (unsigned char)Val;
 	funcs[Addr & 7](Val);
 }

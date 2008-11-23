@@ -92,7 +92,7 @@ void	ExpPort_SetMappings (void)
 
 static	BOOL	POVAxis = FALSE;
 
-LRESULT	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	int i;

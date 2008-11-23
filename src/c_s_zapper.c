@@ -83,7 +83,7 @@ static	unsigned char	Read (struct tStdPort *Cont)
 static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
 }
-static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};

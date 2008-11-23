@@ -505,7 +505,12 @@ void	MapperInterface_Init (void)
 	dInst = LoadLibrary("Plugins\\nsf.dll");
 	LoadDLL = (PLoadMapperDLL)GetProcAddress(dInst,"LoadMapperDLL");
 	UnloadDLL = (PUnloadMapperDLL)GetProcAddress(dInst,"UnloadMapperDLL");
-	if ((!LoadDLL) || (!UnloadDLL) || (!(DI = LoadDLL(mod.hMainWindow,&EI,CurrentMapperInterface))))
+	if (!LoadDLL)
+		MessageBox(mod.hMainWindow,"Fatal error: unable to locate NSF player mapper DLL!","in_nintendulator",MB_OK | MB_ICONERROR);
+	if (!UnloadDLL)
+		MessageBox(mod.hMainWindow,"Fatal error: unable to locate NSF player mapper DLL!","in_nintendulator",MB_OK | MB_ICONERROR);
+	DI = LoadDLL(mod.hMainWindow,&EI,CurrentMapperInterface);
+	if (!DI)
 		MessageBox(mod.hMainWindow,"Fatal error: unable to locate NSF player mapper DLL!","in_nintendulator",MB_OK | MB_ICONERROR);
 #endif	/* !NSFPLAYER */
 	memset(&EI,0,sizeof(EI));
@@ -564,7 +569,7 @@ void	MapperInterface_Init (void)
 }
 
 #ifndef	NSFPLAYER
-LRESULT CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	static PDLLInfo *DLLs;
 	int i;
@@ -647,7 +652,8 @@ BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
 	}
 	// else more than one found
 	DLLs[num] = NULL;
-	if (DI = (PDLLInfo)DialogBoxParam(hInst,(LPCTSTR)IDD_DLLSELECT,hMainWnd,DllSelect,(LPARAM)DLLs))
+	DI = (PDLLInfo)DialogBoxParam(hInst,(LPCTSTR)IDD_DLLSELECT,hMainWnd,DllSelect,(LPARAM)DLLs);
+	if (DI)
 	{
 		MI = DI->LoadMapper(ROM);
 		if (MI->Load)
@@ -659,7 +665,8 @@ BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
 #else	/* NSFPLAYER */
 	if (!DI)
 		return FALSE;
-	if (MI = DI->LoadMapper(ROM))
+	MI = DI->LoadMapper(ROM);
+	if (MI)
 		return TRUE;
 #endif	/* !NSFPLAYER */
 	return FALSE;

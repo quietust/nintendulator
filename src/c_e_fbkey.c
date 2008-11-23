@@ -155,7 +155,7 @@ static	void	Write (struct tExpPort *Cont, unsigned char Val)
 	}
 }
 static	HWND	ConfigWindow = NULL;
-static	LRESULT	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId = LOWORD(wParam);
 	if (uMsg != WM_COMMAND)

@@ -114,7 +114,8 @@ __inline void	Square0_Write (int Reg, unsigned char Val)
 		Square0.CurD = 0;
 		Square0.EnvClk = TRUE;
 		break;
-	case 4:	if (!(Square0.Enabled = Val ? TRUE : FALSE))
+	case 4:	Square0.Enabled = Val ? TRUE : FALSE;
+		if (!Square0.Enabled)
 			Square0.Timer = 0;
 		break;
 	}
@@ -204,7 +205,8 @@ __inline void	Square1_Write (int Reg, unsigned char Val)
 		Square1.CurD = 0;
 		Square1.EnvClk = TRUE;
 		break;
-	case 4:	if (!(Square1.Enabled = Val ? TRUE : FALSE))
+	case 4:	Square1.Enabled = Val ? TRUE : FALSE;
+		if (!Square1.Enabled)
 			Square1.Timer = 0;
 		break;
 	}
@@ -302,7 +304,8 @@ __inline void	Triangle_Write (int Reg, unsigned char Val)
 		}
 		Triangle.LinClk = TRUE;
 		break;
-	case 4:	if (!(Triangle.Enabled = Val ? TRUE : FALSE))
+	case 4:	Triangle.Enabled = Val ? TRUE : FALSE;
+		if (!Triangle.Enabled)
 			Triangle.Timer = 0;
 		break;
 	}
@@ -383,7 +386,8 @@ __inline void	Noise_Write (int Reg, unsigned char Val)
 		}
 		Noise.EnvClk = TRUE;
 		break;
-	case 4:	if (!(Noise.Enabled = Val ? TRUE : FALSE))
+	case 4:	Noise.Enabled = Val ? TRUE : FALSE;
+		if (!Noise.Enabled)
 			Noise.Timer = 0;
 		break;
 	}
@@ -1169,9 +1173,9 @@ void	APU_Run (void)
 		if (samppos > 0x7FFF)
 			samppos = 0x7FFF;
 #ifndef	NSFPLAYER
-		APU.buffer[APU.BufPos] = samppos;
+		APU.buffer[APU.BufPos] = (short)samppos;
 #else	/* NSFPLAYER */
-		sample_pos = samppos;
+		sample_pos = (short)samppos;
 		sample_ok = TRUE;
 #endif	/* !NSFPLAYER */
 		samppos = sampcycles = 0;

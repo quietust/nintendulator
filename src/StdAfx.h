@@ -12,7 +12,8 @@
 
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
-#pragma warning(disable:4761)
+#pragma warning(disable:4100)	// "unreferenced formal parameter" - functions which don't use every parameter (mostly controllers)
+#pragma warning(disable:4201)	// "nonstandard extension used : nameless struct/union" - used everywhere in DirectX
 
 // Windows Header Files:
 #include <windows.h>
