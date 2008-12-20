@@ -882,6 +882,66 @@ void	Debugger_CacheBreakpoints (void)
 	}
 }
 
+struct tBreakpoint *Debugger_GetBreakpoint (HWND hwndDlg, int *_line)
+{
+	struct tBreakpoint *bp;
+	TCHAR *str;
+	int line, len;
+
+	line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCURSEL, 0, 0);
+	if (line == -1)
+	{
+		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
+		return NULL;
+	}
+
+	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), TRUE);
+	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), TRUE);
+
+	len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXTLEN, line, 0);
+	str = malloc((len + 1) * sizeof(TCHAR));
+	SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXT, line, (LPARAM)str);
+
+	// try to find it in the breakpoint list
+	bp = Debugger.Breakpoints;
+	while (bp != NULL)
+	{
+		if (!_tcscmp(bp->desc, str))
+			break;
+		bp = bp->next;
+	}
+	free(str);
+	if (_line != NULL)
+		*_line = line;
+	return bp;
+}
+
+void	Debugger_SetBreakpoint (HWND hwndDlg, struct tBreakpoint *bp)
+{
+	int line;
+	if (bp == NULL)
+	{
+		SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_SETCURSEL, (WPARAM)-1, 0);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
+		return;
+	}
+
+	line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)bp->desc);
+	SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_SETCURSEL, line, 0);
+	if (line == -1)
+	{
+		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
+	}
+	else
+	{
+		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), TRUE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), TRUE);
+	}
+}
+
 INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -1302,17 +1362,29 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case IDC_DEBUG_BREAK_LIST:
-			// only enable Edit/Delete when there's a selection
-			if (SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCURSEL, 0, 0) == -1)
+			if (wmEvent == LBN_DBLCLK)
 			{
-				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
-				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
+				int line;
+				// get selected breakpoint
+				bp = Debugger_GetBreakpoint(hwndDlg, &line);
+
+				if (bp == NULL)
+					break;
+
+				bp->enabled = !bp->enabled;
+				if (bp->enabled)
+					bp->desc[_tcslen(bp->desc) - 2] = _T('+');
+				else	bp->desc[_tcslen(bp->desc) - 2] = _T('-');
+
+				// update breakpoint description
+				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
+				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+				// reselect it
+				Debugger_SetBreakpoint(hwndDlg, bp);
+				// then recache the breakpoints
+				Debugger_CacheBreakpoints();
 			}
-			else
-			{
-				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), TRUE);
-				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), TRUE);
-			}
+			else	Debugger_GetBreakpoint(hwndDlg, NULL);	// enable the add/remove buttons
 			break;
 		case IDC_DEBUG_BREAK_ADD:
 			bp = (struct tBreakpoint *)DialogBoxParam(hInst, (LPCTSTR)IDD_BREAKPOINT, hwndDlg, BreakpointProc, (LPARAM)NULL);
@@ -1321,32 +1393,16 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			// add it to the breakpoint listbox
 			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+			// select it
+			Debugger_SetBreakpoint(hwndDlg, bp);
 			// then recache the breakpoints
 			Debugger_CacheBreakpoints();
 			break;
 		case IDC_DEBUG_BREAK_EDIT:
 			{
-				TCHAR *str;
-				int line, len;
-
-				// get the selected breakpoint's description
-				line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCURSEL, 0, 0);
-				if (line == -1)
-					break;
-				len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXTLEN, line, 0);
-				str = malloc((len + 1) * sizeof(TCHAR));
-				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXT, line, (LPARAM)str);
-
-				// try to find it in the breakpoint list
-				bp = Debugger.Breakpoints;
-				while (bp != NULL)
-				{
-					if (!_tcscmp(bp->desc, str))
-						break;
-					bp = bp->next;
-				}
-				free(str);
-				// extra sanity check
+				int line;
+				// get selected breakpoint
+				bp = Debugger_GetBreakpoint(hwndDlg, &line);
 				if (bp == NULL)
 					break;
 
@@ -1358,33 +1414,18 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// update breakpoint description
 				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
 				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+				// reselect it
+				Debugger_SetBreakpoint(hwndDlg, bp);
 				// then recache the breakpoints
 				Debugger_CacheBreakpoints();
 			}
 			break;
 		case IDC_DEBUG_BREAK_DELETE:
 			{
-				TCHAR *str;
-				int line, len;
+				int line;
+				// get selected breakpoint
+				bp = Debugger_GetBreakpoint(hwndDlg, &line);
 
-				// get the selected breakpoint's description
-				line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCURSEL, 0, 0);
-				if (line == -1)
-					break;
-				len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXTLEN, line, 0);
-				str = malloc((len + 1) * sizeof(TCHAR));
-				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXT, line, (LPARAM)str);
-
-				// try to find it in the breakpoint list
-				bp = Debugger.Breakpoints;
-				while (bp != NULL)
-				{
-					if (!_tcscmp(bp->desc, str))
-						break;
-					bp = bp->next;
-				}
-				free(str);
-				// extra sanity check
 				if (bp == NULL)
 					break;
 
@@ -1396,8 +1437,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					bp->next->prev = bp->prev;
 				free(bp);
 				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
-				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
-				EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
+				Debugger_SetBreakpoint(hwndDlg, NULL);
 				// then recache the breakpoints
 				Debugger_CacheBreakpoints();
 			}
