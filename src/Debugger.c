@@ -1520,6 +1520,8 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					break;
 				// add it to the breakpoint listbox
 				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+				// select it
+				Debugger_SetBreakpoint(hwndDlg, bp);
 				// then recache the breakpoints
 				Debugger_CacheBreakpoints();
 			}
