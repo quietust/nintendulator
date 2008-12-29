@@ -18,6 +18,8 @@
 
 // Windows Header Files:
 #include <windows.h>
+#include <shlobj.h>
+#include <shlwapi.h>
 
 // C RunTime Header Files
 #include <stdlib.h>

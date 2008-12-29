@@ -38,7 +38,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
 				OutputFile="$(OutDir)/Nintendulator.exe"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
@@ -104,7 +104,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
 				OutputFile="$(OutDir)/Nintendulator.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
@@ -166,7 +166,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
 				OutputFile="$(OutDir)/Nintendulator.exe"
 				SuppressStartupBanner="TRUE"
 				GenerateDebugInformation="TRUE"
@@ -232,7 +232,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
 				OutputFile="$(OutDir)/Nintendulator.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"

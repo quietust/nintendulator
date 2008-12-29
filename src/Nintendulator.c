@@ -49,6 +49,7 @@ TCHAR		Path_ROM[MAX_PATH];	// current ROM directory
 TCHAR		Path_NMV[MAX_PATH];	// current movie directory
 TCHAR		Path_AVI[MAX_PATH];	// current AVI directory
 TCHAR		Path_PAL[MAX_PATH];	// current palette directory
+TCHAR		DataPath[MAX_PATH];	// user data path
 BOOL		MaskKeyboard = FALSE;	// mask keyboard accelerators (for when Family Basic Keyboard is active)
 HWND		hDebug;		// Debug Info window
 BOOL		dbgVisible;	// whether or not the Debug window is open
@@ -82,6 +83,17 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	GetModuleFileName(NULL,ProgPath,MAX_PATH);
 	for (i = _tcslen(ProgPath); (i > 0) && (ProgPath[i] != _T('\\')); i--)
 		ProgPath[i] = 0;
+
+	// find our folder in Application Data, if it exists
+	if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, DataPath)))
+	{
+		// if we can't even find AppData, then there's a much bigger problem...
+		MessageBox(NULL, _T("FATAL: unable to locate Application Data folder for current user"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		return FALSE;
+	}
+	PathAppend(DataPath, _T("Nintendulator"));
+	if (GetFileAttributes(DataPath) == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(DataPath, NULL);
 
 	// Perform application initialization:
 	if (!InitInstance (hInstance,nCmdShow)) 

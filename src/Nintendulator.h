@@ -38,6 +38,7 @@ extern	BOOL		dbgVisible;	/* whether or not the Debug window is open */
 
 extern	int		SizeMult;	/* window size multiplier */
 extern	TCHAR		ProgPath[MAX_PATH];	/* program path */
+extern	TCHAR		DataPath[MAX_PATH];	/* data path */
 
 extern	TCHAR		Path_ROM[MAX_PATH];
 extern	TCHAR		Path_NMV[MAX_PATH];

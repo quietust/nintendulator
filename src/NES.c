@@ -44,6 +44,7 @@ void	NES_Init (void)
 	Debugger_SetMode(0);
 #endif	/* ENABLE_DEBUGGER */
 	NES_LoadSettings();
+	NES_SetupDataPath();
 
 	GFX_Create();
 
@@ -200,8 +201,8 @@ void	NES_SaveSRAM (void)
 	if (!NES.SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
-		_stprintf(Filename,_T("%s.fsv"),States.BaseFilename);
-	else	_stprintf(Filename,_T("%s.sav"),States.BaseFilename);
+		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States.BaseFilename);
+	else	_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States.BaseFilename);
 	SRAMFile = _tfopen(Filename,_T("wb"));
 	if (RI.ROMType == ROM_FDS)
 	{
@@ -223,8 +224,8 @@ void	NES_LoadSRAM (void)
 	if (!NES.SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
-		_stprintf(Filename,_T("%s.fsv"),States.BaseFilename);
-	else	_stprintf(Filename,_T("%s.sav"),States.BaseFilename);
+		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States.BaseFilename);
+	else	_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States.BaseFilename);
 	SRAMFile = _tfopen(Filename,_T("rb"));
 	if (!SRAMFile)
 		return;
@@ -1196,4 +1197,145 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,_T("ExpPortD"),0,REG_BINARY,(unsigned char *)Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
 
 	RegCloseKey(SettingsBase);
+}
+
+void	NES_SetupDataPath (void)
+{
+	WIN32_FIND_DATA Data;
+	HANDLE Handle;
+
+	TCHAR path[MAX_PATH];
+	TCHAR filename[MAX_PATH];
+
+	// Create data subdirectories
+	// Savestates
+	_tcscpy(path, DataPath);
+	PathAppend(path, _T("States"));
+	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(path, NULL);
+
+	// SRAM data
+	_tcscpy(path, DataPath);
+	PathAppend(path, _T("SRAM"));
+	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(path, NULL);
+
+	// FDS disk changes
+	_tcscpy(path, DataPath);
+	PathAppend(path, _T("FDS"));
+	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(path, NULL);
+
+	// Debug dumps
+	_tcscpy(path, DataPath);
+	PathAppend(path, _T("Dumps"));
+	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(path, NULL);
+
+	// check if the program's builtin Saves directory is present
+	_tcscpy(path, ProgPath);
+	PathAppend(path, _T("Saves"));
+	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+		return;
+
+	// is it actually a directory?
+	if (!(GetFileAttributes(path) & FILE_ATTRIBUTE_DIRECTORY))
+		return;
+
+	// Relocate FDS disk changes
+	_stprintf(filename, _T("%sSaves\\*.fsv"), ProgPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%sSaves\\%s"), ProgPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\FDS\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+
+	// Relocate SRAM data
+	_stprintf(filename, _T("%sSaves\\*.sav"), ProgPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%sSaves\\%s"), ProgPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\SRAM\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+
+	// Relocate Savestates
+	_stprintf(filename, _T("%sSaves\\*.ns?"), ProgPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%sSaves\\%s"), ProgPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\States\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+
+	// Relocate Debug dumps - Logfiles
+	_stprintf(filename, _T("%sSaves\\*.debug"), ProgPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%sSaves\\%s"), ProgPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\Dumps\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+
+	// Relocate Debug dumps - CPU dumps
+	_stprintf(filename, _T("%sSaves\\*.cpumem"), ProgPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%sSaves\\%s"), ProgPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\Dumps\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+
+	// Relocate Debug dumps - PPU dumps
+	_stprintf(filename, _T("%sSaves\\*.ppumem"), ProgPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%sSaves\\%s"), ProgPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\Dumps\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+
+	// Finally, try to delete the old Saves directory entirely
+	_tcscpy(path, ProgPath);
+	PathAppend(path, _T("Saves"));
+	if (RemoveDirectory(path))
+		EI.DbgOut(_T("Savestate directory successfully relocated"));
+	else	MessageBox(NULL, _T("Nintendulator was unable to fully relocate your old savestates.\nPlease remove all remaining files from Nintendulator's \"Saves\" folder."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 }

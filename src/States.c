@@ -25,25 +25,13 @@ extern FILE *movie;
 
 void	States_Init (void)
 {
-	TCHAR tmp[MAX_PATH];
-	_stprintf(tmp,_T("%sSaves"),ProgPath);
 	States.SelSlot = 0;
-	CreateDirectory(tmp,NULL);	// attempt to create Saves dir (if it exists, it fails silently)
 }
 
 void	States_SetFilename (TCHAR *Filename)
 {
-	TCHAR Tmp[MAX_PATH];
-	size_t i;
-	for (i = _tcslen(Filename); Filename[i] != '\\'; i--);
-	_tcscpy(Tmp,&Filename[i+1]);
-	for (i = _tcslen(Tmp); i >= 0; i--)
-		if (Tmp[i] == '.')
-		{
-			Tmp[i] = 0;
-			break;
-		}
-	_stprintf(States.BaseFilename,_T("%sSaves\\%s"),ProgPath,Tmp);
+	// all we need is the base filename
+	_tsplitpath(Filename, NULL, NULL, States.BaseFilename, NULL);
 }
 
 void	States_SetSlot (int Slot)
@@ -51,7 +39,7 @@ void	States_SetSlot (int Slot)
 	TCHAR tpchr[MAX_PATH];
 	FILE *tmp;
 	States.SelSlot = Slot;
-	_stprintf(tpchr,_T("%s.ns%i"),States.BaseFilename,Slot);
+	_stprintf(tpchr, _T("%s\\States\\%s.ns%i"), DataPath, States.BaseFilename, States.SelSlot);
 	tmp = _tfopen(tpchr,_T("rb"));
 	if (tmp)
 	{
@@ -179,7 +167,7 @@ void	States_SaveState (void)
 		return;
 	}
 
-	_stprintf(tps,_T("%s.ns%i"),States.BaseFilename,States.SelSlot);
+	_stprintf(tps, _T("%s\\States\\%s.ns%i"), DataPath, States.BaseFilename, States.SelSlot);
 	out = _tfopen(tps,_T("w+b"));
 	flen = 0;
 
@@ -272,7 +260,7 @@ void	States_LoadState (void)
 	FILE *in;
 	int flen;
 
-	_stprintf(tps,_T("%s.ns%i"),States.BaseFilename,States.SelSlot);
+	_stprintf(tps, _T("%s\\States\\%s.ns%i"), DataPath, States.BaseFilename, States.SelSlot);
 	in = _tfopen(tps,_T("rb"));
 	if (!in)
 	{
