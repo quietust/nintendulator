@@ -1028,7 +1028,10 @@ static	void	GFX_GenerateRGB (int pal)
 static	BOOL	GFX_ImportPalette (TCHAR *filename, BOOL load)
 {
 	int i, j;
-	FILE *pal = _tfopen(filename,_T("rb"));
+	FILE *pal;
+	if (!_tcslen(filename))
+		return FALSE;
+	pal = _tfopen(filename,_T("rb"));
 	if (!pal)
 		return FALSE;
 	fseek(pal,0,SEEK_END);
@@ -1173,6 +1176,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		IDC_PAL_20,IDC_PAL_21,IDC_PAL_22,IDC_PAL_23,IDC_PAL_24,IDC_PAL_25,IDC_PAL_26,IDC_PAL_27,IDC_PAL_28,IDC_PAL_29,IDC_PAL_2A,IDC_PAL_2B,IDC_PAL_2C,IDC_PAL_2D,IDC_PAL_2E,IDC_PAL_2F,
 		IDC_PAL_30,IDC_PAL_31,IDC_PAL_32,IDC_PAL_33,IDC_PAL_34,IDC_PAL_35,IDC_PAL_36,IDC_PAL_37,IDC_PAL_38,IDC_PAL_39,IDC_PAL_3A,IDC_PAL_3B,IDC_PAL_3C,IDC_PAL_3D,IDC_PAL_3E,IDC_PAL_3F
 	};
+	static BOOL inUpdate = FALSE;
 
 	int wmId, wmEvent;
 	OPENFILENAME ofn;
@@ -1185,6 +1189,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
+		inUpdate = TRUE;
 		ispal = PPU.IsPAL;
 		hue = GFX.NTSChue;
 		nsat = GFX.NTSCsat;
@@ -1215,9 +1220,12 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		SetDlgItemText(hDlg,IDC_PAL_EXTFILE,extfn);
 		CheckRadioButton(hDlg,paltable[0],paltable[PALETTE_MAX-1],paltable[pal]);
 		UpdatePalette(hDlg,pal);
+		inUpdate = FALSE;
 		return TRUE;
 		break;
 	case WM_COMMAND:
+		if (inUpdate)
+			break;
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
 		switch (wmId)
