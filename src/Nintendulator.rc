@@ -456,10 +456,10 @@ BEGIN
     GROUPBOX        "Nametable",IDC_STATIC,4,4,188,169
     CONTROL         "$2000",IDC_DEBUG_PPU_NT0,"Button",BS_AUTORADIOBUTTON,
                     204,156,40,8
-    CONTROL         "$2800",IDC_DEBUG_PPU_NT2,"Button",BS_AUTORADIOBUTTON,
-                    292,156,40,8
     CONTROL         "$2400",IDC_DEBUG_PPU_NT1,"Button",BS_AUTORADIOBUTTON,
                     248,156,40,8
+    CONTROL         "$2800",IDC_DEBUG_PPU_NT2,"Button",BS_AUTORADIOBUTTON,
+                    292,156,40,8
     CONTROL         "$2C00",IDC_DEBUG_PPU_NT3,"Button",BS_AUTORADIOBUTTON,
                     336,156,40,8
     GROUPBOX        "Pattern Tables",IDC_STATIC,196,4,188,101
