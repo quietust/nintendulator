@@ -952,7 +952,7 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 	case WM_INITDIALOG:
 		bp = (struct tBreakpoint *)lParam;
-		if (bp == (void *)0xFFFFFFFF)
+		if (bp == (struct tBreakpoint *)(size_t)0xFFFFFFFF)
 		{
 			bp = NULL;
 			CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_EXEC);

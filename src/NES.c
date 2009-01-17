@@ -1167,12 +1167,12 @@ void	NES_SaveSettings (void)
 
 	RegSetValueEx(SettingsBase,_T("UDLR")        ,0,REG_DWORD,(LPBYTE)&Controllers.EnableOpposites,sizeof(DWORD));
 
-	RegSetValueEx(SettingsBase,_T("CustPaletteNTSC"),0,REG_SZ,(LPBYTE)GFX.CustPaletteNTSC,sizeof(TCHAR) * _tcslen(GFX.CustPaletteNTSC));
-	RegSetValueEx(SettingsBase,_T("CustPalettePAL") ,0,REG_SZ,(LPBYTE)GFX.CustPalettePAL ,sizeof(TCHAR) * _tcslen(GFX.CustPalettePAL));
-	RegSetValueEx(SettingsBase,_T("Path_ROM")       ,0,REG_SZ,(LPBYTE)Path_ROM           ,sizeof(TCHAR) * _tcslen(Path_ROM));
-	RegSetValueEx(SettingsBase,_T("Path_NMV")       ,0,REG_SZ,(LPBYTE)Path_NMV           ,sizeof(TCHAR) * _tcslen(Path_NMV));
-	RegSetValueEx(SettingsBase,_T("Path_AVI")       ,0,REG_SZ,(LPBYTE)Path_AVI           ,sizeof(TCHAR) * _tcslen(Path_AVI));
-	RegSetValueEx(SettingsBase,_T("Path_PAL")       ,0,REG_SZ,(LPBYTE)Path_PAL           ,sizeof(TCHAR) * _tcslen(Path_PAL));
+	RegSetValueEx(SettingsBase,_T("CustPaletteNTSC"),0,REG_SZ,(LPBYTE)GFX.CustPaletteNTSC,(DWORD)(sizeof(TCHAR) * _tcslen(GFX.CustPaletteNTSC)));
+	RegSetValueEx(SettingsBase,_T("CustPalettePAL") ,0,REG_SZ,(LPBYTE)GFX.CustPalettePAL ,(DWORD)(sizeof(TCHAR) * _tcslen(GFX.CustPalettePAL)));
+	RegSetValueEx(SettingsBase,_T("Path_ROM")       ,0,REG_SZ,(LPBYTE)Path_ROM           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_ROM)));
+	RegSetValueEx(SettingsBase,_T("Path_NMV")       ,0,REG_SZ,(LPBYTE)Path_NMV           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_NMV)));
+	RegSetValueEx(SettingsBase,_T("Path_AVI")       ,0,REG_SZ,(LPBYTE)Path_AVI           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_AVI)));
+	RegSetValueEx(SettingsBase,_T("Path_PAL")       ,0,REG_SZ,(LPBYTE)Path_PAL           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_PAL)));
 
 	RegSetValueEx(SettingsBase,_T("Port1T")  ,0,REG_DWORD,(LPBYTE)&Controllers.Port1.Type  ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("Port2T")  ,0,REG_DWORD,(LPBYTE)&Controllers.Port2.Type  ,sizeof(DWORD));

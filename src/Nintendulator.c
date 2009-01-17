@@ -634,7 +634,7 @@ INT_PTR CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 }
 void	AddDebug (TCHAR *txt)
 {
-	int i = _tcsclen(txt), j = GetWindowTextLength(GetDlgItem(hDebug,IDC_DEBUGTEXT));
+	int i = (int)_tcslen(txt), j = GetWindowTextLength(GetDlgItem(hDebug,IDC_DEBUGTEXT));
 	if (!dbgVisible)
 		return;
 	if (i + j + 2 > DebugLen)
@@ -700,7 +700,7 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 				header[i] = 0;
 		}
 
-		i = _tcslen(filename)-1;
+		i = (int)_tcslen(filename)-1;
 		while ((i >= 0) && (filename[i] != _T('\\')))
 			i--;
 		_tcscpy(name,filename+i+1);

@@ -256,7 +256,7 @@ static	BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi,
 	}
 	if (IsEqualGUID(&lpddoi->guidType,&GUID_Button))
 	{
-		ItemNum = (lpddoi->dwOfs - ((DWORD)&Controllers.MouseState.rgbButtons - (DWORD)&Controllers.MouseState)) / sizeof(Controllers.MouseState.rgbButtons[0]);
+		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.MouseState.rgbButtons - (BYTE *)&Controllers.MouseState)) / sizeof(Controllers.MouseState.rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 8))
 			Controllers.ButtonNames[1][ItemNum] = _tcsdup(lpddoi->tszName);
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid mouse button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
@@ -301,7 +301,7 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 	}
 	if (IsEqualGUID(&lpddoi->guidType,&GUID_Slider))
 	{
-		ItemNum = (lpddoi->dwOfs - ((DWORD)&Controllers.JoyState[0].rglSlider - (DWORD)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rglSlider[0]);
+		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.JoyState[0].rglSlider - (BYTE *)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rglSlider[0]);
 		if (ItemNum == 0)
 		{
 			Controllers.AxisFlags[DevNum] |= 0x40;
@@ -316,7 +316,7 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 	}
 	if (IsEqualGUID(&lpddoi->guidType,&GUID_POV))
 	{
-		ItemNum = (lpddoi->dwOfs - ((DWORD)&Controllers.JoyState[0].rgdwPOV - (DWORD)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rgdwPOV[0]);
+		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.JoyState[0].rgdwPOV - (BYTE *)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rgdwPOV[0]);
 		if ((ItemNum >= 0) && (ItemNum < 4))
 		{
 			Controllers.POVFlags[DevNum] |= 0x01 << ItemNum;
@@ -326,7 +326,7 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 	}
 	if (IsEqualGUID(&lpddoi->guidType,&GUID_Button))
 	{
-		ItemNum = (lpddoi->dwOfs - ((DWORD)&Controllers.JoyState[0].rgbButtons - (DWORD)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rgbButtons[0]);
+		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.JoyState[0].rgbButtons - (BYTE *)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 128))
 			Controllers.ButtonNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid joystick button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
