@@ -129,6 +129,9 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	// Main message loop:
 	while (GetMessage(&msg,NULL,0,0))
 	{
+		HWND focus = GetForegroundWindow();
+		if ((focus != hMainWnd) && IsDialogMessage(focus, &msg))
+			continue;
 		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg)) 
 		{
 			TranslateMessage(&msg);
