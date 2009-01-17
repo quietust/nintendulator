@@ -1260,24 +1260,33 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		switch (wmId)
 		{
 		case IDC_DEBUG_REG_A:
+			// Don't bother modifying registers while it's emulating at full speed
+			if (NES.Running)
+				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_A, tpc, 3);
 			CPU.A = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_X:
+			if (NES.Running)
+				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_X, tpc, 3);
 			CPU.X = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_Y:
+			if (NES.Running)
+				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_Y, tpc, 3);
 			CPU.Y = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_P:
+			if (NES.Running)
+				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_P, tpc, 3);
 			CPU.P = (unsigned char)_tcstol(tpc, NULL, 16);
 			CPU_SplitFlags();
@@ -1285,12 +1294,16 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_SP:
+			if (NES.Running)
+				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_SP, tpc, 3);
 			CPU.SP = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_PC:
+			if (NES.Running)
+				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_PC, tpc, 5);
 			CPU.PC = _tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
@@ -1326,6 +1339,9 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_V:
+			// or modify flags while running
+			if (NES.Running)
+				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_V) == BST_CHECKED)
 				CPU.FV = 1;
 			else	CPU.FV = 0;
@@ -1333,6 +1349,8 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_D:
+			if (NES.Running)
+				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_D) == BST_CHECKED)
 				CPU.FD = 1;
 			else	CPU.FD = 0;
@@ -1340,6 +1358,8 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_I:
+			if (NES.Running)
+				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_I) == BST_CHECKED)
 				CPU.FI = 1;
 			else	CPU.FI = 0;
@@ -1347,6 +1367,8 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_Z:
+			if (NES.Running)
+				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_Z) == BST_CHECKED)
 				CPU.FZ = 1;
 			else	CPU.FZ = 0;
@@ -1354,6 +1376,8 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_C:
+			if (NES.Running)
+				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_C) == BST_CHECKED)
 				CPU.FC = 1;
 			else	CPU.FC = 0;
