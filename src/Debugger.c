@@ -207,6 +207,10 @@ void	Debugger_StartLogging (void)
 	TCHAR filename[MAX_PATH];
 	struct tm *newtime;
 	time_t aclock;
+
+	if (!NES.ROMLoaded)
+		return;
+
 	time(&aclock);
 	newtime = localtime(&aclock);
 
@@ -827,6 +831,9 @@ void	Debugger_DumpCPU (void)
 	FILE *out;
 	int i;
 
+	if (!NES.ROMLoaded)
+		return;
+
 	time(&aclock);
 	newtime = localtime(&aclock);
 
@@ -847,6 +854,9 @@ void	Debugger_DumpPPU (void)
 	time_t aclock;
 	FILE *out;
 	int i;
+
+	if (!NES.ROMLoaded)
+		return;
 
 	time(&aclock);
 	newtime = localtime(&aclock);
