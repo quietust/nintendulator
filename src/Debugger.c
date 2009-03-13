@@ -1468,16 +1468,20 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case IDC_DEBUG_CONT_RUN:
-			SendMessage(hMainWnd, WM_COMMAND, ID_CPU_RUN, 0);
+			if (NES.ROMLoaded)
+				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_RUN, 0);
 			break;
 		case IDC_DEBUG_CONT_STEP:
-			SendMessage(hMainWnd, WM_COMMAND, ID_CPU_STEP, 0);
+			if (NES.ROMLoaded)
+				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_STEP, 0);
 			break;
 		case IDC_DEBUG_CONT_RESET:
-			SendMessage(hMainWnd, WM_COMMAND, ID_CPU_SOFTRESET, 0);
+			if (NES.ROMLoaded)
+				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_SOFTRESET, 0);
 			break;
 		case IDC_DEBUG_CONT_POWER:
-			SendMessage(hMainWnd, WM_COMMAND, ID_CPU_HARDRESET, 0);
+			if (NES.ROMLoaded)
+				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_HARDRESET, 0);
 			break;
 		case IDC_DEBUG_CONT_SEEKPC:
 			Debugger.TraceOffset = -1;
