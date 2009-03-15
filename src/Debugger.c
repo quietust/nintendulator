@@ -1728,6 +1728,36 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
+/*
+Nametable:
+* Address (2000-2FFF)
+* X (00-FF)
+* Y (00-FF)
+* Table (0-3)
+* Tile (00-FF)
+* Color (0-3)
+
+Pattern Table:
+* Address (0000-1FFF)
+* Table (0/1)
+* Tile (00-FF)
+* Usage (BG,SPR)
+
+Palette:
+* Address (3F00-3F1F)
+* ID (BG0/SPR3)
+* Offset (0-3)
+* Color (00-3F)
+
+Sprite:
+* Number (0-63)
+* X (00-FF)
+* Y (00-FF)
+* Tile (00-FF)
+* Color (0-3)
+* Flags (H,V,BG)
+*/
+
 INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
