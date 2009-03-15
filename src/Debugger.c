@@ -1002,7 +1002,7 @@ void	Debugger_UpdatePPU (void)
 			}
 			else
 			{
-				MemAddr = (tile << 4) | ((PPU.Reg2000 & 0x08) << 7);
+				MemAddr = (tile << 4) | ((PPU.Reg2000 & 0x08) << 9);
 				Debug_DrawTile(TileArray, MemAddr, color | 4, 8, 8, D_TIL_W);
 			}
 			DrawBitmap = TRUE;
