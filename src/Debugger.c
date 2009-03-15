@@ -711,7 +711,7 @@ void	Debug_DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch)
 			color = GFX.Palette32[PPU.Palette[color]];
 			dest[sx] = color;
 		}
-		dest += pitch * height;
+		dest += pitch;
 	}
 }
 
