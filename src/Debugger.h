@@ -25,6 +25,12 @@
 #define	DEBUG_BREAK_BRK		0x40
 /* #define	DEBUG_BREAK_RST		0x80	/* unused */
 
+#define	DEBUG_DETAIL_NONE	0
+#define	DEBUG_DETAIL_NAMETABLE	1
+#define	DEBUG_DETAIL_SPRITE	2
+#define	DEBUG_DETAIL_PATTERN	3
+#define	DEBUG_DETAIL_PALETTE	4
+
 struct tBreakpoint
 {
 	TCHAR desc[32];
@@ -40,7 +46,10 @@ struct tDebugger
 	BOOL	Enabled;
 	int	Mode;
 
-	BOOL	NTabChanged, PalChanged, PatChanged, SprChanged;
+	BOOL	NTabChanged, PalChanged, PatChanged, SprChanged, DetChanged;
+
+	int	DetailType, DetailNum;
+	int	DetailTypeSave, DetailNumSave;
 
 	BOOL	Logging, Step;
 
@@ -59,6 +68,9 @@ struct tDebugger
 
 	HDC	SpriteDC;	/* Sprites */
 	HBITMAP	SpriteBMP;
+
+	HDC	TileDC;		/* Preview Tile */
+	HBITMAP	TileBMP;
 
 	HWND	CPUWnd;
 	HWND	PPUWnd;

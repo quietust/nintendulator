@@ -7,6 +7,7 @@
 
 #include "stdafx.h"
 #include <time.h>
+#include <windowsx.h>
 #include "Nintendulator.h"
 #include "resource.h"
 #include "MapperInterface.h"
@@ -98,6 +99,9 @@ enum {
 
 	D_SPR_W = 256,
 	D_SPR_H = 88,
+
+	D_TIL_W = 64,
+	D_TIL_H = 64,
 };
 
 INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -115,7 +119,9 @@ void	Debugger_Init (void)
 	Debugger.Enabled = FALSE;
 	Debugger.Mode = 0;
 
-	Debugger.NTabChanged = Debugger.PalChanged = Debugger.PatChanged = Debugger.SprChanged = FALSE;
+	Debugger.NTabChanged = Debugger.PalChanged = Debugger.PatChanged = Debugger.SprChanged = Debugger.DetChanged = FALSE;
+	Debugger.DetailType = Debugger.DetailNum = 0;
+	Debugger.DetailTypeSave = Debugger.DetailNumSave = 0;
 	
 	Debugger.Logging = FALSE;
 	Debugger.Step = FALSE;
@@ -144,6 +150,11 @@ void	Debugger_Init (void)
 	Debugger.SpriteBMP = CreateCompatibleBitmap(TpHDC, D_SPR_W, D_SPR_H);
 	SelectObject(Debugger.SpriteDC, Debugger.SpriteBMP);
 	BitBlt(Debugger.SpriteDC, 0, 0, D_SPR_W, D_SPR_H, NULL, 0, 0, BLACKNESS);
+
+	Debugger.TileDC = CreateCompatibleDC(TpHDC);
+	Debugger.TileBMP = CreateCompatibleBitmap(TpHDC, D_TIL_W, D_TIL_H);
+	SelectObject(Debugger.TileDC, Debugger.TileBMP);
+	BitBlt(Debugger.TileDC, 0, 0, D_TIL_W, D_TIL_H, NULL, 0, 0, BLACKNESS);
 
 	Debugger.CPUWnd = NULL;
 	Debugger.PPUWnd = NULL;
@@ -682,18 +693,50 @@ void	Debugger_AddInst (void)
 	}
 }
 
+void	Debug_DrawTile (unsigned long *dest, int PPUaddr, int palette, int width, int height, int pitch)
+{
+	int sy, sx, py, px;
+	int byte0, byte1, color;
+	for (sy = 0; sy < 8; sy++)
+	{
+		byte0 = DebugMemPPU((unsigned short)(PPUaddr + sy));
+		byte1 = DebugMemPPU((unsigned short)(PPUaddr + sy + 8));
+		for (sx = 0; sx < 8; sx++)
+		{
+			color = ((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6);
+			byte0 <<= 1;
+			byte1 <<= 1;
+			if (color)
+				color |= palette << 2;
+			color = GFX.Palette32[PPU.Palette[color]];
+			if ((width == 1) && (height == 1))
+				dest[sx] = color;
+			else
+			{
+				for (py = 0; py < height; py++)
+					for (px = 0; px < width; px++)
+						dest[px + sx * width + py * pitch] = color;
+			}
+		}
+		dest += pitch * height;
+	}
+}
+
 void	Debugger_UpdatePPU (void)
 {
-	unsigned long ptr;
-	unsigned char color;
 	int MemAddr;
+	int x, y;
+
 	if (Debugger.PalChanged)
 	{
-		int x, y;
+		unsigned char color;
 		/* updating palette also invalidates pattern tables, nametable, and sprites */
 		Debugger.PatChanged = TRUE;
 		Debugger.NTabChanged = TRUE;
 		Debugger.SprChanged = TRUE;
+		if (Debugger.DetailType == DEBUG_DETAIL_PALETTE)
+			Debugger.DetChanged = TRUE;
+
 		for (x = 0; x < 16; x++)
 		{
 			for (y = 0; y < 2; y++)
@@ -716,19 +759,15 @@ void	Debugger_UpdatePPU (void)
 
 	if (Debugger.PatChanged)
 	{
-		int i, t, x, y, sx, sy;
-		static unsigned char pal[4];
+		int t;
 		unsigned long PatternArray[D_PAT_W * D_PAT_H];
-		unsigned char byte0, byte1;
 		BITMAPINFO bmi;
 
 		/* updating pattern table also makes nametable and sprites dirty */
 		Debugger.NTabChanged = TRUE;
 		Debugger.SprChanged = TRUE;
-
-		pal[0] = PPU.Palette[0];
-		for (i = 1; i < 4; i++)
-			pal[i] = PPU.Palette[(Debugger.Palette << 2) | i];
+		if (Debugger.DetailType == DEBUG_DETAIL_PATTERN)
+			Debugger.DetChanged = TRUE;
 
 		for (t = 0; t < 2; t++)
 		{
@@ -737,20 +776,7 @@ void	Debugger_UpdatePPU (void)
 				for (x = 0; x < 16; x++)
 				{
 					MemAddr = (t << 12) | (y << 8) | (x << 4);
-					for (sy = 0; sy < 8; sy++)
-					{
-						ptr = (((y << 3) + sy) << 8) + (t << 7) + (x << 3);
-						byte0 = DebugMemPPU((unsigned short)MemAddr);
-						byte1 = DebugMemPPU((unsigned short)(MemAddr + 8));
-						for (sx = 0; sx < 8; sx++)
-						{
-							color = pal[((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6)];
-							byte0 <<= 1;
-							byte1 <<= 1;
-							PatternArray[ptr++] = GFX.Palette32[color];
-						}
-						MemAddr++;
-					}
+					Debug_DrawTile(PatternArray + y * 8 * D_PAT_W + x * 8 + t * 128, MemAddr, Debugger.Palette, 1, 1, D_PAT_W);
 				}
 			}
 		}
@@ -775,36 +801,21 @@ void	Debugger_UpdatePPU (void)
 	if (Debugger.NTabChanged)
 	{
 		int AttribVal, AttribNum;
-		int NT = Debugger.Nametable, TileY, TileX, py, px;
+		int NT = Debugger.Nametable;
 		unsigned long NameArray[D_NAM_W * D_NAM_H];
-		unsigned char byte0, byte1;
 		BITMAPINFO bmi;
 
-		for (TileY = 0; TileY < 30; TileY++)
-		{
-			for (TileX = 0; TileX < 32; TileX++)
-			{
-				AttribNum = (((TileX & 2) >> 1) | (TileY & 2)) << 1;
-				AttribVal = (PPU.CHRPointer[8 | NT][0x3C0 | ((TileY >> 2) << 3) | (TileX >> 2)] & (3 << AttribNum)) >> AttribNum;
-				MemAddr = ((PPU.Reg2000 & 0x10) << 8) | (PPU.CHRPointer[8 | NT][TileX | (TileY << 5)] << 4);
+		if (Debugger.DetailType == DEBUG_DETAIL_NAMETABLE)
+			Debugger.DetChanged = TRUE;
 
-				for (py = 0; py < 8; py ++)
-				{
-					ptr = (TileY << 11) | (py << 8) | (TileX << 3);
-					byte0 = DebugMemPPU((unsigned short)MemAddr);
-					byte1 = DebugMemPPU((unsigned short)(MemAddr + 8));
-					for (px = 0; px < 8; px ++)
-					{
-						color = ((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6);
-						byte0 <<= 1;
-						byte1 <<= 1;
-						if (color)
-							color |= (AttribVal << 2);
-						else	color = 0;
-						NameArray[ptr++] = GFX.Palette32[PPU.Palette[color]];
-					}
-					MemAddr++;
-				}
+		for (y = 0; y < 30; y++)
+		{
+			for (x = 0; x < 32; x++)
+			{
+				AttribNum = (((x & 2) >> 1) | (y & 2)) << 1;
+				AttribVal = (PPU.CHRPointer[8 | NT][0x3C0 | ((y << 1) & 0x38) | (x >> 2)] >> AttribNum) & 3;
+				MemAddr = ((PPU.Reg2000 & 0x10) << 8) | (PPU.CHRPointer[8 | NT][x | (y << 5)] << 4);
+				Debug_DrawTile(NameArray + y * 8 * D_NAM_W + x * 8, MemAddr, AttribVal, 1, 1, D_NAM_W);
 			}
 		}
 
@@ -827,53 +838,36 @@ void	Debugger_UpdatePPU (void)
 
 	if (Debugger.SprChanged)
 	{
-		int SprNum, Attr, TileNum, height;
-		int TileY, TileX, py, px;
+		int SprNum, Attr, TileNum;
 		unsigned long SprArray[D_SPR_W * D_SPR_H];
-		unsigned char byte0, byte1;
 		BITMAPINFO bmi;
 
-		px = GetSysColor(COLOR_BTNFACE);
-		// convert color to RGB (from Windows BGR)
-		px = (GetRValue(px) << 16) | (GetGValue(px) << 8) | (GetBValue(px) << 0);
-		for (py = 0; py < D_SPR_H * D_SPR_W; py++)
-			SprArray[py] = px;
+		if (Debugger.DetailType == DEBUG_DETAIL_SPRITE)
+			Debugger.DetChanged = TRUE;
 
-		for (TileY = 0; TileY < 4; TileY++)
+		x = GetSysColor(COLOR_BTNFACE);
+		// convert color to RGB (from Windows BGR)
+		x = (GetRValue(x) << 16) | (GetGValue(x) << 8) | (GetBValue(x) << 0);
+		for (y = 0; y < D_SPR_H * D_SPR_W; y++)
+			SprArray[y] = x;
+
+		for (y = 0; y < 4; y++)
 		{
-			for (TileX = 0; TileX < 16; TileX++)
+			for (x = 0; x < 16; x++)
 			{
-				SprNum = (TileY << 4) | TileX;
+				SprNum = (y << 4) | x;
 				TileNum = PPU.Sprite[(SprNum << 2) | 1];
 				Attr = PPU.Sprite[(SprNum << 2) | 2];
 				if (PPU.Reg2000 & 0x20)
 				{
-					height = 16;
 					MemAddr = ((TileNum & 0xFE) << 4) | ((TileNum & 0x01) << 12);
+					Debug_DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), 1, 1, D_SPR_W);
+					Debug_DrawTile(SprArray + y * 24 * D_SPR_W + x * 16 + 8 * D_SPR_W, MemAddr + 16, 4 | (Attr & 3), 1, 1, D_SPR_W);
 				}
 				else
 				{
-					height = 8;
 					MemAddr = (TileNum << 4) | ((PPU.Reg2000 & 0x08) << 9);
-				}
-				for (py = 0; py < height; py++)
-				{
-					if (py == 8)
-						MemAddr += 8;
-					ptr = ((TileY * 24 + py) << 8) | (TileX << 4);
-					byte0 = DebugMemPPU((unsigned short)MemAddr);
-					byte1 = DebugMemPPU((unsigned short)(MemAddr + 8));
-					for (px = 0; px < 8; px++)
-					{
-						color = 0x10 | ((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6);
-						byte0 <<= 1;
-						byte1 <<= 1;
-						if (color)
-							color |= (Attr & 3) << 2;
-						else	color = 0;
-						SprArray[ptr++] = GFX.Palette32[PPU.Palette[color]];
-					}
-					MemAddr++;
+					Debug_DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), 1, 1, D_SPR_W);
 				}
 			}
 		}
@@ -894,6 +888,213 @@ void	Debugger_UpdatePPU (void)
 		RedrawWindow(GetDlgItem(Debugger.PPUWnd, IDC_DEBUG_PPU_SPRITE), NULL, NULL, RDW_INVALIDATE);
 		Debugger.SprChanged = FALSE;
 	}
+
+	if (Debugger.DetChanged)
+	{
+		unsigned char tile, color;
+		TCHAR tpstr[16];
+		HBRUSH brush;
+		RECT rect;
+		unsigned long TileArray[D_TIL_W * D_TIL_H];
+		BITMAPINFO bmi;
+		BOOL DrawBitmap = FALSE;
+
+		x = GetSysColor(COLOR_BTNFACE);
+		// convert color to RGB (from Windows BGR)
+		x = (GetRValue(x) << 16) | (GetGValue(x) << 8) | (GetBValue(x) << 0);
+		for (y = 0; y < D_TIL_H * D_TIL_W; y++)
+			TileArray[y] = x;
+
+		switch (Debugger.DetailType)
+		{
+		case DEBUG_DETAIL_NONE:
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_SELTYPE, _T("None"));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1VAL, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2VAL, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3VAL, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4VAL, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5VAL, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6VAL, _T(""));
+
+			DrawBitmap = TRUE;
+			break;
+		case DEBUG_DETAIL_NAMETABLE:
+			tile = DebugMemPPU(0x2000 | Debugger.DetailNum);
+			color = DebugMemPPU(0x23C0 | (Debugger.DetailNum & 0xC00) | ((Debugger.DetailNum >> 4) & 0x38) | ((Debugger.DetailNum >> 2) & 0x07)) >> ((Debugger.DetailNum & 2) | ((Debugger.DetailNum >> 4) & 4)) & 0x3;
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_SELTYPE, _T("Nametable"));
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1TYPE, _T("Address"));
+			_stprintf(tpstr, _T("%04X"), 0x2000 | Debugger.DetailNum);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2TYPE, _T("X"));
+			_stprintf(tpstr, _T("%02X"), Debugger.DetailNum & 0x1F);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3TYPE, _T("Y"));
+			_stprintf(tpstr, _T("%02X"), (Debugger.DetailNum >> 5) & 0x1F);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4TYPE, _T("Table"));
+			_stprintf(tpstr, _T("%i"), (Debugger.DetailNum >> 10) & 0x3);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5TYPE, _T("Tile"));
+			_stprintf(tpstr, _T("%02X"), tile);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6TYPE, _T("Palette"));
+			_stprintf(tpstr, _T("%i"), color);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6VAL, tpstr);
+
+			MemAddr = (tile << 4) | ((PPU.Reg2000 & 0x10) << 8);
+			Debug_DrawTile(TileArray, MemAddr, color, 8, 8, D_TIL_W);
+			DrawBitmap = TRUE;
+			break;
+		case DEBUG_DETAIL_SPRITE:
+			tile = PPU.Sprite[(Debugger.DetailNum << 2) | 1];
+			color = PPU.Sprite[(Debugger.DetailNum << 2) | 2] & 3;
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_SELTYPE, _T("Sprite"));
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1TYPE, _T("Number"));
+			_stprintf(tpstr, _T("%02X"), Debugger.DetailNum);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2TYPE, _T("X"));
+			_stprintf(tpstr, _T("%02X"), PPU.Sprite[(Debugger.DetailNum << 2) | 3]);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3TYPE, _T("Y"));
+			_stprintf(tpstr, _T("%02X"), PPU.Sprite[(Debugger.DetailNum << 2) | 0]);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4TYPE, _T("Tile"));
+			_stprintf(tpstr, _T("%02X"), tile);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5TYPE, _T("Color"));
+			_stprintf(tpstr, _T("%i"), color);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6TYPE, _T("Flags"));
+			tpstr[0] = 0;
+			if (PPU.Sprite[(Debugger.DetailNum << 2) | 2] & 0x40)
+				_tcscat(tpstr, _T("H "));
+			if (PPU.Sprite[(Debugger.DetailNum << 2) | 2] & 0x80)
+				_tcscat(tpstr, _T("V "));
+			if (PPU.Sprite[(Debugger.DetailNum << 2) | 2] & 0x20)
+				_tcscat(tpstr, _T("BG "));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6VAL, tpstr);
+
+			if (PPU.Reg2000 & 0x20)
+			{
+				MemAddr = ((tile & 0xFE) << 4) | ((tile & 0x01) << 12);
+				Debug_DrawTile(TileArray + 16, MemAddr, color | 4, 4, 4, D_TIL_W);
+				Debug_DrawTile(TileArray + 16 + D_TIL_W * 32, MemAddr + 16, color | 4, 4, 4, D_TIL_W);
+			}
+			else
+			{
+				MemAddr = (tile << 4) | ((PPU.Reg2000 & 0x08) << 7);
+				Debug_DrawTile(TileArray, MemAddr, color | 4, 8, 8, D_TIL_W);
+			}
+			DrawBitmap = TRUE;
+			break;
+		case DEBUG_DETAIL_PATTERN:
+			tile = Debugger.DetailNum & 0xFF;
+			color = Debugger.Palette;
+			MemAddr = Debugger.DetailNum << 4;
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_SELTYPE, _T("Pattern Table"));
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1TYPE, _T("Address"));
+			_stprintf(tpstr, _T("%04X"), MemAddr);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2TYPE, _T("Tile"));
+			_stprintf(tpstr, _T("%02X"), tile);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3VAL, _T(""));
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4TYPE, _T("Table"));
+			_stprintf(tpstr, _T("%i"), Debugger.DetailNum >> 8);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5TYPE, _T("Usage"));
+			tpstr[0] = 0;
+			if (((PPU.Reg2000 & 0x10) << 4) == (Debugger.DetailNum & 0x100))
+				_tcscat(tpstr, _T("BG "));
+			if (PPU.Reg2000 & 0x20)
+				_tcscat(tpstr, _T("SPR16 "));
+			else if (((PPU.Reg2000 & 0x08) << 5) == (Debugger.DetailNum & 0x100))
+				_tcscat(tpstr, _T("SPR "));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6VAL, _T(""));
+
+			Debug_DrawTile(TileArray, MemAddr, color, 8, 8, D_TIL_W);
+			DrawBitmap = TRUE;
+			break;
+		case DEBUG_DETAIL_PALETTE:
+			color = PPU.Palette[Debugger.DetailNum];
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_SELTYPE, _T("Palette"));
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1TYPE, _T("Address"));
+			_stprintf(tpstr, _T("%04X"), 0x3F00 | Debugger.DetailNum);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP1VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2TYPE, _T("ID"));
+			_stprintf(tpstr, _T("%s%i"), (Debugger.DetailNum & 0x10) ? _T("SPR") : _T("BG"), (Debugger.DetailNum >> 2) & 0x3);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP2VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP3VAL, _T(""));
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4TYPE, _T("Color"));
+			_stprintf(tpstr, _T("%02X"), color);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP4VAL, tpstr);
+
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5TYPE, _T("Offset"));
+			_stprintf(tpstr, _T("%i"), Debugger.DetailNum & 0x3);
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP5VAL, tpstr);
+			
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6TYPE, _T(""));
+			SetDlgItemText(Debugger.PPUWnd, IDC_DEBUG_PPU_PROP6VAL, _T(""));
+
+			GetClientRect(GetDlgItem(Debugger.PPUWnd, IDC_DEBUG_PPU_TILE), &rect);
+			brush = CreateSolidBrush(RGB(GFX.RawPalette[0][color][0], GFX.RawPalette[0][color][1], GFX.RawPalette[0][color][2]));
+			FillRect(Debugger.TileDC, &rect, brush);
+			DeleteObject(brush);
+			break;
+		}
+		if (DrawBitmap)
+		{
+			bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+			bmi.bmiHeader.biWidth = D_TIL_W;
+			bmi.bmiHeader.biHeight = -D_TIL_H;
+			bmi.bmiHeader.biPlanes = 1;
+			bmi.bmiHeader.biBitCount = 32;
+			bmi.bmiHeader.biCompression = BI_RGB;
+			bmi.bmiHeader.biSizeImage = 0;
+			bmi.bmiHeader.biXPelsPerMeter = 0;
+			bmi.bmiHeader.biYPelsPerMeter = 0;
+			bmi.bmiHeader.biClrUsed = 0;
+			bmi.bmiHeader.biClrImportant = 0;
+			SetDIBits(Debugger.TileDC, Debugger.TileBMP, 0, D_TIL_H, TileArray, &bmi, DIB_RGB_COLORS);
+		}
+		RedrawWindow(GetDlgItem(Debugger.PPUWnd, IDC_DEBUG_PPU_TILE), NULL, NULL, RDW_INVALIDATE);
+		Debugger.DetChanged = FALSE;
+	}
 }
 
 void	Debugger_Update (void)
@@ -902,6 +1103,16 @@ void	Debugger_Update (void)
 		Debugger_UpdateCPU();
 	if (Debugger.Mode & DEBUG_MODE_PPU)
 		Debugger_UpdatePPU();
+}
+
+void	Debugger_SetDetail (int type, int num)
+{
+	if ((Debugger.DetailType == type) && (Debugger.DetailNum == num))
+		return;
+	Debugger.DetailType = type;
+	Debugger.DetailNum = num;
+	Debugger.DetChanged = TRUE;
+	Debugger_UpdatePPU();
 }
 
 void	Debugger_DumpCPU (void)
@@ -1728,46 +1939,124 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-/*
-Nametable:
-* Address (2000-2FFF)
-* X (00-FF)
-* Y (00-FF)
-* Table (0-3)
-* Tile (00-FF)
-* Color (0-3)
-
-Pattern Table:
-* Address (0000-1FFF)
-* Table (0/1)
-* Tile (00-FF)
-* Usage (BG,SPR)
-
-Palette:
-* Address (3F00-3F1F)
-* ID (BG0/SPR3)
-* Offset (0-3)
-* Color (00-3F)
-
-Sprite:
-* Number (0-63)
-* X (00-FF)
-* Y (00-FF)
-* Tile (00-FF)
-* Color (0-3)
-* Flags (H,V,BG)
-*/
+INT_PTR CALLBACK PPUProc_Nametable (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT point;
+	WNDPROC proc;
+	if (uMsg == WM_MOUSEMOVE)
+	{
+		point.x = GET_X_LPARAM(lParam);
+		point.y = GET_Y_LPARAM(lParam);
+		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 240))
+			Debugger_SetDetail(DEBUG_DETAIL_NAMETABLE, ((point.y << 2) & 0x3E0) | ((point.x >> 3) & 0x1F) | (Debugger.Nametable << 10));
+		else	Debugger_SetDetail(Debugger.DetailTypeSave, Debugger.DetailNumSave);
+		return 0;
+	}
+	if (uMsg == WM_RBUTTONDOWN)
+	{
+		Debugger.DetailTypeSave = Debugger.DetailType;
+		Debugger.DetailNumSave = Debugger.DetailNum;
+		return 0;
+	}
+	proc = (WNDPROC)GetWindowLong(hwndDlg, GWL_USERDATA);
+	return CallWindowProc(proc, hwndDlg, uMsg, wParam, lParam);
+}
+INT_PTR CALLBACK PPUProc_Pattern (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT point;
+	WNDPROC proc;
+	if (uMsg == WM_MOUSEMOVE)
+	{
+		point.x = GET_X_LPARAM(lParam);
+		point.y = GET_Y_LPARAM(lParam);
+		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 128))
+			Debugger_SetDetail(DEBUG_DETAIL_PATTERN, ((point.x >> 3) & 0xF) | ((point.y << 1) & 0xF0) | ((point.x & 0x80) << 1));
+		else	Debugger_SetDetail(Debugger.DetailTypeSave, Debugger.DetailNumSave);
+		return 0;
+	}
+	if (uMsg == WM_RBUTTONDOWN)
+	{
+		Debugger.DetailTypeSave = Debugger.DetailType;
+		Debugger.DetailNumSave = Debugger.DetailNum;
+		return 0;
+	}
+	proc = (WNDPROC)GetWindowLong(hwndDlg, GWL_USERDATA);
+	return CallWindowProc(proc, hwndDlg, uMsg, wParam, lParam);
+}
+INT_PTR CALLBACK PPUProc_Palette (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT point;
+	WNDPROC proc;
+	if (uMsg == WM_MOUSEMOVE)
+	{
+		point.x = GET_X_LPARAM(lParam);
+		point.y = GET_Y_LPARAM(lParam);
+		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 32))
+			Debugger_SetDetail(DEBUG_DETAIL_PALETTE, (point.y & 0x30) | (point.x >> 4));
+		else	Debugger_SetDetail(Debugger.DetailTypeSave, Debugger.DetailNumSave);
+		return 0;
+	}
+	if (uMsg == WM_RBUTTONDOWN)
+	{
+		Debugger.DetailTypeSave = Debugger.DetailType;
+		Debugger.DetailNumSave = Debugger.DetailNum;
+		return 0;
+	}
+	proc = (WNDPROC)GetWindowLong(hwndDlg, GWL_USERDATA);
+	return CallWindowProc(proc, hwndDlg, uMsg, wParam, lParam);
+}
+INT_PTR CALLBACK PPUProc_Sprite (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT point;
+	WNDPROC proc;
+	if (uMsg == WM_MOUSEMOVE)
+	{
+		int height = (PPU.Reg2000 & 0x20) ? 16 : 8;
+		point.x = GET_X_LPARAM(lParam);
+		point.y = GET_Y_LPARAM(lParam);
+		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 96) && ((point.x % 16) < 8) && ((point.y % 24) < height))
+			Debugger_SetDetail(DEBUG_DETAIL_SPRITE, ((point.y / 24) << 4) | (point.x >> 4));
+		else	Debugger_SetDetail(Debugger.DetailTypeSave, Debugger.DetailNumSave);
+		return 0;
+	}
+	if (uMsg == WM_RBUTTONDOWN)
+	{
+		Debugger.DetailTypeSave = Debugger.DetailType;
+		Debugger.DetailNumSave = Debugger.DetailNum;
+		return 0;
+	}
+	proc = (WNDPROC)GetWindowLong(hwndDlg, GWL_USERDATA);
+	return CallWindowProc(proc, hwndDlg, uMsg, wParam, lParam);
+}
 
 INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	LPDRAWITEMSTRUCT lpDrawItem;
 	const int dbgRadio[4] = { IDC_DEBUG_PPU_NT0, IDC_DEBUG_PPU_NT1, IDC_DEBUG_PPU_NT2, IDC_DEBUG_PPU_NT3 };
+	HWND dlgItem;
 
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
 		CheckRadioButton(hwndDlg, IDC_DEBUG_PPU_NT0, IDC_DEBUG_PPU_NT3, dbgRadio[Debugger.Nametable]);
+		Debugger.NTabChanged = Debugger.PalChanged = Debugger.PatChanged = Debugger.SprChanged = Debugger.DetChanged = TRUE;
+
+		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_NAMETABLE);
+		SetWindowLong(dlgItem, GWL_USERDATA, GetWindowLong(dlgItem, GWL_WNDPROC));
+		SetWindowLong(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Nametable);
+
+		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_PATTERN);
+		SetWindowLong(dlgItem, GWL_USERDATA, GetWindowLong(dlgItem, GWL_WNDPROC));
+		SetWindowLong(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Pattern);
+
+		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_PALETTE);
+		SetWindowLong(dlgItem, GWL_USERDATA, GetWindowLong(dlgItem, GWL_WNDPROC));
+		SetWindowLong(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Palette);
+
+		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_SPRITE);
+		SetWindowLong(dlgItem, GWL_USERDATA, GetWindowLong(dlgItem, GWL_WNDPROC));
+		SetWindowLong(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Sprite);
 		return FALSE;
 	case WM_DRAWITEM:
 		lpDrawItem = (LPDRAWITEMSTRUCT)lParam;
@@ -1785,6 +2074,9 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_DEBUG_PPU_SPRITE:
 			BitBlt(lpDrawItem->hDC, 0, 0, D_SPR_W, D_SPR_H, Debugger.SpriteDC, 0, 0, SRCCOPY);
 			break;
+		case IDC_DEBUG_PPU_TILE:
+			BitBlt(lpDrawItem->hDC, 0, 0, D_TIL_W, D_TIL_H, Debugger.TileDC, 0, 0, SRCCOPY);
+			break;
 		}
 		break;
 	case WM_COMMAND:
@@ -1797,41 +2089,47 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Debugger.Nametable = (Debugger.Nametable + 1) & 3;
 			CheckRadioButton(hwndDlg, IDC_DEBUG_PPU_NT0, IDC_DEBUG_PPU_NT3, dbgRadio[Debugger.Nametable]);
 			Debugger.NTabChanged = TRUE;
-			Debugger_Update();
-			break;
-		case IDC_DEBUG_PPU_PALETTE:
+			Debugger_UpdatePPU();
 			break;
 		case IDC_DEBUG_PPU_PATTERN:
 			Debugger.Palette = (Debugger.Palette + 1) & 7;
 			Debugger.PatChanged = TRUE;
-			Debugger_Update();
+			Debugger_UpdatePPU();
 			break;
 		case IDC_DEBUG_PPU_NT0:
 			Debugger.Nametable = 0;
 			Debugger.NTabChanged = TRUE;
-			Debugger_Update();
+			Debugger_UpdatePPU();
 			break;
 		case IDC_DEBUG_PPU_NT1:
 			Debugger.Nametable = 1;
 			Debugger.NTabChanged = TRUE;
-			Debugger_Update();
+			Debugger_UpdatePPU();
 			break;
 		case IDC_DEBUG_PPU_NT2:
 			Debugger.Nametable = 2;
 			Debugger.NTabChanged = TRUE;
-			Debugger_Update();
+			Debugger_UpdatePPU();
 			break;
 		case IDC_DEBUG_PPU_NT3:
 			Debugger.Nametable = 3;
 			Debugger.NTabChanged = TRUE;
-			Debugger_Update();
+			Debugger_UpdatePPU();
 			break;
 		case IDCANCEL:
 			Debugger_SetMode(Debugger.Mode & ~DEBUG_MODE_PPU);
 			break;
 		}
 		break;
-	}	
+	case WM_MOUSEMOVE:
+		Debugger_SetDetail(Debugger.DetailTypeSave, Debugger.DetailNumSave);
+		break;
+	case WM_RBUTTONDOWN:
+		Debugger.DetailTypeSave = DEBUG_DETAIL_NONE;
+		Debugger.DetailNumSave = 0;
+		Debugger_SetDetail(Debugger.DetailTypeSave, Debugger.DetailNumSave);
+		break;
+	}
 	return FALSE;
 }
 
