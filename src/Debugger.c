@@ -94,7 +94,10 @@ enum {
 	D_PAT_H = 128,
 
 	D_NAM_W = 256,
-	D_NAM_H = 240
+	D_NAM_H = 240,
+
+	D_SPR_W = 256,
+	D_SPR_H = 88,
 };
 
 INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -112,7 +115,7 @@ void	Debugger_Init (void)
 	Debugger.Enabled = FALSE;
 	Debugger.Mode = 0;
 
-	Debugger.NTabChanged = Debugger.PalChanged = Debugger.PatChanged = FALSE;
+	Debugger.NTabChanged = Debugger.PalChanged = Debugger.PatChanged = Debugger.SprChanged = FALSE;
 	
 	Debugger.Logging = FALSE;
 	Debugger.Step = FALSE;
@@ -136,6 +139,11 @@ void	Debugger_Init (void)
 	Debugger.NameBMP = CreateCompatibleBitmap(TpHDC, D_NAM_W, D_NAM_H);
 	SelectObject(Debugger.NameDC, Debugger.NameBMP);
 	BitBlt(Debugger.NameDC, 0, 0, D_NAM_W, D_NAM_H, NULL, 0, 0, BLACKNESS);
+
+	Debugger.SpriteDC = CreateCompatibleDC(TpHDC);
+	Debugger.SpriteBMP = CreateCompatibleBitmap(TpHDC, D_SPR_W, D_SPR_H);
+	SelectObject(Debugger.SpriteDC, Debugger.SpriteBMP);
+	BitBlt(Debugger.SpriteDC, 0, 0, D_SPR_W, D_SPR_H, NULL, 0, 0, BLACKNESS);
 
 	Debugger.CPUWnd = NULL;
 	Debugger.PPUWnd = NULL;
@@ -184,6 +192,7 @@ void	Debugger_SetMode (int NewMode)
 		Debugger.NTabChanged = TRUE;
 		Debugger.PalChanged = TRUE;
 		Debugger.PatChanged = TRUE;
+		Debugger.SprChanged = TRUE;
 	}
 	else if (!(Debugger.Mode & DEBUG_MODE_PPU) && Debugger.PPUWnd)
 	{
@@ -681,9 +690,10 @@ void	Debugger_UpdatePPU (void)
 	if (Debugger.PalChanged)
 	{
 		int x, y;
-		/* updating palette also makes pattern table and nametable dirty */
+		/* updating palette also invalidates pattern tables, nametable, and sprites */
 		Debugger.PatChanged = TRUE;
 		Debugger.NTabChanged = TRUE;
+		Debugger.SprChanged = TRUE;
 		for (x = 0; x < 16; x++)
 		{
 			for (y = 0; y < 2; y++)
@@ -691,10 +701,10 @@ void	Debugger_UpdatePPU (void)
 				HBRUSH brush;
 				RECT rect;
 				color = PPU.Palette[y * 16 + x];
-				rect.top = y * 16;
-				rect.bottom = rect.top + 16;
-				rect.left = x * 16;
-				rect.right = rect.left + 16;
+				rect.top = y * (D_PAL_H / 2);
+				rect.bottom = rect.top + (D_PAL_H / 2);
+				rect.left = x * (D_PAL_W / 16);
+				rect.right = rect.left + (D_PAL_W / 16);
 				brush = CreateSolidBrush(RGB(GFX.RawPalette[0][color][0], GFX.RawPalette[0][color][1], GFX.RawPalette[0][color][2]));
 				FillRect(Debugger.PaletteDC, &rect, brush);
 				DeleteObject(brush);
@@ -708,12 +718,13 @@ void	Debugger_UpdatePPU (void)
 	{
 		int i, t, x, y, sx, sy;
 		static unsigned char pal[4];
-		unsigned long PatternArray[256 * 128];
+		unsigned long PatternArray[D_PAT_W * D_PAT_H];
 		unsigned char byte0, byte1;
 		BITMAPINFO bmi;
 
-		/* updating pattern table also makes nametable dirty */
+		/* updating pattern table also makes nametable and sprites dirty */
 		Debugger.NTabChanged = TRUE;
+		Debugger.SprChanged = TRUE;
 
 		pal[0] = PPU.Palette[0];
 		for (i = 1; i < 4; i++)
@@ -765,7 +776,7 @@ void	Debugger_UpdatePPU (void)
 	{
 		int AttribVal, AttribNum;
 		int NT = Debugger.Nametable, TileY, TileX, py, px;
-		unsigned long NameArray[256 * 240];
+		unsigned long NameArray[D_NAM_W * D_NAM_H];
 		unsigned char byte0, byte1;
 		BITMAPINFO bmi;
 
@@ -812,6 +823,76 @@ void	Debugger_UpdatePPU (void)
 
 		RedrawWindow(GetDlgItem(Debugger.PPUWnd, IDC_DEBUG_PPU_NAMETABLE), NULL, NULL, RDW_INVALIDATE);
 		Debugger.NTabChanged = FALSE;
+	}
+
+	if (Debugger.SprChanged)
+	{
+		int SprNum, Attr, TileNum, height;
+		int TileY, TileX, py, px;
+		unsigned long SprArray[D_SPR_W * D_SPR_H];
+		unsigned char byte0, byte1;
+		BITMAPINFO bmi;
+
+		px = GetSysColor(COLOR_BTNFACE);
+		// convert color to RGB (from Windows BGR)
+		px = (GetRValue(px) << 16) | (GetGValue(px) << 8) | (GetBValue(px) << 0);
+		for (py = 0; py < D_SPR_H * D_SPR_W; py++)
+			SprArray[py] = px;
+
+		for (TileY = 0; TileY < 4; TileY++)
+		{
+			for (TileX = 0; TileX < 16; TileX++)
+			{
+				SprNum = (TileY << 4) | TileX;
+				TileNum = PPU.Sprite[(SprNum << 2) | 1];
+				Attr = PPU.Sprite[(SprNum << 2) | 2];
+				if (PPU.Reg2000 & 0x20)
+				{
+					height = 16;
+					MemAddr = ((TileNum & 0xFE) << 4) | ((TileNum & 0x01) << 12);
+				}
+				else
+				{
+					height = 8;
+					MemAddr = (TileNum << 4) | ((PPU.Reg2000 & 0x08) << 9);
+				}
+				for (py = 0; py < height; py++)
+				{
+					if (py == 8)
+						MemAddr += 8;
+					ptr = ((TileY * 24 + py) << 8) | (TileX << 4);
+					byte0 = DebugMemPPU((unsigned short)MemAddr);
+					byte1 = DebugMemPPU((unsigned short)(MemAddr + 8));
+					for (px = 0; px < 8; px++)
+					{
+						color = 0x10 | ((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6);
+						byte0 <<= 1;
+						byte1 <<= 1;
+						if (color)
+							color |= (Attr & 3) << 2;
+						else	color = 0;
+						SprArray[ptr++] = GFX.Palette32[PPU.Palette[color]];
+					}
+					MemAddr++;
+				}
+			}
+		}
+
+		bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
+		bmi.bmiHeader.biWidth = D_SPR_W;
+		bmi.bmiHeader.biHeight = -D_SPR_H;
+		bmi.bmiHeader.biPlanes = 1;
+		bmi.bmiHeader.biBitCount = 32;
+		bmi.bmiHeader.biCompression = BI_RGB;
+		bmi.bmiHeader.biSizeImage = 0;
+		bmi.bmiHeader.biXPelsPerMeter = 0;
+		bmi.bmiHeader.biYPelsPerMeter = 0;
+		bmi.bmiHeader.biClrUsed = 0;
+		bmi.bmiHeader.biClrImportant = 0;
+		SetDIBits(Debugger.SpriteDC, Debugger.SpriteBMP, 0, D_SPR_H, SprArray, &bmi, DIB_RGB_COLORS);
+
+		RedrawWindow(GetDlgItem(Debugger.PPUWnd, IDC_DEBUG_PPU_SPRITE), NULL, NULL, RDW_INVALIDATE);
+		Debugger.SprChanged = FALSE;
 	}
 }
 
@@ -1670,6 +1751,9 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDC_DEBUG_PPU_PALETTE:
 			BitBlt(lpDrawItem->hDC, 0, 0, D_PAL_W, D_PAL_H, Debugger.PaletteDC, 0, 0, SRCCOPY);
+			break;
+		case IDC_DEBUG_PPU_SPRITE:
+			BitBlt(lpDrawItem->hDC, 0, 0, D_SPR_W, D_SPR_H, Debugger.SpriteDC, 0, 0, SRCCOPY);
 			break;
 		}
 		break;

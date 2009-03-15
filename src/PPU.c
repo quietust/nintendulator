@@ -1232,6 +1232,7 @@ static	void	__fastcall	Write0 (int Val)
 	PPU.IntReg |= (Val & 3) << 10;
 #ifdef	ENABLE_DEBUGGER
 	Debugger.NTabChanged = TRUE;
+	Debugger.SprChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 }
 
@@ -1261,6 +1262,9 @@ static	void	__fastcall	Write4 (int Val)
 	if ((PPU.SprAddr & 0x03) == 0x02)
 		Val &= 0xE3;
 	PPU.Sprite[PPU.SprAddr++] = (unsigned char)Val;
+#ifdef	ENABLE_DEBUGGER
+	Debugger.SprChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
 }
 
 static	void	__fastcall	Write5 (int Val)

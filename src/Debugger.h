@@ -41,7 +41,7 @@ struct tDebugger
 	BOOL	Enabled;
 	int	Mode;
 
-	BOOL	NTabChanged, PalChanged, PatChanged;
+	BOOL	NTabChanged, PalChanged, PatChanged, SprChanged;
 
 	BOOL	Logging, Step;
 
@@ -57,6 +57,9 @@ struct tDebugger
 
 	HDC	NameDC;		/* Nametable */
 	HBITMAP	NameBMP;
+
+	HDC	SpriteDC;	/* Sprites */
+	HBITMAP	SpriteBMP;
 
 	HWND	CPUWnd;
 	HWND	PPUWnd;
