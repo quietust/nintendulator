@@ -268,10 +268,11 @@ unsigned char DebugMemPPU (unsigned short Addr)
 
 /* Decodes an instruction into plain text, suitable for displaying in the debugger or writing to a logfile
  * Returns the effective address for usage with breakpoints */
-unsigned short	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
+int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 {
 	unsigned char OpData[3] = {0, 0, 0};
-	unsigned short Operand = 0, MidAddr = 0, EffectiveAddr = 0;
+	unsigned short Operand = 0, MidAddr = 0;
+	int EffectiveAddr = -1;
 	OpData[0] = DebugMemCPU(Addr);
 	switch (TraceAddrMode[OpData[0]])
 	{
@@ -288,6 +289,7 @@ unsigned short	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 	case ABS:
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);Operand = OpData[1] | (OpData[2] << 8);
+		EffectiveAddr = Operand;
 		break;
 	case ABX:
 		OpData[1] = DebugMemCPU(Addr+1);
@@ -306,6 +308,7 @@ unsigned short	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 	case ZPG:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
+		EffectiveAddr = Operand;
 		break;
 	case ZPX:
 		OpData[1] = DebugMemCPU(Addr+1);
@@ -401,18 +404,23 @@ void	Debugger_UpdateCPU (void)
 		NES.Stop = TRUE;
 	/* check for breakpoints */
 	{
+		int BreakAddr;
 		/* PC has execution breakpoint */
 		if (Debugger.BPcache[CPU.PC] & DEBUG_BREAK_EXEC)
 			NES.Stop = TRUE;
 		/* I/O break */
-		Addr = DecodeInstruction((unsigned short)CPU.PC, NULL, NULL);
+		BreakAddr = DecodeInstruction((unsigned short)CPU.PC, NULL, NULL);
 		TpVal = DebugMemCPU((unsigned short)CPU.PC);
-		/* read opcode, effective address has read breakpoint */
-		if ((TraceIO[TpVal] & DEBUG_BREAK_READ) && (Debugger.BPcache[Addr] & DEBUG_BREAK_READ))
-			NES.Stop = TRUE;
-		/* write opcode, effective address has write breakpoint */
-		if ((TraceIO[TpVal] & DEBUG_BREAK_WRITE) && (Debugger.BPcache[Addr] & DEBUG_BREAK_WRITE))
-			NES.Stop = TRUE;
+		/* */
+		if (BreakAddr != -1)
+		{
+			/* read opcode, effective address has read breakpoint */
+			if ((TraceIO[TpVal] & DEBUG_BREAK_READ) && (Debugger.BPcache[BreakAddr] & DEBUG_BREAK_READ))
+				NES.Stop = TRUE;
+			/* write opcode, effective address has write breakpoint */
+			if ((TraceIO[TpVal] & DEBUG_BREAK_WRITE) && (Debugger.BPcache[BreakAddr] & DEBUG_BREAK_WRITE))
+				NES.Stop = TRUE;
+		}
 		/* opcode breakpoint */
 		if (Debugger.BPcache[0x10000 | TpVal] & DEBUG_BREAK_OPCODE)
 			NES.Stop = TRUE;
