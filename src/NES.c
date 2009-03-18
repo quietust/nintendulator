@@ -35,6 +35,7 @@ void	NES_Init (void)
 	MapperInterface_Init();
 	APU_Init();
 	GFX_Init();
+	AVI_Init();
 #ifdef	ENABLE_DEBUGGER
 	Debugger_Init();
 #endif	/* ENABLE_DEBUGGER */
@@ -274,7 +275,7 @@ void	NES_CloseFile (void)
 		memset(&RI,0,sizeof(RI));
 	}
 
-	if (aviout)
+	if (AVI.aviout)
 		AVI_End();
 	if (Movie.Mode)
 		Movie_Stop();

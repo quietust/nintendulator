@@ -9,11 +9,19 @@
 #define AVI_H
 
 DECLARE_HANDLE(HAVI);
-extern HAVI aviout;
 
-void AVI_Start(void);
-void AVI_AddVideo(void);
-void AVI_AddAudio(void);
-void AVI_End(void);
+struct tAVI
+{
+	HAVI aviout;
+	HBITMAP hbm;
+	unsigned long *videoBuffer;
+};
+extern	struct tAVI AVI;
+
+void	AVI_Init	(void);
+void	AVI_Start	(void);
+void	AVI_AddVideo	(void);
+void	AVI_AddAudio	(void);
+void	AVI_End		(void);
 
 #endif	/* !AVI_H */

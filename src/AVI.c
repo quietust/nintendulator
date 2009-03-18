@@ -157,85 +157,6 @@ HRESULT SetAviVideoCompression (HAVI avi, HBITMAP hbm, AVICOMPRESSOPTIONS *opts,
 	return AVIERR_OK;
 }
 
-/*
-HRESULT SetAviAudioCompression (HAVI avi, AVICOMPRESSOPTIONS *opts, BOOL ShowDialog, HWND hparent)
-{
-	DIBSECTION dibs;
-	int sbm;
-	TAviUtil *au;
-	HRESULT hr;
-
-	if (!avi)
-		return AVIERR_BADHANDLE;
-	if (!hbm)
-		return AVIERR_BADPARAM;
-	sbm = GetObject(hbm, sizeof(dibs), &dibs);
-	if (sbm != sizeof(DIBSECTION))
-		return AVIERR_BADPARAM;
-	au = (TAviUtil*)avi;
-	if (au->iserr)
-		return AVIERR_ERROR;
-	// has compression already been configured?
-	if (au->vidStreamComp)
-		return AVIERR_COMPRESSOR;
-
-	if (!au->vidStream)	// create the stream, if it wasn't there before
-	{
-		AVISTREAMINFO strhdr;
-		ZeroMemory(&strhdr,sizeof(strhdr));
-		strhdr.fccType = streamtypeVIDEO;
-		strhdr.fccHandler = 0; 
-		strhdr.dwScale = au->period;
-		strhdr.dwRate = 1000000000;
-		strhdr.dwSuggestedBufferSize = dibs.dsBmih.biSizeImage;
-		SetRect(&strhdr.rcFrame, 0, 0, dibs.dsBmih.biWidth, dibs.dsBmih.biHeight);
-		hr = AVIFileCreateStream(au->pfile, &au->vidStream, &strhdr);
-		if (hr)
-		{
-			au->iserr = TRUE;
-			return hr;
-		}
-	}
-
-	if (!au->vidStreamComp)	// set the compression, prompting dialog if necessary
-	{
-		AVICOMPRESSOPTIONS myopts;
-		AVICOMPRESSOPTIONS *aopts[1];
-		DIBSECTION dibs;
-
-		ZeroMemory(&myopts, sizeof(myopts));
-		if (opts)
-			aopts[0] = opts;
-		else	aopts[0] = &myopts;
-		if (ShowDialog)
-		{
-			BOOL res = (BOOL)AVISaveOptions(hparent, 0, 1, &au->vidStream, aopts);
-			if (!res)
-			{
-				AVISaveOptionsFree(1, aopts);
-				au->iserr = TRUE;
-				return AVIERR_USERABORT;
-			}
-		}
-		hr = AVIMakeCompressedStream(&au->vidStreamComp, au->vidStream, aopts[0], NULL);
-		AVISaveOptionsFree(1, aopts);
-		if (hr)
-		{
-			au->iserr = TRUE;
-			return hr;
-		}
-		GetObject(hbm, sizeof(dibs), &dibs);
-		hr = AVIStreamSetFormat(au->vidStreamComp, 0, &dibs.dsBmih, dibs.dsBmih.biSize + dibs.dsBmih.biClrUsed * sizeof(RGBQUAD));
-		if (hr)
-		{
-			au->iserr = TRUE;
-			return hr;
-		}
-	}
-	return AVIERR_OK;
-}
-*/
-
 HRESULT AddAviFrame (HAVI avi, HBITMAP hbm)
 {
 	DIBSECTION dibs;
@@ -395,39 +316,47 @@ unsigned int FormatAviMessage (HRESULT code, TCHAR *buf, unsigned int len)
 	return mlen;
 }
 
-HAVI aviout = NULL;
+struct tAVI AVI;
+void	AVI_Init (void)
+{
+	AVI.aviout = NULL;
+	AVI.videoBuffer = NULL;
+	AVI.hbm = NULL;
+}
+
 void	AVI_End (void)
 {
-	if (!aviout)
+	if (!AVI.aviout)
 	{
-		MessageBox(hMainWnd,_T("No AVI capture is currently in progress!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd, _T("No AVI capture is currently in progress!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
-	CloseAvi(aviout);
-	aviout = NULL;
-	EnableMenuItem(hMenu,ID_MISC_STARTAVICAPTURE,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_MISC_STOPAVICAPTURE,MF_GRAYED);
+	CloseAvi(AVI.aviout);
+	AVI.aviout = NULL;
+	if (AVI.hbm)
+		DeleteObject(AVI.hbm);
+	AVI.hbm = NULL;
+	AVI.videoBuffer = NULL;
+	EnableMenuItem(hMenu, ID_MISC_STARTAVICAPTURE, MF_ENABLED);
+	EnableMenuItem(hMenu, ID_MISC_STOPAVICAPTURE, MF_GRAYED);
 }
 
 void	AVI_Start (void)
 {
 	WAVEFORMATEX wfx;
-	HBITMAP hbm;
 	BITMAPINFOHEADER bmih;
-	long *pBits;
 	HRESULT hr;
-	AVICOMPRESSOPTIONS opts;
 
 	TCHAR FileName[MAX_PATH] = {0};
 	OPENFILENAME ofn;
 
-	if (aviout)
+	if (AVI.aviout)
 	{
-		MessageBox(hMainWnd,_T("An AVI capture is already in progress!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd, _T("An AVI capture is already in progress!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
 
-	ZeroMemory(&ofn,sizeof(ofn));
+	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hMainWnd;
 	ofn.hInstance = hInst;
@@ -448,8 +377,8 @@ void	AVI_Start (void)
 	if (!GetSaveFileName(&ofn))
 		return;
 
-	_tcscpy(Path_AVI,FileName);
-	Path_AVI[ofn.nFileOffset-1] = 0;
+	_tcscpy(Path_AVI, FileName);
+	Path_AVI[ofn.nFileOffset - 1] = 0;
 
 	wfx.wFormatTag = WAVE_FORMAT_PCM;
 	wfx.nChannels = 1;
@@ -460,8 +389,8 @@ void	AVI_Start (void)
 	wfx.cbSize = 0;
 
 	if (PPU.IsPAL)
-		aviout = CreateAvi(FileName,19997209,&wfx);
-	else	aviout = CreateAvi(FileName,16639263,&wfx);
+		AVI.aviout = CreateAvi(FileName, 19997209, &wfx);	// 50.006978 fps
+	else	AVI.aviout = CreateAvi(FileName, 16639263, &wfx);	// 60.098816 fps
 
 	bmih.biSize = sizeof(BITMAPINFOHEADER);
 	bmih.biWidth = 256;
@@ -475,83 +404,63 @@ void	AVI_Start (void)
 	bmih.biClrUsed = 0;
 	bmih.biClrImportant = 0;
 	
-	hbm = CreateDIBSection(NULL,(BITMAPINFO *)&bmih,DIB_RGB_COLORS,&pBits,NULL,0);
+	AVI.hbm = CreateDIBSection(NULL, (BITMAPINFO *)&bmih, DIB_RGB_COLORS, &AVI.videoBuffer, NULL, 0);
 
-	ZeroMemory(&opts,sizeof(opts));
-	hr = SetAviVideoCompression(aviout,hbm,&opts,TRUE,hMainWnd);
+	hr = SetAviVideoCompression(AVI.aviout, AVI.hbm, NULL, TRUE, hMainWnd);
 	if (hr)
 	{
 		TCHAR msg[256];
-		FormatAviMessage(hr,msg,256);
-		MessageBox(hMainWnd,msg,_T("Nintendulator"),MB_OK);
+		FormatAviMessage(hr, msg, 256);
+		MessageBox(hMainWnd, msg, _T("Nintendulator"), MB_OK);
 		AVI_End();
 		return;
 	}
-	DeleteObject(hbm);
-	EnableMenuItem(hMenu,ID_MISC_STARTAVICAPTURE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_MISC_STOPAVICAPTURE,MF_ENABLED);
+	EnableMenuItem(hMenu, ID_MISC_STARTAVICAPTURE, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_MISC_STOPAVICAPTURE, MF_ENABLED);
 }
 
 void	AVI_AddVideo (void)
 {
-	HBITMAP hbm;
-	unsigned long *pBits;
-	BITMAPINFOHEADER bmih;
 	HRESULT hr;
 
-	if (!aviout)
+	if (!AVI.aviout)
 	{
-		MessageBox(hMainWnd,_T("Error! AVI frame capture attempted while not recording!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd, _T("Error! AVI frame capture attempted while not recording!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
-	bmih.biSize = sizeof(BITMAPINFOHEADER);
-	bmih.biWidth = 256;
-	bmih.biHeight = 240;
-	bmih.biPlanes = 1;
-	bmih.biBitCount = 32;
-	bmih.biCompression = BI_RGB;
-	bmih.biSizeImage = 0;
-	bmih.biXPelsPerMeter = 0;
-	bmih.biYPelsPerMeter = 0;
-	bmih.biClrUsed = 0;
-	bmih.biClrImportant = 0;
-	
-	hbm = CreateDIBSection(NULL,(BITMAPINFO *)&bmih,DIB_RGB_COLORS,&pBits,NULL,0);
-
 	{
 		register unsigned short *src = DrawArray;
 		int x, y;
 		for (y = 0; y < 240; y++)
 		{
-			register unsigned long *dst = pBits + 256*(239-y);
+			register unsigned long *dst = AVI.videoBuffer + 256 * (239 - y);
 			for (x = 0; x < 256; x++)
 				dst[x] = GFX.Palette32[src[x]];
 			src += x;
 		}
 	}
-	hr = AddAviFrame(aviout,hbm);
+	hr = AddAviFrame(AVI.aviout, AVI.hbm);
 	if (hr)
 	{
 		TCHAR msg[256];
-		FormatAviMessage(hr,msg,256);
-		MessageBox(hMainWnd,msg,_T("Nintendulator"),MB_OK);
+		FormatAviMessage(hr, msg, 256);
+		MessageBox(hMainWnd, msg, _T("Nintendulator"), MB_OK);
 	}
-	DeleteObject(hbm);
 }
 
 void	AVI_AddAudio (void)
 {
 	HRESULT hr;
-	if (!aviout)
+	if (!AVI.aviout)
 	{
-		MessageBox(hMainWnd,_T("Error! AVI audio capture attempted while not recording!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd, _T("Error! AVI audio capture attempted while not recording!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
-	hr = AddAviAudio(aviout,APU.buffer,735*2);
+	hr = AddAviAudio(AVI.aviout, APU.buffer, 735*2);
 	if (hr)
 	{
 		TCHAR msg[256];
-		FormatAviMessage(hr,msg,256);
-		MessageBox(hMainWnd,msg,_T("Nintendulator"),MB_OK);
+		FormatAviMessage(hr, msg, 256);
+		MessageBox(hMainWnd, msg, _T("Nintendulator"), MB_OK);
 	}
 }

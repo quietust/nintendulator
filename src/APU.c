@@ -1118,7 +1118,7 @@ void	APU_Run (void)
 		unsigned long rpos, wpos;
 
 		APU.Cycles = NewBufPos = 0;
-		if (aviout)
+		if (AVI.aviout)
 			AVI_AddAudio();
 		do
 		{

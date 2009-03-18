@@ -247,7 +247,7 @@ void	GFX_DrawScreen (void)
 {
 	LARGE_INTEGER TmpClockVal;
 	static int TitleDelay = 0;
-	if (aviout)
+	if (AVI.aviout)
 		AVI_AddVideo();
 	if (GFX.SlowDown)
 		Sleep(GFX.SlowRate * 1000 / GFX.WantFPS);
