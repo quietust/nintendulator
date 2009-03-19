@@ -275,95 +275,95 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
-				RelativePath="..\src\APU.c">
+				RelativePath="..\src\APU.cpp">
 			</File>
 			<File
-				RelativePath="..\src\AVI.c">
+				RelativePath="..\src\AVI.cpp">
 			</File>
 			<File
-				RelativePath="..\src\Controllers.c">
+				RelativePath="..\src\Controllers.cpp">
 			</File>
 			<File
-				RelativePath="..\src\CPU.c">
+				RelativePath="..\src\CPU.cpp">
 			</File>
 			<File
-				RelativePath="..\src\Debugger.c">
+				RelativePath="..\src\Debugger.cpp">
 			</File>
 			<File
-				RelativePath="..\src\Genie.c">
+				RelativePath="..\src\Genie.cpp">
 			</File>
 			<File
-				RelativePath="..\src\GFX.c">
+				RelativePath="..\src\GFX.cpp">
 			</File>
 			<File
-				RelativePath="..\src\MapperInterface.c">
+				RelativePath="..\src\MapperInterface.cpp">
 			</File>
 			<File
-				RelativePath="..\src\Movie.c">
+				RelativePath="..\src\Movie.cpp">
 			</File>
 			<File
-				RelativePath="..\src\NES.c">
+				RelativePath="..\src\NES.cpp">
 			</File>
 			<File
-				RelativePath="..\src\Nintendulator.c">
+				RelativePath="..\src\Nintendulator.cpp">
 			</File>
 			<File
-				RelativePath="..\src\PPU.c">
+				RelativePath="..\src\PPU.cpp">
 			</File>
 			<File
-				RelativePath="..\src\States.c">
+				RelativePath="..\src\States.cpp">
 			</File>
 			<Filter
 				Name="Std Controllers"
 				Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 				<File
-					RelativePath="..\src\c_s_arkpad.c">
+					RelativePath="..\src\c_s_arkpad.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_s_fourscore.c">
+					RelativePath="..\src\c_s_fourscore.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_s_powpad.c">
+					RelativePath="..\src\c_s_powpad.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_s_snescont.c">
+					RelativePath="..\src\c_s_snescont.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_s_stdcont.c">
+					RelativePath="..\src\c_s_stdcont.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_s_unconnected.c">
+					RelativePath="..\src\c_s_unconnected.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_s_vszapper.c">
+					RelativePath="..\src\c_s_vszapper.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_s_zapper.c">
+					RelativePath="..\src\c_s_zapper.cpp">
 				</File>
 			</Filter>
 			<Filter
 				Name="Exp Controllers"
 				Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 				<File
-					RelativePath="..\src\c_e_altkey.c">
+					RelativePath="..\src\c_e_altkey.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_e_arkpad.c">
+					RelativePath="..\src\c_e_arkpad.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_e_fam4play.c">
+					RelativePath="..\src\c_e_fam4play.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_e_famtrain.c">
+					RelativePath="..\src\c_e_famtrain.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_e_fbkey.c">
+					RelativePath="..\src\c_e_fbkey.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_e_tablet.c">
+					RelativePath="..\src\c_e_tablet.cpp">
 				</File>
 				<File
-					RelativePath="..\src\c_e_unconnected.c">
+					RelativePath="..\src\c_e_unconnected.cpp">
 				</File>
 			</Filter>
 		</Filter>
