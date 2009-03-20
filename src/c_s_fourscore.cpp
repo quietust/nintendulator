@@ -147,7 +147,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,FSPort2.Type,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_SETCURSEL,FSPort3.Type,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_SETCURSEL,FSPort4.Type,0);
-		if (Movie.Mode)
+		if (Movie::Mode)
 		{
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),FALSE);

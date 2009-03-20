@@ -139,7 +139,7 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 		for (i = 0; i < EXP_MAX; i++)
 			SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)ExpPort_Mappings[i]);
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_SETCURSEL,ExpPort.Type,0);
-		if (Movie.Mode)
+		if (Movie::Mode)
 		{
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),FALSE);
@@ -508,7 +508,7 @@ void	Init (void)
 	NumDevices = 2;	// joysticks start at slot 2
 	IDirectInput7_EnumDevices(DirectInput,DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
 
-	Movie.Mode = 0;
+	Movie::Mode = 0;
 	Acquire();
 }
 
@@ -588,7 +588,7 @@ int	Load (FILE *in)
 {
 	int clen = 0;
 	int tpi;
-	Movie.ControllerTypes[3] = 1;	// denotes that controller state has been loaded
+	Movie::ControllerTypes[3] = 1;	// denotes that controller state has been loaded
 					// if we're playing a movie, this means we should
 					// SKIP the controller info in the movie block
 	fread(&tpi,4,1,in);	StdPort_SetControllerType(&FSPort1,tpi);	clen += 4;
@@ -702,20 +702,20 @@ void	UpdateInput (void)
 				ZeroMemory(&JoyState[i],sizeof(DIJOYSTATE2));
 		}
 
-	if (Movie.Mode & MOV_PLAY)
-		Cmd = Movie_LoadInput();
+	if (Movie::Mode & MOV_PLAY)
+		Cmd = Movie::LoadInput();
 	else
 	{
 		if ((MI) && (MI->Config))
 			Cmd = MI->Config(CFG_QUERY,0);
 	}
-	Port1.Frame(&Port1,Movie.Mode);
-	Port2.Frame(&Port2,Movie.Mode);
-	ExpPort.Frame(&ExpPort,Movie.Mode);
+	Port1.Frame(&Port1,Movie::Mode);
+	Port2.Frame(&Port2,Movie::Mode);
+	ExpPort.Frame(&ExpPort,Movie::Mode);
 	if ((Cmd) && (MI) && (MI->Config))
 		MI->Config(CFG_CMD,Cmd);
-	if (Movie.Mode & MOV_RECORD)
-		Movie_SaveInput(Cmd);
+	if (Movie::Mode & MOV_RECORD)
+		Movie::SaveInput(Cmd);
 }
 
 int	GetConfigButton (HWND hWnd, int DevNum)

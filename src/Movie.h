@@ -12,27 +12,18 @@
 #define	MOV_RECORD	0x02
 #define	MOV_REVIEW	0x04
 
-struct tMovie
+namespace Movie
 {
-	unsigned char	Mode;
-	FILE *		Data;
-	unsigned char	ControllerTypes[4];
-	int		ReRecords;
-	TCHAR		Filename[MAX_PATH];
-	TCHAR *		Description;
-	int		Len;
-	int		Pos;
-	int		FrameLen;
-};
-extern struct tMovie Movie;
+extern unsigned char	Mode;
+extern unsigned char	ControllerTypes[4];
 
-void		Movie_ShowFrame	(void);
-void		Movie_Play	(void);
-void		Movie_Record	(void);
-void		Movie_Stop	(void);
-unsigned char	Movie_LoadInput	(void);
-void		Movie_SaveInput	(unsigned char);
-int		Movie_Save	(FILE *);
-int		Movie_Load	(FILE *);
-
+void		ShowFrame	(void);
+void		Play		(void);
+void		Record		(void);
+void		Stop		(void);
+unsigned char	LoadInput	(void);
+void		SaveInput	(unsigned char);
+int		Save		(FILE *);
+int		Load		(FILE *);
+} // namespace Movie
 #endif	/* !MOVIE_H */

@@ -143,11 +143,11 @@ int	States_SaveData (FILE *out)
 			free(tpmi);
 		}
 	}
-	if (Movie.Mode)	// save state when recording, reviewing, OR playing
+	if (Movie::Mode)	// save state when recording, reviewing, OR playing
 	{
 		fwrite("NMOV",1,4,out);		flen += 4;
 		fwrite(&clen,1,4,out);		flen += 4;
-		clen = Movie_Save(out);
+		clen = Movie::Save(out);
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
@@ -174,7 +174,7 @@ void	States_SaveState (void)
 	fwrite("NSS\x1A",1,4,out);
 	fwrite(STATES_VERSION,1,4,out);
 	fwrite(&flen,1,4,out);
-	if (Movie.Mode)	// save NREC during playback as well
+	if (Movie::Mode)	// save NREC during playback as well
 		fwrite("NREC",1,4,out);
 	else	fwrite("NSAV",1,4,out);
 
@@ -186,7 +186,7 @@ void	States_SaveState (void)
 	fclose(out);
 
 	PrintTitlebar(_T("State saved: %i"), States.SelSlot);
-	Movie_ShowFrame();
+	Movie::ShowFrame();
 }
 
 BOOL	States_LoadData (FILE *in, int flen)
@@ -238,7 +238,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 			}
 		}
 		else if (!memcmp(csig,"NMOV",4))
-			clen -= Movie_Load(in);
+			clen -= Movie::Load(in);
 		if (clen != 0)
 		{
 			SSOK = FALSE;		// too much, or too little
@@ -299,7 +299,7 @@ void	States_LoadState (void)
 	else if (!memcmp(tpc,"NSAV",4))
 	{
 		/* Non-movie savestate, can NOT load these while a movie is open */
-		if (Movie.Mode)
+		if (Movie::Mode)
 		{
 			fclose(in);
 			PrintTitlebar(_T("Selected savestate (%i) does not contain movie data!"), States.SelSlot);
@@ -317,8 +317,8 @@ void	States_LoadState (void)
 	fseek(in,16,SEEK_SET);
 	NES_Reset(RESET_SOFT);
 
-	if (Movie.Mode & MOV_REVIEW)		/* If the user is reviewing an existing movie */
-		Movie.Mode = MOV_RECORD;	/* then resume recording once they LOAD state */
+	if (Movie::Mode & MOV_REVIEW)		/* If the user is reviewing an existing movie */
+		Movie::Mode = MOV_RECORD;	/* then resume recording once they LOAD state */
 
 	NES.GameGenie = FALSE;	/* If the savestate uses it, it'll turn back on shortly */
 	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
@@ -326,6 +326,6 @@ void	States_LoadState (void)
 	if (States_LoadData(in, flen))
 		PrintTitlebar(_T("State loaded: %i"), States.SelSlot);
 	else	PrintTitlebar(_T("State loaded with errors: %i"), States.SelSlot);
-	Movie_ShowFrame();
+	Movie::ShowFrame();
 	fclose(in);
 }

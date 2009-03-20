@@ -278,8 +278,8 @@ void	NES_CloseFile (void)
 
 	if (AVI::handle)
 		AVI::End();
-	if (Movie.Mode)
-		Movie_Stop();
+	if (Movie::Mode)
+		Movie::Stop();
 
 	EnableMenuItem(hMenu,ID_GAME,MF_GRAYED);
 	EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_ENABLED);
@@ -940,7 +940,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 	{	// if we save or load while paused, we want to end up here
 		// so we don't end up advancing another frame
 		NES.GotStep = FALSE;
-		Movie_ShowFrame();
+		Movie::ShowFrame();
 		while (NES.FrameStep && !NES.GotStep && !NES.Stop)
 			Sleep(1);
 	}
@@ -968,7 +968,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 				if (NES.FrameStep)	// if we pause during emulation
 				{	// it'll get caught down here at scanline 240
 					NES.GotStep = FALSE;
-					Movie_ShowFrame();
+					Movie::ShowFrame();
 					while (NES.FrameStep && !NES.GotStep && !NES.Stop)
 						Sleep(1);
 				}
@@ -979,7 +979,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 	}
 
 	APU::SoundOFF();
-	Movie_ShowFrame();
+	Movie::ShowFrame();
 
 #endif	/* CPU_BENCHMARK */
 	UpdateTitlebar();

@@ -320,16 +320,16 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CPU_SOFTRESET:
 			NES_Stop();
-			if (Movie.Mode)
-				Movie_Stop();
+			if (Movie::Mode)
+				Movie::Stop();
 			NES_Reset(RESET_SOFT);
 			if (running)
 				NES_Start(FALSE);
 			break;
 		case ID_CPU_HARDRESET:
 			NES_Stop();
-			if (Movie.Mode)
-				Movie_Stop();
+			if (Movie::Mode)
+				Movie::Stop();
 			NES_Reset(RESET_HARD);
 			if (running)
 				NES_Start(FALSE);
@@ -546,13 +546,13 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			AVI::End();
 			break;
 		case ID_MISC_PLAYMOVIE:
-			Movie_Play();
+			Movie::Play();
 			break;
 		case ID_MISC_RECORDMOVIE:
-			Movie_Record();
+			Movie::Record();
 			break;
 		case ID_MISC_STOPMOVIE:
-			Movie_Stop();
+			Movie::Stop();
 			break;
 		case ID_HELP_ABOUT:
 			DialogBox(hInst,(LPCTSTR)IDD_ABOUTBOX,hWnd,(DLGPROC)About);
