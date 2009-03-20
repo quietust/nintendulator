@@ -69,14 +69,14 @@ void about(HWND hwndParent)
 
 void	init (void)
 {
-	APU_Init();
-	APU_Create();
+	APU::Init();
+	APU::Create();
 	MapperInterface_Init();
 }
 
 void	quit (void)
 {
-	APU_Release();
+	APU::Release();
 	MapperInterface_Release();
 }
 
@@ -104,7 +104,7 @@ void	NES_Reset (void)
 	CPU_PowerOn();
 	if (MI->Reset)
 		MI->Reset(RESET_HARD);
-	APU_Reset();
+	APU::Reset();
 	CPU_Reset();
 }
 
@@ -296,13 +296,13 @@ DWORD	WINAPI	PlayThread (void *param)
 {
 	int bufpos = 0;
 	int l;
-	sample_ok = FALSE;
+	APU::sample_ok = FALSE;
 	while (!killPlayThread)
 	{
-		while (!sample_ok)
+		while (!APU::sample_ok)
 			CPU_ExecOp();
-		sample_ok = FALSE;
-		((short *)&sample_buffer)[bufpos] = sample_pos;
+		APU::sample_ok = FALSE;
+		((short *)&sample_buffer)[bufpos] = APU::sample_pos;
 		bufpos++;
 		if (bufpos == 576)
 		{

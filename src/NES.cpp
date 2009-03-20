@@ -33,7 +33,7 @@ void	NES_Init (void)
 {
 	SetWindowPos(hMainWnd,HWND_TOP,0,0,256,240,SWP_NOZORDER);
 	MapperInterface_Init();
-	APU_Init();
+	APU::Init();
 	GFX_Init();
 	AVI_Init();
 #ifdef	ENABLE_DEBUGGER
@@ -64,9 +64,9 @@ void	NES_Release (void)
 {
 	if (NES.ROMLoaded)
 		NES_CloseFile();
-	APU_Release();
-	if (APU.buffer)
-		free(APU.buffer);
+	APU::Release();
+	if (APU::buffer)	// this really should go in APU.cpp
+		free(APU::buffer);
 	GFX_Release();
 	Controllers_Release();
 	MapperInterface_Release();
@@ -811,7 +811,7 @@ void	NES_SetCPUMode (int NewMode)
 			PPU.SLnum = PPU.SLEndFrame - 2;
 		GFX.WantFPS = 60;
 		GFX_LoadPalette(GFX.PaletteNTSC);
-		APU_SetFPS(60);
+		APU::SetFPS(60);
 		EI.DbgOut(_T("Emulation switched to NTSC"));
 	}
 	else
@@ -821,7 +821,7 @@ void	NES_SetCPUMode (int NewMode)
 		PPU.SLEndFrame = 312;
 		GFX.WantFPS = 50;
 		GFX_LoadPalette(GFX.PalettePAL);
-		APU_SetFPS(50);
+		APU::SetFPS(50);
 		EI.DbgOut(_T("Emulation switched to PAL"));
 	}
 }
@@ -893,7 +893,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 			MI->Reset(RESET_SOFT);
 		break;
 	}
-	APU_Reset();
+	APU::Reset();
 	CPU_Reset();
 	PPU_Reset();
 	CPU.WantNMI = FALSE;
@@ -933,7 +933,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 #else	/* !CPU_BENCHMARK */
 
 	if ((!NES.Stop) && (NES.SoundEnabled))
-		APU_SoundON();	// don't turn on sound if we're only stepping 1 instruction
+		APU::SoundON();	// don't turn on sound if we're only stepping 1 instruction
 
 	if ((PPU.SLnum == 240) && (NES.FrameStep))
 	{	// if we save or load while paused, we want to end up here
@@ -977,7 +977,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 		}
 	}
 
-	APU_SoundOFF();
+	APU::SoundOFF();
 	Movie_ShowFrame();
 
 #endif	/* CPU_BENCHMARK */

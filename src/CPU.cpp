@@ -52,7 +52,6 @@ void	MAPINT	CPU_NoCPUCycle (void) { }
 static	BOOL LastNMI;
 static	BOOL LastIRQ;
 
-extern	void	DPCM_Fetch (void);
 static	__forceinline void	RunCycle (void)
 {
 #ifndef	NSFPLAYER
@@ -64,7 +63,7 @@ static	__forceinline void	RunCycle (void)
 #ifndef	NSFPLAYER
 	PPU_Run();
 #endif	/* !NSFPLAYER */
-	APU_Run();
+	APU::Run();
 #endif	/* !CPU_BENCHMARK */
 }
 #define	CPU_MemGetCode	CPU_MemGet
@@ -89,7 +88,7 @@ unsigned char	__fastcall	CPU_MemGet (unsigned int Addr)
 			while (--PCMCycles)
 				CPU_MemGet(Addr);
 		}
-		DPCM_Fetch();
+		APU::DPCM::Fetch();
 	}
 
 	RunCycle();
@@ -278,7 +277,7 @@ int	MAPINT	CPU_Read4k (int Bank, int Addr)
 {
 	switch (Addr)
 	{
-	case 0x015:	return APU_Read4015();						break;
+	case 0x015:	return APU::Read4015();						break;
 #ifndef	NSFPLAYER
 	case 0x016:	return (CPU.LastRead & 0xC0) |
 			(Controllers.Port1.Read(&Controllers.Port1) & 0x19) |
@@ -305,7 +304,7 @@ void	MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
 	case 0x00C:case 0x00D:case 0x00E:case 0x00F:
 	case 0x010:case 0x011:case 0x012:case 0x013:
 	case 0x015:case 0x017:
-			APU_WriteReg(Addr,(unsigned char)Val);	break;
+			APU::WriteReg(Addr,(unsigned char)Val);	break;
 	case 0x014:	for (i = 0; i < 0x100; i++)
 				CPU_MemSet(0x2004,CPU_MemGet((Val << 8) | i));
 			CPU_MemGet(CPU.PC);	break;

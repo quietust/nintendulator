@@ -71,7 +71,7 @@ int	States_SaveData (FILE *out)
 	{
 		fwrite("APUS",1,4,out);		flen += 4;
 		fwrite(&clen,1,4,out);		flen += 4;
-		clen = APU_Save(out);
+		clen = APU::Save(out);
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
@@ -204,7 +204,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 		else if (!memcmp(csig,"PPUS",4))
 			clen -= PPU_Load(in);
 		else if (!memcmp(csig,"APUS",4))
-			clen -= APU_Load(in);
+			clen -= APU::Load(in);
 		else if (!memcmp(csig,"CTRL",4))
 			clen -= Controllers_Load(in);
 		else if (!memcmp(csig,"GENI",4))

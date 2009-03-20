@@ -456,7 +456,7 @@ void	AVI_AddAudio (void)
 		MessageBox(hMainWnd, _T("Error! AVI audio capture attempted while not recording!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
-	hr = AddAviAudio(AVI.aviout, APU.buffer, 735*2);
+	hr = AddAviAudio(AVI.aviout, APU::buffer, 735*2);
 	if (hr)
 	{
 		TCHAR msg[256];

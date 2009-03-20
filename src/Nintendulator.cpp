@@ -510,13 +510,13 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (NES.SoundEnabled)
 			{
 				if (running)
-					APU_SoundON();
+					APU::SoundON();
 				CheckMenuItem(hMenu,ID_SOUND_ENABLED,MF_CHECKED);
 			}
 			else
 			{
 				if (running)
-					APU_SoundOFF();
+					APU::SoundOFF();
 				CheckMenuItem(hMenu,ID_SOUND_ENABLED,MF_UNCHECKED);
 			}
 			break;

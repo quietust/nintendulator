@@ -23,7 +23,30 @@
 
 #define	SOUND_FILTERING
 
-struct tAPU APU;
+namespace APU
+{
+int			Cycles;
+int			BufPos;
+#ifndef	NSFPLAYER
+unsigned long		next_pos;
+BOOL			isEnabled;
+
+LPDIRECTSOUND		DirectSound;
+LPDIRECTSOUNDBUFFER	PrimaryBuffer;
+LPDIRECTSOUNDBUFFER	Buffer;
+
+short			*buffer;
+int			buflen;
+BYTE			Regs[0x18];
+#endif	/* !NSFPLAYER */
+
+int			WantFPS;
+unsigned long		MHz;
+BOOL			PAL;
+#ifndef	NSFPLAYER
+unsigned long		LockSize;
+#endif	/* !NSFPLAYER */
+int			InternalClock;
 
 #ifndef	NSFPLAYER
 #define	FREQ		44100
@@ -31,14 +54,6 @@ struct tAPU APU;
 #define	FRAMEBUF	4
 const	unsigned int	LOCK_SIZE = FREQ * (BITS / 8);
 #endif	/* !NSFPLAYER */
-
-static	struct
-{
-	unsigned char Square0_wavehold, Square0_timer1, Square0_timer2;
-	unsigned char Square1_wavehold, Square1_timer1, Square1_timer2;
-	unsigned char Triangle_wavehold, Triangle_timer1, Triangle_timer2;
-	unsigned char Noise_wavehold, Noise_timer1, Noise_timer2;
-}	Race;
 
 const	unsigned char	LengthCounts[32] = {
 	0x0A,0xFE,
@@ -59,8 +74,49 @@ const	unsigned char	LengthCounts[32] = {
 	0x10,0x1C,
 	0x20,0x1E
 };
+const	signed char	SquareDuty[4][8] = {
+	{-4,+4,-4,-4,-4,-4,-4,-4},
+	{-4,+4,+4,-4,-4,-4,-4,-4},
+	{-4,+4,+4,+4,+4,-4,-4,-4},
+	{+4,-4,-4,+4,+4,+4,+4,+4}
+};
+const	signed char	TriangleDuty[32] = {
+	-8,-7,-6,-5,-4,-3,-2,-1,
+	+0,+1,+2,+3,+4,+5,+6,+7,
+	+7,+6,+5,+4,+3,+2,+1,+0,
+	-1,-2,-3,-4,-5,-6,-7,-8
+};
+const	unsigned long	NoiseFreqNTSC[16] = {
+	0x004,0x008,0x010,0x020,0x040,0x060,0x080,0x0A0,
+	0x0CA,0x0FE,0x17C,0x1FC,0x2FA,0x3F8,0x7F2,0xFE4
+};
+const	unsigned long	NoiseFreqPAL[16] = {
+	0x004,0x007,0x00E,0x01E,0x03C,0x058,0x076,0x094,
+	0x0BC,0x0EC,0x162,0x1D8,0x2C4,0x3B0,0x762,0xEC2
+};
+const	unsigned long	DPCMFreqNTSC[16] = {
+	0x1AC,0x17C,0x154,0x140,0x11E,0x0FE,0x0E2,0x0D6,
+	0x0BE,0x0A0,0x08E,0x080,0x06A,0x054,0x048,0x036
+};
+const	unsigned long	DPCMFreqPAL[16] = {
+	0x18E,0x162,0x13C,0x12A,0x114,0x0EC,0x0D2,0x0C6,
+	0x0B0,0x094,0x084,0x076,0x062,0x04E,0x042,0x032
+};
+const	int	FrameCyclesNTSC_0[7] = { 7459,7456,7458,7457,1,1,7457 };
+const	int	FrameCyclesNTSC_1[6] = { 1,7458,7456,7458,7456,7454 };
+const	int	FrameCyclesPAL_0[7] = { 8315,8314,8312,8313,1,1,8313 };
+const	int	FrameCyclesPAL_1[6] = { 1,8314,8314,8312,8314,8312 };
 
-static	struct
+namespace Race
+{
+	unsigned char Square0_wavehold, Square0_timer1, Square0_timer2;
+	unsigned char Square1_wavehold, Square1_timer1, Square1_timer2;
+	unsigned char Triangle_wavehold, Triangle_timer1, Triangle_timer2;
+	unsigned char Noise_wavehold, Noise_timer1, Noise_timer2;
+	void Run (void);
+} // namespace race
+
+namespace Square0
 {
 	unsigned char volume, envelope, wavehold, duty, swpspeed, swpdir, swpstep, swpenab;
 	unsigned long freq;	// short
@@ -72,196 +128,236 @@ static	struct
 	BOOL EnvClk, SwpClk;
 	unsigned long Cycles;	// short
 	signed long Pos;
-}	Square0, Square1;
-const	signed char	Duties[4][8] = {
-	{-4,+4,-4,-4,-4,-4,-4,-4},
-	{-4,+4,+4,-4,-4,-4,-4,-4},
-	{-4,+4,+4,+4,+4,-4,-4,-4},
-	{+4,-4,-4,+4,+4,+4,+4,+4}
-};
-__inline void	Square0_CheckActive (void)
+
+void	Reset (void)
 {
-	Square0.ValidFreq = (Square0.freq >= 0x8) && ((Square0.swpdir) || !((Square0.freq + (Square0.freq >> Square0.swpstep)) & 0x800));
-	Square0.Active = Square0.Timer && Square0.ValidFreq;
-	Square0.Pos = Square0.Active ? (Duties[Square0.duty][Square0.CurD] * Square0.Vol) : 0;
+	volume = envelope = wavehold = duty = swpspeed = swpdir = swpstep = swpenab = 0;
+	freq = 0;
+	Vol = 0;
+	CurD = 0;
+	Timer = 0;
+	Envelope = 0;
+	Enabled = ValidFreq = Active = FALSE;
+	EnvClk = SwpClk = FALSE;
+	Pos = 0;
+	Cycles = 1;
+	EnvCtr = 1;
+	BendCtr = 1;
 }
-__inline void	Square0_Write (int Reg, unsigned char Val)
+inline void	CheckActive (void)
+{
+	ValidFreq = (freq >= 0x8) && ((swpdir) || !((freq + (freq >> swpstep)) & 0x800));
+	Active = Timer && ValidFreq;
+	Pos = Active ? (SquareDuty[duty][CurD] * Vol) : 0;
+}
+inline void	Write (int Reg, unsigned char Val)
 {
 	switch (Reg)
 	{
-	case 0:	Square0.volume = Val & 0xF;
-		Square0.envelope = Val & 0x10;
-		Race.Square0_wavehold = Val & 0x20;
-		Square0.duty = (Val >> 6) & 0x3;
-		Square0.Vol = Square0.envelope ? Square0.volume : Square0.Envelope;
+	case 0:	volume = Val & 0xF;
+		envelope = Val & 0x10;
+		Race::Square0_wavehold = Val & 0x20;
+		duty = (Val >> 6) & 0x3;
+		Vol = envelope ? volume : Envelope;
 		break;
-	case 1:	Square0.swpstep = Val & 0x07;
-		Square0.swpdir = Val & 0x08;
-		Square0.swpspeed = (Val >> 4) & 0x7;
-		Square0.swpenab = Val & 0x80;
-		Square0.SwpClk = TRUE;
+	case 1:	swpstep = Val & 0x07;
+		swpdir = Val & 0x08;
+		swpspeed = (Val >> 4) & 0x7;
+		swpenab = Val & 0x80;
+		SwpClk = TRUE;
 		break;
-	case 2:	Square0.freq &= 0x700;
-		Square0.freq |= Val;
+	case 2:	freq &= 0x700;
+		freq |= Val;
 		break;
-	case 3:	Square0.freq &= 0xFF;
-		Square0.freq |= (Val & 0x7) << 8;
-		if (Square0.Enabled)
+	case 3:	freq &= 0xFF;
+		freq |= (Val & 0x7) << 8;
+		if (Enabled)
 		{
-			Race.Square0_timer1 = LengthCounts[(Val >> 3) & 0x1F];
-			Race.Square0_timer2 = Square0.Timer;
+			Race::Square0_timer1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race::Square0_timer2 = Timer;
 		}
-		Square0.CurD = 0;
-		Square0.EnvClk = TRUE;
+		CurD = 0;
+		EnvClk = TRUE;
 		break;
-	case 4:	Square0.Enabled = Val ? TRUE : FALSE;
-		if (!Square0.Enabled)
-			Square0.Timer = 0;
+	case 4:	Enabled = Val ? TRUE : FALSE;
+		if (!Enabled)
+			Timer = 0;
 		break;
 	}
-	Square0_CheckActive();
+	CheckActive();
 }
 
-__inline void	Square0_Run (void)
+inline void	Run (void)
 {
-	if (!--Square0.Cycles)
+	if (!--Cycles)
 	{
-		Square0.Cycles = (Square0.freq + 1) << 1;
-		Square0.CurD = (Square0.CurD + 1) & 0x7;
-		if (Square0.Active)
-			Square0.Pos = Duties[Square0.duty][Square0.CurD] * Square0.Vol;
+		Cycles = (freq + 1) << 1;
+		CurD = (CurD + 1) & 0x7;
+		if (Active)
+			Pos = SquareDuty[duty][CurD] * Vol;
 	}
 }
-__inline void	Square0_QuarterFrame (void)
+inline void	QuarterFrame (void)
 {
-	if (Square0.EnvClk)
+	if (EnvClk)
 	{
-		Square0.EnvClk = FALSE;
-		Square0.Envelope = 0xF;
-		Square0.EnvCtr = Square0.volume + 1;
+		EnvClk = FALSE;
+		Envelope = 0xF;
+		EnvCtr = volume + 1;
 	}
-	else if (!--Square0.EnvCtr)
+	else if (!--EnvCtr)
 	{
-		Square0.EnvCtr = Square0.volume + 1;
-		if (Square0.Envelope)
-			Square0.Envelope--;
-		else	Square0.Envelope = Square0.wavehold ? 0xF : 0x0;
+		EnvCtr = volume + 1;
+		if (Envelope)
+			Envelope--;
+		else	Envelope = wavehold ? 0xF : 0x0;
 	}
-	Square0.Vol = Square0.envelope ? Square0.volume : Square0.Envelope;
-	Square0_CheckActive();
+	Vol = envelope ? volume : Envelope;
+	CheckActive();
 }
-__inline void	Square0_HalfFrame (void)
+inline void	HalfFrame (void)
 {
-	if (!--Square0.BendCtr)
+	if (!--BendCtr)
 	{
-		Square0.BendCtr = Square0.swpspeed + 1;
-		if (Square0.swpenab && Square0.swpstep && Square0.ValidFreq)
+		BendCtr = swpspeed + 1;
+		if (swpenab && swpstep && ValidFreq)
 		{
-			int sweep = Square0.freq >> Square0.swpstep;
-			Square0.freq += Square0.swpdir ? ~sweep : sweep;
+			int sweep = freq >> swpstep;
+			freq += swpdir ? ~sweep : sweep;
 		}
 	}
-	if (Square0.SwpClk)
+	if (SwpClk)
 	{
-		Square0.SwpClk = FALSE;
-		Square0.BendCtr = Square0.swpspeed + 1;
+		SwpClk = FALSE;
+		BendCtr = swpspeed + 1;
 	}
-	if (Square0.Timer && !Square0.wavehold)
-		Square0.Timer--;
-	Square0_CheckActive();
+	if (Timer && !wavehold)
+		Timer--;
+	CheckActive();
 }
-__inline void	Square1_CheckActive (void)
+} // namespace Square0
+
+namespace Square1
 {
-	Square1.ValidFreq = (Square1.freq >= 0x8) && ((Square1.swpdir) || !((Square1.freq + (Square1.freq >> Square1.swpstep)) & 0x800));
-	Square1.Active = Square1.Timer && Square1.ValidFreq;
-	Square1.Pos = Square1.Active ? (Duties[Square1.duty][Square1.CurD] * Square1.Vol) : 0;
+	unsigned char volume, envelope, wavehold, duty, swpspeed, swpdir, swpstep, swpenab;
+	unsigned long freq;	// short
+	unsigned char Vol;
+	unsigned char CurD;
+	unsigned char Timer;
+	unsigned char EnvCtr, Envelope, BendCtr;
+	BOOL Enabled, ValidFreq, Active;
+	BOOL EnvClk, SwpClk;
+	unsigned long Cycles;	// short
+	signed long Pos;
+
+void	Reset (void)
+{
+	volume = envelope = wavehold = duty = swpspeed = swpdir = swpstep = swpenab = 0;
+	freq = 0;
+	Vol = 0;
+	CurD = 0;
+	Timer = 0;
+	Envelope = 0;
+	Enabled = ValidFreq = Active = FALSE;
+	EnvClk = SwpClk = FALSE;
+	Pos = 0;
+	Cycles = 1;
+	EnvCtr = 1;
+	BendCtr = 1;
 }
-__inline void	Square1_Write (int Reg, unsigned char Val)
+inline void	CheckActive (void)
+{
+	ValidFreq = (freq >= 0x8) && ((swpdir) || !((freq + (freq >> swpstep)) & 0x800));
+	Active = Timer && ValidFreq;
+	Pos = Active ? (SquareDuty[duty][CurD] * Vol) : 0;
+}
+inline void	Write (int Reg, unsigned char Val)
 {
 	switch (Reg)
 	{
-	case 0:	Square1.volume = Val & 0xF;
-		Square1.envelope = Val & 0x10;
-		Race.Square1_wavehold = Val & 0x20;
-		Square1.duty = (Val >> 6) & 0x3;
-		Square1.Vol = Square1.envelope ? Square1.volume : Square1.Envelope;
+	case 0:	volume = Val & 0xF;
+		envelope = Val & 0x10;
+		Race::Square1_wavehold = Val & 0x20;
+		duty = (Val >> 6) & 0x3;
+		Vol = envelope ? volume : Envelope;
 		break;
-	case 1:	Square1.swpstep = Val & 0x07;
-		Square1.swpdir = Val & 0x08;
-		Square1.swpspeed = (Val >> 4) & 0x7;
-		Square1.swpenab = Val & 0x80;
-		Square1.SwpClk = TRUE;
+	case 1:	swpstep = Val & 0x07;
+		swpdir = Val & 0x08;
+		swpspeed = (Val >> 4) & 0x7;
+		swpenab = Val & 0x80;
+		SwpClk = TRUE;
 		break;
-	case 2:	Square1.freq &= 0x700;
-		Square1.freq |= Val;
+	case 2:	freq &= 0x700;
+		freq |= Val;
 		break;
-	case 3:	Square1.freq &= 0xFF;
-		Square1.freq |= (Val & 0x7) << 8;
-		if (Square1.Enabled)
+	case 3:	freq &= 0xFF;
+		freq |= (Val & 0x7) << 8;
+		if (Enabled)
 		{
-			Race.Square1_timer1 = LengthCounts[(Val >> 3) & 0x1F];
-			Race.Square1_timer2 = Square1.Timer;
+			Race::Square1_timer1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race::Square1_timer2 = Timer;
 		}
-		Square1.CurD = 0;
-		Square1.EnvClk = TRUE;
+		CurD = 0;
+		EnvClk = TRUE;
 		break;
-	case 4:	Square1.Enabled = Val ? TRUE : FALSE;
-		if (!Square1.Enabled)
-			Square1.Timer = 0;
+	case 4:	Enabled = Val ? TRUE : FALSE;
+		if (!Enabled)
+			Timer = 0;
 		break;
 	}
-	Square1_CheckActive();
+	CheckActive();
 }
-__inline void	Square1_Run (void)
+inline void	Run (void)
 {
-	if (!--Square1.Cycles)
+	if (!--Cycles)
 	{
-		Square1.Cycles = (Square1.freq + 1) << 1;
-		Square1.CurD = (Square1.CurD + 1) & 0x7;
-		if (Square1.Active)
-			Square1.Pos = Duties[Square1.duty][Square1.CurD] * Square1.Vol;
+		Cycles = (freq + 1) << 1;
+		CurD = (CurD + 1) & 0x7;
+		if (Active)
+			Pos = SquareDuty[duty][CurD] * Vol;
 	}
 }
-__inline void	Square1_QuarterFrame (void)
+inline void	QuarterFrame (void)
 {
-	if (Square1.EnvClk)
+	if (EnvClk)
 	{
-		Square1.EnvClk = FALSE;
-		Square1.Envelope = 0xF;
-		Square1.EnvCtr = Square1.volume + 1;
+		EnvClk = FALSE;
+		Envelope = 0xF;
+		EnvCtr = volume + 1;
 	}
-	else if (!--Square1.EnvCtr)
+	else if (!--EnvCtr)
 	{
-		Square1.EnvCtr = Square1.volume + 1;
-		if (Square1.Envelope)
-			Square1.Envelope--;
-		else	Square1.Envelope = Square1.wavehold ? 0xF : 0x0;
+		EnvCtr = volume + 1;
+		if (Envelope)
+			Envelope--;
+		else	Envelope = wavehold ? 0xF : 0x0;
 	}
-	Square1.Vol = Square1.envelope ? Square1.volume : Square1.Envelope;
-	Square1_CheckActive();
+	Vol = envelope ? volume : Envelope;
+	CheckActive();
 }
-__inline void	Square1_HalfFrame (void)
+inline void	HalfFrame (void)
 {
-	if (!--Square1.BendCtr)
+	if (!--BendCtr)
 	{
-		Square1.BendCtr = Square1.swpspeed + 1;
-		if (Square1.swpenab && Square1.swpstep && Square1.ValidFreq)
+		BendCtr = swpspeed + 1;
+		if (swpenab && swpstep && ValidFreq)
 		{
-			int sweep = Square1.freq >> Square1.swpstep;
-			Square1.freq += Square1.swpdir ? -sweep : sweep;
+			int sweep = freq >> swpstep;
+			freq += swpdir ? -sweep : sweep;
 		}
 	}
-	if (Square1.SwpClk)
+	if (SwpClk)
 	{
-		Square1.SwpClk = FALSE;
-		Square1.BendCtr = Square1.swpspeed + 1;
+		SwpClk = FALSE;
+		BendCtr = swpspeed + 1;
 	}
-	if (Square1.Timer && !Square1.wavehold)
-		Square1.Timer--;
-	Square1_CheckActive();
+	if (Timer && !wavehold)
+		Timer--;
+	CheckActive();
 }
+} // namespace Square1
 
-static	struct
+namespace Triangle
 {
 	unsigned char linear, wavehold;
 	unsigned long freq;	// short
@@ -271,79 +367,85 @@ static	struct
 	BOOL LinClk;
 	unsigned long Cycles;	// short
 	signed long Pos;
-}	Triangle;
-const	signed char	TriDuty[32] = {
-	-8,-7,-6,-5,-4,-3,-2,-1,
-	+0,+1,+2,+3,+4,+5,+6,+7,
-	+7,+6,+5,+4,+3,+2,+1,+0,
-	-1,-2,-3,-4,-5,-6,-7,-8
-};
-__inline void	Triangle_CheckActive (void)
+
+void	Reset (void)
 {
-	Triangle.Active = Triangle.Timer && Triangle.LinCtr;
-	if (Triangle.freq < 4)
-		Triangle.Pos = 0;	// beyond hearing range
-	else	Triangle.Pos = TriDuty[Triangle.CurD] * 8;
+	linear = wavehold = 0;
+	freq = 0;
+	CurD = 0;
+	Timer = LinCtr = 0;
+	Enabled = Active = FALSE;
+        LinClk = FALSE;
+	Pos = 0;
+	Cycles = 1;
 }
-__inline void	Triangle_Write (int Reg, unsigned char Val)
+inline void	CheckActive (void)
+{
+	Active = Timer && LinCtr;
+	if (freq < 4)
+		Pos = 0;	// beyond hearing range
+	else	Pos = TriangleDuty[CurD] * 8;
+}
+inline void	Write (int Reg, unsigned char Val)
 {
 	switch (Reg)
 	{
-	case 0:	Triangle.linear = Val & 0x7F;
-		Race.Triangle_wavehold = (Val >> 7) & 0x1;
+	case 0:	linear = Val & 0x7F;
+		Race::Triangle_wavehold = (Val >> 7) & 0x1;
 		break;
-	case 2:	Triangle.freq &= 0x700;
-		Triangle.freq |= Val;
+	case 2:	freq &= 0x700;
+		freq |= Val;
 		break;
-	case 3:	Triangle.freq &= 0xFF;
-		Triangle.freq |= (Val & 0x7) << 8;
-		if (Triangle.Enabled)
+	case 3:	freq &= 0xFF;
+		freq |= (Val & 0x7) << 8;
+		if (Enabled)
 		{
-			Race.Triangle_timer1 = LengthCounts[(Val >> 3) & 0x1F];
-			Race.Triangle_timer2 = Triangle.Timer;
+			Race::Triangle_timer1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race::Triangle_timer2 = Timer;
 		}
-		Triangle.LinClk = TRUE;
+		LinClk = TRUE;
 		break;
-	case 4:	Triangle.Enabled = Val ? TRUE : FALSE;
-		if (!Triangle.Enabled)
-			Triangle.Timer = 0;
+	case 4:	Enabled = Val ? TRUE : FALSE;
+		if (!Enabled)
+			Timer = 0;
 		break;
 	}
-	Triangle_CheckActive();
+	CheckActive();
 }
-__inline void	Triangle_Run (void)
+inline void	Run (void)
 {
-	if (!--Triangle.Cycles)
+	if (!--Cycles)
 	{
-		Triangle.Cycles = Triangle.freq + 1;
-		if (Triangle.Active)
+		Cycles = freq + 1;
+		if (Active)
 		{
-			Triangle.CurD++;
-			Triangle.CurD &= 0x1F;
-			if (Triangle.freq < 4)
-				Triangle.Pos = 0;	// beyond hearing range
-			else	Triangle.Pos = TriDuty[Triangle.CurD] * 8;
+			CurD++;
+			CurD &= 0x1F;
+			if (freq < 4)
+				Pos = 0;	// beyond hearing range
+			else	Pos = TriangleDuty[CurD] * 8;
 		}
 	}
 }
-__inline void	Triangle_QuarterFrame (void)
+inline void	QuarterFrame (void)
 {
-	if (Triangle.LinClk)
-		Triangle.LinCtr = Triangle.linear;
-	else	if (Triangle.LinCtr)
-		Triangle.LinCtr--;
-	if (!Triangle.wavehold)
-		Triangle.LinClk = FALSE;
-	Triangle_CheckActive();
+	if (LinClk)
+		LinCtr = linear;
+	else	if (LinCtr)
+		LinCtr--;
+	if (!wavehold)
+		LinClk = FALSE;
+	CheckActive();
 }
-__inline void	Triangle_HalfFrame (void)
+inline void	HalfFrame (void)
 {
-	if (Triangle.Timer && !Triangle.wavehold)
-		Triangle.Timer--;
-	Triangle_CheckActive();
+	if (Timer && !wavehold)
+		Timer--;
+	CheckActive();
 }
+} // namespace Triangle
 
-static	struct
+namespace Noise
 {
 	unsigned char volume, envelope, wavehold, datatype;
 	unsigned long freq;	// short
@@ -355,81 +457,88 @@ static	struct
 	BOOL EnvClk;
 	unsigned long Cycles;	// short
 	signed long Pos;
-}	Noise;
-const	unsigned long	NoiseFreqNTSC[16] = {
-	0x004,0x008,0x010,0x020,0x040,0x060,0x080,0x0A0,
-	0x0CA,0x0FE,0x17C,0x1FC,0x2FA,0x3F8,0x7F2,0xFE4
-};
-const	unsigned long	NoiseFreqPAL[16] = {
-	0x004,0x007,0x00E,0x01E,0x03C,0x058,0x076,0x094,
-	0x0BC,0x0EC,0x162,0x1D8,0x2C4,0x3B0,0x762,0xEC2
-};
-const	unsigned long	*NoiseFreq;
-__inline void	Noise_Write (int Reg, unsigned char Val)
+
+const unsigned long	*FreqTable;
+void	Reset (void)
+{
+	volume = envelope = wavehold = datatype = 0;
+	freq = 0;
+	Vol = 0;
+	Timer = 0;
+	Envelope = 0;
+	Enabled = FALSE;
+	EnvClk = FALSE;
+	Pos = 0;
+	CurD = 1;
+	Cycles = 1;
+	EnvCtr = 1;
+}
+inline void	Write (int Reg, unsigned char Val)
 {
 	switch (Reg)
 	{
-	case 0:	Noise.volume = Val & 0x0F;
-		Noise.envelope = Val & 0x10;
-		Race.Noise_wavehold = Val & 0x20;
-		Noise.Vol = Noise.envelope ? Noise.volume : Noise.Envelope;
-		if (Noise.Timer)
-			Noise.Pos = ((Noise.CurD & 0x4000) ? -2 : 2) * Noise.Vol;
+	case 0:	volume = Val & 0x0F;
+		envelope = Val & 0x10;
+		Race::Noise_wavehold = Val & 0x20;
+		Vol = envelope ? volume : Envelope;
+		if (Timer)
+			Pos = ((CurD & 0x4000) ? -2 : 2) * Vol;
 		break;
-	case 2:	Noise.freq = Val & 0xF;
-		Noise.datatype = Val & 0x80;
+	case 2:	freq = Val & 0xF;
+		datatype = Val & 0x80;
 		break;
-	case 3:	if (Noise.Enabled)
+	case 3:	if (Enabled)
 		{
-			Race.Noise_timer1 = LengthCounts[(Val >> 3) & 0x1F];
-			Race.Noise_timer2 = Noise.Timer;
+			Race::Noise_timer1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race::Noise_timer2 = Timer;
 		}
-		Noise.EnvClk = TRUE;
+		EnvClk = TRUE;
 		break;
-	case 4:	Noise.Enabled = Val ? TRUE : FALSE;
-		if (!Noise.Enabled)
-			Noise.Timer = 0;
+	case 4:	Enabled = Val ? TRUE : FALSE;
+		if (!Enabled)
+			Timer = 0;
 		break;
 	}
 }
-__inline void	Noise_Run (void)
+inline void	Run (void)
 {
-	if (!--Noise.Cycles)
+	if (!--Cycles)
 	{
-		Noise.Cycles = NoiseFreq[Noise.freq];	/* no + 1 here */
-		if (Noise.datatype)
-			Noise.CurD = (Noise.CurD << 1) | (((Noise.CurD >> 14) ^ (Noise.CurD >> 8)) & 0x1);
-		else	Noise.CurD = (Noise.CurD << 1) | (((Noise.CurD >> 14) ^ (Noise.CurD >> 13)) & 0x1);
-		if (Noise.Timer)
-			Noise.Pos = ((Noise.CurD & 0x4000) ? -2 : 2) * Noise.Vol;
+		Cycles = FreqTable[freq];	/* no + 1 here */
+		if (datatype)
+			CurD = (CurD << 1) | (((CurD >> 14) ^ (CurD >> 8)) & 0x1);
+		else	CurD = (CurD << 1) | (((CurD >> 14) ^ (CurD >> 13)) & 0x1);
+		if (Timer)
+			Pos = ((CurD & 0x4000) ? -2 : 2) * Vol;
 	}
 }
-__inline void	Noise_QuarterFrame (void)
+inline void	QuarterFrame (void)
 {
-	if (Noise.EnvClk)
+	if (EnvClk)
 	{
-		Noise.EnvClk = FALSE;
-		Noise.Envelope = 0xF;
-		Noise.EnvCtr = Noise.volume + 1;
+		EnvClk = FALSE;
+		Envelope = 0xF;
+		EnvCtr = volume + 1;
 	}
-	else if (!--Noise.EnvCtr)
+	else if (!--EnvCtr)
 	{
-		Noise.EnvCtr = Noise.volume + 1;
-		if (Noise.Envelope)
-			Noise.Envelope--;
-		else	Noise.Envelope = Noise.wavehold ? 0xF : 0x0;
+		EnvCtr = volume + 1;
+		if (Envelope)
+			Envelope--;
+		else	Envelope = wavehold ? 0xF : 0x0;
 	}
-	Noise.Vol = Noise.envelope ? Noise.volume : Noise.Envelope;
-	if (Noise.Timer)
-		Noise.Pos = ((Noise.CurD & 0x4000) ? -2 : 2) * Noise.Vol;
+	Vol = envelope ? volume : Envelope;
+	if (Timer)
+		Pos = ((CurD & 0x4000) ? -2 : 2) * Vol;
 }
-__inline void	Noise_HalfFrame (void)
+inline void	HalfFrame (void)
 {
-	if (Noise.Timer && !Noise.wavehold)
-		Noise.Timer--;
+	if (Timer && !wavehold)
+		Timer--;
 }
+} // namespace Noise
 
-static	struct
+namespace DPCM
 {
 	unsigned char freq, wavehold, doirq, pcmdata, addr, len;
 	unsigned long CurAddr, SampleLen;	// short
@@ -438,210 +547,254 @@ static	struct
 	unsigned long LengthCtr;	// short
 	unsigned long Cycles;	// short
 	signed long Pos;
-}	DPCM;
-const	unsigned long	DPCMFreqNTSC[16] = {
-	0x1AC,0x17C,0x154,0x140,0x11E,0x0FE,0x0E2,0x0D6,
-	0x0BE,0x0A0,0x08E,0x080,0x06A,0x054,0x048,0x036
-};
-const	unsigned long	DPCMFreqPAL[16] = {
-	0x18E,0x162,0x13C,0x12A,0x114,0x0EC,0x0D2,0x0C6,
-	0x0B0,0x094,0x084,0x076,0x062,0x04E,0x042,0x032
-};
-const	unsigned long	*DPCMFreq;
-__inline void	DPCM_Write (int Reg, unsigned char Val)
+
+const	unsigned long	*FreqTable;
+void	Reset (void)
+{
+	freq = wavehold = doirq = pcmdata = addr = len = 0;
+	CurAddr = SampleLen = 0;
+	outmode = FALSE;
+	shiftreg = buffer = 0;
+	LengthCtr = 0;
+	Pos = 0;
+
+	Cycles = 1;
+	buffull = TRUE;
+	outbits = 8;
+}
+inline void	Write (int Reg, unsigned char Val)
 {
 	switch (Reg)
 	{
-	case 0:	DPCM.freq = Val & 0xF;
-		DPCM.wavehold = (Val >> 6) & 0x1;
-		DPCM.doirq = Val >> 7;
-		if (!DPCM.doirq)
+	case 0:	freq = Val & 0xF;
+		wavehold = (Val >> 6) & 0x1;
+		doirq = Val >> 7;
+		if (!doirq)
 			CPU.WantIRQ &= ~IRQ_DPCM;
 		break;
-	case 1:	DPCM.pcmdata = Val & 0x7F;
-		DPCM.Pos = (DPCM.pcmdata - 0x40) * 3;
+	case 1:	pcmdata = Val & 0x7F;
+		Pos = (pcmdata - 0x40) * 3;
 		break;
-	case 2:	DPCM.addr = Val;
+	case 2:	addr = Val;
 		break;
-	case 3:	DPCM.len = Val;
+	case 3:	len = Val;
 		break;
 	case 4:	if (Val)
 		{
-			if (!DPCM.LengthCtr)
+			if (!LengthCtr)
 			{
-				DPCM.CurAddr = 0xC000 | (DPCM.addr << 6);
-				DPCM.LengthCtr = (DPCM.len << 4) + 1;
+				CurAddr = 0xC000 | (addr << 6);
+				LengthCtr = (len << 4) + 1;
 			}
 		}
-		else	DPCM.LengthCtr = 0;
+		else	LengthCtr = 0;
 		CPU.WantIRQ &= ~IRQ_DPCM;
 		break;
 	}
 }
-__inline void	DPCM_Run (void)
+inline void	Run (void)
 {
-	if (!--DPCM.Cycles)
+	if (!--Cycles)
 	{
-		DPCM.Cycles = DPCMFreq[DPCM.freq];
-		if (DPCM.outmode)
+		Cycles = FreqTable[freq];
+		if (outmode)
 		{
-			if (DPCM.shiftreg & 1)
+			if (shiftreg & 1)
 			{
-				if (DPCM.pcmdata <= 0x7D)
-					DPCM.pcmdata += 2;
+				if (pcmdata <= 0x7D)
+					pcmdata += 2;
 			}
 			else
 			{
-				if (DPCM.pcmdata >= 0x02)
-					DPCM.pcmdata -= 2;
+				if (pcmdata >= 0x02)
+					pcmdata -= 2;
 			}
-			DPCM.shiftreg >>= 1;
-			DPCM.Pos = (DPCM.pcmdata - 0x40) * 3;
+			shiftreg >>= 1;
+			Pos = (pcmdata - 0x40) * 3;
 		}
-		if (!--DPCM.outbits)
+		if (!--outbits)
 		{
-			DPCM.outbits = 8;
-			if (DPCM.buffull && DPCM.LengthCtr)
+			outbits = 8;
+			if (buffull && LengthCtr)
 			{
-				DPCM.outmode = TRUE;
-				DPCM.shiftreg = DPCM.buffer;
-				DPCM.buffull = FALSE;
+				outmode = TRUE;
+				shiftreg = buffer;
+				buffull = FALSE;
 				CPU.PCMCycles = 4;
 			}
-			else	DPCM.outmode = FALSE;
+			else	outmode = FALSE;
 		}
 	}
 }
 
-void	DPCM_Fetch (void)
+void	Fetch (void)
 {
-	DPCM.buffer = CPU_MemGet(DPCM.CurAddr);
-	DPCM.buffull = TRUE;
-	if (++DPCM.CurAddr == 0x10000)
-		DPCM.CurAddr = 0x8000;
-	if (!--DPCM.LengthCtr)
+	buffer = CPU_MemGet(CurAddr);
+	buffull = TRUE;
+	if (++CurAddr == 0x10000)
+		CurAddr = 0x8000;
+	if (!--LengthCtr)
 	{
-		if (DPCM.wavehold)
+		if (wavehold)
 		{
-			DPCM.CurAddr = 0xC000 | (DPCM.addr << 6);
-			DPCM.LengthCtr = (DPCM.len << 4) + 1;
+			CurAddr = 0xC000 | (addr << 6);
+			LengthCtr = (len << 4) + 1;
 		}
-		else	if (DPCM.doirq)
+		else if (doirq)
 			CPU.WantIRQ |= IRQ_DPCM;
 	}
 }
+} // namespace DPCM
 
-static	struct
+namespace Frame
 {
 	unsigned char Bits;
 	unsigned long Cycles;
 	int Num;
-}	Frame;
-const	int	FrameCyclesNTSC_0[7] = { 7459,7456,7458,7457,1,1,7457 };
-const	int	FrameCyclesNTSC_1[6] = { 1,7458,7456,7458,7456,7454 };
-const	int	FrameCyclesPAL_0[7] = { 8315,8314,8312,8313,1,1,8313 };
-const	int	FrameCyclesPAL_1[6] = { 1,8314,8314,8312,8314,8312 };
-const	int	*FrameCycles_0;
-const	int	*FrameCycles_1;
-__inline void	Frame_Write (unsigned char Val)
+
+const	int	*CycleTable_0;
+const	int	*CycleTable_1;
+void	Reset (void)
 {
-	Frame.Bits = Val & 0xC0;
-	Frame.Num = 0;
-	if (Frame.Bits & 0x80)
-		Frame.Cycles = FrameCycles_1[0];
-	else	Frame.Cycles = FrameCycles_0[0];
-	if (APU.InternalClock & 1)
-		Frame.Cycles += 2;
-	else	Frame.Cycles++;
-	if (Frame.Bits & 0x40)
+	Bits = 0;
+	Num = 0;
+	Cycles = CycleTable_0[0];
+}
+inline void	Write (unsigned char Val)
+{
+	Bits = Val & 0xC0;
+	Num = 0;
+	if (Bits & 0x80)
+		Cycles = CycleTable_1[0];
+	else	Cycles = CycleTable_0[0];
+	if (InternalClock & 1)
+		Cycles += 2;
+	else	Cycles++;
+	if (Bits & 0x40)
 		CPU.WantIRQ &= ~IRQ_FRAME;
 }
-__inline void	Frame_Run (void)
+inline void	Run (void)
 {
-	if (!--Frame.Cycles)
+	if (!--Cycles)
 	{
-		if (Frame.Bits & 0x80)
+		if (Bits & 0x80)
 		{
-			if (Frame.Num < 4)
+			if (Num < 4)
 			{
-				Square0_QuarterFrame();
-				Square1_QuarterFrame();
-				Triangle_QuarterFrame();
-				Noise_QuarterFrame();
-				if ((Frame.Num == 0) || (Frame.Num == 2))
+				Square0::QuarterFrame();
+				Square1::QuarterFrame();
+				Triangle::QuarterFrame();
+				Noise::QuarterFrame();
+				if ((Num == 0) || (Num == 2))
 				{
-					Square0_HalfFrame();
-					Square1_HalfFrame();
-					Triangle_HalfFrame();
-					Noise_HalfFrame();
+					Square0::HalfFrame();
+					Square1::HalfFrame();
+					Triangle::HalfFrame();
+					Noise::HalfFrame();
 				}
 			}
-			Frame.Cycles = FrameCycles_1[Frame.Num + 1];
-			Frame.Num++;
-			if (Frame.Num == 5)
-				Frame.Num = 0;
+			Cycles = CycleTable_1[Num + 1];
+			Num++;
+			if (Num == 5)
+				Num = 0;
 		}
 		else
 		{
-			if ((Frame.Num == 0) || (Frame.Num == 1) || (Frame.Num == 2) ||(Frame.Num == 4))
+			if ((Num == 0) || (Num == 1) || (Num == 2) ||(Num == 4))
 			{
-				Square0_QuarterFrame();
-				Square1_QuarterFrame();
-				Triangle_QuarterFrame();
-				Noise_QuarterFrame();
+				Square0::QuarterFrame();
+				Square1::QuarterFrame();
+				Triangle::QuarterFrame();
+				Noise::QuarterFrame();
 			}
-			if ((Frame.Num == 1) || (Frame.Num == 4))
+			if ((Num == 1) || (Num == 4))
 			{
-				Square0_HalfFrame();
-				Square1_HalfFrame();
-				Triangle_HalfFrame();
-				Noise_HalfFrame();
+				Square0::HalfFrame();
+				Square1::HalfFrame();
+				Triangle::HalfFrame();
+				Noise::HalfFrame();
 			}
-			if (((Frame.Num == 3) || (Frame.Num == 4) || (Frame.Num == 5)) && !(Frame.Bits & 0x40))
+			if (((Num == 3) || (Num == 4) || (Num == 5)) && !(Bits & 0x40))
 				CPU.WantIRQ |= IRQ_FRAME;
-			Frame.Cycles = FrameCycles_0[Frame.Num + 1];
-			Frame.Num++;
-			if (Frame.Num == 6)
-				Frame.Num = 0;
+			Cycles = CycleTable_0[Num + 1];
+			Num++;
+			if (Num == 6)
+				Num = 0;
 		}
 	}
 }
+} // namespace Frame
 
-void	APU_WriteReg (int Addr, unsigned char Val)
+void	Race::Run (void)
+{
+	Square0::wavehold = Square0_wavehold;
+	if (Square0_timer1)
+	{
+		if (Square0::Timer == Square0_timer2)
+			Square0::Timer = Square0_timer1;
+		Square0_timer1 = 0;
+	}
+
+	Square1::wavehold = Square1_wavehold;
+	if (Square1_timer1)
+	{
+		if (Square1::Timer == Square1_timer2)
+			Square1::Timer = Square1_timer1;
+		Square1_timer1 = 0;
+	}
+
+	Triangle::wavehold = Triangle_wavehold;
+	if (Triangle_timer1)
+	{
+		if (Triangle::Timer == Triangle_timer2)
+			Triangle::Timer = Triangle_timer1;
+		Triangle_timer1 = 0;
+	}
+
+	Noise::wavehold = Noise_wavehold;
+	if (Noise_timer1)
+	{
+		if (Noise::Timer == Noise_timer2)
+			Noise::Timer = Noise_timer1;
+		Noise_timer1 = 0;
+	}
+}
+
+void	WriteReg (int Addr, unsigned char Val)
 {
 #ifndef	NSFPLAYER
 	if (Addr < 0x018)
-		APU.Regs[Addr] = Val;
+		Regs[Addr] = Val;
 #endif	/* !NSFPLAYER */
 	switch (Addr)
 	{
-	case 0x000:	Square0_Write(0,Val);	break;
-	case 0x001:	Square0_Write(1,Val);	break;
-	case 0x002:	Square0_Write(2,Val);	break;
-	case 0x003:	Square0_Write(3,Val);	break;
-	case 0x004:	Square1_Write(0,Val);	break;
-	case 0x005:	Square1_Write(1,Val);	break;
-	case 0x006:	Square1_Write(2,Val);	break;
-	case 0x007:	Square1_Write(3,Val);	break;
-	case 0x008:	Triangle_Write(0,Val);	break;
-	case 0x009:	Triangle_Write(1,Val);	break;
-	case 0x00A:	Triangle_Write(2,Val);	break;
-	case 0x00B:	Triangle_Write(3,Val);	break;
-	case 0x00C:	Noise_Write(0,Val);	break;
-	case 0x00D:	Noise_Write(1,Val);	break;
-	case 0x00E:	Noise_Write(2,Val);	break;
-	case 0x00F:	Noise_Write(3,Val);	break;
-	case 0x010:	DPCM_Write(0,Val);	break;
-	case 0x011:	DPCM_Write(1,Val);	break;
-	case 0x012:	DPCM_Write(2,Val);	break;
-	case 0x013:	DPCM_Write(3,Val);	break;
-	case 0x015:	Square0_Write(4,Val & 0x1);
-			Square1_Write(4,Val & 0x2);
-			Triangle_Write(4,Val & 0x4);
-			Noise_Write(4,Val & 0x8);
-			DPCM_Write(4,Val & 0x10);
+	case 0x000:	Square0::Write(0,Val);	break;
+	case 0x001:	Square0::Write(1,Val);	break;
+	case 0x002:	Square0::Write(2,Val);	break;
+	case 0x003:	Square0::Write(3,Val);	break;
+	case 0x004:	Square1::Write(0,Val);	break;
+	case 0x005:	Square1::Write(1,Val);	break;
+	case 0x006:	Square1::Write(2,Val);	break;
+	case 0x007:	Square1::Write(3,Val);	break;
+	case 0x008:	Triangle::Write(0,Val);	break;
+	case 0x009:	Triangle::Write(1,Val);	break;
+	case 0x00A:	Triangle::Write(2,Val);	break;
+	case 0x00B:	Triangle::Write(3,Val);	break;
+	case 0x00C:	Noise::Write(0,Val);	break;
+	case 0x00D:	Noise::Write(1,Val);	break;
+	case 0x00E:	Noise::Write(2,Val);	break;
+	case 0x00F:	Noise::Write(3,Val);	break;
+	case 0x010:	DPCM::Write(0,Val);	break;
+	case 0x011:	DPCM::Write(1,Val);	break;
+	case 0x012:	DPCM::Write(2,Val);	break;
+	case 0x013:	DPCM::Write(3,Val);	break;
+	case 0x015:	Square0::Write(4,Val & 0x1);
+			Square1::Write(4,Val & 0x2);
+			Triangle::Write(4,Val & 0x4);
+			Noise::Write(4,Val & 0x8);
+			DPCM::Write(4,Val & 0x10);
 						break;
-	case 0x017:	Frame_Write(Val);	break;
+	case 0x017:	Frame::Write(Val);	break;
 #ifndef	NSFPLAYER
 	default:	MessageBox(hMainWnd,_T("ERROR: Invalid sound write!"),_T("Nintendulator"),MB_OK);
 #else	/* NSFPLAYER */
@@ -650,65 +803,30 @@ void	APU_WriteReg (int Addr, unsigned char Val)
 						break;
 	}
 }
-unsigned char	APU_Read4015 (void)
+unsigned char	Read4015 (void)
 {
 	unsigned char result =
-		((            Square0.Timer) ? 0x01 : 0) |
-		((            Square1.Timer) ? 0x02 : 0) |
-		((           Triangle.Timer) ? 0x04 : 0) |
-		((              Noise.Timer) ? 0x08 : 0) |
-		((           DPCM.LengthCtr) ? 0x10 : 0) |
+		((            Square0::Timer) ? 0x01 : 0) |
+		((            Square1::Timer) ? 0x02 : 0) |
+		((           Triangle::Timer) ? 0x04 : 0) |
+		((              Noise::Timer) ? 0x08 : 0) |
+		((           DPCM::LengthCtr) ? 0x10 : 0) |
 		(((CPU.WantIRQ & IRQ_FRAME)) ? 0x40 : 0) |
 		(((CPU.WantIRQ &  IRQ_DPCM)) ? 0x80 : 0);
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 	return result;
 }
 
-void	APU_Race (void)
-{
-	Square0.wavehold = Race.Square0_wavehold;
-	if (Race.Square0_timer1)
-	{
-		if (Square0.Timer == Race.Square0_timer2)
-			Square0.Timer = Race.Square0_timer1;
-		Race.Square0_timer1 = 0;
-	}
-
-	Square1.wavehold = Race.Square1_wavehold;
-	if (Race.Square1_timer1)
-	{
-		if (Square1.Timer == Race.Square1_timer2)
-			Square1.Timer = Race.Square1_timer1;
-		Race.Square1_timer1 = 0;
-	}
-
-	Triangle.wavehold = Race.Triangle_wavehold;
-	if (Race.Triangle_timer1)
-	{
-		if (Triangle.Timer == Race.Triangle_timer2)
-			Triangle.Timer = Race.Triangle_timer1;
-		Race.Triangle_timer1 = 0;
-	}
-
-	Noise.wavehold = Race.Noise_wavehold;
-	if (Race.Noise_timer1)
-	{
-		if (Noise.Timer == Race.Noise_timer2)
-			Noise.Timer = Race.Noise_timer1;
-		Race.Noise_timer1 = 0;
-	}
-}
-
 #ifndef	NSFPLAYER
-#define	APU_Try(action,errormsg)\
+#define	Try(action,errormsg)\
 {\
 	if (FAILED(action))\
 	{\
-		APU_Release();\
-		APU_Create();\
+		Release();\
+		Create();\
 		if (FAILED(action))\
 		{\
-			APU_SoundOFF();\
+			SoundOFF();\
 			MessageBox(hMainWnd,errormsg,_T("Nintendulator"),MB_OK | MB_ICONERROR);\
 			return;\
 		}\
@@ -716,26 +834,26 @@ void	APU_Race (void)
 }
 #endif	/* !NSFPLAYER */
 
-void	APU_SetFPSVars (int FPS)
+void	SetFPSVars (int FPS)
 {
-	APU.WantFPS = FPS;
-	if (APU.WantFPS == 60)
+	WantFPS = FPS;
+	if (WantFPS == 60)
 	{
-		APU.PAL = FALSE;
-		APU.MHz = 1789773;
-		NoiseFreq = NoiseFreqNTSC;
-		DPCMFreq = DPCMFreqNTSC;
-		FrameCycles_0 = FrameCyclesNTSC_0;
-		FrameCycles_1 = FrameCyclesNTSC_1;
+		PAL = FALSE;
+		MHz = 1789773;
+		Noise::FreqTable = NoiseFreqNTSC;
+		DPCM::FreqTable = DPCMFreqNTSC;
+		Frame::CycleTable_0 = FrameCyclesNTSC_0;
+		Frame::CycleTable_1 = FrameCyclesNTSC_1;
 	}
-	else if (APU.WantFPS == 50)
+	else if (WantFPS == 50)
 	{
-		APU.PAL = TRUE;
-		APU.MHz = 1662607;
-		NoiseFreq = NoiseFreqPAL;
-		DPCMFreq = DPCMFreqPAL;
-		FrameCycles_0 = FrameCyclesPAL_0;
-		FrameCycles_1 = FrameCyclesPAL_1;
+		PAL = TRUE;
+		MHz = 1662607;
+		Noise::FreqTable = NoiseFreqPAL;
+		DPCM::FreqTable = DPCMFreqPAL;
+		Frame::CycleTable_0 = FrameCyclesPAL_0;
+		Frame::CycleTable_1 = FrameCyclesPAL_1;
 	}
 	else
 	{
@@ -747,73 +865,73 @@ void	APU_SetFPSVars (int FPS)
 		return;
 	}
 #ifndef	NSFPLAYER
-	APU.LockSize = LOCK_SIZE / APU.WantFPS;
-	APU.buflen = APU.LockSize / (BITS / 8);
-	if (APU.buffer)
-		free(APU.buffer);
-	APU.buffer = (short *)malloc(APU.LockSize);
+	LockSize = LOCK_SIZE / WantFPS;
+	buflen = LockSize / (BITS / 8);
+	if (buffer)
+		free(buffer);
+	buffer = (short *)malloc(LockSize);
 #endif	/* !NSFPLAYER */
 }
 
-void	APU_SetFPS (int FPS)
+void	SetFPS (int FPS)
 {
 #ifndef	NSFPLAYER
-	BOOL Enabled = APU.isEnabled;
-	APU_Release();
+	BOOL Enabled = isEnabled;
+	Release();
 #endif	/* !NSFPLAYER */
-	APU_SetFPSVars(FPS);
+	SetFPSVars(FPS);
 #ifndef	NSFPLAYER
-	APU_Create();
+	Create();
 	if (Enabled)
-		APU_SoundON();
+		SoundON();
 #endif	/* !NSFPLAYER */
 }
 
-void	APU_Init (void)
+void	Init (void)
 {
 #ifndef	NSFPLAYER
-	ZeroMemory(APU.Regs,sizeof(APU.Regs));
-	APU.DirectSound		= NULL;
-	APU.PrimaryBuffer	= NULL;
-	APU.Buffer		= NULL;
-	APU.buffer		= NULL;
-	APU.isEnabled		= FALSE;
+	ZeroMemory(Regs,sizeof(Regs));
+	DirectSound		= NULL;
+	PrimaryBuffer	= NULL;
+	Buffer		= NULL;
+	buffer		= NULL;
+	isEnabled		= FALSE;
 #endif	/* !NSFPLAYER */
-	APU.WantFPS		= 0;
-	APU.MHz			= 1;
-	APU.PAL			= FALSE;
+	WantFPS		= 0;
+	MHz			= 1;
+	PAL			= FALSE;
 #ifndef	NSFPLAYER
-	APU.LockSize		= 0;
-	APU.buflen		= 0;
+	LockSize		= 0;
+	buflen		= 0;
 #endif	/* !NSFPLAYER */
-	APU.Cycles		= 0;
-	APU.BufPos		= 0;
+	Cycles		= 0;
+	BufPos		= 0;
 #ifndef	NSFPLAYER
-	APU.next_pos		= 0;
+	next_pos		= 0;
 #endif	/* !NSFPLAYER */
 }
 
-void	APU_Create (void)
+void	Create (void)
 {
 #ifndef	NSFPLAYER
 	DSBUFFERDESC DSBD;
 	WAVEFORMATEX WFX;
 #endif	/* !NSFPLAYER */
 
-	if (!APU.WantFPS)
-		APU_SetFPSVars(60);
+	if (!WantFPS)
+		SetFPSVars(60);
 
 #ifndef	NSFPLAYER
-	if (FAILED(DirectSoundCreate(NULL,&APU.DirectSound,NULL)))
+	if (FAILED(DirectSoundCreate(NULL,&DirectSound,NULL)))
 	{
-		APU_Release();
+		Release();
 		MessageBox(hMainWnd,_T("Failed to create DirectSound interface!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
-	if (FAILED(IDirectSound_SetCooperativeLevel(APU.DirectSound,hMainWnd,DSSCL_PRIORITY)))
+	if (FAILED(IDirectSound_SetCooperativeLevel(DirectSound,hMainWnd,DSSCL_PRIORITY)))
 	{
-		APU_Release();
+		Release();
 		MessageBox(hMainWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
@@ -823,9 +941,9 @@ void	APU_Create (void)
 	DSBD.dwFlags = DSBCAPS_PRIMARYBUFFER;
 	DSBD.dwBufferBytes = 0;
 	DSBD.lpwfxFormat = NULL;
-	if (FAILED(IDirectSound_CreateSoundBuffer(APU.DirectSound,&DSBD,&APU.PrimaryBuffer,NULL)))
+	if (FAILED(IDirectSound_CreateSoundBuffer(DirectSound,&DSBD,&PrimaryBuffer,NULL)))
 	{
-		APU_Release();
+		Release();
 		MessageBox(hMainWnd,_T("Failed to create primary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
@@ -837,176 +955,162 @@ void	APU_Create (void)
 	WFX.wBitsPerSample = BITS;
 	WFX.nBlockAlign = WFX.wBitsPerSample / 8 * WFX.nChannels;
 	WFX.nAvgBytesPerSec = WFX.nSamplesPerSec * WFX.nBlockAlign;
-	if (FAILED(IDirectSoundBuffer_SetFormat(APU.PrimaryBuffer,&WFX)))
+	if (FAILED(IDirectSoundBuffer_SetFormat(PrimaryBuffer,&WFX)))
 	{
-		APU_Release();
+		Release();
 		MessageBox(hMainWnd,_T("Failed to set output format!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
-	if (FAILED(IDirectSoundBuffer_Play(APU.PrimaryBuffer,0,0,DSBPLAY_LOOPING)))
+	if (FAILED(IDirectSoundBuffer_Play(PrimaryBuffer,0,0,DSBPLAY_LOOPING)))
 	{
-		APU_Release();
+		Release();
 		MessageBox(hMainWnd,_T("Failed to start playing primary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
 
 	DSBD.dwFlags = DSBCAPS_GLOBALFOCUS | DSBCAPS_LOCSOFTWARE | DSBCAPS_GETCURRENTPOSITION2;
-	DSBD.dwBufferBytes = APU.LockSize * FRAMEBUF;
+	DSBD.dwBufferBytes = LockSize * FRAMEBUF;
 	DSBD.lpwfxFormat = &WFX;
 
-	if (FAILED(IDirectSound_CreateSoundBuffer(APU.DirectSound,&DSBD,&APU.Buffer,NULL)))
+	if (FAILED(IDirectSound_CreateSoundBuffer(DirectSound,&DSBD,&Buffer,NULL)))
 	{
-		APU_Release();
+		Release();
 		MessageBox(hMainWnd,_T("Failed to create secondary buffer!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
-	EI.DbgOut(_T("Created %iHz %i bit audio buffer, %i frames (%i bytes per frame)"), WFX.nSamplesPerSec, WFX.wBitsPerSample, DSBD.dwBufferBytes / APU.LockSize, APU.LockSize);
+	EI.DbgOut(_T("Created %iHz %i bit audio buffer, %i frames (%i bytes per frame)"), WFX.nSamplesPerSec, WFX.wBitsPerSample, DSBD.dwBufferBytes / LockSize, LockSize);
 #endif	/* !NSFPLAYER */
 }
 
-void	APU_Release (void)
+void	Release (void)
 {
 #ifndef	NSFPLAYER
-	if (APU.Buffer)
+	if (Buffer)
 	{
-		APU_SoundOFF();
-		IDirectSoundBuffer_Release(APU.Buffer);
-	}								APU.Buffer = NULL;
-	if (APU.PrimaryBuffer)
+		SoundOFF();
+		IDirectSoundBuffer_Release(Buffer);
+	}								Buffer = NULL;
+	if (PrimaryBuffer)
 	{
-		IDirectSoundBuffer_Stop(APU.PrimaryBuffer);
-		IDirectSoundBuffer_Release(APU.PrimaryBuffer);
-	}								APU.PrimaryBuffer = NULL;
-	if (APU.DirectSound)	IDirectSound_Release(APU.DirectSound);	APU.DirectSound = NULL;
+		IDirectSoundBuffer_Stop(PrimaryBuffer);
+		IDirectSoundBuffer_Release(PrimaryBuffer);
+	}								PrimaryBuffer = NULL;
+	if (DirectSound)	IDirectSound_Release(DirectSound);	DirectSound = NULL;
 #endif	/* !NSFPLAYER */
 }
 
-void	APU_Reset  (void)
+void	Reset  (void)
 {
 #ifndef	NSFPLAYER
-	ZeroMemory(APU.Regs,0x18);
+	ZeroMemory(Regs,0x18);
 #endif	/* !NSFPLAYER */
-	ZeroMemory(&Frame,sizeof(Frame));
-	ZeroMemory(&Square0,sizeof(Square0));
-	ZeroMemory(&Square1,sizeof(Square1));
-	ZeroMemory(&Triangle,sizeof(Triangle));
-	ZeroMemory(&Noise,sizeof(Noise));
-	ZeroMemory(&DPCM,sizeof(DPCM));
-	Noise.CurD = 1;
-	APU.Cycles = 1;
-	Square0.Cycles = 1;
-	Square0.EnvCtr = 1;
-	Square0.BendCtr = 1;
-	Square1.Cycles = 1;
-	Square1.EnvCtr = 1;
-	Square1.BendCtr = 1;
-	Triangle.Cycles = 1;
-	Noise.Cycles = 1;
-	Noise.EnvCtr = 1;
-	DPCM.Cycles = 1;
-	DPCM.buffull = TRUE;
-	DPCM.outbits = 8;
-	Frame.Cycles = FrameCycles_0[0];
+	Frame::Reset();
+	Square0::Reset();
+	Square1::Reset();
+	Triangle::Reset();
+	Noise::Reset();
+	DPCM::Reset();
+	Cycles = 1;
 	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
-	APU.InternalClock = 0;
+	InternalClock = 0;
 }
 
 #ifndef	NSFPLAYER
-void	APU_SoundOFF (void)
+void	SoundOFF (void)
 {
-	APU.isEnabled = FALSE;
-	if (APU.Buffer)
-		IDirectSoundBuffer_Stop(APU.Buffer);
+	isEnabled = FALSE;
+	if (Buffer)
+		IDirectSoundBuffer_Stop(Buffer);
 }
 
-void	APU_SoundON (void)
+void	SoundON (void)
 {
 	LPVOID bufPtr;
 	DWORD bufBytes;
-	if (!APU.Buffer)
+	if (!Buffer)
 	{
-		APU.isEnabled = FALSE;
-		APU_Create();
-		if (!APU.Buffer)
+		isEnabled = FALSE;
+		Create();
+		if (!Buffer)
 			return;
 	}
-	APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,0,0,&bufPtr,&bufBytes,NULL,0,DSBLOCK_ENTIREBUFFER),_T("Error locking sound buffer (Clear)"))
+	Try(IDirectSoundBuffer_Lock(Buffer,0,0,&bufPtr,&bufBytes,NULL,0,DSBLOCK_ENTIREBUFFER),_T("Error locking sound buffer (Clear)"))
 	ZeroMemory(bufPtr,bufBytes);
-	APU_Try(IDirectSoundBuffer_Unlock(APU.Buffer,bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer (Clear)"))
-	APU.isEnabled = TRUE;
-	APU_Try(IDirectSoundBuffer_Play(APU.Buffer,0,0,DSBPLAY_LOOPING),_T("Unable to start playing buffer"))
-	APU.next_pos = 0;
+	Try(IDirectSoundBuffer_Unlock(Buffer,bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer (Clear)"))
+	isEnabled = TRUE;
+	Try(IDirectSoundBuffer_Play(Buffer,0,0,DSBPLAY_LOOPING),_T("Unable to start playing buffer"))
+	next_pos = 0;
 }
 
-void	APU_Config (HWND hWnd)
+void	Config (HWND hWnd)
 {
 }
 
-int	APU_Save (FILE *out)
+int	Save (FILE *out)
 {
 	int clen = 0;
 	unsigned char tpc;
-	tpc = APU.Regs[0x15] & 0xF;
+	tpc = Regs[0x15] & 0xF;
 	fwrite(&tpc,1,1,out);			clen++;		//	uint8		Last value written to $4015, lower 4 bits
 
-	fwrite(&APU.Regs[0x01],1,1,out);	clen++;		//	uint8		Last value written to $4001
-	fwrite(&Square0.freq,2,1,out);		clen += 2;	//	uint16		Square0 frequency
-	fwrite(&Square0.Timer,1,1,out);		clen++;		//	uint8		Square0 timer
-	fwrite(&Square0.CurD,1,1,out);		clen++;		//	uint8		Square0 duty cycle pointer
-	tpc = (Square0.EnvClk ? 0x2 : 0x0) | (Square0.SwpClk ? 0x1 : 0x0);
+	fwrite(&Regs[0x01],1,1,out);	clen++;		//	uint8		Last value written to $4001
+	fwrite(&Square0::freq,2,1,out);		clen += 2;	//	uint16		Square0 frequency
+	fwrite(&Square0::Timer,1,1,out);		clen++;		//	uint8		Square0 timer
+	fwrite(&Square0::CurD,1,1,out);		clen++;		//	uint8		Square0 duty cycle pointer
+	tpc = (Square0::EnvClk ? 0x2 : 0x0) | (Square0::SwpClk ? 0x1 : 0x0);
 	fwrite(&tpc,1,1,out);			clen++;		//	uint8		Boolean flags for whether Square0 envelope(2)/sweep(1) needs a reload
-	fwrite(&Square0.EnvCtr,1,1,out);	clen++;		//	uint8		Square0 envelope counter
-	fwrite(&Square0.Envelope,1,1,out);	clen++;		//	uint8		Square0 envelope value
-	fwrite(&Square0.BendCtr,1,1,out);	clen++;		//	uint8		Square0 bend counter
-	fwrite(&Square0.Cycles,2,1,out);	clen += 2;	//	uint16		Square0 cycles
-	fwrite(&APU.Regs[0x00],1,1,out);	clen++;		//	uint8		Last value written to $4000
+	fwrite(&Square0::EnvCtr,1,1,out);	clen++;		//	uint8		Square0 envelope counter
+	fwrite(&Square0::Envelope,1,1,out);	clen++;		//	uint8		Square0 envelope value
+	fwrite(&Square0::BendCtr,1,1,out);	clen++;		//	uint8		Square0 bend counter
+	fwrite(&Square0::Cycles,2,1,out);	clen += 2;	//	uint16		Square0 cycles
+	fwrite(&Regs[0x00],1,1,out);	clen++;		//	uint8		Last value written to $4000
 
-	fwrite(&APU.Regs[0x05],1,1,out);	clen++;		//	uint8		Last value written to $4005
-	fwrite(&Square1.freq,2,1,out);		clen += 2;	//	uint16		Square1 frequency
-	fwrite(&Square1.Timer,1,1,out);		clen++;		//	uint8		Square1 timer
-	fwrite(&Square1.CurD,1,1,out);		clen++;		//	uint8		Square1 duty cycle pointer
-	tpc = (Square1.EnvClk ? 0x2 : 0x0) | (Square1.SwpClk ? 0x1 : 0x0);
+	fwrite(&Regs[0x05],1,1,out);	clen++;		//	uint8		Last value written to $4005
+	fwrite(&Square1::freq,2,1,out);		clen += 2;	//	uint16		Square1 frequency
+	fwrite(&Square1::Timer,1,1,out);		clen++;		//	uint8		Square1 timer
+	fwrite(&Square1::CurD,1,1,out);		clen++;		//	uint8		Square1 duty cycle pointer
+	tpc = (Square1::EnvClk ? 0x2 : 0x0) | (Square1::SwpClk ? 0x1 : 0x0);
 	fwrite(&tpc,1,1,out);			clen++;		//	uint8		Boolean flags for whether Square1 envelope(2)/sweep(1) needs a reload
-	fwrite(&Square1.EnvCtr,1,1,out);	clen++;		//	uint8		Square1 envelope counter
-	fwrite(&Square1.Envelope,1,1,out);	clen++;		//	uint8		Square1 envelope value
-	fwrite(&Square1.BendCtr,1,1,out);	clen++;		//	uint8		Square1 bend counter
-	fwrite(&Square1.Cycles,2,1,out);	clen += 2;	//	uint16		Square1 cycles
-	fwrite(&APU.Regs[0x04],1,1,out);	clen++;		//	uint8		Last value written to $4004
+	fwrite(&Square1::EnvCtr,1,1,out);	clen++;		//	uint8		Square1 envelope counter
+	fwrite(&Square1::Envelope,1,1,out);	clen++;		//	uint8		Square1 envelope value
+	fwrite(&Square1::BendCtr,1,1,out);	clen++;		//	uint8		Square1 bend counter
+	fwrite(&Square1::Cycles,2,1,out);	clen += 2;	//	uint16		Square1 cycles
+	fwrite(&Regs[0x04],1,1,out);	clen++;		//	uint8		Last value written to $4004
 
-	fwrite(&Triangle.freq,2,1,out);		clen += 2;	//	uint16		Triangle frequency
-	fwrite(&Triangle.Timer,1,1,out);	clen++;		//	uint8		Triangle timer
-	fwrite(&Triangle.CurD,1,1,out);		clen++;		//	uint8		Triangle duty cycle pointer
-	fwrite(&Triangle.LinClk,1,1,out);	clen++;		//	uint8		Boolean flag for whether linear counter needs reload
-	fwrite(&Triangle.LinCtr,1,1,out);	clen++;		//	uint8		Triangle linear counter
-	fwrite(&Triangle.Cycles,1,1,out);	clen++;		//	uint16		Triangle cycles
-	fwrite(&APU.Regs[0x08],1,1,out);	clen++;		//	uint8		Last value written to $4008
+	fwrite(&Triangle::freq,2,1,out);		clen += 2;	//	uint16		Triangle frequency
+	fwrite(&Triangle::Timer,1,1,out);	clen++;		//	uint8		Triangle timer
+	fwrite(&Triangle::CurD,1,1,out);		clen++;		//	uint8		Triangle duty cycle pointer
+	fwrite(&Triangle::LinClk,1,1,out);	clen++;		//	uint8		Boolean flag for whether linear counter needs reload
+	fwrite(&Triangle::LinCtr,1,1,out);	clen++;		//	uint8		Triangle linear counter
+	fwrite(&Triangle::Cycles,1,1,out);	clen++;		//	uint16		Triangle cycles
+	fwrite(&Regs[0x08],1,1,out);	clen++;		//	uint8		Last value written to $4008
 
-	fwrite(&APU.Regs[0x0E],1,1,out);	clen++;		//	uint8		Last value written to $400E
-	fwrite(&Noise.Timer,1,1,out);		clen++;		//	uint8		Noise timer
-	fwrite(&Noise.CurD,2,1,out);		clen += 2;	//	uint16		Noise duty cycle pointer
-	fwrite(&Noise.EnvClk,1,1,out);		clen++;		//	uint8		Boolean flag for whether Noise envelope needs a reload
-	fwrite(&Noise.EnvCtr,1,1,out);		clen++;		//	uint8		Noise envelope counter
-	fwrite(&Noise.Envelope,1,1,out);	clen++;		//	uint8		Noise  envelope value
-	fwrite(&Noise.Cycles,2,1,out);		clen += 2;	//	uint16		Noise cycles
-	fwrite(&APU.Regs[0x0C],1,1,out);	clen++;		//	uint8		Last value written to $400C
+	fwrite(&Regs[0x0E],1,1,out);	clen++;		//	uint8		Last value written to $400E
+	fwrite(&Noise::Timer,1,1,out);		clen++;		//	uint8		Noise timer
+	fwrite(&Noise::CurD,2,1,out);		clen += 2;	//	uint16		Noise duty cycle pointer
+	fwrite(&Noise::EnvClk,1,1,out);		clen++;		//	uint8		Boolean flag for whether Noise envelope needs a reload
+	fwrite(&Noise::EnvCtr,1,1,out);		clen++;		//	uint8		Noise envelope counter
+	fwrite(&Noise::Envelope,1,1,out);	clen++;		//	uint8		Noise  envelope value
+	fwrite(&Noise::Cycles,2,1,out);		clen += 2;	//	uint16		Noise cycles
+	fwrite(&Regs[0x0C],1,1,out);	clen++;		//	uint8		Last value written to $400C
 
-	fwrite(&APU.Regs[0x10],1,1,out);	clen++;		//	uint8		Last value written to $4010
-	fwrite(&APU.Regs[0x11],1,1,out);	clen++;		//	uint8		Last value written to $4011
-	fwrite(&APU.Regs[0x12],1,1,out);	clen++;		//	uint8		Last value written to $4012
-	fwrite(&APU.Regs[0x13],1,1,out);	clen++;		//	uint8		Last value written to $4013
-	fwrite(&DPCM.CurAddr,2,1,out);		clen += 2;	//	uint16		DPCM current address
-	fwrite(&DPCM.SampleLen,2,1,out);	clen += 2;	//	uint16		DPCM current length
-	fwrite(&DPCM.shiftreg,1,1,out);		clen++;		//	uint8		DPCM shift register
-	tpc = (DPCM.buffull ? 0x1 : 0x0) | (DPCM.outmode ? 0x2 : 0x0);
+	fwrite(&Regs[0x10],1,1,out);	clen++;		//	uint8		Last value written to $4010
+	fwrite(&Regs[0x11],1,1,out);	clen++;		//	uint8		Last value written to $4011
+	fwrite(&Regs[0x12],1,1,out);	clen++;		//	uint8		Last value written to $4012
+	fwrite(&Regs[0x13],1,1,out);	clen++;		//	uint8		Last value written to $4013
+	fwrite(&DPCM::CurAddr,2,1,out);		clen += 2;	//	uint16		DPCM current address
+	fwrite(&DPCM::SampleLen,2,1,out);	clen += 2;	//	uint16		DPCM current length
+	fwrite(&DPCM::shiftreg,1,1,out);		clen++;		//	uint8		DPCM shift register
+	tpc = (DPCM::buffull ? 0x1 : 0x0) | (DPCM::outmode ? 0x2 : 0x0);
 	fwrite(&tpc,1,1,out);			clen++;		//	uint8		DPCM output mode(2)/buffer full(1)
-	fwrite(&DPCM.outbits,1,1,out);		clen++;		//	uint8		DPCM shift count
-	fwrite(&DPCM.buffer,1,1,out);		clen++;		//	uint8		DPCM read buffer
-	fwrite(&DPCM.Cycles,2,1,out);		clen += 2;	//	uint16		DPCM cycles
-	fwrite(&DPCM.LengthCtr,2,1,out);	clen += 2;	//	uint16		DPCM length counter
+	fwrite(&DPCM::outbits,1,1,out);		clen++;		//	uint8		DPCM shift count
+	fwrite(&DPCM::buffer,1,1,out);		clen++;		//	uint8		DPCM read buffer
+	fwrite(&DPCM::Cycles,2,1,out);		clen += 2;	//	uint16		DPCM cycles
+	fwrite(&DPCM::LengthCtr,2,1,out);	clen += 2;	//	uint16		DPCM length counter
 
-	fwrite(&APU.Regs[0x17],1,1,out);	clen++;		//	uint8		Last value written to $4017
-	fwrite(&Frame.Cycles,2,1,out);		clen += 2;	//	uint16		Frame counter cycles
-	fwrite(&Frame.Num,1,1,out);		clen++;		//	uint8		Frame counter phase
+	fwrite(&Regs[0x17],1,1,out);	clen++;		//	uint8		Last value written to $4017
+	fwrite(&Frame::Cycles,2,1,out);		clen += 2;	//	uint16		Frame counter cycles
+	fwrite(&Frame::Num,1,1,out);		clen++;		//	uint8		Frame counter phase
 
 	tpc = CPU.WantIRQ & (IRQ_DPCM | IRQ_FRAME);
 	fwrite(&tpc,1,1,out);			clen++;		//	uint8		APU-related IRQs (PCM and FRAME, as-is)
@@ -1014,87 +1118,87 @@ int	APU_Save (FILE *out)
 	return clen;
 }
 
-int	APU_Load (FILE *in)
+int	Load (FILE *in)
 {
 	int clen = 0;
 	unsigned char tpc;
 
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4015, lower 4 bits
-	APU_WriteReg(0x015,tpc);	// this will ACK any DPCM IRQ
+	WriteReg(0x015,tpc);	// this will ACK any DPCM IRQ
 
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4001
-	APU_WriteReg(0x001,tpc);
-	fread(&Square0.freq,2,1,in);		clen += 2;	//	uint16		Square0 frequency
-	fread(&Square0.Timer,1,1,in);		clen++;		//	uint8		Square0 timer
-	fread(&Square0.CurD,1,1,in);		clen++;		//	uint8		Square0 duty cycle pointer
+	WriteReg(0x001,tpc);
+	fread(&Square0::freq,2,1,in);		clen += 2;	//	uint16		Square0 frequency
+	fread(&Square0::Timer,1,1,in);		clen++;		//	uint8		Square0 timer
+	fread(&Square0::CurD,1,1,in);		clen++;		//	uint8		Square0 duty cycle pointer
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Boolean flags for whether Square0 envelope(2)/sweep(1) needs a reload
-	Square0.EnvClk = (tpc & 0x2);
-	Square0.SwpClk = (tpc & 0x1);
-	fread(&Square0.EnvCtr,1,1,in);		clen++;		//	uint8		Square0 envelope counter
-	fread(&Square0.Envelope,1,1,in);	clen++;		//	uint8		Square0 envelope value
-	fread(&Square0.BendCtr,1,1,in);		clen++;		//	uint8		Square0 bend counter
-	fread(&Square0.Cycles,2,1,in);		clen += 2;	//	uint16		Square0 cycles
+	Square0::EnvClk = (tpc & 0x2);
+	Square0::SwpClk = (tpc & 0x1);
+	fread(&Square0::EnvCtr,1,1,in);		clen++;		//	uint8		Square0 envelope counter
+	fread(&Square0::Envelope,1,1,in);	clen++;		//	uint8		Square0 envelope value
+	fread(&Square0::BendCtr,1,1,in);		clen++;		//	uint8		Square0 bend counter
+	fread(&Square0::Cycles,2,1,in);		clen += 2;	//	uint16		Square0 cycles
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4000
-	APU_WriteReg(0x000,tpc);
+	WriteReg(0x000,tpc);
 
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4005
-	APU_WriteReg(0x005,tpc);
-	fread(&Square1.freq,2,1,in);		clen += 2;	//	uint16		Square1 frequency
-	fread(&Square1.Timer,1,1,in);		clen++;		//	uint8		Square1 timer
-	fread(&Square1.CurD,1,1,in);		clen++;		//	uint8		Square1 duty cycle pointer
+	WriteReg(0x005,tpc);
+	fread(&Square1::freq,2,1,in);		clen += 2;	//	uint16		Square1 frequency
+	fread(&Square1::Timer,1,1,in);		clen++;		//	uint8		Square1 timer
+	fread(&Square1::CurD,1,1,in);		clen++;		//	uint8		Square1 duty cycle pointer
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Boolean flags for whether Square1 envelope(2)/sweep(1) needs a reload
-	Square1.EnvClk = (tpc & 0x2);
-	Square1.SwpClk = (tpc & 0x1);
-	fread(&Square1.EnvCtr,1,1,in);		clen++;		//	uint8		Square1 envelope counter
-	fread(&Square1.Envelope,1,1,in);	clen++;		//	uint8		Square1 envelope value
-	fread(&Square1.BendCtr,1,1,in);		clen++;		//	uint8		Square1 bend counter
-	fread(&Square1.Cycles,2,1,in);		clen += 2;	//	uint16		Square1 cycles
+	Square1::EnvClk = (tpc & 0x2);
+	Square1::SwpClk = (tpc & 0x1);
+	fread(&Square1::EnvCtr,1,1,in);		clen++;		//	uint8		Square1 envelope counter
+	fread(&Square1::Envelope,1,1,in);	clen++;		//	uint8		Square1 envelope value
+	fread(&Square1::BendCtr,1,1,in);		clen++;		//	uint8		Square1 bend counter
+	fread(&Square1::Cycles,2,1,in);		clen += 2;	//	uint16		Square1 cycles
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4004
-	APU_WriteReg(0x004,tpc);
+	WriteReg(0x004,tpc);
 
-	fread(&Triangle.freq,2,1,in);		clen += 2;	//	uint16		Triangle frequency
-	fread(&Triangle.Timer,1,1,in);		clen++;		//	uint8		Triangle timer
-	fread(&Triangle.CurD,1,1,in);		clen++;		//	uint8		Triangle duty cycle pointer
-	fread(&Triangle.LinClk,1,1,in);		clen++;		//	uint8		Boolean flag for whether linear counter needs reload
-	fread(&Triangle.LinCtr,1,1,in);		clen++;		//	uint8		Triangle linear counter
-	fread(&Triangle.Cycles,1,1,in);		clen++;		//	uint16		Triangle cycles
+	fread(&Triangle::freq,2,1,in);		clen += 2;	//	uint16		Triangle frequency
+	fread(&Triangle::Timer,1,1,in);		clen++;		//	uint8		Triangle timer
+	fread(&Triangle::CurD,1,1,in);		clen++;		//	uint8		Triangle duty cycle pointer
+	fread(&Triangle::LinClk,1,1,in);		clen++;		//	uint8		Boolean flag for whether linear counter needs reload
+	fread(&Triangle::LinCtr,1,1,in);		clen++;		//	uint8		Triangle linear counter
+	fread(&Triangle::Cycles,1,1,in);		clen++;		//	uint16		Triangle cycles
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4008
-	APU_WriteReg(0x008,tpc);
+	WriteReg(0x008,tpc);
 
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $400E
-	APU_WriteReg(0x00E,tpc);
-	fread(&Noise.Timer,1,1,in);		clen++;		//	uint8		Noise timer
-	fread(&Noise.CurD,2,1,in);		clen += 2;	//	uint16		Noise duty cycle pointer
-	fread(&Noise.EnvClk,1,1,in);		clen++;		//	uint8		Boolean flag for whether Noise envelope needs a reload
-	fread(&Noise.EnvCtr,1,1,in);		clen++;		//	uint8		Noise envelope counter
-	fread(&Noise.Envelope,1,1,in);		clen++;		//	uint8		Noise  envelope value
-	fread(&Noise.Cycles,2,1,in);		clen += 2;	//	uint16		Noise cycles
+	WriteReg(0x00E,tpc);
+	fread(&Noise::Timer,1,1,in);		clen++;		//	uint8		Noise timer
+	fread(&Noise::CurD,2,1,in);		clen += 2;	//	uint16		Noise duty cycle pointer
+	fread(&Noise::EnvClk,1,1,in);		clen++;		//	uint8		Boolean flag for whether Noise envelope needs a reload
+	fread(&Noise::EnvCtr,1,1,in);		clen++;		//	uint8		Noise envelope counter
+	fread(&Noise::Envelope,1,1,in);		clen++;		//	uint8		Noise  envelope value
+	fread(&Noise::Cycles,2,1,in);		clen += 2;	//	uint16		Noise cycles
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $400C
-	APU_WriteReg(0x00C,tpc);
+	WriteReg(0x00C,tpc);
 
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4010
-	APU_WriteReg(0x010,tpc);
+	WriteReg(0x010,tpc);
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4011
-	APU_WriteReg(0x011,tpc);
+	WriteReg(0x011,tpc);
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4012
-	APU_WriteReg(0x012,tpc);
+	WriteReg(0x012,tpc);
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Last value written to $4013
-	APU_WriteReg(0x013,tpc);
-	fread(&DPCM.CurAddr,2,1,in);		clen += 2;	//	uint16		DPCM current address
-	fread(&DPCM.SampleLen,2,1,in);		clen += 2;	//	uint16		DPCM current length
-	fread(&DPCM.shiftreg,1,1,in);		clen++;		//	uint8		DPCM shift register
+	WriteReg(0x013,tpc);
+	fread(&DPCM::CurAddr,2,1,in);		clen += 2;	//	uint16		DPCM current address
+	fread(&DPCM::SampleLen,2,1,in);		clen += 2;	//	uint16		DPCM current length
+	fread(&DPCM::shiftreg,1,1,in);		clen++;		//	uint8		DPCM shift register
 	fread(&tpc,1,1,in);			clen++;		//	uint8		DPCM output mode(2)/buffer full(1)
-	DPCM.buffull = tpc & 0x1;
-	DPCM.outmode = tpc & 0x2;
-	fread(&DPCM.outbits,1,1,in);		clen++;		//	uint8		DPCM shift count
-	fread(&DPCM.buffer,1,1,in);		clen++;		//	uint8		DPCM read buffer
-	fread(&DPCM.Cycles,2,1,in);		clen += 2;	//	uint16		DPCM cycles
-	fread(&DPCM.LengthCtr,2,1,in);		clen += 2;	//	uint16		DPCM length counter
+	DPCM::buffull = tpc & 0x1;
+	DPCM::outmode = tpc & 0x2;
+	fread(&DPCM::outbits,1,1,in);		clen++;		//	uint8		DPCM shift count
+	fread(&DPCM::buffer,1,1,in);		clen++;		//	uint8		DPCM read buffer
+	fread(&DPCM::Cycles,2,1,in);		clen += 2;	//	uint16		DPCM cycles
+	fread(&DPCM::LengthCtr,2,1,in);		clen += 2;	//	uint16		DPCM length counter
 
 	fread(&tpc,1,1,in);			clen++;		//	uint8		Frame counter bits (last write to $4017)
-	APU_WriteReg(0x017,tpc);	// and this will ACK any frame IRQ
-	fread(&Frame.Cycles,2,1,in);		clen += 2;	//	uint16		Frame counter cycles
-	fread(&Frame.Num,1,1,in);		clen++;		//	uint8		Frame counter phase
+	WriteReg(0x017,tpc);	// and this will ACK any frame IRQ
+	fread(&Frame::Cycles,2,1,in);		clen += 2;	//	uint16		Frame counter cycles
+	fread(&Frame::Num,1,1,in);		clen++;		//	uint8		Frame counter phase
 
 	fread(&tpc,1,1,in);			clen++;		//	uint8		APU-related IRQs (PCM and FRAME, as-is)
 	CPU.WantIRQ |= tpc;		// so we can reload them here
@@ -1106,65 +1210,65 @@ short	sample_pos = 0;
 BOOL	sample_ok = FALSE;
 #endif	/* !NSFPLAYER */
 
-void	APU_Run (void)
+void	Run (void)
 {
 	static int sampcycles = 0, samppos = 0;
 #ifndef	NSFPLAYER
-	int NewBufPos = FREQ * ++APU.Cycles / APU.MHz;
-	if (NewBufPos >= APU.buflen)
+	int NewBufPos = FREQ * ++Cycles / MHz;
+	if (NewBufPos >= buflen)
 	{
 		LPVOID bufPtr;
 		DWORD bufBytes;
 		unsigned long rpos, wpos;
 
-		APU.Cycles = NewBufPos = 0;
+		Cycles = NewBufPos = 0;
 		if (AVI.aviout)
 			AVI_AddAudio();
 		do
 		{
 			Sleep(1);
-			if (!APU.isEnabled)
+			if (!isEnabled)
 				break;
-			APU_Try(IDirectSoundBuffer_GetCurrentPosition(APU.Buffer,&rpos,&wpos),_T("Error getting audio position"))
-			rpos /= APU.LockSize;
-			wpos /= APU.LockSize;
+			Try(IDirectSoundBuffer_GetCurrentPosition(Buffer,&rpos,&wpos),_T("Error getting audio position"))
+			rpos /= LockSize;
+			wpos /= LockSize;
 			if (wpos < rpos)
 				wpos += FRAMEBUF;
-		} while ((rpos <= APU.next_pos) && (APU.next_pos <= wpos));
-		if (APU.isEnabled)
+		} while ((rpos <= next_pos) && (next_pos <= wpos));
+		if (isEnabled)
 		{
-			APU_Try(IDirectSoundBuffer_Lock(APU.Buffer,APU.next_pos * APU.LockSize,APU.LockSize,&bufPtr,&bufBytes,NULL,0,0),_T("Error locking sound buffer"))
-			memcpy(bufPtr,APU.buffer,bufBytes);
-			APU_Try(IDirectSoundBuffer_Unlock(APU.Buffer,bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer"))
-			APU.next_pos = (APU.next_pos + 1) % FRAMEBUF;
+			Try(IDirectSoundBuffer_Lock(Buffer,next_pos * LockSize,LockSize,&bufPtr,&bufBytes,NULL,0,0),_T("Error locking sound buffer"))
+			memcpy(bufPtr,buffer,bufBytes);
+			Try(IDirectSoundBuffer_Unlock(Buffer,bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer"))
+			next_pos = (next_pos + 1) % FRAMEBUF;
 		}
 	}
 #else	/* NSFPLAYER */
-	int NewBufPos = SAMPLERATE * ++APU.Cycles / APU.MHz;
+	int NewBufPos = SAMPLERATE * ++Cycles / MHz;
 	if (NewBufPos == SAMPLERATE)	/* we've generated 1 second, so we can reset our counters now */
-		APU.Cycles = NewBufPos = 0;
+		Cycles = NewBufPos = 0;
 #endif	/* !NSFPLAYER */
-	APU.InternalClock++;
-	Frame_Run();
-	APU_Race();
-	Square0_Run();
-	Square1_Run();
-	Triangle_Run();
-	Noise_Run();
-	DPCM_Run();
+	InternalClock++;
+	Frame::Run();
+	Race::Run();
+	Square0::Run();
+	Square1::Run();
+	Triangle::Run();
+	Noise::Run();
+	DPCM::Run();
 
 #ifdef	SOUND_FILTERING
-	samppos += Square0.Pos + Square1.Pos + Triangle.Pos + Noise.Pos + DPCM.Pos;
+	samppos += Square0::Pos + Square1::Pos + Triangle::Pos + Noise::Pos + DPCM::Pos;
 #endif	/* SOUND_FILTERING */
 	sampcycles++;
 	
-	if (NewBufPos != APU.BufPos)
+	if (NewBufPos != BufPos)
 	{
-		APU.BufPos = NewBufPos;
+		BufPos = NewBufPos;
 #ifdef	SOUND_FILTERING
 		samppos = (samppos << 6) / sampcycles;
 #else	/* !SOUND_FILTERING */
-		samppos = (Square0.Pos + Square1.Pos + Triangle.Pos + Noise.Pos + DPCM.Pos) << 6;
+		samppos = (Square0::Pos + Square1::Pos + Triangle::Pos + Noise::Pos + DPCM::Pos) << 6;
 #endif	/* SOUND_FILTERING */
 		if ((MI) && (MI->GenSound))
 			samppos += MI->GenSound(sampcycles);
@@ -1173,7 +1277,7 @@ void	APU_Run (void)
 		if (samppos > 0x7FFF)
 			samppos = 0x7FFF;
 #ifndef	NSFPLAYER
-		APU.buffer[APU.BufPos] = (short)samppos;
+		buffer[BufPos] = (short)samppos;
 #else	/* NSFPLAYER */
 		sample_pos = (short)samppos;
 		sample_ok = TRUE;
@@ -1181,3 +1285,5 @@ void	APU_Run (void)
 		samppos = sampcycles = 0;
 	}
 }
+
+} // namespace APU
