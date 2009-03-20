@@ -8,24 +8,26 @@
 #include "stdafx.h"
 #include "Controllers.h"
 
-static	void	Frame (struct Controllers::tStdPort *Cont, unsigned char mode)
+namespace Controllers
+{
+static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 }
-static	unsigned char	Read (struct Controllers::tStdPort *Cont)
+static	unsigned char	Read (struct tStdPort *Cont)
 {
 	return 0;
 }
-static	void	Write (struct Controllers::tStdPort *Cont, unsigned char Val)
+static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
 }
-static	void	Config (struct Controllers::tStdPort *Cont, HWND hWnd)
+static	void	Config (struct tStdPort *Cont, HWND hWnd)
 {
 	MessageBox(hWnd,_T("No configuration necessary!"),_T("Nintendulator"),MB_OK);
 }
-static	void	Unload (struct Controllers::tStdPort *Cont)
+static	void	Unload (struct tStdPort *Cont)
 {
 }
-void	StdPort_SetUnconnected (struct Controllers::tStdPort *Cont)
+void	StdPort_SetUnconnected (struct tStdPort *Cont)
 {
 	Cont->Read = Read;
 	Cont->Write = Write;
@@ -39,3 +41,4 @@ void	StdPort_SetUnconnected (struct Controllers::tStdPort *Cont)
 	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 }
+} // namespace Controllers

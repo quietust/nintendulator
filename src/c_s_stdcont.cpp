@@ -11,12 +11,14 @@
 #include "Movie.h"
 #include "Controllers.h"
 
+namespace Controllers
+{
 #define	Bits	Data[0]
 #define	BitPtr	Data[1]
 #define	Strobe	Data[2]
 #define	NewBits	Data[3]
 
-static	void	Frame (struct Controllers::tStdPort *Cont, unsigned char mode)
+static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	int i;
 	if (mode & MOV_PLAY)
@@ -26,10 +28,10 @@ static	void	Frame (struct Controllers::tStdPort *Cont, unsigned char mode)
 		Cont->NewBits = 0;
 		for (i = 0; i < 8; i++)
 		{
-			if (Controllers::IsPressed(Cont->Buttons[i]))
+			if (IsPressed(Cont->Buttons[i]))
 				Cont->NewBits |= 1 << i;
 		}
-		if (!Controllers::EnableOpposites)
+		if (!EnableOpposites)
 		{	/* prevent simultaneously pressing left+right or up+down */
 			if ((Cont->NewBits & 0xC0) == 0xC0)
 				Cont->NewBits &= 0x3F;
@@ -41,7 +43,7 @@ static	void	Frame (struct Controllers::tStdPort *Cont, unsigned char mode)
 		Cont->MovData[0] = (unsigned char)Cont->NewBits;
 }
 
-static	unsigned char	Read (struct Controllers::tStdPort *Cont)
+static	unsigned char	Read (struct tStdPort *Cont)
 {
 	unsigned char result;
 	if (Cont->Strobe)
@@ -58,7 +60,7 @@ static	unsigned char	Read (struct Controllers::tStdPort *Cont)
 	}
 	return result;
 }
-static	void	Write (struct Controllers::tStdPort *Cont, unsigned char Val)
+static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
 	if ((Cont->Strobe) || (Val & 1))
 	{
@@ -71,22 +73,22 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 {
 	int dlgLists[8] = {IDC_CONT_D0,IDC_CONT_D1,IDC_CONT_D2,IDC_CONT_D3,IDC_CONT_D4,IDC_CONT_D5,IDC_CONT_D6,IDC_CONT_D7};
 	int dlgButtons[8] = {IDC_CONT_K0,IDC_CONT_K1,IDC_CONT_K2,IDC_CONT_K3,IDC_CONT_K4,IDC_CONT_K5,IDC_CONT_K6,IDC_CONT_K7};
-	static struct Controllers::tStdPort *Cont = NULL;
+	static struct tStdPort *Cont = NULL;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct Controllers::tStdPort *)lParam;
-	Controllers::ParseConfigMessages(hDlg,8,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+		Cont = (struct tStdPort *)lParam;
+	ParseConfigMessages(hDlg,8,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct Controllers::tStdPort *Cont, HWND hWnd)
+static	void	Config (struct tStdPort *Cont, HWND hWnd)
 {
 	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_STDCONTROLLER,hWnd,ConfigProc,(LPARAM)Cont);
 }
-static	void	Unload (struct Controllers::tStdPort *Cont)
+static	void	Unload (struct tStdPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	StdPort_SetStdController (struct Controllers::tStdPort *Cont)
+void	StdPort_SetStdController (struct tStdPort *Cont)
 {
 	Cont->Read = Read;
 	Cont->Write = Write;
@@ -108,3 +110,4 @@ void	StdPort_SetStdController (struct Controllers::tStdPort *Cont)
 #undef	Strobe
 #undef	BitPtr
 #undef	Bits
+} // namespace Controllers

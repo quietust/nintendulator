@@ -11,10 +11,13 @@
 #include "Movie.h"
 #include "Controllers.h"
 
+namespace Controllers
+{
 #define	Bits	Data[0]
 #define	Sel	Data[1]
 #define	NewBits	Data[2]
-static	void	Frame (struct Controllers::tExpPort *Cont, unsigned char mode)
+
+static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 {
 	int i;
 	if (mode & MOV_PLAY)
@@ -24,7 +27,7 @@ static	void	Frame (struct Controllers::tExpPort *Cont, unsigned char mode)
 		Cont->NewBits = 0;
 		for (i = 0; i < 12; i++)
 		{
-			if (Controllers::IsPressed(Cont->Buttons[i]))
+			if (IsPressed(Cont->Buttons[i]))
 				Cont->NewBits |= 1 << i;
 		}
 	}
@@ -34,11 +37,11 @@ static	void	Frame (struct Controllers::tExpPort *Cont, unsigned char mode)
 		Cont->MovData[1] = (unsigned char)(Cont->NewBits >> 8);
 	}
 }
-static	unsigned char	Read1 (struct Controllers::tExpPort *Cont)
+static	unsigned char	Read1 (struct tExpPort *Cont)
 {
 	return 0;
 }
-static	unsigned char	Read2 (struct Controllers::tExpPort *Cont)
+static	unsigned char	Read2 (struct tExpPort *Cont)
 {
 	unsigned char result = 0;
 	if (Cont->Sel & 0x1)
@@ -49,7 +52,7 @@ static	unsigned char	Read2 (struct Controllers::tExpPort *Cont)
 		result = (unsigned char)(Cont->Bits >> 0) & 0xF;
 	return (result ^ 0xF) << 1;
 }
-static	void	Write (struct Controllers::tExpPort *Cont, unsigned char Val)
+static	void	Write (struct tExpPort *Cont, unsigned char Val)
 {
 	Cont->Bits = Cont->NewBits;
 	Cont->Sel = ~Val & 7;
@@ -58,9 +61,9 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 {
 	int dlgLists[12] = {IDC_CONT_D0,IDC_CONT_D1,IDC_CONT_D2,IDC_CONT_D3,IDC_CONT_D4,IDC_CONT_D5,IDC_CONT_D6,IDC_CONT_D7,IDC_CONT_D8,IDC_CONT_D9,IDC_CONT_D10,IDC_CONT_D11};
 	int dlgButtons[12] = {IDC_CONT_K0,IDC_CONT_K1,IDC_CONT_K2,IDC_CONT_K3,IDC_CONT_K4,IDC_CONT_K5,IDC_CONT_K6,IDC_CONT_K7,IDC_CONT_K8,IDC_CONT_K9,IDC_CONT_K10,IDC_CONT_K11};
-	static struct Controllers::tExpPort *Cont = NULL;
+	static struct tExpPort *Cont = NULL;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct Controllers::tExpPort *)lParam;
+		Cont = (struct tExpPort *)lParam;
 	if ((uMsg == WM_COMMAND) && (LOWORD(wParam) == IDC_CONT_FLIP))
 	{
 		int i;
@@ -80,21 +83,21 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		Cont->Buttons[10] = Buttons[9];
 		Cont->Buttons[11] = Buttons[8];
 		for (i = 0; i < 12; i++)
-			Controllers::ConfigButton(&Cont->Buttons[i],Cont->Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),FALSE);
+			ConfigButton(&Cont->Buttons[i],Cont->Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),FALSE);
 	}
-	else	Controllers::ParseConfigMessages(hDlg,12,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+	else	ParseConfigMessages(hDlg,12,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct Controllers::tExpPort *Cont, HWND hWnd)
+static	void	Config (struct tExpPort *Cont, HWND hWnd)
 {
 	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_FAMTRAIN,hWnd,ConfigProc,(LPARAM)Cont);
 }
-static	void	Unload (struct Controllers::tExpPort *Cont)
+static	void	Unload (struct tExpPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	ExpPort_SetFamTrainer (struct Controllers::tExpPort *Cont)
+void	ExpPort_SetFamTrainer (struct tExpPort *Cont)
 {
 	Cont->Read1 = Read1;
 	Cont->Read2 = Read2;
@@ -115,3 +118,4 @@ void	ExpPort_SetFamTrainer (struct Controllers::tExpPort *Cont)
 #undef	NewBits
 #undef	Sel
 #undef	Bits
+} // namespace Controllers

@@ -11,6 +11,8 @@
 #include "Movie.h"
 #include "Controllers.h"
 
+namespace Controllers
+{
 #define	Bits1	Data[0]
 #define	Bits2	Data[1]
 #define	BitPtr1	Data[2]
@@ -18,7 +20,8 @@
 #define	Strobe	Data[4]
 #define	NewBit1	Data[5]
 #define	NewBit2	Data[6]
-static	void	Frame (struct Controllers::tExpPort *Cont, unsigned char mode)
+
+static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 {
 	int i;
 	if (mode & MOV_PLAY)
@@ -32,12 +35,12 @@ static	void	Frame (struct Controllers::tExpPort *Cont, unsigned char mode)
 		Cont->NewBit2 = 0;
 		for (i = 0; i < 8; i++)
 		{
-			if (Controllers::IsPressed(Cont->Buttons[i]))
+			if (IsPressed(Cont->Buttons[i]))
 				Cont->NewBit1 |= 1 << i;
-			if (Controllers::IsPressed(Cont->Buttons[i+8]))
+			if (IsPressed(Cont->Buttons[i+8]))
 				Cont->NewBit2 |= 1 << i;
 		}
-		if (!Controllers::EnableOpposites)
+		if (!EnableOpposites)
 		{	/* prevent simultaneously pressing left+right or up+down */
 			if ((Cont->NewBit1 & 0xC0) == 0xC0)
 				Cont->NewBit1 &= 0x3F;
@@ -57,7 +60,7 @@ static	void	Frame (struct Controllers::tExpPort *Cont, unsigned char mode)
 	}
 }
 
-static	unsigned char	Read1 (struct Controllers::tExpPort *Cont)
+static	unsigned char	Read1 (struct tExpPort *Cont)
 {
 	unsigned char result = 1;
 	if (Cont->Strobe)
@@ -73,7 +76,7 @@ static	unsigned char	Read1 (struct Controllers::tExpPort *Cont)
 	}
 	return result << 1;
 }
-static	unsigned char	Read2 (struct Controllers::tExpPort *Cont)
+static	unsigned char	Read2 (struct tExpPort *Cont)
 {
 	unsigned char result = 1;
 	if (Cont->Strobe)
@@ -89,7 +92,7 @@ static	unsigned char	Read2 (struct Controllers::tExpPort *Cont)
 	}
 	return result << 1;
 }
-static	void	Write (struct Controllers::tExpPort *Cont, unsigned char Val)
+static	void	Write (struct tExpPort *Cont, unsigned char Val)
 {
 	if ((Cont->Strobe) || (Val & 1))
 	{
@@ -104,22 +107,22 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 {
 	int dlgLists[16] = {IDC_CONT_D0,IDC_CONT_D1,IDC_CONT_D2,IDC_CONT_D3,IDC_CONT_D4,IDC_CONT_D5,IDC_CONT_D6,IDC_CONT_D7,IDC_CONT_D8,IDC_CONT_D9,IDC_CONT_D10,IDC_CONT_D11,IDC_CONT_D12,IDC_CONT_D13,IDC_CONT_D14,IDC_CONT_D15};
 	int dlgButtons[16] = {IDC_CONT_K0,IDC_CONT_K1,IDC_CONT_K2,IDC_CONT_K3,IDC_CONT_K4,IDC_CONT_K5,IDC_CONT_K6,IDC_CONT_K7,IDC_CONT_K8,IDC_CONT_K9,IDC_CONT_K10,IDC_CONT_K11,IDC_CONT_K12,IDC_CONT_K13,IDC_CONT_K14,IDC_CONT_K15};
-	static struct Controllers::tExpPort *Cont = NULL;
+	static struct tExpPort *Cont = NULL;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct Controllers::tExpPort *)lParam;
-	Controllers::ParseConfigMessages(hDlg,16,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+		Cont = (struct tExpPort *)lParam;
+	ParseConfigMessages(hDlg,16,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct Controllers::tExpPort *Cont, HWND hWnd)
+static	void	Config (struct tExpPort *Cont, HWND hWnd)
 {
 	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_FAMI4PLAY,hWnd,ConfigProc,(LPARAM)Cont);
 }
-static	void	Unload (struct Controllers::tExpPort *Cont)
+static	void	Unload (struct tExpPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	ExpPort_SetFami4Play (struct Controllers::tExpPort *Cont)
+void	ExpPort_SetFami4Play (struct tExpPort *Cont)
 {
 	Cont->Read1 = Read1;
 	Cont->Read2 = Read2;
@@ -148,3 +151,4 @@ void	ExpPort_SetFami4Play (struct Controllers::tExpPort *Cont)
 #undef	BitPtr1
 #undef	Bits2
 #undef	Bits1
+} // namespace Controllers

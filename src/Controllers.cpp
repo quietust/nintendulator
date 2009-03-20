@@ -13,23 +13,6 @@
 #include "Controllers.h"
 #include <commdlg.h>
 
-void	StdPort_SetUnconnected		(struct Controllers::tStdPort *);
-void	StdPort_SetStdController	(struct Controllers::tStdPort *);
-void	StdPort_SetZapper		(struct Controllers::tStdPort *);
-void	StdPort_SetArkanoidPaddle	(struct Controllers::tStdPort *);
-void	StdPort_SetPowerPad		(struct Controllers::tStdPort *);
-void	StdPort_SetFourScore		(struct Controllers::tStdPort *);
-void	StdPort_SetSnesController	(struct Controllers::tStdPort *);
-void	StdPort_SetVSZapper		(struct Controllers::tStdPort *);
-
-void	ExpPort_SetUnconnected		(struct Controllers::tExpPort *);
-void	ExpPort_SetFami4Play		(struct Controllers::tExpPort *);
-void	ExpPort_SetArkanoidPaddle	(struct Controllers::tExpPort *);
-void	ExpPort_SetFamilyBasicKeyboard	(struct Controllers::tExpPort *);
-void	ExpPort_SetAltKeyboard		(struct Controllers::tExpPort *);
-void	ExpPort_SetFamTrainer		(struct Controllers::tExpPort *);
-void	ExpPort_SetTablet		(struct Controllers::tExpPort *);
-
 namespace Controllers
 {
 static	HWND key;
@@ -37,6 +20,23 @@ static	HWND key;
 struct tStdPort Port1, Port2;
 struct tStdPort FSPort1, FSPort2, FSPort3, FSPort4;
 struct tExpPort ExpPort;
+
+void	StdPort_SetUnconnected		(struct tStdPort *);
+void	StdPort_SetStdController	(struct tStdPort *);
+void	StdPort_SetZapper		(struct tStdPort *);
+void	StdPort_SetArkanoidPaddle	(struct tStdPort *);
+void	StdPort_SetPowerPad		(struct tStdPort *);
+void	StdPort_SetFourScore		(struct tStdPort *);
+void	StdPort_SetSnesController	(struct tStdPort *);
+void	StdPort_SetVSZapper		(struct tStdPort *);
+
+void	ExpPort_SetUnconnected		(struct tExpPort *);
+void	ExpPort_SetFami4Play		(struct tExpPort *);
+void	ExpPort_SetArkanoidPaddle	(struct tExpPort *);
+void	ExpPort_SetFamilyBasicKeyboard	(struct tExpPort *);
+void	ExpPort_SetAltKeyboard		(struct tExpPort *);
+void	ExpPort_SetFamTrainer		(struct tExpPort *);
+void	ExpPort_SetTablet		(struct tExpPort *);
 
 BOOL	EnableOpposites;
 

@@ -12,13 +12,16 @@
 #include "Controllers.h"
 #include "GFX.h"
 
+namespace Controllers
+{
 #define	Bits	Data[0]
 #define	Pos	Data[1]
 #define	BitPtr	Data[2]
 #define	Strobe	Data[3]
 #define	Button	Data[4]
 #define	NewBits	Data[5]
-static	void	Frame (struct Controllers::tStdPort *Cont, unsigned char mode)
+
+static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 {
 	int x, i;
 	if (mode & MOV_PLAY)
@@ -29,8 +32,8 @@ static	void	Frame (struct Controllers::tStdPort *Cont, unsigned char mode)
 	else
 	{
 		GFX_SetCursorPos(128,220);
-		Cont->Button = Controllers::IsPressed(Cont->Buttons[0]);
-		Cont->Pos += Controllers::MouseState.lX;
+		Cont->Button = IsPressed(Cont->Buttons[0]);
+		Cont->Pos += MouseState.lX;
 		if (Cont->Pos < 196)
 			Cont->Pos = 196;
 		if (Cont->Pos > 484)
@@ -50,7 +53,7 @@ static	void	Frame (struct Controllers::tStdPort *Cont, unsigned char mode)
 		x >>= 1;
 	}
 }
-static	unsigned char	Read (struct Controllers::tStdPort *Cont)
+static	unsigned char	Read (struct tStdPort *Cont)
 {
 	unsigned char result;
 	if (Cont->BitPtr < 8)
@@ -60,7 +63,7 @@ static	unsigned char	Read (struct Controllers::tStdPort *Cont)
 		result |= 0x08;
 	return result;
 }
-static	void	Write (struct Controllers::tStdPort *Cont, unsigned char Val)
+static	void	Write (struct tStdPort *Cont, unsigned char Val)
 {
 	if ((!Cont->Strobe) && (Val & 1))
 	{
@@ -73,22 +76,22 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
-	static struct Controllers::tStdPort *Cont = NULL;
+	static struct tStdPort *Cont = NULL;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct Controllers::tStdPort *)lParam;
-	Controllers::ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+		Cont = (struct tStdPort *)lParam;
+	ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct Controllers::tStdPort *Cont, HWND hWnd)
+static	void	Config (struct tStdPort *Cont, HWND hWnd)
 {
 	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_ARKANOIDPADDLE,hWnd,ConfigProc,(LPARAM)Cont);
 }
-static	void	Unload (struct Controllers::tStdPort *Cont)
+static	void	Unload (struct tStdPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	StdPort_SetArkanoidPaddle (struct Controllers::tStdPort *Cont)
+void	StdPort_SetArkanoidPaddle (struct tStdPort *Cont)
 {
 	Cont->Read = Read;
 	Cont->Write = Write;
@@ -114,3 +117,4 @@ void	StdPort_SetArkanoidPaddle (struct Controllers::tStdPort *Cont)
 #undef	BitPtr
 #undef	Pos
 #undef	Bits
+} // namespace Controllers
