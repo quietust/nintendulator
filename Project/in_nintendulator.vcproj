@@ -31,8 +31,7 @@
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName="$(IntDir)/"
 				WarningLevel="4"
-				DebugInformationFormat="4"
-				CompileAs="1"/>
+				DebugInformationFormat="4"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
@@ -95,8 +94,7 @@
 				AssemblerListingLocation="$(IntDir)/"
 				ObjectFile="$(IntDir)/"
 				ProgramDataBaseFileName="$(IntDir)/"
-				WarningLevel="4"
-				CompileAs="1"/>
+				WarningLevel="4"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool

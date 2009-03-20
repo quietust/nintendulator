@@ -21,7 +21,7 @@ static	void	AllocMov (struct tStdPort *Cont)
 		Cont->MovLen = Controllers.FSPort1.MovLen + Controllers.FSPort3.MovLen;
 	if (Cont->PortNum == 1)
 		Cont->MovLen = Controllers.FSPort2.MovLen + Controllers.FSPort4.MovLen;
-	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
+	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 }
 
@@ -199,7 +199,7 @@ void	StdPort_SetFourScore (struct tStdPort *Cont)
 	Cont->Frame = Frame;
 	Cont->Type = STD_FOURSCORE;
 	Cont->DataLen = 3;
-	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data[0]));
+	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
 	if (Cont == &Controllers.Port1)

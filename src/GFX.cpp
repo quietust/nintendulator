@@ -78,7 +78,7 @@ void	GFX_Create (void)
 		return;
 	}
 
-	if (FAILED(DirectDrawCreateEx(NULL,(LPVOID *)&GFX.DirectDraw,&IID_IDirectDraw7,NULL)))
+	if (FAILED(DirectDrawCreateEx(NULL,(LPVOID *)&GFX.DirectDraw,IID_IDirectDraw7,NULL)))
 	{
 		GFX_Release();
 		MessageBox(hMainWnd,_T("Failed to initialize DirectDraw 7"),_T("Nintendulator"),MB_OK | MB_ICONERROR);

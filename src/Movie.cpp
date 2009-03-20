@@ -134,13 +134,13 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			fread(&len, 4, 1, Movie.Data);
 			if (len)
 			{
-				char *desc = malloc(len);
+				char *desc = (char *)malloc(len);
 				int len2;
 				fread(desc, len, 1, Movie.Data);
 #ifdef	UNICODE
 				// Windows 9x doesn't support this function natively
 				len2 = MultiByteToWideChar(CP_UTF8, 0, desc, len, NULL, 0);
-				Movie.Description = malloc(len2 * sizeof(TCHAR));
+				Movie.Description = (TCHAR *)malloc(len2 * sizeof(TCHAR));
 				if (Movie.Description)
 				{
 					MultiByteToWideChar(CP_UTF8, 0, desc, len, Movie.Description, len2);
@@ -325,12 +325,12 @@ void	Movie_Play (void)
 	fread(&len, 4, 1, Movie.Data);
 	if (len)
 	{
-		char *desc = malloc(len);
+		char *desc = (char *)malloc(len);
 		int len2;
 		fread(desc, len, 1, Movie.Data);
 #ifdef	UNICODE
 		len2 = MultiByteToWideChar(CP_UTF8, 0, desc, len, NULL, 0);
-		Movie.Description = malloc(len2 * sizeof(TCHAR));
+		Movie.Description = (TCHAR *)malloc(len2 * sizeof(TCHAR));
 		if (Movie.Description)
 		{
 			MultiByteToWideChar(CP_UTF8, 0, desc, len, Movie.Description, len2);
@@ -455,7 +455,7 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			{
 #ifdef	UNICODE
 				int len = GetWindowTextLength(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION)) + 1;
-				Movie.Description = malloc(len * sizeof(TCHAR));
+				Movie.Description = (TCHAR *)malloc(len * sizeof(TCHAR));
 				if (Movie.Description)
 					GetDlgItemText(hDlg, IDC_MOVIE_RECORD_DESCRIPTION, Movie.Description, len);
 #else	/* !UNICODE */
@@ -564,7 +564,7 @@ void	Movie_Record (void)
 	{
 		char *desc;
 		len = WideCharToMultiByte(CP_UTF8, 0, Movie.Description, -1, NULL, 0, NULL, NULL);
-		desc = malloc(len);
+		desc = (char *)malloc(len);
 		WideCharToMultiByte(CP_UTF8, 0, Movie.Description, -1, desc, len, NULL, NULL);
 		fwrite(&len, 4, 1, Movie.Data);		// comment length
 		fwrite(desc, len, 1, Movie.Data);	// comment data

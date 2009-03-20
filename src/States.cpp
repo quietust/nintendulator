@@ -134,7 +134,7 @@ int	States_SaveData (FILE *out)
 		else	clen = 0;
 		if (clen)
 		{
-			unsigned char *tpmi = malloc(clen);
+			unsigned char *tpmi = (unsigned char *)malloc(clen);
 			MI->SaveLoad(STATE_SAVE,0,tpmi);
 			fwrite("MAPR",1,4,out);		flen += 4;
 			fwrite(&clen,1,4,out);		flen += 4;
@@ -230,7 +230,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 			if ((MI) && (MI->SaveLoad))
 			{
 				int len = MI->SaveLoad(STATE_SIZE,0,NULL);
-				unsigned char *tpmi = malloc(len);
+				unsigned char *tpmi = (unsigned char *)malloc(len);
 				fread(tpmi,1,len,in);			//	CUST	uint8[...]	Custom mapper data
 				MI->SaveLoad(STATE_LOAD,0,tpmi);
 				free(tpmi);

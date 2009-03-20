@@ -404,7 +404,7 @@ void	AVI_Start (void)
 	bmih.biClrUsed = 0;
 	bmih.biClrImportant = 0;
 	
-	AVI.hbm = CreateDIBSection(NULL, (BITMAPINFO *)&bmih, DIB_RGB_COLORS, &AVI.videoBuffer, NULL, 0);
+	AVI.hbm = CreateDIBSection(NULL, (BITMAPINFO *)&bmih, DIB_RGB_COLORS, (void **)&AVI.videoBuffer, NULL, 0);
 
 	hr = SetAviVideoCompression(AVI.aviout, AVI.hbm, NULL, TRUE, hMainWnd);
 	if (hr)

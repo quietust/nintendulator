@@ -226,7 +226,7 @@ void	Controllers_OpenConfig (void)
 static	BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	int ItemNum = 0;
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_Key))
+	if (IsEqualGUID(lpddoi->guidType,GUID_Key))
 	{
 		ItemNum = lpddoi->dwOfs;
 		if ((ItemNum >= 0) && (ItemNum < 256))
@@ -239,22 +239,22 @@ static	BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 static	BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	int ItemNum = 0;
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_XAxis))
+	if (IsEqualGUID(lpddoi->guidType,GUID_XAxis))
 	{
 		Controllers.AxisFlags[1] |= 0x01;
 		Controllers.AxisNames[1][AXIS_X] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_YAxis))
+	if (IsEqualGUID(lpddoi->guidType,GUID_YAxis))
 	{
 		Controllers.AxisFlags[1] |= 0x02;
 		Controllers.AxisNames[1][AXIS_Y] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_ZAxis))
+	if (IsEqualGUID(lpddoi->guidType,GUID_ZAxis))
 	{
 		Controllers.AxisFlags[1] |= 0x04;
 		Controllers.AxisNames[1][AXIS_Z] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_Button))
+	if (IsEqualGUID(lpddoi->guidType,GUID_Button))
 	{
 		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.MouseState.rgbButtons - (BYTE *)&Controllers.MouseState)) / sizeof(Controllers.MouseState.rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 8))
@@ -269,37 +269,37 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 {
 	int DevNum = Controllers.NumDevices;
 	int ItemNum = 0;
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_XAxis))
+	if (IsEqualGUID(lpddoi->guidType,GUID_XAxis))
 	{
 		Controllers.AxisFlags[DevNum] |= 0x01;
 		Controllers.AxisNames[DevNum][AXIS_X] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_YAxis))
+	if (IsEqualGUID(lpddoi->guidType,GUID_YAxis))
 	{
 		Controllers.AxisFlags[DevNum] |= 0x02;
 		Controllers.AxisNames[DevNum][AXIS_Y] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_ZAxis))
+	if (IsEqualGUID(lpddoi->guidType,GUID_ZAxis))
 	{
 		Controllers.AxisFlags[DevNum] |= 0x04;
 		Controllers.AxisNames[DevNum][AXIS_Z] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_RxAxis))
+	if (IsEqualGUID(lpddoi->guidType,GUID_RxAxis))
 	{
 		Controllers.AxisFlags[DevNum] |= 0x08;
 		Controllers.AxisNames[DevNum][AXIS_RX] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_RyAxis))
+	if (IsEqualGUID(lpddoi->guidType,GUID_RyAxis))
 	{
 		Controllers.AxisFlags[DevNum] |= 0x10;
 		Controllers.AxisNames[DevNum][AXIS_RY] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_RzAxis))
+	if (IsEqualGUID(lpddoi->guidType,GUID_RzAxis))
 	{
 		Controllers.AxisFlags[DevNum] |= 0x20;
 		Controllers.AxisNames[DevNum][AXIS_RZ] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_Slider))
+	if (IsEqualGUID(lpddoi->guidType,GUID_Slider))
 	{
 		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.JoyState[0].rglSlider - (BYTE *)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rglSlider[0]);
 		if (ItemNum == 0)
@@ -314,7 +314,7 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 		}
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid slider ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_POV))
+	if (IsEqualGUID(lpddoi->guidType,GUID_POV))
 	{
 		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.JoyState[0].rgdwPOV - (BYTE *)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rgdwPOV[0]);
 		if ((ItemNum >= 0) && (ItemNum < 4))
@@ -324,7 +324,7 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 		}
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid POV hat ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
-	if (IsEqualGUID(&lpddoi->guidType,&GUID_Button))
+	if (IsEqualGUID(lpddoi->guidType,GUID_Button))
 	{
 		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.JoyState[0].rgbButtons - (BYTE *)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 128))
@@ -339,7 +339,7 @@ static	BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pv
 {
 	HRESULT hr;
 	int DevNum = Controllers.NumDevices;
-	if (SUCCEEDED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&lpddi->guidInstance,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[DevNum],NULL)))
+	if (SUCCEEDED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,lpddi->guidInstance,IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[DevNum],NULL)))
 	{
 		DIDEVCAPS caps;
 		if (FAILED(hr = IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[DevNum],&c_dfDIJoystick2)))
@@ -371,7 +371,7 @@ static	BOOL	InitKeyboard (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&GUID_SysKeyboard,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[0],NULL)))
+	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,GUID_SysKeyboard,IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[0],NULL)))
 		return FALSE;
 	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[0],&c_dfDIKeyboard)))
 		goto end;
@@ -405,7 +405,7 @@ static	BOOL	InitMouse (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,&GUID_SysMouse,&IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[1],NULL)))
+	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,GUID_SysMouse,IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[1],NULL)))
 		return FALSE;
 	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[1],&c_dfDIMouse2)))
 		goto end;
@@ -468,7 +468,7 @@ void	Controllers_Init (void)
 	StdPort_SetUnconnected(&Controllers.FSPort4);
 	ExpPort_SetUnconnected(&Controllers.ExpPort);
 	
-	if (FAILED(DirectInputCreateEx(hInst,DIRECTINPUT_VERSION,&IID_IDirectInput7,(LPVOID *)&Controllers.DirectInput,NULL)))
+	if (FAILED(DirectInputCreateEx(hInst,DIRECTINPUT_VERSION,IID_IDirectInput7,(LPVOID *)&Controllers.DirectInput,NULL)))
 	{
 		MessageBox(hMainWnd,_T("Unable to initialize DirectInput!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;

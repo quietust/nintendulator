@@ -1227,7 +1227,7 @@ struct tBreakpoint *Debugger_GetBreakpoint (HWND hwndDlg, int *_line)
 	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), TRUE);
 
 	len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXTLEN, line, 0);
-	str = malloc((len + 1) * sizeof(TCHAR));
+	str = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
 	SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXT, line, (LPARAM)str);
 
 	// try to find it in the breakpoint list
@@ -1291,7 +1291,7 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				if (line == -1)
 					break;
 				len = SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, LB_GETTEXTLEN, line, 0);
-				str = malloc((len + 1) * sizeof(TCHAR));
+				str = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
 				SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, LB_GETTEXT, line, (LPARAM)str);
 				Addr = _tcstol(str, NULL, 16);
 				_stprintf(tpc, _T("%04X"), Addr);
@@ -1828,7 +1828,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (line == -1)
 					break;
 				len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETTEXTLEN, line, 0);
-				str = malloc((len + 1) * sizeof(TCHAR));
+				str = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
 				SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETTEXT, line, (LPARAM)str);
 				Addr = _tcstol(str, NULL, 16);
 				_stprintf(tpc, _T("%04X"), Addr);

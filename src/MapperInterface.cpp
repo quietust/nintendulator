@@ -472,7 +472,7 @@ void	MapperInterface_Init (void)
 	_tcscat(Path,_T("Mappers\\"));
 	_stprintf(Filename,_T("%s%s"),Path,_T("*.dll"));
 	Handle = FindFirstFile(Filename,&Data);
-	ThisDLL = malloc(sizeof(struct tMapperDLL));
+	ThisDLL = (struct tMapperDLL *)malloc(sizeof(struct tMapperDLL));
 	if (Handle != INVALID_HANDLE_VALUE)
 	{
 		do
@@ -490,7 +490,7 @@ void	MapperInterface_Init (void)
 					DbgOut(_T("Added mapper pack %s: '%s' v%X.%X (%04X/%02X/%02X)"), Data.cFileName, ThisDLL->DI->Description, ThisDLL->DI->Version >> 16, ThisDLL->DI->Version & 0xFFFF, ThisDLL->DI->Date >> 16, (ThisDLL->DI->Date >> 8) & 0xFF, ThisDLL->DI->Date & 0xFF);
 					ThisDLL->Next = MapperDLLs;
 					MapperDLLs = ThisDLL;
-					ThisDLL = malloc(sizeof(struct tMapperDLL));
+					ThisDLL = (struct tMapperDLL *)malloc(sizeof(struct tMapperDLL));
 				}
 				else	FreeLibrary(ThisDLL->dInst);
 			}
@@ -579,7 +579,7 @@ INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 		DLLs = (PDLLInfo *)lParam;
 		for (i = 0; DLLs[i] != NULL; i++)
 		{
-			TCHAR *desc = malloc(sizeof(TCHAR) * (_tcslen(DLLs[i]->Description) + 32));
+			TCHAR *desc = (TCHAR *)malloc(sizeof(TCHAR) * (_tcslen(DLLs[i]->Description) + 32));
 			_stprintf(desc,_T("\"%s\" v%x.%x (%04x/%02x/%02x)"),
 				DLLs[i]->Description,
 				(DLLs[i]->Version >> 16) & 0xFFFF, DLLs[i]->Version & 0xFFFF,
@@ -622,7 +622,7 @@ BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
 		ThisDLL = ThisDLL->Next;
 	}
 
-	DLLs = malloc(num * sizeof(PDLLInfo));
+	DLLs = (PDLLInfo *)malloc(num * sizeof(PDLLInfo));
 	num = 0;
 	ThisDLL = MapperDLLs;
 	while (ThisDLL)

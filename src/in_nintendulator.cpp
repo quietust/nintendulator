@@ -45,7 +45,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 // post this to the main window at end of file (after playback as stopped)
 #define WM_WA_MPEG_EOF WM_USER+2
 
-In_Module mod;					// the output module (declared near the bottom of this file)
+extern In_Module mod;				// the output module (declared near the bottom of this file)
 char lastfn[MAX_PATH];				// currently playing file (used for getting info on the current file)
 int file_length;				// file length, in bytes
 int decode_pos_ms;				// current decoding position, in milliseconds
@@ -183,7 +183,7 @@ int play(char *fn)
 
 	if (!MapperInterface_LoadMapper(&RI))
 	{
-		RI.ROMType = 0;
+		RI.ROMType = ROM_UNDEFINED;
 		return 1;	// couldn't load mapper!
 	}
 	if (MI->Load)
@@ -228,7 +228,7 @@ void stop() {
 	free(RI.NSF_Title);
 	free(RI.NSF_Artist);
 	free(RI.NSF_Copyright);
-	RI.ROMType = 0;
+	RI.ROMType = ROM_UNDEFINED;
 }
 
 int getlength() { 

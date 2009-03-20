@@ -127,9 +127,9 @@ void	StdPort_SetPowerPad (struct tStdPort *Cont)
 	Cont->Frame = Frame;
 	Cont->NumButtons = 12;
 	Cont->DataLen = 6;
-	Cont->Data = malloc(Cont->DataLen * sizeof(Cont->Data[0]));
+	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
 	Cont->MovLen = 2;
-	Cont->MovData = malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
+	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 	Cont->Bits1 = 0;
 	Cont->Bits2 = 0;
