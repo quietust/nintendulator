@@ -301,7 +301,7 @@ unsigned char DebugMemCPU (unsigned short Addr)
 {
 	int Bank = (Addr >> 12) & 0xF;
 	FCPURead Read = CPU::ReadHandler[Bank];
-	if ((Read == CPU::ReadRAM) || (Read == CPU::ReadPRG) || (Read == GenieRead) || (Read == GenieRead1) || (Read == GenieRead2) || (Read == GenieRead3))
+	if ((Read == CPU::ReadRAM) || (Read == CPU::ReadPRG) || (Read == Genie::Read) || (Read == Genie::Read1) || (Read == Genie::Read2) || (Read == Genie::Read3))
 		return (unsigned char)Read(Bank, Addr & 0xFFF);
 	else	return 0xFF;
 }

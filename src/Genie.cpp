@@ -14,9 +14,15 @@
 #include "PPU.h"
 #include "Genie.h"
 
-struct tGenie Genie;
+namespace Genie
+{
+	int Code1B, Code2B, Code3B;
+	int Code1A, Code2A, Code3A;
+	int Code1O, Code2O, Code3O;
+	int Code1V, Code2V, Code3V;
+	unsigned char CodeStat;
 
-unsigned char GameGeniePRG[0x1000] = {
+unsigned char PRG[0x1000] = {
 0x78,0xD8,0xA9,0x00,0x8D,0x00,0x20,0xA2,0xFF,0x9A,0xA9,0x00,0x8D,0xF0,0xFF,0x20,0x1E,0xF0,0x8D,0xF1,0xFF,0x20,0x1E,0xF0,0x8D,0xF0,0xFF,0x4C,0x29,0xF0,0xA2,0x60,
 0xA0,0x08,0xCA,0xD0,0xFD,0x88,0xD0,0xFA,0x60,0xA2,0x0A,0xAD,0x02,0x20,0x10,0xFB,0xCA,0xD0,0xF8,0xA2,0xFF,0x9A,0xA9,0x07,0x85,0x01,0xA9,0x00,0x85,0x00,0xA8,0x91,
 0x00,0xC8,0xD0,0xFB,0xC6,0x01,0x10,0xF7,0xA9,0x06,0x85,0x01,0x8D,0x01,0x20,0xA9,0x80,0x85,0x00,0x8D,0x00,0x20,0xCE,0x2B,0x00,0x4C,0x1F,0xF4,0xA9,0x01,0x8D,0x16,
@@ -145,7 +151,8 @@ unsigned char GameGeniePRG[0x1000] = {
 0x2C,0x70,0x87,0x10,0x20,0xE0,0x0C,0x40,0x04,0x04,0xAE,0xE0,0x0A,0x00,0x0A,0x00,0x0C,0x40,0x04,0x04,0xE4,0xE4,0x81,0x90,0x06,0x40,0x08,0x00,0x04,0x04,0xE4,0xE4,
 0x06,0x40,0x0A,0x00,0x0C,0x40,0x04,0x04,0xE0,0xE4,0xA6,0xA0,0xA0,0xE0,0xC4,0x80,0x04,0x04,0x00,0x00,0x23,0x31,0x00,0x00,0x00,0x00,0x05,0x04,0x00,0x70,0x03,0x3B,
 0x71,0x0E,0xFF,0x50,0x0C,0xC4,0x03,0x3B,0x71,0x0E,0xFF,0x50,0x0C,0xC4,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xAA,0x7D,0xF0,0x00,0xF0,0xFF,0xFF};
-unsigned char GameGenieCHR[0x400] = {
+
+unsigned char CHR[0x400] = {
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xF0,0xF0,0xF0,0xF0,0x00,0x00,0x00,0x00,0xF0,0xF0,0xF0,0xF0,
 0x00,0x00,0x00,0x00,0x0F,0x0F,0x0F,0x0F,0x00,0x00,0x00,0x00,0x0F,0x0F,0x0F,0x0F,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,
 0xF0,0xF0,0xF0,0xF0,0x00,0x00,0x00,0x00,0xF0,0xF0,0xF0,0xF0,0x00,0x00,0x00,0x00,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,
@@ -179,53 +186,53 @@ unsigned char GameGenieCHR[0x400] = {
 0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xF0,0xF0,0xF0,0xF0,0xFF,0xFF,0xFF,0xFF,0xF0,0xF0,0xF0,0xF0,
 0xFF,0xFF,0xFF,0xFF,0x0F,0x0F,0x0F,0x0F,0xFF,0xFF,0xFF,0xFF,0x0F,0x0F,0x0F,0x0F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
-int	MAPINT	GenieRead (int Bank, int Addr)
+int	MAPINT	Read (int Bank, int Addr)
 {
 	int result = CPU::ReadPRG(Bank,Addr);
 	if (NES.GameGenie)
 	{
-		if ((Genie.CodeStat & 0x10) && (Bank == Genie.Code1B) && (Addr == Genie.Code1A) && ((Genie.CodeStat & 0x02) || (result == Genie.Code1O)))
-			return Genie.Code1V;
-		if ((Genie.CodeStat & 0x20) && (Bank == Genie.Code2B) && (Addr == Genie.Code2A) && ((Genie.CodeStat & 0x04) || (result == Genie.Code2O)))
-			return Genie.Code2V;
-		if ((Genie.CodeStat & 0x40) && (Bank == Genie.Code3B) && (Addr == Genie.Code3A) && ((Genie.CodeStat & 0x08) || (result == Genie.Code3O)))
-			return Genie.Code3V;
+		if ((CodeStat & 0x10) && (Bank == Code1B) && (Addr == Code1A) && ((CodeStat & 0x02) || (result == Code1O)))
+			return Code1V;
+		if ((CodeStat & 0x20) && (Bank == Code2B) && (Addr == Code2A) && ((CodeStat & 0x04) || (result == Code2O)))
+			return Code2V;
+		if ((CodeStat & 0x40) && (Bank == Code3B) && (Addr == Code3A) && ((CodeStat & 0x08) || (result == Code3O)))
+			return Code3V;
 	}
 	return result;
 }
-int	MAPINT	GenieRead1 (int Bank, int Addr)
+int	MAPINT	Read1 (int Bank, int Addr)
 {
 	int result = CPU::ReadPRG(Bank,Addr);
-	if ((NES.GameGenie) && ((Addr == Genie.Code1A) && ((Genie.CodeStat & 0x02) || (result == Genie.Code1O))))
-		return Genie.Code1V;
+	if ((NES.GameGenie) && ((Addr == Code1A) && ((CodeStat & 0x02) || (result == Code1O))))
+		return Code1V;
 	else	return result;
 }
-int	MAPINT	GenieRead2 (int Bank, int Addr)
+int	MAPINT	Read2 (int Bank, int Addr)
 {
 	int result = CPU::ReadPRG(Bank,Addr);
-	if ((NES.GameGenie) && ((Addr == Genie.Code2A) && ((Genie.CodeStat & 0x04) || (result == Genie.Code2O))))
-		return Genie.Code2V;
+	if ((NES.GameGenie) && ((Addr == Code2A) && ((CodeStat & 0x04) || (result == Code2O))))
+		return Code2V;
 	else	return result;
 }
-int	MAPINT	GenieRead3 (int Bank, int Addr)
+int	MAPINT	Read3 (int Bank, int Addr)
 {
 	int result = CPU::ReadPRG(Bank,Addr);
-	if ((NES.GameGenie) && ((Addr == Genie.Code3A) && ((Genie.CodeStat & 0x08) || (result == Genie.Code3O))))
-		return Genie.Code3V;
+	if ((NES.GameGenie) && ((Addr == Code3A) && ((CodeStat & 0x08) || (result == Code3O))))
+		return Code3V;
 	else	return result;
 }
 
 
-void	MAPINT	GenieWrite (int Bank, int Addr, int Val)
+void	MAPINT	Write (int Bank, int Addr, int Val)
 {
 	int i;
 	switch (Addr)
 	{
 	case 0:	if (Val & 1)
-			Genie.CodeStat = (unsigned char)(0x80 | (Val ^ 0x7E));
+			CodeStat = (unsigned char)(0x80 | (Val ^ 0x7E));
 		else
 		{
-			Genie.CodeStat &= 0x7F;
+			CodeStat &= 0x7F;
 
 			for (i = 0x8; i < 0x10; i++)
 			{	// reset PRG banks
@@ -239,7 +246,7 @@ void	MAPINT	GenieWrite (int Bank, int Addr, int Val)
 			}
 			CPU::WriteHandler[0x8] = CPU::WritePRG;	// and the PRG write handler for $8000-$8FFF
 
-			Genie_Init();	// map in the appropriate [optimized] read handlers
+			Init();	// map in the appropriate [optimized] read handlers
 			MI = MI2;	// swap in the REAL mapper
 			CPU::GetHandlers();	// grab a copy of CPUCycle
 			PPU_GetHandlers();	// ...and PPUCycle
@@ -247,54 +254,54 @@ void	MAPINT	GenieWrite (int Bank, int Addr, int Val)
 				MI->Reset(RESET_HARD);
 		}
 		break;
-	case 1:	Genie.Code1B = 8 | (Val >> 4);
-		Genie.Code1A = (Genie.Code1A & 0xFF) | ((Val << 8) & 0xF00);
+	case 1:	Code1B = 8 | (Val >> 4);
+		Code1A = (Code1A & 0xFF) | ((Val << 8) & 0xF00);
 		break;
-	case 2:	Genie.Code1A = (Genie.Code1A & 0xF00) | (Val);
+	case 2:	Code1A = (Code1A & 0xF00) | (Val);
 		break;
-	case 3:	Genie.Code1O = Val;
+	case 3:	Code1O = Val;
 		break;
-	case 4:	Genie.Code1V = Val;
+	case 4:	Code1V = Val;
 		break;
-	case 5:	Genie.Code2B = 8 | (Val >> 4);
-		Genie.Code2A = (Genie.Code2A & 0xFF) | ((Val << 8) & 0xF00);
+	case 5:	Code2B = 8 | (Val >> 4);
+		Code2A = (Code2A & 0xFF) | ((Val << 8) & 0xF00);
 		break;
-	case 6:	Genie.Code2A = (Genie.Code2A & 0xF00) | (Val);
+	case 6:	Code2A = (Code2A & 0xF00) | (Val);
 		break;
-	case 7:	Genie.Code2O = Val;
+	case 7:	Code2O = Val;
 		break;
-	case 8:	Genie.Code2V = Val;
+	case 8:	Code2V = Val;
 		break;
-	case 9:	Genie.Code3B = 8 | (Val >> 4);
-		Genie.Code3A = (Genie.Code3A & 0xFF) | ((Val << 8) & 0xF00);
+	case 9:	Code3B = 8 | (Val >> 4);
+		Code3A = (Code3A & 0xFF) | ((Val << 8) & 0xF00);
 		break;
-	case 10:Genie.Code3A = (Genie.Code3A & 0xF00) | (Val);
+	case 10:Code3A = (Code3A & 0xF00) | (Val);
 		break;
-	case 11:Genie.Code3O = Val;
+	case 11:Code3O = Val;
 		break;
-	case 12:Genie.Code3V = Val;
+	case 12:Code3V = Val;
 		break;
 	}
 }
 
-void	Genie_Reset (void)
+void	Reset (void)
 {
 	int i;
-	Genie.Code1B = Genie.Code2B = Genie.Code3B = 0;
-	Genie.Code1A = Genie.Code2A = Genie.Code3A = 0;
-	Genie.Code1O = Genie.Code2O = Genie.Code3O = 0;
-	Genie.Code1V = Genie.Code2V = Genie.Code3V = 0;
-	Genie.CodeStat = 0x80;
+	Code1B = Code2B = Code3B = 0;
+	Code1A = Code2A = Code3A = 0;
+	Code1O = Code2O = Code3O = 0;
+	Code1V = Code2V = Code3V = 0;
+	CodeStat = 0x80;
 	for (i = 0x8; i < 0x10; i++)
 	{
 		CPU::Readable[i] = TRUE;
-		CPU::PRGPointer[i] = GameGeniePRG;
+		CPU::PRGPointer[i] = PRG;
 	}
-	CPU::WriteHandler[0x8] = GenieWrite;
+	CPU::WriteHandler[0x8] = Write;
 	for (i = 0; i < 8; i++)
 	{
 		PPU.Writable[i] = FALSE;
-		PPU.CHRPointer[i] = GameGenieCHR;
+		PPU.CHRPointer[i] = CHR;
 	}
 	EI.Mirror_V();
 	MI2 = MI;
@@ -303,107 +310,105 @@ void	Genie_Reset (void)
 	CPU::GetHandlers();
 }
 
-void	Genie_Init (void)
+void	Init (void)
 {
 	int IsCode[8] = {0,0,0,0,0,0,0,0};
-	if (Genie.CodeStat & 0x10)
-		IsCode[Genie.Code1B - 8]++;
-	if (Genie.CodeStat & 0x20)
-		IsCode[Genie.Code2B - 8]++;
-	if (Genie.CodeStat & 0x40)
-		IsCode[Genie.Code3B - 8]++;
-	if (Genie.CodeStat & 0x10)
+	if (CodeStat & 0x10)
+		IsCode[Code1B - 8]++;
+	if (CodeStat & 0x20)
+		IsCode[Code2B - 8]++;
+	if (CodeStat & 0x40)
+		IsCode[Code3B - 8]++;
+	if (CodeStat & 0x10)
 	{
-		if (IsCode[Genie.Code1B - 8] > 1)
-			CPU::ReadHandler[Genie.Code1B] = GenieRead;
-		else 
-			CPU::ReadHandler[Genie.Code1B] = GenieRead1;
+		if (IsCode[Code1B - 8] > 1)
+			CPU::ReadHandler[Code1B] = Read;
+		else 	CPU::ReadHandler[Code1B] = Read1;
 	}
-	if (Genie.CodeStat & 0x20)
+	if (CodeStat & 0x20)
 	{
-		if (IsCode[Genie.Code2B - 8] > 1)
-			CPU::ReadHandler[Genie.Code2B] = GenieRead;
-		else 
-			CPU::ReadHandler[Genie.Code2B] = GenieRead2;
+		if (IsCode[Code2B - 8] > 1)
+			CPU::ReadHandler[Code2B] = Read;
+		else 	CPU::ReadHandler[Code2B] = Read2;
 	}
-	if (Genie.CodeStat & 0x40)
+	if (CodeStat & 0x40)
 	{
-		if (IsCode[Genie.Code3B - 8] > 1)
-			CPU::ReadHandler[Genie.Code3B] = GenieRead;
-		else 
-			CPU::ReadHandler[Genie.Code3B] = GenieRead3;
+		if (IsCode[Code3B - 8] > 1)
+			CPU::ReadHandler[Code3B] = Read;
+		else 	CPU::ReadHandler[Code3B] = Read3;
 	}
 }
 
-int	Genie_Save (FILE *out)
+int	Save (FILE *out)
 {
 	int clen = 0;
 	unsigned char val;
 	unsigned short addr;
 		//Data
-	val = (unsigned char)NES.GameGenie;				fwrite(&val,1,1,out);	clen++;
-	val = Genie.CodeStat;						fwrite(&val,1,1,out);	clen++;
+	val = (unsigned char)NES.GameGenie;			fwrite(&val,1,1,out);	clen++;
+	val = CodeStat;						fwrite(&val,1,1,out);	clen++;
 
-	addr = (unsigned short)((Genie.Code1B << 12) | Genie.Code1A);	fwrite(&addr,2,1,out);	clen += 2;
-	val = (unsigned char)Genie.Code1O;				fwrite(&val,1,1,out);	clen++;
-	val = (unsigned char)Genie.Code1V;				fwrite(&val,1,1,out);	clen++;
+	addr = (unsigned short)((Code1B << 12) | Code1A);	fwrite(&addr,2,1,out);	clen += 2;
+	val = (unsigned char)Code1O;				fwrite(&val,1,1,out);	clen++;
+	val = (unsigned char)Code1V;				fwrite(&val,1,1,out);	clen++;
 
-	addr = (unsigned short)((Genie.Code2B << 12) | Genie.Code2A);	fwrite(&addr,2,1,out);	clen += 2;
-	val = (unsigned char)Genie.Code2O;				fwrite(&val,1,1,out);	clen++;
-	val = (unsigned char)Genie.Code2V;				fwrite(&val,1,1,out);	clen++;
+	addr = (unsigned short)((Code2B << 12) | Code2A);	fwrite(&addr,2,1,out);	clen += 2;
+	val = (unsigned char)Code2O;				fwrite(&val,1,1,out);	clen++;
+	val = (unsigned char)Code2V;				fwrite(&val,1,1,out);	clen++;
 
-	addr = (unsigned short)((Genie.Code3B << 12) | Genie.Code3A);	fwrite(&addr,2,1,out);	clen += 2;
-	val = (unsigned char)Genie.Code3O;				fwrite(&val,1,1,out);	clen++;
-	val = (unsigned char)Genie.Code3V;				fwrite(&val,1,1,out);	clen++;
+	addr = (unsigned short)((Code3B << 12) | Code3A);	fwrite(&addr,2,1,out);	clen += 2;
+	val = (unsigned char)Code3O;				fwrite(&val,1,1,out);	clen++;
+	val = (unsigned char)Code3V;				fwrite(&val,1,1,out);	clen++;
 
 	return clen;
 }
 
-int	Genie_Load (FILE *in)
+int	Load (FILE *in)
 {
 	int clen = 0;
 	unsigned char val;
 	unsigned short addr;
 	fread(&val,1,1,in);	clen++;		NES.GameGenie = val;
-	fread(&val,1,1,in);	clen++;		Genie.CodeStat = val;
+	fread(&val,1,1,in);	clen++;		CodeStat = val;
 
-	fread(&addr,2,1,in);	clen += 2;	Genie.Code1A = addr & 0xFFF; Genie.Code1B = addr >> 12;
-	fread(&val,1,1,in);	clen++;		Genie.Code1O = val;
-	fread(&val,1,1,in);	clen++;		Genie.Code1V = val;
+	fread(&addr,2,1,in);	clen += 2;	Code1A = addr & 0xFFF; Code1B = addr >> 12;
+	fread(&val,1,1,in);	clen++;		Code1O = val;
+	fread(&val,1,1,in);	clen++;		Code1V = val;
 
-	fread(&addr,2,1,in);	clen += 2;	Genie.Code2A = addr & 0xFFF; Genie.Code2B = addr >> 12;
-	fread(&val,1,1,in);	clen++;		Genie.Code2O = val;
-	fread(&val,1,1,in);	clen++;		Genie.Code2V = val;
+	fread(&addr,2,1,in);	clen += 2;	Code2A = addr & 0xFFF; Code2B = addr >> 12;
+	fread(&val,1,1,in);	clen++;		Code2O = val;
+	fread(&val,1,1,in);	clen++;		Code2V = val;
 
-	fread(&addr,2,1,in);	clen += 2;	Genie.Code3A = addr & 0xFFF; Genie.Code3B = addr >> 12;
-	fread(&val,1,1,in);	clen++;		Genie.Code3O = val;
-	fread(&val,1,1,in);	clen++;		Genie.Code3V = val;
+	fread(&addr,2,1,in);	clen += 2;	Code3A = addr & 0xFFF; Code3B = addr >> 12;
+	fread(&val,1,1,in);	clen++;		Code3O = val;
+	fread(&val,1,1,in);	clen++;		Code3V = val;
 
-	if (Genie.CodeStat & 0x10)
+	if (CodeStat & 0x10)
 	{
-		if (Genie.CodeStat & 0x02)
-			EI.DbgOut(_T("Loaded Game Genie code 1: $%01X%03X -> $%02X"), Genie.Code1B, Genie.Code1A, Genie.Code1V);
-		else	EI.DbgOut(_T("Loaded Game Genie code 1: $%01X%03X : $%02X -> $%02X"), Genie.Code1B, Genie.Code1A, Genie.Code1O, Genie.Code1V);
+		if (CodeStat & 0x02)
+			EI.DbgOut(_T("Loaded Game Genie code 1: $%01X%03X -> $%02X"), Code1B, Code1A, Code1V);
+		else	EI.DbgOut(_T("Loaded Game Genie code 1: $%01X%03X : $%02X -> $%02X"), Code1B, Code1A, Code1O, Code1V);
 	}
-	if (Genie.CodeStat & 0x20)
+	if (CodeStat & 0x20)
 	{
-		if (Genie.CodeStat & 0x04)
-			EI.DbgOut(_T("Loaded Game Genie code 2: $%01X%03X -> $%02X"), Genie.Code2B, Genie.Code2A, Genie.Code2V);
-		else	EI.DbgOut(_T("Loaded Game Genie code 2: $%01X%03X : $%02X -> $%02X"), Genie.Code2B, Genie.Code2A, Genie.Code2O, Genie.Code2V);
+		if (CodeStat & 0x04)
+			EI.DbgOut(_T("Loaded Game Genie code 2: $%01X%03X -> $%02X"), Code2B, Code2A, Code2V);
+		else	EI.DbgOut(_T("Loaded Game Genie code 2: $%01X%03X : $%02X -> $%02X"), Code2B, Code2A, Code2O, Code2V);
 	}
-	if (Genie.CodeStat & 0x40)
+	if (CodeStat & 0x40)
 	{
-		if (Genie.CodeStat & 0x08)
-			EI.DbgOut(_T("Loaded Game Genie code 3: $%01X%03X -> $%02X"), Genie.Code3B, Genie.Code3A, Genie.Code3V);
-		else	EI.DbgOut(_T("Loaded Game Genie code 3: $%01X%03X : $%02X -> $%02X"), Genie.Code3B, Genie.Code3A, Genie.Code3O, Genie.Code3V);
+		if (CodeStat & 0x08)
+			EI.DbgOut(_T("Loaded Game Genie code 3: $%01X%03X -> $%02X"), Code3B, Code3A, Code3V);
+		else	EI.DbgOut(_T("Loaded Game Genie code 3: $%01X%03X : $%02X -> $%02X"), Code3B, Code3A, Code3O, Code3V);
 	}
 
 	if (NES.GameGenie)
 		CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
 	else	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
-	Genie_Init();		// reset the I/O handlers
+	Init();		// reset the I/O handlers
 	if ((MI) && (MI->Reset))
 		MI->Reset(RESET_SOFT);	// and then (soft) reset the mapper again; we'll load its state momentarily
 	return clen;
 }
+} // namespace Genie

@@ -84,11 +84,11 @@ int	States_SaveData (FILE *out)
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
 	}
-	if (Genie.CodeStat & 1)
+	if (Genie::CodeStat & 1)
 	{
 		fwrite("GENI",1,4,out);		flen += 4;
 		fwrite(&clen,1,4,out);		flen += 4;
-		clen = Genie_Save(out);
+		clen = Genie::Save(out);
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
@@ -161,7 +161,7 @@ void	States_SaveState (void)
 	int flen;
 	FILE *out;
 
-	if (Genie.CodeStat & 0x80)
+	if (Genie::CodeStat & 0x80)
 	{
 		PrintTitlebar(_T("Cannot save state at the Game Genie code entry screen!"));
 		return;
@@ -208,7 +208,7 @@ BOOL	States_LoadData (FILE *in, int flen)
 		else if (!memcmp(csig,"CTRL",4))
 			clen -= Controllers::Load(in);
 		else if (!memcmp(csig,"GENI",4))
-			clen -= Genie_Load(in);
+			clen -= Genie::Load(in);
 		else if (!memcmp(csig,"NPRA",4))
 		{
 			memset(PRG_RAM,0,sizeof(PRG_RAM));

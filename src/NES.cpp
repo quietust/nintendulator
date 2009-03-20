@@ -844,7 +844,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 	CPU::ReadHandler[3] = PPU_IntRead;	CPU::WriteHandler[3] = PPU_IntWrite;
 	CPU::ReadHandler[4] = CPU::Read4k;	CPU::WriteHandler[4] = CPU::Write4k;
 	if (!NES.GameGenie)
-		Genie.CodeStat = 0;
+		Genie::CodeStat = 0;
 	for (i = 0x0; i < 0x8; i++)
 	{
 		PPU.ReadHandler[i] = PPU_BusRead;
@@ -873,7 +873,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 		CPU::PowerOn();
 		PPU_PowerOn();
 		if (NES.GameGenie)
-			Genie_Reset();
+			Genie::Reset();
 		else	if ((MI) && (MI->Reset))
 			MI->Reset(RESET_HARD);
 		break;
@@ -886,9 +886,9 @@ void	NES_Reset (RESET_TYPE ResetType)
 		}
 		if (NES.GameGenie)
 		{
-			if (Genie.CodeStat & 1)
-				Genie_Init();	// Set up the PRG read handlers BEFORE resetting the mapper
-			else	Genie_Reset();	// map the Game Genie back in its place
+			if (Genie::CodeStat & 1)
+				Genie::Init();	// Set up the PRG read handlers BEFORE resetting the mapper
+			else	Genie::Reset();	// map the Game Genie back in its place
 		}
 		if ((MI) && (MI->Reset))
 			MI->Reset(RESET_SOFT);

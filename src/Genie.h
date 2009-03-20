@@ -8,24 +8,19 @@
 #ifndef GENIE_H
 #define GENIE_H
 
-struct tGenie
+namespace Genie
 {
-	int Code1B, Code2B, Code3B;
-	int Code1A, Code2A, Code3A;
-	int Code1O, Code2O, Code3O;
-	int Code1V, Code2V, Code3V;
-	unsigned char CodeStat;
-};
-extern	struct tGenie Genie;
+extern unsigned char CodeStat;
 
-int	MAPINT	GenieRead (int,int);
-int	MAPINT	GenieRead1 (int,int);
-int	MAPINT	GenieRead2 (int,int);
-int	MAPINT	GenieRead3 (int,int);
+int	MAPINT	Read (int,int);
+int	MAPINT	Read1 (int,int);
+int	MAPINT	Read2 (int,int);
+int	MAPINT	Read3 (int,int);
 
-void	Genie_Reset (void);
-void	Genie_Init (void);
-int	Genie_Save (FILE *);
-int	Genie_Load (FILE *);
+void	Reset (void);
+void	Init (void);
+int	Save (FILE *);
+int	Load (FILE *);
 
+} // namespace Genie
 #endif	/* !GENIE_H */
