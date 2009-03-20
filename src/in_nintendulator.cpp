@@ -71,13 +71,13 @@ void	init (void)
 {
 	APU::Init();
 	APU::Create();
-	MapperInterface_Init();
+	MapperInterface::Init();
 }
 
 void	quit (void)
 {
 	APU::Release();
-	MapperInterface_Release();
+	MapperInterface::Release();
 }
 
 int isourfile(char *fn) { return 0; }	// used for detecting URL streams.. unused here. strncmp(fn,"http://",7) to detect HTTP streams, etc
@@ -181,7 +181,7 @@ int play(char *fn)
 
 	NES.PRGMask = MAX_PRGROM_MASK;
 
-	if (!MapperInterface_LoadMapper(&RI))
+	if (!MapperInterface::LoadMapper(&RI))
 	{
 		RI.ROMType = ROM_UNDEFINED;
 		return 1;	// couldn't load mapper!
@@ -224,7 +224,7 @@ void stop() {
 
 	mod.SAVSADeInit();
 
-	MapperInterface_UnloadMapper();
+	MapperInterface::UnloadMapper();
 	free(RI.NSF_Title);
 	free(RI.NSF_Artist);
 	free(RI.NSF_Copyright);

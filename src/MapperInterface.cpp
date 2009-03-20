@@ -461,7 +461,9 @@ static	void	MAPINT	StatusOut (TCHAR *text, ...)
 
 /******************************************************************************/
 
-void	MapperInterface_Init (void)
+namespace MapperInterface
+{
+void	Init (void)
 {
 #ifndef	NSFPLAYER
 	WIN32_FIND_DATA Data;
@@ -610,7 +612,7 @@ INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 }
 #endif	/* !NSFPLAYER */
 
-BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
+BOOL	LoadMapper (CPROMInfo ROM)
 {
 #ifndef	NSFPLAYER
 	PDLLInfo *DLLs;
@@ -672,7 +674,7 @@ BOOL	MapperInterface_LoadMapper (CPROMInfo ROM)
 	return FALSE;
 }
 
-void	MapperInterface_UnloadMapper (void)
+void	UnloadMapper (void)
 {
 	if (MI)
 	{
@@ -690,7 +692,7 @@ void	MapperInterface_UnloadMapper (void)
 	}
 }
 
-void	MapperInterface_Release (void)
+void	Release (void)
 {
 #ifndef	NSFPLAYER
 	struct tMapperDLL *ThisDLL = MapperDLLs;
@@ -708,3 +710,4 @@ void	MapperInterface_Release (void)
 	FreeLibrary(dInst);
 #endif	/* !NSFPLAYER */
 }
+} // namespace MapperInterface

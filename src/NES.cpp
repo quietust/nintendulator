@@ -32,7 +32,7 @@ static	TCHAR *CompatLevel[COMPAT_NONE] = {_T("Fully supported!"),_T("Mostly supp
 void	NES_Init (void)
 {
 	SetWindowPos(hMainWnd,HWND_TOP,0,0,256,240,SWP_NOZORDER);
-	MapperInterface_Init();
+	MapperInterface::Init();
 	APU::Init();
 	GFX::Init();
 	AVI::Init();
@@ -69,7 +69,7 @@ void	NES_Release (void)
 		free(APU::buffer);
 	GFX::Release();
 	Controllers::Release();
-	MapperInterface_Release();
+	MapperInterface::Release();
 
 	NES_SaveSettings();
 	DestroyWindow(hMainWnd);
@@ -257,7 +257,7 @@ void	NES_CloseFile (void)
 	NES_SaveSRAM();
 	if (NES.ROMLoaded)
 	{
-		MapperInterface_UnloadMapper();
+		MapperInterface::UnloadMapper();
 		NES.ROMLoaded = FALSE;
 		EI.DbgOut(_T("ROM unloaded."));
 	}
@@ -397,7 +397,7 @@ const TCHAR *	NES_OpenFileiNES (TCHAR *filename)
 		NES.CHRMask = MAX_CHRROM_MASK;
 
 	
-	if (!MapperInterface_LoadMapper(&RI))
+	if (!MapperInterface::LoadMapper(&RI))
 	{
 		static TCHAR err[256];
 		_stprintf(err,_T("Mapper %i not supported!"),RI.INES_MapperNum);
@@ -556,7 +556,7 @@ const TCHAR *	NES_OpenFileUNIF (TCHAR *filename)
 	if (!p2Found)
 		NES.CHRMask = MAX_CHRROM_MASK;
 
-	if (!MapperInterface_LoadMapper(&RI))
+	if (!MapperInterface::LoadMapper(&RI))
 	{
 		static TCHAR err[256];
 		_stprintf(err,_T("UNIF boardset \"%hs\" not supported!"),RI.UNIF_BoardName);
@@ -608,7 +608,7 @@ const TCHAR *	NES_OpenFileFDS (TCHAR *filename)
 
 	NES.PRGMask = ((RI.FDS_NumSides << 4) - 1) & MAX_PRGROM_MASK;
 
-	if (!MapperInterface_LoadMapper(&RI))
+	if (!MapperInterface::LoadMapper(&RI))
 		return _T("Famicom Disk System support not found!");
 
 	EI.DbgOut(_T("FDS file loaded: %s - %s"),MI->Description,CompatLevel[MI->Compatibility]);
@@ -682,7 +682,7 @@ const TCHAR *	NES_OpenFileNSF (TCHAR *filename)
 
 	NES.PRGMask = MAX_PRGROM_MASK;
 
-	if (!MapperInterface_LoadMapper(&RI))
+	if (!MapperInterface::LoadMapper(&RI))
 		return _T("NSF support not found!");
 	EI.DbgOut(_T("NSF loaded: %s - %s"),MI->Description,CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("Data length: %iKB"),RI.NSF_DataSize >> 10);
@@ -790,7 +790,7 @@ const char *	NES_OpenFileNFRF (char *filename)
 	for (p2 = 1; p2 < 0x10000000; p2 <<= 1)
 		if (p2 == EI.PRG_ROM_Size) p2Found = FALSE;
 	if (!p2Found) NES.PRGMask = 0xFFFFFFFF;
-	if (!MapperInterface_LoadByBoard(BoardName))
+	if (!MapperInterface::LoadByBoard(BoardName))
 	{
 		static char err[256];
 		sprintf(err,"Boardset \"%s\" not supported!",RI.NRFF_BoardName);

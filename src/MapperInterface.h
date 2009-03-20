@@ -209,9 +209,11 @@ extern	TROMInfo		RI;
 extern	PDLLInfo		DI;
 extern	CPMapperInfo		MI, MI2;
 
-void	MapperInterface_Init (void);
-void	MapperInterface_Release (void);
-BOOL	MapperInterface_LoadMapper (CPROMInfo ROM);
-void	MapperInterface_UnloadMapper (void);
-
+namespace MapperInterface
+{
+void	Init (void);
+void	Release (void);
+BOOL	LoadMapper (CPROMInfo ROM);
+void	UnloadMapper (void);
+} // namespace MapperInterface
 #endif	/* !MAPPERINTERFACE_H */
