@@ -122,7 +122,7 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 		else if (_tcschr(cmdline,' '))
 			*_tcschr(cmdline,' ') = 0;
 
-		NES_OpenFile(cmdline);
+		NES::OpenFile(cmdline);
 		free(bkptr);	// free up the memory from its original pointer
 	}
 
@@ -201,7 +201,7 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 	hDebug = CreateDialog(hInst,(LPCTSTR)IDD_DEBUG,hMainWnd,DebugWnd);
 	SetWindowPos(hDebug,hMainWnd,0,0,0,0,SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOSIZE);
 
-	NES_Init();
+	NES::Init();
 	return TRUE;
 }
 
@@ -222,7 +222,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	TCHAR FileName[MAX_PATH];
 	OPENFILENAME ofn;
-	BOOL running = NES.Running;
+	BOOL running = NES::Running;
 
 	switch (message) 
 	{
@@ -269,13 +269,13 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				_tcscpy(Path_ROM,FileName);
 				Path_ROM[ofn.nFileOffset-1] = 0;
-				NES_Stop();
-				NES_OpenFile(FileName);
+				NES::Stop();
+				NES::OpenFile(FileName);
 			}
 			break;
 		case ID_FILE_CLOSE:
-			NES_Stop();
-			NES_CloseFile();
+			NES::Stop();
+			NES::CloseFile();
 			break;
 		case ID_FILE_HEADER:
 			FileName[0] = 0;
@@ -302,43 +302,43 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				DialogBoxParam(hInst,(LPCTSTR)IDD_INESHEADER,hWnd,InesHeader,(LPARAM)FileName);
 			break;
 		case ID_FILE_AUTORUN:
-			NES.AutoRun = !NES.AutoRun;
-			if (NES.AutoRun)
+			NES::AutoRun = !NES::AutoRun;
+			if (NES::AutoRun)
 				CheckMenuItem(hMenu,ID_FILE_AUTORUN,MF_CHECKED);
 			else	CheckMenuItem(hMenu,ID_FILE_AUTORUN,MF_UNCHECKED);
 			break;
 
 		case ID_CPU_RUN:
-			NES_Start(FALSE);
+			NES::Start(FALSE);
 			break;
 		case ID_CPU_STEP:
-			NES_Stop();		// need to stop first
-			NES_Start(TRUE);	// so the 'start' makes it through
+			NES::Stop();		// need to stop first
+			NES::Start(TRUE);	// so the 'start' makes it through
 			break;
 		case ID_CPU_STOP:
-			NES_Stop();
+			NES::Stop();
 			break;
 		case ID_CPU_SOFTRESET:
-			NES_Stop();
+			NES::Stop();
 			if (Movie::Mode)
 				Movie::Stop();
-			NES_Reset(RESET_SOFT);
+			NES::Reset(RESET_SOFT);
 			if (running)
-				NES_Start(FALSE);
+				NES::Start(FALSE);
 			break;
 		case ID_CPU_HARDRESET:
-			NES_Stop();
+			NES::Stop();
 			if (Movie::Mode)
 				Movie::Stop();
-			NES_Reset(RESET_HARD);
+			NES::Reset(RESET_HARD);
 			if (running)
-				NES_Start(FALSE);
+				NES::Start(FALSE);
 			break;
 		case ID_CPU_SAVESTATE:
-			NES_Stop();
+			NES::Stop();
 			while (PPU.SLnum != 240)
 			{
-				if (NES.FrameStep && !NES.GotStep)
+				if (NES::FrameStep && !NES::GotStep)
 					MessageBox(hMainWnd,_T("Impossible: savestate is advancing to scanline 240 in framestep mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 				do
 				{
@@ -347,20 +347,20 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						Debugger::AddInst();
 #endif	/* ENABLE_DEBUGGER */
 					CPU::ExecOp();
-				} while (!NES.Scanline);
-				NES.Scanline = FALSE;
+				} while (!NES::Scanline);
+				NES::Scanline = FALSE;
 			}
 #ifdef	ENABLE_DEBUGGER
 			if (Debugger::Enabled)
 				Debugger::Update();
 #endif	/* ENABLE_DEBUGGER */
 			States_SaveState();
-			if (running)	NES_Start(FALSE);
+			if (running)	NES::Start(FALSE);
 			break;
 		case ID_CPU_LOADSTATE:
-			NES_Stop();
+			NES::Stop();
 			States_LoadState();
-			if (running)	NES_Start(FALSE);
+			if (running)	NES::Start(FALSE);
 			break;
 		case ID_CPU_PREVSTATE:
 			States.SelSlot += 9;
@@ -373,19 +373,19 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			States_SetSlot(States.SelSlot);
 			break;
 		case ID_CPU_GAMEGENIE:
-			NES.GameGenie = !NES.GameGenie;
-			if (NES.GameGenie)
+			NES::GameGenie = !NES::GameGenie;
+			if (NES::GameGenie)
 				CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
 			else	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 			break;
 		case ID_CPU_FRAMESTEP_ENABLED:
-			NES.FrameStep = !NES.FrameStep;
-			if (NES.FrameStep)
+			NES::FrameStep = !NES::FrameStep;
+			if (NES::FrameStep)
 				CheckMenuItem(hMenu,ID_CPU_FRAMESTEP_ENABLED,MF_CHECKED);
 			else	CheckMenuItem(hMenu,ID_CPU_FRAMESTEP_ENABLED,MF_UNCHECKED);
 			break;
 		case ID_CPU_FRAMESTEP_STEP:
-			NES.GotStep = TRUE;
+			NES::GotStep = TRUE;
 			break;
 		case ID_PPU_FRAMESKIP_AUTO:
 			GFX::aFSkip = !GFX::aFSkip;
@@ -423,35 +423,35 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_PPU_SIZE_1X:
 			SizeMult = 1;
-			NES_UpdateInterface();
+			NES::UpdateInterface();
 			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_1X,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_2X:
 			SizeMult = 2;
-			NES_UpdateInterface();
+			NES::UpdateInterface();
 			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_3X:
 			SizeMult = 3;
-			NES_UpdateInterface();
+			NES::UpdateInterface();
 			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_3X,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_4X:
 			SizeMult = 4;
-			NES_UpdateInterface();
+			NES::UpdateInterface();
 			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);
 			break;
 		case ID_PPU_MODE_NTSC:
-			NES_Stop();
-			NES_SetCPUMode(0);
+			NES::Stop();
+			NES::SetCPUMode(0);
 			CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
-			if (running)	NES_Start(FALSE);
+			if (running)	NES::Start(FALSE);
 			break;
 		case ID_PPU_MODE_PAL:
-			NES_Stop();
-			NES_SetCPUMode(1);
+			NES::Stop();
+			NES::SetCPUMode(1);
 			CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
-			if (running)	NES_Start(FALSE);
+			if (running)	NES::Start(FALSE);
 			break;
 		case ID_PPU_PALETTE:
 			GFX::PaletteConfig();
@@ -487,27 +487,27 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_20,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FULLSCREEN:
-			NES_Stop();
+			NES::Stop();
 			GFX::Release();
 			GFX::Fullscreen = !GFX::Fullscreen;
 			GFX::Create();
 			if (running)
-				NES_Start(FALSE);
+				NES::Start(FALSE);
 			break;
 		case ID_PPU_SCANLINES:
-			NES_Stop();
+			NES::Stop();
 			GFX::Release();
 			GFX::Scanlines = !GFX::Scanlines;
 			GFX::Create();
 			if (running)
-				NES_Start(FALSE);
+				NES::Start(FALSE);
 			if (GFX::Scanlines)
 				CheckMenuItem(hMenu,ID_PPU_SCANLINES,MF_CHECKED);
 			else	CheckMenuItem(hMenu,ID_PPU_SCANLINES,MF_UNCHECKED);
 			break;
 		case ID_SOUND_ENABLED:
-			NES.SoundEnabled = !NES.SoundEnabled;
-			if (NES.SoundEnabled)
+			NES::SoundEnabled = !NES::SoundEnabled;
+			if (NES::SoundEnabled)
 			{
 				if (running)
 					APU::SoundON();
@@ -521,9 +521,9 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case ID_INPUT_SETUP:
-			NES_Stop();
+			NES::Stop();
 			Controllers::OpenConfig();
-			if (running)	NES_Start(FALSE);
+			if (running)	NES::Start(FALSE);
 			break;
 #ifdef	ENABLE_DEBUGGER
 		case ID_DEBUG_CPU:
@@ -537,7 +537,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 #endif	/* ENABLE_DEBUGGER */
 		case ID_GAME:
-			NES_MapperConfig();
+			NES::MapperConfig();
 			break;
 		case ID_MISC_STARTAVICAPTURE:
 			AVI::Start();
@@ -564,18 +564,18 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DROPFILES:
 		DragQueryFile((HDROP)wParam,0,FileName,MAX_PATH);
 		DragFinish((HDROP)wParam);
-		NES_Stop();
-		NES_OpenFile(FileName);
+		NES::Stop();
+		NES::OpenFile(FileName);
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd,&ps);
-		if (!NES.Running)
+		if (!NES::Running)
 			GFX::Repaint();
 		EndPaint(hWnd,&ps);
 		break;
 	case WM_CLOSE:
-		NES_Stop();
-		NES_Release();
+		NES::Stop();
+		NES::Release();
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -865,7 +865,7 @@ void	SetWindowClientArea (HWND hWnd, int w, int h)
 void	UpdateTitlebar (void)
 {
 	TCHAR titlebar[256];
-	if (NES.Running)
+	if (NES::Running)
 		_stprintf(titlebar,_T("Nintendulator - %i FPS (%i %sFSkip)"),GFX::FPSnum,GFX::FSkip,GFX::aFSkip?_T("Auto"):_T(""));
 	else	_tcscpy(titlebar,_T("Nintendulator - Stopped"));
 	if (TitlebarDelay > 0)

@@ -82,12 +82,18 @@ void	quit (void)
 
 int isourfile(char *fn) { return 0; }	// used for detecting URL streams.. unused here. strncmp(fn,"http://",7) to detect HTTP streams, etc
 
-struct tNES NES;
+namespace NES
+{
+	int PRGMask;
 
-unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];
-unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];
+	BOOL ROMLoaded;
+	BOOL IsNSF;
+	BOOL SoundEnabled;
 
-void	NES_Reset (void)
+	unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];
+	unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];
+
+void	Reset (void)
 {
 	int i;
 	for (i = 0x0; i < 0x10; i++)
@@ -107,7 +113,7 @@ void	NES_Reset (void)
 	APU::Reset();
 	CPU::Reset();
 }
-
+} // namespace NES
 int play(char *fn) 
 {
 	int maxlatency;
@@ -167,11 +173,11 @@ int play(char *fn)
 	memcpy(RI.NSF_Artist,&Header[0x2E],32);
 	memcpy(RI.NSF_Copyright,&Header[0x4E],32);
 	if (memcmp(RI.NSF_InitBanks,"\0\0\0\0\0\0\0\0",8))
-		ReadFile(input_file,&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF),file_length,&numBytesRead,NULL);
+		ReadFile(input_file,&NES::PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF),file_length,&numBytesRead,NULL);
 	else
 	{
 		memcpy(RI.NSF_InitBanks,"\x00\x01\x02\x03\x04\x05\x06\x07",8);
-		ReadFile(input_file,&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF),file_length,&numBytesRead,NULL);
+		ReadFile(input_file,&NES::PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF),file_length,&numBytesRead,NULL);
 	}
 
 	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
@@ -179,7 +185,7 @@ int play(char *fn)
 	if (RI.NSF_PALSpeed == 20000)
 		RI.NSF_PALSpeed = 19997;	// same for PAL NSFs (though we don't really support those right now)
 
-	NES.PRGMask = MAX_PRGROM_MASK;
+	NES::PRGMask = MAX_PRGROM_MASK;
 
 	if (!MapperInterface::LoadMapper(&RI))
 	{
@@ -189,7 +195,7 @@ int play(char *fn)
 	if (MI->Load)
 		MI->Load();
 
-	NES_Reset();	// NSF loaded successfully, reset the NES
+	NES::Reset();	// NSF loaded successfully, reset the NES
 			// and start it running
 	killPlayThread = FALSE;
 	thread_handle = (HANDLE) CreateThread(NULL,0,(LPTHREAD_START_ROUTINE) PlayThread,NULL,0,(LPDWORD)&thread_id);

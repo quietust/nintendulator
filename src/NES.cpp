@@ -21,15 +21,28 @@
 #include "Controllers.h"
 #include "Genie.h"
 
-struct tNES NES;
-unsigned char PRG_ROM[0x800][0x1000];	/* 8192 KB */
-unsigned char CHR_ROM[0x1000][0x400];	/* 4096 KB */
-unsigned char PRG_RAM[0x10][0x1000];	/*   64 KB */
-unsigned char CHR_RAM[0x20][0x400];	/*   32 KB */
+namespace NES
+{
+	int SRAM_Size;
 
-static	TCHAR *CompatLevel[COMPAT_NONE] = {_T("Fully supported!"),_T("Mostly supported"),_T("Partially supported")};
+	int PRGMask, CHRMask;
 
-void	NES_Init (void)
+	BOOL ROMLoaded;
+	BOOL DoStop, Running, Scanline;
+	BOOL GameGenie;
+	BOOL SoundEnabled;
+	BOOL AutoRun;
+	BOOL FrameStep, GotStep;
+	BOOL HasMenu;
+
+	unsigned char PRG_ROM[0x800][0x1000];	/* 8192 KB */
+	unsigned char CHR_ROM[0x1000][0x400];	/* 4096 KB */
+	unsigned char PRG_RAM[0x10][0x1000];	/*   64 KB */
+	unsigned char CHR_RAM[0x20][0x400];	/*   32 KB */
+
+	const TCHAR *CompatLevel[COMPAT_NONE] = {_T("Fully supported!"),_T("Mostly supported"),_T("Partially supported")};
+
+void	Init (void)
 {
 	SetWindowPos(hMainWnd,HWND_TOP,0,0,256,240,SWP_NOZORDER);
 	MapperInterface::Init();
@@ -44,26 +57,26 @@ void	NES_Init (void)
 #ifdef	ENABLE_DEBUGGER
 	Debugger::SetMode(0);
 #endif	/* ENABLE_DEBUGGER */
-	NES_LoadSettings();
-	NES_SetupDataPath();
+	LoadSettings();
+	SetupDataPath();
 
 	GFX::Create();
 
-	NES_CloseFile();
+	CloseFile();
 
-	NES.Running = FALSE;
-	NES.Stop = FALSE;
-	NES.GameGenie = FALSE;
-	NES.ROMLoaded = FALSE;
+	Running = FALSE;
+	DoStop = FALSE;
+	GameGenie = FALSE;
+	ROMLoaded = FALSE;
 	memset(&RI,0,sizeof(RI));
 
 	UpdateTitlebar();
 }
 
-void	NES_Release (void)
+void	Release (void)
 {
-	if (NES.ROMLoaded)
-		NES_CloseFile();
+	if (ROMLoaded)
+		CloseFile();
 	APU::Release();
 	if (APU::buffer)	// this really should go in APU.cpp
 		free(APU::buffer);
@@ -71,53 +84,53 @@ void	NES_Release (void)
 	Controllers::Release();
 	MapperInterface::Release();
 
-	NES_SaveSettings();
+	SaveSettings();
 	DestroyWindow(hMainWnd);
 }
 
-void	NES_OpenFile (TCHAR *filename)
+void	OpenFile (TCHAR *filename)
 {
 	size_t len = _tcslen(filename);
 	const TCHAR *LoadRet = NULL;
-	if (NES.ROMLoaded)
-		NES_CloseFile();
+	if (ROMLoaded)
+		CloseFile();
 
 	EI.DbgOut(_T("Loading file '%s'..."),filename);
 	if (!_tcsicmp(filename + len - 4, _T(".NES")))
-		LoadRet = NES_OpenFileiNES(filename);
+		LoadRet = OpenFileiNES(filename);
 	else if (!_tcsicmp(filename + len - 4, _T(".NSF")))
-		LoadRet = NES_OpenFileNSF(filename);
+		LoadRet = OpenFileNSF(filename);
 	else if (!_tcsicmp(filename + len - 4, _T(".UNF")))
-		LoadRet = NES_OpenFileUNIF(filename);
+		LoadRet = OpenFileUNIF(filename);
 	else if (!_tcsicmp(filename + len - 5, _T(".UNIF")))
-		LoadRet = NES_OpenFileUNIF(filename);
+		LoadRet = OpenFileUNIF(filename);
 	else if (!_tcsicmp(filename + len - 4, _T(".FDS")))
-		LoadRet = NES_OpenFileFDS(filename);
+		LoadRet = OpenFileFDS(filename);
 	else	LoadRet = _T("File type not recognized!");
 
 	if (LoadRet)
 	{
 		MessageBox(hMainWnd,LoadRet,_T("Nintendulator"),MB_OK | MB_ICONERROR);
-		NES_CloseFile();
+		CloseFile();
 		return;
 	}
-	NES.ROMLoaded = TRUE;
+	ROMLoaded = TRUE;
 	EI.DbgOut(_T("Loaded successfully!"));
 	States_SetFilename(filename);
 
-	NES.HasMenu = FALSE;
+	HasMenu = FALSE;
 	if (MI->Config)
 	{
 		if (MI->Config(CFG_WINDOW,FALSE))
-			NES.HasMenu = TRUE;
+			HasMenu = TRUE;
 		EnableMenuItem(hMenu,ID_GAME,MF_ENABLED);
 	}
 	else	EnableMenuItem(hMenu,ID_GAME,MF_GRAYED);
-	NES_LoadSRAM();
+	LoadSRAM();
 
 	if (RI.ROMType == ROM_NSF)
 	{
-		NES.GameGenie = FALSE;
+		GameGenie = FALSE;
 		CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 		EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_GRAYED);
 	}
@@ -150,12 +163,12 @@ void	NES_OpenFile (TCHAR *filename)
 	Debugger::SprChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 
-	NES_Reset(RESET_HARD);
-	if ((NES.AutoRun) || (RI.ROMType == ROM_NSF))
-		NES_Start(FALSE);
+	Reset(RESET_HARD);
+	if ((AutoRun) || (RI.ROMType == ROM_NSF))
+		Start(FALSE);
 }
 
-int	NES_FDSSave (FILE *out)
+int	FDSSave (FILE *out)
 {
 	int clen = 0;
 	int x, y, n = 0;
@@ -179,7 +192,7 @@ int	NES_FDSSave (FILE *out)
 	return clen;
 }
 
-int	NES_FDSLoad (FILE *in)
+int	FDSLoad (FILE *in)
 {
 	int clen = 0;
 	int n;
@@ -196,11 +209,11 @@ int	NES_FDSLoad (FILE *in)
 	return clen;
 }
 
-void	NES_SaveSRAM (void)
+void	SaveSRAM (void)
 {
 	TCHAR Filename[MAX_PATH];
 	FILE *SRAMFile;
-	if (!NES.SRAM_Size)
+	if (!SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
 		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States.BaseFilename);
@@ -208,22 +221,22 @@ void	NES_SaveSRAM (void)
 	SRAMFile = _tfopen(Filename,_T("wb"));
 	if (RI.ROMType == ROM_FDS)
 	{
-		NES_FDSSave(SRAMFile);
+		FDSSave(SRAMFile);
 		EI.DbgOut(_T("Saved disk changes"));
 	}
 	else
 	{
-		fwrite(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
+		fwrite(PRG_RAM,1,SRAM_Size,SRAMFile);
 		EI.DbgOut(_T("Saved SRAM."));
 	}
 	fclose(SRAMFile);
 }
-void	NES_LoadSRAM (void)
+void	LoadSRAM (void)
 {
 	TCHAR Filename[MAX_PATH];
 	FILE *SRAMFile;
 	int len;
-	if (!NES.SRAM_Size)
+	if (!SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
 		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States.BaseFilename);
@@ -236,29 +249,29 @@ void	NES_LoadSRAM (void)
 	fseek(SRAMFile,0,SEEK_SET);
 	if (RI.ROMType == ROM_FDS)
 	{
-		if (len == NES_FDSLoad(SRAMFile))
+		if (len == FDSLoad(SRAMFile))
 			EI.DbgOut(_T("Loaded disk changes"));
 		else	EI.DbgOut(_T("File length mismatch while loading disk data!"));
 	}
 	else
 	{
-		ZeroMemory(PRG_RAM,NES.SRAM_Size);
-		fread(PRG_RAM,1,NES.SRAM_Size,SRAMFile);
-		if (len == NES.SRAM_Size)
-			EI.DbgOut(_T("Loaded SRAM (%i bytes)."),NES.SRAM_Size);
+		ZeroMemory(PRG_RAM,SRAM_Size);
+		fread(PRG_RAM,1,SRAM_Size,SRAMFile);
+		if (len == SRAM_Size)
+			EI.DbgOut(_T("Loaded SRAM (%i bytes)."),SRAM_Size);
 		else	EI.DbgOut(_T("File length mismatch while loading SRAM!"));
 	}
 	fclose(SRAMFile);
 }
 
-void	NES_CloseFile (void)
+void	CloseFile (void)
 {
 	int i;
-	NES_SaveSRAM();
-	if (NES.ROMLoaded)
+	SaveSRAM();
+	if (ROMLoaded)
 	{
 		MapperInterface::UnloadMapper();
-		NES.ROMLoaded = FALSE;
+		ROMLoaded = FALSE;
 		EI.DbgOut(_T("ROM unloaded."));
 	}
 
@@ -299,7 +312,7 @@ void	NES_CloseFile (void)
 	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_GRAYED);
 	EnableMenuItem(hMenu,ID_MISC_STARTAVICAPTURE,MF_GRAYED);
 
-	NES.SRAM_Size = 0;
+	SRAM_Size = 0;
 	for (i = 0; i < 16; i++)
 	{
 		CPU::PRGPointer[i] = PRG_RAM[0];
@@ -320,7 +333,7 @@ void	NES_CloseFile (void)
 		(((a) <<  8) & 0x00FF0000) | \
 		(((a) << 24) & 0xFF000000))
 
-const TCHAR *	NES_OpenFileiNES (TCHAR *filename)
+const TCHAR *	OpenFileiNES (TCHAR *filename)
 {
 	int i;
 	FILE *in;
@@ -379,22 +392,22 @@ const TCHAR *	NES_OpenFileiNES (TCHAR *filename)
 
 	fclose(in);
 
-	NES.PRGMask = ((RI.INES_PRGSize << 2) - 1) & MAX_PRGROM_MASK;
-	NES.CHRMask = ((RI.INES_CHRSize << 3) - 1) & MAX_CHRROM_MASK;
+	PRGMask = ((RI.INES_PRGSize << 2) - 1) & MAX_PRGROM_MASK;
+	CHRMask = ((RI.INES_CHRSize << 3) - 1) & MAX_CHRROM_MASK;
 
 	p2Found = FALSE;
 	for (tmp = 1; tmp < 0x40000000; tmp <<= 1)
 		if (tmp == RI.INES_PRGSize)
 			p2Found = TRUE;
 	if (!p2Found)
-		NES.PRGMask = MAX_PRGROM_MASK;
+		PRGMask = MAX_PRGROM_MASK;
 
 	p2Found = FALSE;
 	for (tmp = 1; tmp < 0x40000000; tmp <<= 1)
 		if (tmp == RI.INES_CHRSize)
 			p2Found = TRUE;
 	if (!p2Found)
-		NES.CHRMask = MAX_CHRROM_MASK;
+		CHRMask = MAX_CHRROM_MASK;
 
 	
 	if (!MapperInterface::LoadMapper(&RI))
@@ -409,7 +422,7 @@ const TCHAR *	NES_OpenFileiNES (TCHAR *filename)
 	return NULL;
 }
 
-const TCHAR *	NES_OpenFileUNIF (TCHAR *filename)
+const TCHAR *	OpenFileUNIF (TCHAR *filename)
 {
 	unsigned long Signature, BlockLen;
 	unsigned char *tPRG[0x10], *tCHR[0x10];
@@ -457,8 +470,8 @@ const TCHAR *	NES_OpenFileUNIF (TCHAR *filename)
 		case MKID('TVCI'):
 			fread(&tp,1,1,in);
 			RI.UNIF_NTSCPAL = tp;
-			if (tp == 0) NES_SetCPUMode(0);
-			if (tp == 1) NES_SetCPUMode(1);
+			if (tp == 0) SetCPUMode(0);
+			if (tp == 1) SetCPUMode(1);
 			break;
 		case MKID('BATR'):
 			fread(&tp,1,1,in);
@@ -538,23 +551,23 @@ const TCHAR *	NES_OpenFileUNIF (TCHAR *filename)
 	fclose(in);
 
 	PRGsize = (unsigned int)(PRGPoint - PRG_ROM[0]);
-	NES.PRGMask = ((PRGsize / 0x1000) - 1) & MAX_PRGROM_MASK;
+	PRGMask = ((PRGsize / 0x1000) - 1) & MAX_PRGROM_MASK;
 	CHRsize = (unsigned int)(CHRPoint - CHR_ROM[0]);
-	NES.CHRMask = ((CHRsize / 0x400) - 1) & MAX_CHRROM_MASK;
+	CHRMask = ((CHRsize / 0x400) - 1) & MAX_CHRROM_MASK;
 
 	p2Found = FALSE;
 	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
 		if (p2 == PRGsize)
 			p2Found = TRUE;
 	if (!p2Found)
-		NES.PRGMask = MAX_PRGROM_MASK;
+		PRGMask = MAX_PRGROM_MASK;
 
 	p2Found = FALSE;
 	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
 		if (p2 == CHRsize)
 			p2Found = TRUE;
 	if (!p2Found)
-		NES.CHRMask = MAX_CHRROM_MASK;
+		CHRMask = MAX_CHRROM_MASK;
 
 	if (!MapperInterface::LoadMapper(&RI))
 	{
@@ -576,7 +589,7 @@ const TCHAR *	NES_OpenFileUNIF (TCHAR *filename)
 	return NULL;
 }
 
-const TCHAR *	NES_OpenFileFDS (TCHAR *filename)
+const TCHAR *	OpenFileFDS (TCHAR *filename)
 {
 	FILE *in;
 	unsigned long Header;
@@ -606,18 +619,18 @@ const TCHAR *	NES_OpenFileFDS (TCHAR *filename)
 
 	RI.FDS_NumSides = numSides;
 
-	NES.PRGMask = ((RI.FDS_NumSides << 4) - 1) & MAX_PRGROM_MASK;
+	PRGMask = ((RI.FDS_NumSides << 4) - 1) & MAX_PRGROM_MASK;
 
 	if (!MapperInterface::LoadMapper(&RI))
 		return _T("Famicom Disk System support not found!");
 
 	EI.DbgOut(_T("FDS file loaded: %s - %s"),MI->Description,CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("Data length: %i disk side(s)"),RI.FDS_NumSides);
-	NES.SRAM_Size = 1;	// special, so FDS always saves changes
+	SRAM_Size = 1;	// special, so FDS always saves changes
 	return NULL;
 }
 
-const TCHAR *	NES_OpenFileNSF (TCHAR *filename)
+const TCHAR *	OpenFileNSF (TCHAR *filename)
 {
 	FILE *in;
 	unsigned char Header[128];	/* Header Bytes */
@@ -680,7 +693,7 @@ const TCHAR *	NES_OpenFileNSF (TCHAR *filename)
 		RI.NSF_PALSpeed = 19997;
 	}
 
-	NES.PRGMask = MAX_PRGROM_MASK;
+	PRGMask = MAX_PRGROM_MASK;
 
 	if (!MapperInterface::LoadMapper(&RI))
 		return _T("NSF support not found!");
@@ -689,7 +702,7 @@ const TCHAR *	NES_OpenFileNSF (TCHAR *filename)
 	return NULL;
 }
 /*
-const char *	NES_OpenFileNFRF (char *filename)
+const char *	OpenFileNFRF (char *filename)
 {
 	unsigned long BlockSig, tp, i;
 	int BlockHeader;
@@ -725,8 +738,8 @@ const char *	NES_OpenFileNFRF (char *filename)
 			fread(&tp,1,4,in);
 			if (BlockHeader-4)
 				fseek(in,BlockHeader-4,SEEK_CUR);
-			if (tp == 0) NES_SetCPUMode(0);
-			if (tp == 1) NES_SetCPUMode(1);	
+			if (tp == 0) SetCPUMode(0);
+			if (tp == 1) SetCPUMode(1);	
 			break;
 		case MKID('BATT'):
 			EI.Flags |= 0x02;
@@ -785,11 +798,11 @@ const char *	NES_OpenFileNFRF (char *filename)
 	fclose(in);
 	EI.PRG_ROM_Size = (int)(PRGPoint - PRG_ROM[0]);
 	EI.CHR_ROM_Size = (int)(CHRPoint - CHR_ROM[0]);
-	NES.PRGMask = ((EI.PRG_ROM_Size >> 12) - 1) & MAX_PRGROM_MASK;
-	NES.CHRMask = ((EI.CHR_ROM_Size >> 10) - 1) & MAX_CHRROM_MASK;
+	PRGMask = ((EI.PRG_ROM_Size >> 12) - 1) & MAX_PRGROM_MASK;
+	CHRMask = ((EI.CHR_ROM_Size >> 10) - 1) & MAX_CHRROM_MASK;
 	for (p2 = 1; p2 < 0x10000000; p2 <<= 1)
 		if (p2 == EI.PRG_ROM_Size) p2Found = FALSE;
-	if (!p2Found) NES.PRGMask = 0xFFFFFFFF;
+	if (!p2Found) PRGMask = 0xFFFFFFFF;
 	if (!MapperInterface::LoadByBoard(BoardName))
 	{
 		static char err[256];
@@ -801,7 +814,7 @@ const char *	NES_OpenFileNFRF (char *filename)
 	return NULL;
 }
 */
-void	NES_SetCPUMode (int NewMode)
+void	SetCPUMode (int NewMode)
 {
 	if (NewMode == 0)
 	{
@@ -827,7 +840,7 @@ void	NES_SetCPUMode (int NewMode)
 	}
 }
 
-void	NES_Reset (RESET_TYPE ResetType)
+void	Reset (RESET_TYPE ResetType)
 {
 	int i;
 	for (i = 0x0; i < 0x10; i++)
@@ -843,7 +856,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 	CPU::ReadHandler[2] = PPU_IntRead;	CPU::WriteHandler[2] = PPU_IntWrite;
 	CPU::ReadHandler[3] = PPU_IntRead;	CPU::WriteHandler[3] = PPU_IntWrite;
 	CPU::ReadHandler[4] = CPU::Read4k;	CPU::WriteHandler[4] = CPU::Write4k;
-	if (!NES.GameGenie)
+	if (!GameGenie)
 		Genie::CodeStat = 0;
 	for (i = 0x0; i < 0x8; i++)
 	{
@@ -863,7 +876,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 	{
 	case RESET_HARD:
 		EI.DbgOut(_T("Performing hard reset..."));
-		ZeroMemory((unsigned char *)PRG_RAM+NES.SRAM_Size,sizeof(PRG_RAM)-NES.SRAM_Size);
+		ZeroMemory((unsigned char *)PRG_RAM+SRAM_Size,sizeof(PRG_RAM)-SRAM_Size);
 		ZeroMemory(CHR_RAM,sizeof(CHR_RAM));
 		if (MI2)
 		{
@@ -872,7 +885,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 		}
 		CPU::PowerOn();
 		PPU_PowerOn();
-		if (NES.GameGenie)
+		if (GameGenie)
 			Genie::Reset();
 		else	if ((MI) && (MI->Reset))
 			MI->Reset(RESET_HARD);
@@ -884,7 +897,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 			MI = MI2;
 			MI2 = NULL;
 		}
-		if (NES.GameGenie)
+		if (GameGenie)
 		{
 			if (Genie::CodeStat & 1)
 				Genie::Init();	// Set up the PRG read handlers BEFORE resetting the mapper
@@ -902,11 +915,11 @@ void	NES_Reset (RESET_TYPE ResetType)
 	if (Debugger::Enabled)
 		Debugger::Update();
 #endif	/* ENABLE_DEBUGGER */
-	NES.Scanline = FALSE;
+	Scanline = FALSE;
 	EI.DbgOut(_T("Reset complete."));
 }
 
-DWORD	WINAPI	NES_Thread (void *param)
+DWORD	WINAPI	Thread (void *param)
 {
 #ifdef	CPU_BENCHMARK
 	/* Run with cyctest.nes */
@@ -933,19 +946,19 @@ DWORD	WINAPI	NES_Thread (void *param)
 	EI.DbgOut(_T("10 seconds emulated in %lu milliseconds"),(unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
 #else	/* !CPU_BENCHMARK */
 
-	if ((!NES.Stop) && (NES.SoundEnabled))
+	if ((!DoStop) && (SoundEnabled))
 		APU::SoundON();	// don't turn on sound if we're only stepping 1 instruction
 
-	if ((PPU.SLnum == 240) && (NES.FrameStep))
+	if ((PPU.SLnum == 240) && (FrameStep))
 	{	// if we save or load while paused, we want to end up here
 		// so we don't end up advancing another frame
-		NES.GotStep = FALSE;
+		GotStep = FALSE;
 		Movie::ShowFrame();
-		while (NES.FrameStep && !NES.GotStep && !NES.Stop)
+		while (FrameStep && !GotStep && !DoStop)
 			Sleep(1);
 	}
 	
-	while (!NES.Stop)
+	while (!DoStop)
 	{
 #ifdef	ENABLE_DEBUGGER
 		if (Debugger::Enabled)
@@ -956,20 +969,20 @@ DWORD	WINAPI	NES_Thread (void *param)
 		if (Debugger::Enabled)
 			Debugger::Update();
 #endif	/* ENABLE_DEBUGGER */
-		if (NES.Scanline)
+		if (Scanline)
 		{
-			NES.Scanline = FALSE;
+			Scanline = FALSE;
 			if (PPU.SLnum == 240)
 			{
 #ifdef	ENABLE_DEBUGGER
 				if (Debugger::Enabled)
 					Debugger::Update();
 #endif	/* ENABLE_DEBUGGER */
-				if (NES.FrameStep)	// if we pause during emulation
+				if (FrameStep)	// if we pause during emulation
 				{	// it'll get caught down here at scanline 240
-					NES.GotStep = FALSE;
+					GotStep = FALSE;
 					Movie::ShowFrame();
-					while (NES.FrameStep && !NES.GotStep && !NES.Stop)
+					while (FrameStep && !GotStep && !DoStop)
 						Sleep(1);
 				}
 			}
@@ -983,44 +996,44 @@ DWORD	WINAPI	NES_Thread (void *param)
 
 #endif	/* CPU_BENCHMARK */
 	UpdateTitlebar();
-	NES.Running = FALSE;
+	Running = FALSE;
 	return 0;
 }
-void	NES_Start (BOOL step)
+void	Start (BOOL step)
 {
 	DWORD ThreadID;
-	if (NES.Running)
+	if (Running)
 		return;
-	NES.Running = TRUE;
+	Running = TRUE;
 #ifdef	ENABLE_DEBUGGER
 	Debugger::Step = step;
 #endif	/* ENABLE_DEBUGGER */
-	NES.Stop = FALSE;
-	CloseHandle(CreateThread(NULL,0,NES_Thread,NULL,0,&ThreadID));
+	DoStop = FALSE;
+	CloseHandle(CreateThread(NULL,0,Thread,NULL,0,&ThreadID));
 }
-void	NES_Stop (void)
+void	Stop (void)
 {
-	if (!NES.Running)
+	if (!Running)
 		return;
-	NES.Stop = TRUE;
-	while (NES.Running)
+	DoStop = TRUE;
+	while (Running)
 	{
 		ProcessMessages();
 		Sleep(1);
 	}
 }
 
-void	NES_MapperConfig (void)
+void	MapperConfig (void)
 {
 	MI->Config(CFG_WINDOW,TRUE);
 }
 
-void	NES_UpdateInterface (void)
+void	UpdateInterface (void)
 {
 	SetWindowClientArea(hMainWnd,256 * SizeMult,240 * SizeMult);
 }
 
-void	NES_LoadSettings (void)
+void	LoadSettings (void)
 {
 	HKEY SettingsBase;
 	unsigned long Size;
@@ -1031,7 +1044,7 @@ void	NES_LoadSettings (void)
 
 	/* Load Defaults */
 	SizeMult = 1;
-	NES.SoundEnabled = 1;
+	SoundEnabled = 1;
 	GFX::aFSkip = 1;
 	GFX::FSkip = 0;
 	GFX::PaletteNTSC = 0;
@@ -1051,16 +1064,16 @@ void	NES_LoadSettings (void)
 	GFX::SlowRate = 2;
 	CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_2,MF_BYCOMMAND);
 
-	NES.FrameStep = FALSE;
+	FrameStep = FALSE;
 	Path_ROM[0] = Path_NMV[0] = Path_AVI[0] = Path_PAL[0] = 0;
 
 	/* End Defaults */
 
 	RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("SoundEnabled"),0,NULL,(LPBYTE)&NES.SoundEnabled,&Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("SoundEnabled"),0,NULL,(LPBYTE)&SoundEnabled,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("aFSkip")      ,0,NULL,(LPBYTE)&GFX::aFSkip     ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("PPUMode")     ,0,NULL,(LPBYTE)&PPU.IsPAL       ,&Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("AutoRun")     ,0,NULL,(LPBYTE)&NES.AutoRun     ,&Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("AutoRun")     ,0,NULL,(LPBYTE)&AutoRun     ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("Scanlines")   ,0,NULL,(LPBYTE)&GFX::Scanlines  ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("UDLR")        ,0,NULL,(LPBYTE)&Controllers::EnableOpposites,&Size);
 
@@ -1113,10 +1126,10 @@ void	NES_LoadSettings (void)
 
 	RegCloseKey(SettingsBase);
 
-	if (NES.SoundEnabled)
+	if (SoundEnabled)
 		CheckMenuItem(hMenu, ID_SOUND_ENABLED, MF_CHECKED);
 
-	if (NES.AutoRun)
+	if (AutoRun)
 		CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_CHECKED);
 
 	if (GFX::NTSChue >= 300)		// old hue settings were 300 to 360
@@ -1137,28 +1150,28 @@ void	NES_LoadSettings (void)
 		CheckMenuItem(hMenu, ID_PPU_SCANLINES, MF_CHECKED);
 
 	if (PPU.IsPAL)
-		NES_SetCPUMode(1);
-	else	NES_SetCPUMode(0);
+		SetCPUMode(1);
+	else	SetCPUMode(0);
 
 	SetWindowPos(hMainWnd,HWND_TOP,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
 
 	Controllers::Acquire();
-	NES_UpdateInterface();
+	UpdateInterface();
 }
 
-void	NES_SaveSettings (void)
+void	SaveSettings (void)
 {
 	HKEY SettingsBase;
 	RECT wRect;
 	GetWindowRect(hMainWnd,&wRect);
 	if (RegOpenKeyEx(HKEY_CURRENT_USER,_T("SOFTWARE\\Nintendulator\\"),0,KEY_ALL_ACCESS,&SettingsBase))
 		RegCreateKeyEx(HKEY_CURRENT_USER,_T("SOFTWARE\\Nintendulator\\"),0,_T("NintendulatorClass"),REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&SettingsBase,NULL);
-	RegSetValueEx(SettingsBase,_T("SoundEnabled"),0,REG_DWORD,(LPBYTE)&NES.SoundEnabled,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("SoundEnabled"),0,REG_DWORD,(LPBYTE)&SoundEnabled,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("SizeMult")    ,0,REG_DWORD,(LPBYTE)&SizeMult        ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("FSkip")       ,0,REG_DWORD,(LPBYTE)&GFX::FSkip      ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("aFSkip")      ,0,REG_DWORD,(LPBYTE)&GFX::aFSkip     ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("PPUMode")     ,0,REG_DWORD,(LPBYTE)&PPU.IsPAL       ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("AutoRun")     ,0,REG_DWORD,(LPBYTE)&NES.AutoRun     ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("AutoRun")     ,0,REG_DWORD,(LPBYTE)&AutoRun     ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("PosX")        ,0,REG_DWORD,(LPBYTE)&wRect.left      ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("PosY")        ,0,REG_DWORD,(LPBYTE)&wRect.top       ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("Scanlines")   ,0,REG_DWORD,(LPBYTE)&GFX::Scanlines  ,sizeof(DWORD));
@@ -1197,7 +1210,7 @@ void	NES_SaveSettings (void)
 	RegCloseKey(SettingsBase);
 }
 
-void	NES_SetupDataPath (void)
+void	SetupDataPath (void)
 {
 	WIN32_FIND_DATA Data;
 	HANDLE Handle;
@@ -1337,3 +1350,4 @@ void	NES_SetupDataPath (void)
 		EI.DbgOut(_T("Savestate directory successfully relocated"));
 	else	MessageBox(NULL, _T("Nintendulator was unable to fully relocate your old savestates.\nPlease remove all remaining files from Nintendulator's \"Saves\" folder."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 }
+} // namespace NES

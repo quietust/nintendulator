@@ -8,53 +8,52 @@
 #ifndef NES_H
 #define NES_H
 
-struct tNES
+namespace NES
 {
-	int SRAM_Size;
+extern int SRAM_Size;
 
-	int PRGMask, CHRMask;
+extern int PRGMask, CHRMask;
 
-	BOOL ROMLoaded;
-	BOOL Stop, Running, Scanline;
-	BOOL GameGenie;
-	BOOL SoundEnabled;
-	BOOL AutoRun;
-	BOOL FrameStep, GotStep;
-	BOOL HasMenu;
-};
-extern	struct tNES NES;
+extern BOOL ROMLoaded;
+extern BOOL DoStop, Running, Scanline;
+extern BOOL GameGenie;
+extern BOOL SoundEnabled;
+extern BOOL AutoRun;
+extern BOOL FrameStep, GotStep;
+extern BOOL HasMenu;
 
 #define	MAX_PRGROM_MASK	0x7FF
 #define	MAX_PRGRAM_MASK	0xF
 #define	MAX_CHRROM_MASK	0xFFF
 #define	MAX_CHRRAM_MASK	0x1F
-extern	unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];	/* 8192 KB */
-extern	unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];	/*   64 KB */
-extern	unsigned char CHR_ROM[MAX_CHRROM_MASK+1][0x400];	/* 4096 KB */
-extern	unsigned char CHR_RAM[MAX_CHRRAM_MASK+1][0x400];	/*   32 KB */
+extern unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];	/* 8192 KB */
+extern unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];	/*   64 KB */
+extern unsigned char CHR_ROM[MAX_CHRROM_MASK+1][0x400];	/* 4096 KB */
+extern unsigned char CHR_RAM[MAX_CHRRAM_MASK+1][0x400];	/*   32 KB */
 
-void	NES_Init (void);
-void	NES_Release (void);
-void	NES_OpenFile (TCHAR *);
-void	NES_CloseFile (void);
-int	NES_FDSSave (FILE *);
-int	NES_FDSLoad (FILE *);
-void	NES_SaveSRAM (void);
-void	NES_LoadSRAM (void);
-const TCHAR *	NES_OpenFileiNES (TCHAR *);
-const TCHAR *	NES_OpenFileUNIF (TCHAR *);
-const TCHAR *	NES_OpenFileFDS (TCHAR *);
-const TCHAR *	NES_OpenFileNSF (TCHAR *);
-void	NES_SetCPUMode (int);
-void	NES_Reset (RESET_TYPE);
+void	Init (void);
+void	Release (void);
+void	OpenFile (TCHAR *);
+void	CloseFile (void);
+int	FDSSave (FILE *);
+int	FDSLoad (FILE *);
+void	SaveSRAM (void);
+void	LoadSRAM (void);
+const TCHAR *	OpenFileiNES (TCHAR *);
+const TCHAR *	OpenFileUNIF (TCHAR *);
+const TCHAR *	OpenFileFDS (TCHAR *);
+const TCHAR *	OpenFileNSF (TCHAR *);
+void	SetCPUMode (int);
+void	Reset (RESET_TYPE);
 
-void	NES_Start (BOOL);
-void	NES_Stop (void);
+void	Start (BOOL);
+void	Stop (void);
 
-void	NES_UpdateInterface (void);
-void	NES_LoadSettings (void);
-void	NES_SaveSettings (void);
-void	NES_SetupDataPath (void);
-void	NES_MapperConfig (void);
+void	UpdateInterface (void);
+void	LoadSettings (void);
+void	SaveSettings (void);
+void	SetupDataPath (void);
+void	MapperConfig (void);
 
+} // namespace NES
 #endif	/* !NES_H */

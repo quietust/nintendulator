@@ -268,7 +268,7 @@ void	Release (void)
 		ShowWindow(hMainWnd,SW_RESTORE);
 		if (dbgVisible)
 			ShowWindow(hDebug,SW_RESTORE);
-		NES_UpdateInterface();
+		NES::UpdateInterface();
 	}
 }
 
@@ -1138,7 +1138,7 @@ void	LoadPalette (int PalNum)
 		Palette32[i] = (RV << 16) | (GV << 8) | BV;
 	}
 	// redraw the screen with the new palette, but only if emulation isn't active
-	if (!NES.Running)
+	if (!NES::Running)
 		Update();
 }
 #undef CLIP

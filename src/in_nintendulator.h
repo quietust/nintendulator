@@ -182,20 +182,15 @@ typedef struct
 
 #pragma warning(disable:4761)
 
-struct tNES
+namespace NES
 {
-	int PRGMask;
-
-	BOOL ROMLoaded;
-	BOOL IsNSF;
-	BOOL SoundEnabled;
-};
-extern	struct tNES NES;
+extern int PRGMask;
 
 #define	MAX_PRGROM_MASK	0x7FF	// 8192 KB
 #define	MAX_PRGRAM_MASK	0xF	// 64 KB
-extern	unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];
-extern	unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];
+extern unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];
+extern unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];
+} // namespace NES
 
 extern	In_Module	mod;
 

@@ -197,7 +197,7 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 void	Play (void)
 {
-	BOOL resume = FALSE, running = NES.Running;
+	BOOL resume = FALSE, running = NES::Running;
 	int ret, len;
 	char buf[4];
 
@@ -207,13 +207,13 @@ void	Play (void)
 		return;
 	}
 
-	NES_Stop();
+	NES::Stop();
 
 	ret = DialogBox(hInst, (LPCTSTR)IDD_MOVIE_PLAY, hMainWnd, MoviePlayProc);
 	if (ret == 0)
 	{
 		if (running)
-			NES_Start(FALSE);
+			NES::Start(FALSE);
 		return;
 	}
 	if (ret == 2)
@@ -261,17 +261,17 @@ void	Play (void)
 
 	Pos = Len = 0;
 
-	NES.SRAM_Size = 0;		// when messing with movies, don't save SRAM
+	NES::SRAM_Size = 0;		// when messing with movies, don't save SRAM
 
 	if (RI.ROMType == ROM_FDS)	// when playing FDS movies, discard savedata; if there is savestate data, we'll be reloading it
-		memcpy(PRG_ROM[0x000], PRG_ROM[0x400], RI.FDS_NumSides << 16);
+		memcpy(NES::PRG_ROM[0x000], NES::PRG_ROM[0x400], RI.FDS_NumSides << 16);
 
 	FindBlock();		// SPECIAL - seek to NMOV block
 	fread(buf, 4, 1, Data);	// to see if Game Genie is used or not
 
 	if (buf[3] & 0x40)		// we need to check this BEFORE reset so we can possibly swap in the menu
-		NES.GameGenie = TRUE;	// this bit ONLY gets set for reset-based movies
-	else	NES.GameGenie = FALSE;	// if it starts from a savestate, it's already in the game (and we load the GENI block)
+		NES::GameGenie = TRUE;	// this bit ONLY gets set for reset-based movies
+	else	NES::GameGenie = FALSE;	// if it starts from a savestate, it's already in the game (and we load the GENI block)
 
 	fseek(Data, 16, SEEK_SET);	// seek back to the beginning of the file (past the header)
 
@@ -280,7 +280,7 @@ void	Play (void)
 		MI->Unload();
 	if (MI->Load)
 		MI->Load();
-	NES_Reset(RESET_HARD);
+	NES::Reset(RESET_HARD);
 	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
 	if (!States_LoadData(Data, len))
 	{
@@ -323,10 +323,10 @@ void	Play (void)
 		}
 		ExpPort_SetControllerType(&Controllers::ExpPort, buf[2]);
 	}
-	NES_SetCPUMode(buf[3] >> 7);	// Set to NTSC or PAL
+	NES::SetCPUMode(buf[3] >> 7);	// Set to NTSC or PAL
 
 	FrameLen = Controllers::Port1.MovLen + Controllers::Port2.MovLen + Controllers::ExpPort.MovLen;
-	if (NES.HasMenu)
+	if (NES::HasMenu)
 		FrameLen++;
 	if (FrameLen != (buf[3] & 0x3F))
 		MessageBox(hMainWnd, _T("The frame size specified in this movie is incorrect! This movie may not play properly!"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
@@ -490,7 +490,7 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 
 void	Record (void)
 {
-	BOOL fromState = FALSE, running = NES.Running;
+	BOOL fromState = FALSE, running = NES::Running;
 	int ret, len, x;
 
 	if (Mode)
@@ -499,26 +499,26 @@ void	Record (void)
 		return;
 	}
 
-	NES_Stop();
+	NES::Stop();
 
 	ret = DialogBox(hInst, (LPCTSTR)IDD_MOVIE_RECORD, hMainWnd, MovieRecordProc);
 	if (ret == 0)
 	{
 		if (running)
-			NES_Start(FALSE);
+			NES::Start(FALSE);
 		return;
 	}
 	if (ret == 2)
 		fromState = TRUE;
 
-	if ((MI) && (MI->Config) && (!NES.HasMenu))
+	if ((MI) && (MI->Config) && (!NES::HasMenu))
 		EnableMenuItem(hMenu, ID_GAME, MF_GRAYED);
 	
 	len = 0;
 	ReRecords = 0;
 	Pos = Len = 0;
 
-	NES.SRAM_Size = 0;		// when messing with movies, don't save SRAM
+	NES::SRAM_Size = 0;		// when messing with movies, don't save SRAM
 
 	fwrite("NSS\x1A", 1, 4, Data);
 	fwrite(STATES_VERSION, 1, 4, Data);
@@ -535,8 +535,8 @@ void	Record (void)
 		if (MI->Load)
 			MI->Load();
 		if (RI.ROMType == ROM_FDS)	// if recording an FDS movie from reset, discard all savedata
-			memcpy(PRG_ROM[0x000], PRG_ROM[0x400], RI.FDS_NumSides << 16);
-		NES_Reset(RESET_HARD);
+			memcpy(NES::PRG_ROM[0x000], NES::PRG_ROM[0x400], RI.FDS_NumSides << 16);
+		NES::Reset(RESET_HARD);
 	}
 	// save savestate BEFORE enabling recording, so we don't try to re-save the NMOV block
 	Mode = MOV_RECORD;
@@ -562,10 +562,10 @@ void	Record (void)
 	FrameLen += Controllers::Port1.MovLen;
 	FrameLen += Controllers::Port2.MovLen;
 	FrameLen += Controllers::ExpPort.MovLen;
-	if (NES.HasMenu)
+	if (NES::HasMenu)
 		FrameLen++;
 	x |= FrameLen;
-	if (NES.GameGenie && !fromState)	// set Game Genie bit only if recording from reset
+	if (NES::GameGenie && !fromState)	// set Game Genie bit only if recording from reset
 		x |= 0x40;			// - otherwise we can just detect it from the GENI block
 	fwrite(&x, 1, 1, Data);		// frame size, NTSC/PAL, Game Genie
 	fwrite(&ReRecords, 4, 1, Data);// rerecord count
@@ -692,11 +692,11 @@ static	void	EndMovie (void)
 
 void	Stop (void)
 {
-	BOOL running = NES.Running;
-	NES_Stop();
+	BOOL running = NES::Running;
+	NES::Stop();
 	EndMovie();
 	if (running)
-		NES_Start(FALSE);
+		NES::Start(FALSE);
 }
 
 unsigned char	LoadInput (void)
@@ -715,7 +715,7 @@ unsigned char	LoadInput (void)
 		fread(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,Data);		Pos += Controllers::Port2.MovLen;
 	if (Controllers::ExpPort.MovLen)
 		fread(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,Data);	Pos += Controllers::ExpPort.MovLen;
-	if (NES.HasMenu)
+	if (NES::HasMenu)
 	{
 		fread(&Cmd,1,1,Data);
 		Pos++;
@@ -732,7 +732,7 @@ void	SaveInput (unsigned char Cmd)
 		fwrite(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,Data);	len += Controllers::Port2.MovLen;
 	if (Controllers::ExpPort.MovLen)
 		fwrite(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,Data);	len += Controllers::ExpPort.MovLen;
-	if (NES.HasMenu)
+	if (NES::HasMenu)
 	{
 		fwrite(&Cmd,1,1,Data);
 		len++;
@@ -833,7 +833,7 @@ int	Load (FILE *in)
 				fwrite(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,Data);
 				tpi -= Controllers::ExpPort.MovLen;
 			}
-			if (NES.HasMenu)
+			if (NES::HasMenu)
 			{
 				fread(&Cmd,1,1,in);
 				fwrite(&Cmd,1,1,Data);
@@ -873,7 +873,7 @@ int	Load (FILE *in)
 				fread(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,in);
 				tpi -= Controllers::ExpPort.MovLen;
 			}
-			if (NES.HasMenu)
+			if (NES::HasMenu)
 			{
 				fread(&Cmd,1,1,in);
 				tpi--;

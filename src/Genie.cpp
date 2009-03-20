@@ -189,7 +189,7 @@ unsigned char CHR[0x400] = {
 int	MAPINT	Read (int Bank, int Addr)
 {
 	int result = CPU::ReadPRG(Bank,Addr);
-	if (NES.GameGenie)
+	if (NES::GameGenie)
 	{
 		if ((CodeStat & 0x10) && (Bank == Code1B) && (Addr == Code1A) && ((CodeStat & 0x02) || (result == Code1O)))
 			return Code1V;
@@ -203,21 +203,21 @@ int	MAPINT	Read (int Bank, int Addr)
 int	MAPINT	Read1 (int Bank, int Addr)
 {
 	int result = CPU::ReadPRG(Bank,Addr);
-	if ((NES.GameGenie) && ((Addr == Code1A) && ((CodeStat & 0x02) || (result == Code1O))))
+	if ((NES::GameGenie) && ((Addr == Code1A) && ((CodeStat & 0x02) || (result == Code1O))))
 		return Code1V;
 	else	return result;
 }
 int	MAPINT	Read2 (int Bank, int Addr)
 {
 	int result = CPU::ReadPRG(Bank,Addr);
-	if ((NES.GameGenie) && ((Addr == Code2A) && ((CodeStat & 0x04) || (result == Code2O))))
+	if ((NES::GameGenie) && ((Addr == Code2A) && ((CodeStat & 0x04) || (result == Code2O))))
 		return Code2V;
 	else	return result;
 }
 int	MAPINT	Read3 (int Bank, int Addr)
 {
 	int result = CPU::ReadPRG(Bank,Addr);
-	if ((NES.GameGenie) && ((Addr == Code3A) && ((CodeStat & 0x08) || (result == Code3O))))
+	if ((NES::GameGenie) && ((Addr == Code3A) && ((CodeStat & 0x08) || (result == Code3O))))
 		return Code3V;
 	else	return result;
 }
@@ -345,7 +345,7 @@ int	Save (FILE *out)
 	unsigned char val;
 	unsigned short addr;
 		//Data
-	val = (unsigned char)NES.GameGenie;			fwrite(&val,1,1,out);	clen++;
+	val = (unsigned char)NES::GameGenie;			fwrite(&val,1,1,out);	clen++;
 	val = CodeStat;						fwrite(&val,1,1,out);	clen++;
 
 	addr = (unsigned short)((Code1B << 12) | Code1A);	fwrite(&addr,2,1,out);	clen += 2;
@@ -368,7 +368,7 @@ int	Load (FILE *in)
 	int clen = 0;
 	unsigned char val;
 	unsigned short addr;
-	fread(&val,1,1,in);	clen++;		NES.GameGenie = val;
+	fread(&val,1,1,in);	clen++;		NES::GameGenie = val;
 	fread(&val,1,1,in);	clen++;		CodeStat = val;
 
 	fread(&addr,2,1,in);	clen += 2;	Code1A = addr & 0xFFF; Code1B = addr >> 12;
@@ -402,7 +402,7 @@ int	Load (FILE *in)
 		else	EI.DbgOut(_T("Loaded Game Genie code 3: $%01X%03X : $%02X -> $%02X"), Code3B, Code3A, Code3O, Code3V);
 	}
 
-	if (NES.GameGenie)
+	if (NES::GameGenie)
 		CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
 	else	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 

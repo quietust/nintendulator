@@ -501,7 +501,7 @@ int	PPU_Load (FILE *in)
 	PPU.IsRendering = PPU.OnScreen = FALSE;
 	PPU.ColorEmphasis = (PPU.Reg2001 & 0xE0) << 1;
 	PPU.GrayScale = (PPU.Reg2001 & 0x01) ? 0x30 : 0x3F;
-	NES_SetCPUMode(PPU.IsPAL);
+	NES::SetCPUMode(PPU.IsPAL);
 	return clen;
 }
 
@@ -550,7 +550,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 		{
 			PPU.Clockticks = 0;
 			PPU.SLnum++;
-			NES.Scanline = TRUE;
+			NES::Scanline = TRUE;
 			if (PPU.SLnum < 240)
 				PPU.OnScreen = TRUE;
 			else if (PPU.SLnum == 240)
@@ -884,7 +884,7 @@ __inline static	void	RunSkip (int NumTicks)
 		{
 			PPU.Clockticks = 0;
 			PPU.SLnum++;
-			NES.Scanline = TRUE;
+			NES::Scanline = TRUE;
 			if (PPU.SLnum < 240)
 				PPU.OnScreen = TRUE;
 			else if (PPU.SLnum == 240)

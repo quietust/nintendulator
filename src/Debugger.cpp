@@ -277,7 +277,7 @@ void	StartLogging (void)
 	struct tm *newtime;
 	time_t aclock;
 
-	if (!NES.ROMLoaded)
+	if (!NES::ROMLoaded)
 		return;
 
 	time(&aclock);
@@ -450,13 +450,13 @@ void	UpdateCPU (void)
 
 	/* if we chose "Step", stop emulation */
 	if (Step)
-		NES.Stop = TRUE;
+		NES::DoStop = TRUE;
 	/* check for breakpoints */
 	{
 		int BreakAddr;
 		/* PC has execution breakpoint */
 		if (BPcache[CPU::PC] & DEBUG_BREAK_EXEC)
-			NES.Stop = TRUE;
+			NES::DoStop = TRUE;
 		/* I/O break */
 		BreakAddr = DecodeInstruction((unsigned short)CPU::PC, NULL, NULL);
 		TpVal = DebugMemCPU((unsigned short)CPU::PC);
@@ -465,27 +465,27 @@ void	UpdateCPU (void)
 		{
 			/* read opcode, effective address has read breakpoint */
 			if ((TraceIO[TpVal] & DEBUG_BREAK_READ) && (BPcache[BreakAddr] & DEBUG_BREAK_READ))
-				NES.Stop = TRUE;
+				NES::DoStop = TRUE;
 			/* write opcode, effective address has write breakpoint */
 			if ((TraceIO[TpVal] & DEBUG_BREAK_WRITE) && (BPcache[BreakAddr] & DEBUG_BREAK_WRITE))
-				NES.Stop = TRUE;
+				NES::DoStop = TRUE;
 		}
 		/* opcode breakpoint */
 		if (BPcache[0x10000 | TpVal] & DEBUG_BREAK_OPCODE)
-			NES.Stop = TRUE;
+			NES::DoStop = TRUE;
 		/* interrupt breakpoints */
 		if ((CPU::GotInterrupt == INTERRUPT_NMI) && (BPcache[0x10100] & DEBUG_BREAK_NMI))
-			NES.Stop = TRUE;
+			NES::DoStop = TRUE;
 /*		if ((CPU::GotInterrupt == INTERRUPT_RST) && (BPcache[0x10100] & DEBUG_BREAK_RST))
-			NES.Stop = TRUE;*/
+			NES::DoStop = TRUE;*/
 		if ((CPU::GotInterrupt == INTERRUPT_IRQ) && (BPcache[0x10100] & DEBUG_BREAK_IRQ))
-			NES.Stop = TRUE;
+			NES::DoStop = TRUE;
 		if ((CPU::GotInterrupt == INTERRUPT_BRK) && (BPcache[0x10100] & DEBUG_BREAK_BRK))
-			NES.Stop = TRUE;
+			NES::DoStop = TRUE;
 
 	}
 	/* if emulation wasn't stopped, don't bother updating the dialog */
-	if (!NES.Stop)
+	if (!NES::DoStop)
 		return;
 
 	inUpdate = TRUE;
@@ -1197,7 +1197,7 @@ void	DumpCPU (void)
 	FILE *out;
 	int i;
 
-	if (!NES.ROMLoaded)
+	if (!NES::ROMLoaded)
 		return;
 
 	time(&aclock);
@@ -1221,7 +1221,7 @@ void	DumpPPU (void)
 	FILE *out;
 	int i;
 
-	if (!NES.ROMLoaded)
+	if (!NES::ROMLoaded)
 		return;
 
 	time(&aclock);
@@ -1637,7 +1637,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 		case IDC_DEBUG_REG_A:
 			// Don't bother modifying registers while it's emulating at full speed
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_A, tpc, 3);
 			CPU::A = (unsigned char)_tcstol(tpc, NULL, 16);
@@ -1645,7 +1645,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_X:
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_X, tpc, 3);
 			CPU::X = (unsigned char)_tcstol(tpc, NULL, 16);
@@ -1653,7 +1653,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_Y:
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_Y, tpc, 3);
 			CPU::Y = (unsigned char)_tcstol(tpc, NULL, 16);
@@ -1661,7 +1661,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_P:
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_P, tpc, 3);
 			CPU::P = (unsigned char)_tcstol(tpc, NULL, 16);
@@ -1670,7 +1670,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_SP:
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_SP, tpc, 3);
 			CPU::SP = (unsigned char)_tcstol(tpc, NULL, 16);
@@ -1678,7 +1678,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				UpdateCPU();
 			break;
 		case IDC_DEBUG_REG_PC:
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_PC, tpc, 5);
 			CPU::PC = _tcstol(tpc, NULL, 16);
@@ -1716,7 +1716,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDC_DEBUG_FLAG_V:
 			// or modify flags while running
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_V) == BST_CHECKED)
 				CPU::FV = 1;
@@ -1725,7 +1725,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_D:
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_D) == BST_CHECKED)
 				CPU::FD = 1;
@@ -1734,7 +1734,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_I:
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_I) == BST_CHECKED)
 				CPU::FI = 1;
@@ -1743,7 +1743,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_Z:
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_Z) == BST_CHECKED)
 				CPU::FZ = 1;
@@ -1752,7 +1752,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_C:
-			if (NES.Running)
+			if (NES::Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_C) == BST_CHECKED)
 				CPU::FC = 1;
@@ -1844,19 +1844,19 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case IDC_DEBUG_CONT_RUN:
-			if (NES.ROMLoaded)
+			if (NES::ROMLoaded)
 				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_RUN, 0);
 			break;
 		case IDC_DEBUG_CONT_STEP:
-			if (NES.ROMLoaded)
+			if (NES::ROMLoaded)
 				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_STEP, 0);
 			break;
 		case IDC_DEBUG_CONT_RESET:
-			if (NES.ROMLoaded)
+			if (NES::ROMLoaded)
 				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_SOFTRESET, 0);
 			break;
 		case IDC_DEBUG_CONT_POWER:
-			if (NES.ROMLoaded)
+			if (NES::ROMLoaded)
 				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_HARDRESET, 0);
 			break;
 		case IDC_DEBUG_CONT_SEEKPC:

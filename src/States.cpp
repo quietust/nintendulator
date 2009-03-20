@@ -94,8 +94,8 @@ int	States_SaveData (FILE *out)
 		fseek(out,clen,SEEK_CUR);	flen += clen;
 	}
 	{
-		for (clen = sizeof(PRG_RAM) - 1; clen >= 0; clen--)
-			if (PRG_RAM[clen >> 12][clen & 0xFFF])
+		for (clen = sizeof(NES::PRG_RAM) - 1; clen >= 0; clen--)
+			if (NES::PRG_RAM[clen >> 12][clen & 0xFFF])
 				break;
 		if (clen >= 0)
 		{
@@ -103,12 +103,12 @@ int	States_SaveData (FILE *out)
 			fwrite("NPRA",1,4,out);		flen += 4;
 			fwrite(&clen,1,4,out);		flen += 4;
 				//Data
-			fwrite(PRG_RAM,1,clen,out);	flen += clen;	//	PRAM	uint8[...]	PRG_RAM data
+			fwrite(NES::PRG_RAM,1,clen,out);	flen += clen;	//	PRAM	uint8[...]	PRG_RAM data
 		}
 	}
 	{
-		for (clen = sizeof(CHR_RAM) - 1; clen >= 0; clen--)
-			if (CHR_RAM[clen >> 10][clen & 0x3FF])
+		for (clen = sizeof(NES::CHR_RAM) - 1; clen >= 0; clen--)
+			if (NES::CHR_RAM[clen >> 10][clen & 0x3FF])
 				break;
 		if (clen >= 0)
 		{
@@ -116,14 +116,14 @@ int	States_SaveData (FILE *out)
 			fwrite("NCRA",1,4,out);		flen += 4;
 			fwrite(&clen,1,4,out);		flen += 4;
 				//Data
-			fwrite(CHR_RAM,1,clen,out);	flen += clen;	//	CRAM	uint8[...]	CHR_RAM data
+			fwrite(NES::CHR_RAM,1,clen,out);	flen += clen;	//	CRAM	uint8[...]	CHR_RAM data
 		}
 	}
 	if (RI.ROMType == ROM_FDS)
 	{
 		fwrite("DISK",1,4,out);		flen += 4;
 		fwrite(&clen,1,4,out);		flen += 4;
-		clen = NES_FDSSave(out);
+		clen = NES::FDSSave(out);
 		fseek(out,-clen - 4,SEEK_CUR);
 		fwrite(&clen,1,4,out);
 		fseek(out,clen,SEEK_CUR);	flen += clen;
@@ -211,18 +211,18 @@ BOOL	States_LoadData (FILE *in, int flen)
 			clen -= Genie::Load(in);
 		else if (!memcmp(csig,"NPRA",4))
 		{
-			memset(PRG_RAM,0,sizeof(PRG_RAM));
-			fread(PRG_RAM,1,clen,in);	clen = 0;
+			memset(NES::PRG_RAM,0,sizeof(NES::PRG_RAM));
+			fread(NES::PRG_RAM,1,clen,in);	clen = 0;
 		}
 		else if (!memcmp(csig,"NCRA",4))
 		{
-			memset(CHR_RAM,0,sizeof(CHR_RAM));
-			fread(CHR_RAM,1,clen,in);	clen = 0;
+			memset(NES::CHR_RAM,0,sizeof(NES::CHR_RAM));
+			fread(NES::CHR_RAM,1,clen,in);	clen = 0;
 		}
 		else if (!memcmp(csig,"DISK",4))
 		{
 			if (RI.ROMType == ROM_FDS)
-				clen -= NES_FDSLoad(in);
+				clen -= NES::FDSLoad(in);
 			else	EI.DbgOut(_T("Error - DISK save block found for non-FDS game!"));
 		}
 		else if (!memcmp(csig,"MAPR",4))
@@ -315,12 +315,12 @@ void	States_LoadState (void)
 	}
 
 	fseek(in,16,SEEK_SET);
-	NES_Reset(RESET_SOFT);
+	NES::Reset(RESET_SOFT);
 
 	if (Movie::Mode & MOV_REVIEW)		/* If the user is reviewing an existing movie */
 		Movie::Mode = MOV_RECORD;	/* then resume recording once they LOAD state */
 
-	NES.GameGenie = FALSE;	/* If the savestate uses it, it'll turn back on shortly */
+	NES::GameGenie = FALSE;	/* If the savestate uses it, it'll turn back on shortly */
 	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
 	if (States_LoadData(in, flen))
