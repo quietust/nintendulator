@@ -440,7 +440,7 @@ void	AddVideo (void)
 		{
 			register unsigned long *dst = videoBuffer + 256 * (239 - y);
 			for (x = 0; x < 256; x++)
-				dst[x] = GFX.Palette32[src[x]];
+				dst[x] = GFX::Palette32[src[x]];
 			src += x;
 		}
 	}

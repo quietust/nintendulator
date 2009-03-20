@@ -189,7 +189,7 @@ ATOM	MyRegisterClass (HINSTANCE hInstance)
 //
 BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 {
-	GFX.DirectDraw = NULL;	// gotta do this so we don't paint from nothing
+	GFX::DirectDraw = NULL;	// gotta do this so we don't paint from nothing
 	hInst = hInstance;
 	hMenu = LoadMenu(hInst,(LPCTSTR)IDR_NINTENDULATOR);
 	hMainWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,hMenu,hInstance,NULL);
@@ -388,38 +388,38 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			NES.GotStep = TRUE;
 			break;
 		case ID_PPU_FRAMESKIP_AUTO:
-			GFX.aFSkip = !GFX.aFSkip;
-			GFX_SetFrameskip(-1);
+			GFX::aFSkip = !GFX::aFSkip;
+			GFX::SetFrameskip(-1);
 			break;
 		case ID_PPU_FRAMESKIP_0:
-			GFX_SetFrameskip(0);
+			GFX::SetFrameskip(0);
 			break;
 		case ID_PPU_FRAMESKIP_1:
-			GFX_SetFrameskip(1);
+			GFX::SetFrameskip(1);
 			break;
 		case ID_PPU_FRAMESKIP_2:
-			GFX_SetFrameskip(2);
+			GFX::SetFrameskip(2);
 			break;
 		case ID_PPU_FRAMESKIP_3:
-			GFX_SetFrameskip(3);
+			GFX::SetFrameskip(3);
 			break;
 		case ID_PPU_FRAMESKIP_4:
-			GFX_SetFrameskip(4);
+			GFX::SetFrameskip(4);
 			break;
 		case ID_PPU_FRAMESKIP_5:
-			GFX_SetFrameskip(5);
+			GFX::SetFrameskip(5);
 			break;
 		case ID_PPU_FRAMESKIP_6:
-			GFX_SetFrameskip(6);
+			GFX::SetFrameskip(6);
 			break;
 		case ID_PPU_FRAMESKIP_7:
-			GFX_SetFrameskip(7);
+			GFX::SetFrameskip(7);
 			break;
 		case ID_PPU_FRAMESKIP_8:
-			GFX_SetFrameskip(8);
+			GFX::SetFrameskip(8);
 			break;
 		case ID_PPU_FRAMESKIP_9:
-			GFX_SetFrameskip(9);
+			GFX::SetFrameskip(9);
 			break;
 		case ID_PPU_SIZE_1X:
 			SizeMult = 1;
@@ -454,54 +454,54 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (running)	NES_Start(FALSE);
 			break;
 		case ID_PPU_PALETTE:
-			GFX_PaletteConfig();
+			GFX::PaletteConfig();
 			break;
 		case ID_PPU_SLOWDOWN_ENABLED:
-			GFX.SlowDown = !GFX.SlowDown;
-			if (GFX.SlowDown)
+			GFX::SlowDown = !GFX::SlowDown;
+			if (GFX::SlowDown)
 				CheckMenuItem(hMenu,ID_PPU_SLOWDOWN_ENABLED,MF_CHECKED);
 			else	CheckMenuItem(hMenu,ID_PPU_SLOWDOWN_ENABLED,MF_UNCHECKED);
 			break;
 		case ID_PPU_SLOWDOWN_2:
-			GFX.SlowRate = 2;
+			GFX::SlowRate = 2;
 			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_2,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_3:
-			GFX.SlowRate = 3;
+			GFX::SlowRate = 3;
 			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_3,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_4:
-			GFX.SlowRate = 4;
+			GFX::SlowRate = 4;
 			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_4,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_5:
-			GFX.SlowRate = 5;
+			GFX::SlowRate = 5;
 			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_5,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_10:
-			GFX.SlowRate = 10;
+			GFX::SlowRate = 10;
 			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_10,MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_20:
-			GFX.SlowRate = 20;
+			GFX::SlowRate = 20;
 			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_20,MF_BYCOMMAND);
 			break;
 		case ID_PPU_FULLSCREEN:
 			NES_Stop();
-			GFX_Release();
-			GFX.Fullscreen = !GFX.Fullscreen;
-			GFX_Create();
+			GFX::Release();
+			GFX::Fullscreen = !GFX::Fullscreen;
+			GFX::Create();
 			if (running)
 				NES_Start(FALSE);
 			break;
 		case ID_PPU_SCANLINES:
 			NES_Stop();
-			GFX_Release();
-			GFX.Scanlines = !GFX.Scanlines;
-			GFX_Create();
+			GFX::Release();
+			GFX::Scanlines = !GFX::Scanlines;
+			GFX::Create();
 			if (running)
 				NES_Start(FALSE);
-			if (GFX.Scanlines)
+			if (GFX::Scanlines)
 				CheckMenuItem(hMenu,ID_PPU_SCANLINES,MF_CHECKED);
 			else	CheckMenuItem(hMenu,ID_PPU_SCANLINES,MF_UNCHECKED);
 			break;
@@ -570,7 +570,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd,&ps);
 		if (!NES.Running)
-			GFX_Repaint();
+			GFX::Repaint();
 		EndPaint(hWnd,&ps);
 		break;
 	case WM_CLOSE:
@@ -866,7 +866,7 @@ void	UpdateTitlebar (void)
 {
 	TCHAR titlebar[256];
 	if (NES.Running)
-		_stprintf(titlebar,_T("Nintendulator - %i FPS (%i %sFSkip)"),GFX.FPSnum,GFX.FSkip,GFX.aFSkip?_T("Auto"):_T(""));
+		_stprintf(titlebar,_T("Nintendulator - %i FPS (%i %sFSkip)"),GFX::FPSnum,GFX::FSkip,GFX::aFSkip?_T("Auto"):_T(""));
 	else	_tcscpy(titlebar,_T("Nintendulator - Stopped"));
 	if (TitlebarDelay > 0)
 	{

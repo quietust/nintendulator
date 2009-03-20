@@ -23,16 +23,45 @@
 #define M_PI	3.14159265358979323846
 #endif	/* !M_PI */
 
-struct tGFX GFX;
+namespace GFX
+{
+	unsigned char RawPalette[8][64][3];
+	unsigned short Palette15[512];
+	unsigned short Palette16[512];
+	unsigned long Palette32[512];
+	char Depth;
+	BOOL Fullscreen, Scanlines;
 
-#define	GFX_Try(action,errormsg)\
+	LARGE_INTEGER ClockFreq;
+	LARGE_INTEGER LastClockVal;
+	int FPSnum, FPSCnt, FSkip;
+	BOOL aFSkip;
+
+	int Pitch;
+	int WantFPS;
+	int aFPScnt, aFPSnum;
+
+	BOOL SlowDown;
+	int SlowRate;
+
+	int PaletteNTSC, PalettePAL;
+	int NTSChue, NTSCsat, PALsat;
+	TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
+
+	LPDIRECTDRAW7		DirectDraw;
+	LPDIRECTDRAWSURFACE7	PrimarySurf, SecondarySurf;
+	LPDIRECTDRAWCLIPPER	Clipper;
+	DDSURFACEDESC2		SurfDesc;
+	DWORD			SurfSize;
+
+#define	Try(action,errormsg)\
 {\
 	if (FAILED(action))\
 	{\
-		GFX_Release();\
+		Release();\
 		MessageBox(hMainWnd,errormsg _T(", retrying"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);\
-		GFX.Fullscreen = FALSE;\
-		GFX_Create();\
+		Fullscreen = FALSE;\
+		Create();\
 		PPU_GetGFXPtr();\
 		if (FAILED(action))\
 		{\
@@ -41,198 +70,198 @@ struct tGFX GFX;
 		}\
 	}\
 }
-void	GFX_Init (void)
+void	Init (void)
 {
-	ZeroMemory(&GFX.SurfDesc,sizeof(GFX.SurfDesc));
-	ZeroMemory(GFX.Palette15,sizeof(GFX.Palette15));
-	ZeroMemory(GFX.Palette16,sizeof(GFX.Palette16));
-	ZeroMemory(GFX.Palette32,sizeof(GFX.Palette32));
-	GFX.DirectDraw = NULL;
-	GFX.PrimarySurf = NULL;
-	GFX.SecondarySurf = NULL;
-	GFX.Clipper = NULL;
-	GFX.Pitch = 0;
-	GFX.WantFPS = 0;
-	GFX.FPSCnt = 0;
-	GFX.FPSnum = 0;
-	GFX.aFPScnt = 0;
-	GFX.aFPSnum = 0;
-	GFX.FSkip = 0;
-	GFX.aFSkip = TRUE;
-	GFX.Depth = 0;
-	GFX.ClockFreq.QuadPart = 0;
-	GFX.LastClockVal.QuadPart = 0;
-	GFX.PaletteNTSC = 0;
-	GFX.PalettePAL = 1;
-	GFX.NTSChue = 0;
-	GFX.NTSCsat = 50;
-	GFX.PALsat = 50;
-	GFX.Fullscreen = FALSE;
+	ZeroMemory(&SurfDesc,sizeof(SurfDesc));
+	ZeroMemory(Palette15,sizeof(Palette15));
+	ZeroMemory(Palette16,sizeof(Palette16));
+	ZeroMemory(Palette32,sizeof(Palette32));
+	DirectDraw = NULL;
+	PrimarySurf = NULL;
+	SecondarySurf = NULL;
+	Clipper = NULL;
+	Pitch = 0;
+	WantFPS = 0;
+	FPSCnt = 0;
+	FPSnum = 0;
+	aFPScnt = 0;
+	aFPSnum = 0;
+	FSkip = 0;
+	aFSkip = TRUE;
+	Depth = 0;
+	ClockFreq.QuadPart = 0;
+	LastClockVal.QuadPart = 0;
+	PaletteNTSC = 0;
+	PalettePAL = 1;
+	NTSChue = 0;
+	NTSCsat = 50;
+	PALsat = 50;
+	Fullscreen = FALSE;
 }
 
-void	GFX_Create (void)
+void	Create (void)
 {
-	if (!QueryPerformanceFrequency(&GFX.ClockFreq))
+	if (!QueryPerformanceFrequency(&ClockFreq))
 	{
 		MessageBox(hMainWnd,_T("Failed to determine performance counter frequency!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
-	if (FAILED(DirectDrawCreateEx(NULL,(LPVOID *)&GFX.DirectDraw,IID_IDirectDraw7,NULL)))
+	if (FAILED(DirectDrawCreateEx(NULL,(LPVOID *)&DirectDraw,IID_IDirectDraw7,NULL)))
 	{
-		GFX_Release();
+		Release();
 		MessageBox(hMainWnd,_T("Failed to initialize DirectDraw 7"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
-	if (GFX.Fullscreen)
+	if (Fullscreen)
 	{
 		if (dbgVisible)
 			ShowWindow(hDebug,SW_MINIMIZE);
 		SetWindowLong(hMainWnd,GWL_STYLE,WS_POPUP);
 		SetMenu(hMainWnd,NULL);
 		ShowWindow(hMainWnd,SW_MAXIMIZE);
-		if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw, hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
+		if (FAILED(IDirectDraw7_SetCooperativeLevel(DirectDraw, hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
-		if (FAILED(IDirectDraw7_SetDisplayMode(GFX.DirectDraw, 640, 480, 32, 0, 0)))
+		if (FAILED(IDirectDraw7_SetDisplayMode(DirectDraw, 640, 480, 32, 0, 0)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to set display mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
 	else
 	{
-		if (FAILED(IDirectDraw7_SetCooperativeLevel(GFX.DirectDraw,hMainWnd,DDSCL_NORMAL)))
+		if (FAILED(IDirectDraw7_SetCooperativeLevel(DirectDraw,hMainWnd,DDSCL_NORMAL)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to set DirectDraw cooperative level"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
 
-	ZeroMemory(&GFX.SurfDesc,sizeof(GFX.SurfDesc));
-	GFX.SurfDesc.dwSize = sizeof(GFX.SurfDesc);
+	ZeroMemory(&SurfDesc,sizeof(SurfDesc));
+	SurfDesc.dwSize = sizeof(SurfDesc);
 
-	if (GFX.Fullscreen)
+	if (Fullscreen)
 	{
-		GFX.SurfDesc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
-		GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
-		GFX.SurfDesc.dwBackBufferCount = 1;
+		SurfDesc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+		SurfDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
+		SurfDesc.dwBackBufferCount = 1;
 
-		if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.PrimarySurf,NULL)))
+		if (FAILED(IDirectDraw7_CreateSurface(DirectDraw,&SurfDesc,&PrimarySurf,NULL)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
-		GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
-		if (FAILED(IDirectDrawSurface7_GetAttachedSurface(GFX.PrimarySurf,&GFX.SurfDesc.ddsCaps,&GFX.SecondarySurf)))
+		SurfDesc.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
+		if (FAILED(IDirectDrawSurface7_GetAttachedSurface(PrimarySurf,&SurfDesc.ddsCaps,&SecondarySurf)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to get secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
 	else
 	{
-		GFX.SurfDesc.dwFlags = DDSD_CAPS;
-		GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+		SurfDesc.dwFlags = DDSD_CAPS;
+		SurfDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 
-		if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.PrimarySurf,NULL)))
+		if (FAILED(IDirectDraw7_CreateSurface(DirectDraw,&SurfDesc,&PrimarySurf,NULL)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
-		if (GFX.Scanlines)
+		if (Scanlines)
 		{
-			GFX.SurfDesc.dwWidth = 512;
-			GFX.SurfDesc.dwHeight = 480;
+			SurfDesc.dwWidth = 512;
+			SurfDesc.dwHeight = 480;
 		}
 		else
 		{
-			GFX.SurfDesc.dwWidth = 256;
-			GFX.SurfDesc.dwHeight = 240;
+			SurfDesc.dwWidth = 256;
+			SurfDesc.dwHeight = 240;
 		}
-		GFX.SurfDesc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
-		GFX.SurfDesc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+		SurfDesc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+		SurfDesc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
-		if (FAILED(IDirectDraw7_CreateSurface(GFX.DirectDraw,&GFX.SurfDesc,&GFX.SecondarySurf,NULL)))
+		if (FAILED(IDirectDraw7_CreateSurface(DirectDraw,&SurfDesc,&SecondarySurf,NULL)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to create secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
 
-	if (!GFX.Fullscreen)
+	if (!Fullscreen)
 	{
-		if (FAILED(IDirectDraw7_CreateClipper(GFX.DirectDraw,0,&GFX.Clipper,NULL)))
+		if (FAILED(IDirectDraw7_CreateClipper(DirectDraw,0,&Clipper,NULL)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to create clipper"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
-		if (FAILED(IDirectDrawClipper_SetHWnd(GFX.Clipper,0,hMainWnd)))
+		if (FAILED(IDirectDrawClipper_SetHWnd(Clipper,0,hMainWnd)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to set clipper window"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
-		if (FAILED(IDirectDrawSurface7_SetClipper(GFX.PrimarySurf,GFX.Clipper)))
+		if (FAILED(IDirectDrawSurface7_SetClipper(PrimarySurf,Clipper)))
 		{
-			GFX_Release();
+			Release();
 			MessageBox(hMainWnd,_T("Failed to assign clipper to primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 	}
 
-	ZeroMemory(&GFX.SurfDesc,sizeof(GFX.SurfDesc));
-	GFX.SurfDesc.dwSize = sizeof(GFX.SurfDesc);
+	ZeroMemory(&SurfDesc,sizeof(SurfDesc));
+	SurfDesc.dwSize = sizeof(SurfDesc);
 
-	if (FAILED(IDirectDrawSurface7_GetSurfaceDesc(GFX.SecondarySurf,&GFX.SurfDesc)))
+	if (FAILED(IDirectDrawSurface7_GetSurfaceDesc(SecondarySurf,&SurfDesc)))
 	{
-		GFX_Release();
+		Release();
 		MessageBox(hMainWnd,_T("Failed to retrieve surface description"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
 	}
 
-	GFX.Pitch = GFX.SurfDesc.lPitch;
-	GFX.FPSCnt = GFX.FSkip;
+	Pitch = SurfDesc.lPitch;
+	FPSCnt = FSkip;
 
-	switch (GFX.SurfDesc.ddpfPixelFormat.dwRGBBitCount)
+	switch (SurfDesc.ddpfPixelFormat.dwRGBBitCount)
 	{
-	case 16:if (GFX.SurfDesc.ddpfPixelFormat.dwRBitMask == 0xF800)
-			GFX.Depth = 16;
-		else	GFX.Depth = 15;	break;
-	case 32:GFX.Depth = 32;		break;
+	case 16:if (SurfDesc.ddpfPixelFormat.dwRBitMask == 0xF800)
+			Depth = 16;
+		else	Depth = 15;	break;
+	case 32:Depth = 32;		break;
 	default:
-		GFX_Release();
+		Release();
 		MessageBox(hMainWnd,_T("Invalid bit depth detected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;			break;
 	}
 
-	// this will automatically call GFX_Update()
-	GFX_LoadPalette(PPU.IsPAL ? GFX.PalettePAL : GFX.PaletteNTSC);
-	EI.DbgOut(_T("Created %ix%i %i-bit display surface (%s)"), GFX.SurfDesc.dwWidth, GFX.SurfDesc.dwHeight, GFX.Depth, GFX.Fullscreen ? _T("fullscreen") : _T("windowed"));
+	// this will automatically call Update()
+	LoadPalette(PPU.IsPAL ? PalettePAL : PaletteNTSC);
+	EI.DbgOut(_T("Created %ix%i %i-bit display surface (%s)"), SurfDesc.dwWidth, SurfDesc.dwHeight, Depth, Fullscreen ? _T("fullscreen") : _T("windowed"));
 }
 
-void	GFX_Release (void)
+void	Release (void)
 {
-	if (GFX.Clipper)	IDirectDrawClipper_Release(GFX.Clipper);	GFX.Clipper = NULL;
-	if (GFX.SecondarySurf)	IDirectDrawSurface7_Release(GFX.SecondarySurf);	GFX.SecondarySurf = NULL;
-	if (GFX.PrimarySurf)	IDirectDrawSurface7_Release(GFX.PrimarySurf);	GFX.PrimarySurf = NULL;
-	if (GFX.DirectDraw)	IDirectDraw7_Release(GFX.DirectDraw);		GFX.DirectDraw = NULL;
-	if (GFX.Fullscreen)
+	if (Clipper)	IDirectDrawClipper_Release(Clipper);	Clipper = NULL;
+	if (SecondarySurf)	IDirectDrawSurface7_Release(SecondarySurf);	SecondarySurf = NULL;
+	if (PrimarySurf)	IDirectDrawSurface7_Release(PrimarySurf);	PrimarySurf = NULL;
+	if (DirectDraw)	IDirectDraw7_Release(DirectDraw);		DirectDraw = NULL;
+	if (Fullscreen)
 	{
 		SetWindowLong(hMainWnd,GWL_STYLE,WS_OVERLAPPEDWINDOW);
 		SetMenu(hMainWnd,hMenu);
@@ -243,35 +272,35 @@ void	GFX_Release (void)
 	}
 }
 
-void	GFX_DrawScreen (void)
+void	DrawScreen (void)
 {
 	LARGE_INTEGER TmpClockVal;
 	static int TitleDelay = 0;
 	if (AVI::handle)
 		AVI::AddVideo();
-	if (GFX.SlowDown)
-		Sleep(GFX.SlowRate * 1000 / GFX.WantFPS);
-	if (++GFX.FPSCnt > GFX.FSkip)
+	if (SlowDown)
+		Sleep(SlowRate * 1000 / WantFPS);
+	if (++FPSCnt > FSkip)
 	{
-		GFX_Update();
-		GFX.FPSCnt = 0;
+		Update();
+		FPSCnt = 0;
 	}
 	QueryPerformanceCounter(&TmpClockVal);
-	GFX.aFPSnum += (int)(TmpClockVal.QuadPart - GFX.LastClockVal.QuadPart);
-	GFX.LastClockVal = TmpClockVal;
-	if (++GFX.aFPScnt >= 20)
+	aFPSnum += (int)(TmpClockVal.QuadPart - LastClockVal.QuadPart);
+	LastClockVal = TmpClockVal;
+	if (++aFPScnt >= 20)
 	{
-		GFX.FPSnum = (int)((GFX.ClockFreq.QuadPart * GFX.aFPScnt) / GFX.aFPSnum);
-		if (GFX.aFSkip)
+		FPSnum = (int)((ClockFreq.QuadPart * aFPScnt) / aFPSnum);
+		if (aFSkip)
 		{
-			if ((GFX.FSkip < 9) && (GFX.FPSnum <= (GFX.WantFPS * 9 / 10)))
-				GFX.FSkip++;
-			if ((GFX.FSkip > 0) && (GFX.FPSnum >= (GFX.WantFPS - 1)))
-				GFX.FSkip--;
-			GFX_SetFrameskip(-1);
+			if ((FSkip < 9) && (FPSnum <= (WantFPS * 9 / 10)))
+				FSkip++;
+			if ((FSkip > 0) && (FPSnum >= (WantFPS - 1)))
+				FSkip--;
+			SetFrameskip(-1);
 		}
-		GFX.aFPScnt = 0;
-		GFX.aFPSnum = 0;
+		aFPScnt = 0;
+		aFPSnum = 0;
 	}
 	if (!TitleDelay--)
 	{
@@ -280,22 +309,22 @@ void	GFX_DrawScreen (void)
 	}
 }
 
-void	GFX_SetFrameskip (int skip)
+void	SetFrameskip (int skip)
 {
 	if (skip != -1)
-		GFX.FSkip = skip;
+		FSkip = skip;
 
 	if ((Controllers::Port1.Type == Controllers::STD_ZAPPER) || (Controllers::Port1.Type == Controllers::STD_VSZAPPER) ||
 		(Controllers::Port2.Type == Controllers::STD_ZAPPER) || (Controllers::Port2.Type == Controllers::STD_VSZAPPER))
 	{	// if Zapper, force it to zero frameskip, otherwise it won't work
-		GFX.FSkip = 0;
-		GFX.aFSkip = 0;
+		FSkip = 0;
+		aFSkip = 0;
 	}
 
-	if (GFX.aFSkip)
+	if (aFSkip)
 		CheckMenuItem(hMenu,ID_PPU_FRAMESKIP_AUTO,MF_CHECKED);
 	else	CheckMenuItem(hMenu,ID_PPU_FRAMESKIP_AUTO,MF_UNCHECKED);
-	switch (GFX.FSkip)
+	switch (FSkip)
 	{
 	case 0:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_0,MF_BYCOMMAND);	break;
 	case 1:	CheckMenuRadioItem(hMenu,ID_PPU_FRAMESKIP_0,ID_PPU_FRAMESKIP_9,ID_PPU_FRAMESKIP_1,MF_BYCOMMAND);	break;
@@ -310,21 +339,21 @@ void	GFX_SetFrameskip (int skip)
 	}
 }
 
-void	GFX_Draw2x (void)
+void	Draw2x (void)
 {
 	register unsigned short *src = DrawArray;
-	if (GFX.Depth == 32)
+	if (Depth == 32)
 	{
 		int x, y;
 		for (y = 0; y < 480; y++)
 		{
-			register unsigned long *dst = (unsigned long *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
-			if (GFX.Fullscreen)
+			register unsigned long *dst = (unsigned long *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
+			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
 					*dst++ = 0;
 			}
-			if (GFX.Scanlines && (y & 1))
+			if (Scanlines && (y & 1))
 			{
 				for (x = 0; x < 256; x++)
 				{
@@ -337,12 +366,12 @@ void	GFX_Draw2x (void)
 			{
 				for (x = 0; x < 256; x++)
 				{
-					*dst++ = GFX.Palette32[*src];
-					*dst++ = GFX.Palette32[*src];
+					*dst++ = Palette32[*src];
+					*dst++ = Palette32[*src];
 					src++;
 				}
 			}
-			if (GFX.Fullscreen)
+			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
 					*dst++ = 0;
@@ -351,18 +380,18 @@ void	GFX_Draw2x (void)
 				src -= 256;
 		}
 	}
-	else if (GFX.Depth == 16)
+	else if (Depth == 16)
 	{
 		int x, y;
 		for (y = 0; y < 480; y++)
 		{
-			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
-			if (GFX.Fullscreen)
+			register unsigned short *dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
+			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
 					*dst++ = 0;
 			}
-			if (GFX.Scanlines && (y & 1))
+			if (Scanlines && (y & 1))
 			{
 				for (x = 0; x < 256; x++)
 				{
@@ -375,12 +404,12 @@ void	GFX_Draw2x (void)
 			{
 				for (x = 0; x < 256; x++)
 				{
-					*dst++ = GFX.Palette16[*src];
-					*dst++ = GFX.Palette16[*src];
+					*dst++ = Palette16[*src];
+					*dst++ = Palette16[*src];
 					src++;
 				}
 			}
-			if (GFX.Fullscreen)
+			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
 					*dst++ = 0;
@@ -394,13 +423,13 @@ void	GFX_Draw2x (void)
 		int x, y;
 		for (y = 0; y < 240; y++)
 		{
-			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
-			if (GFX.Fullscreen)
+			register unsigned short *dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
+			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
 					*dst++ = 0;
 			}
-			if (GFX.Scanlines && (y & 1))
+			if (Scanlines && (y & 1))
 			{
 				for (x = 0; x < 256; x++)
 				{
@@ -413,12 +442,12 @@ void	GFX_Draw2x (void)
 			{
 				for (x = 0; x < 256; x++)
 				{
-					*dst++ = GFX.Palette15[*src];
-					*dst++ = GFX.Palette15[*src];
+					*dst++ = Palette15[*src];
+					*dst++ = Palette15[*src];
 					src++;
 				}
 			}
-			if (GFX.Fullscreen)
+			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
 					*dst++ = 0;
@@ -429,27 +458,27 @@ void	GFX_Draw2x (void)
 	}
 }
 
-void	GFX_Draw1x (void)
+void	Draw1x (void)
 {
 	register unsigned short *src = DrawArray;
-	if (GFX.Depth == 32)
+	if (Depth == 32)
 	{
 		int x, y;
 		for (y = 0; y < 240; y++)
 		{
-			register unsigned long *dst = (unsigned long *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			register unsigned long *dst = (unsigned long *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			for (x = 0; x < 256; x++)
-				*dst++ = GFX.Palette32[*src++];
+				*dst++ = Palette32[*src++];
 		}
 	}
-	else if (GFX.Depth == 16)
+	else if (Depth == 16)
 	{
 		int x, y;
 		for (y = 0; y < 240; y++)
 		{
-			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			register unsigned short *dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			for (x = 0; x < 256; x++)
-				*dst++ = GFX.Palette16[*src++];
+				*dst++ = Palette16[*src++];
 		}
 	}
 	else
@@ -457,34 +486,34 @@ void	GFX_Draw1x (void)
 		int x, y;
 		for (y = 0; y < 240; y++)
 		{
-			register unsigned short *dst = (unsigned short *)((unsigned char *)GFX.SurfDesc.lpSurface + y*GFX.Pitch);
+			register unsigned short *dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			for (x = 0; x < 256; x++)
-				*dst++ = GFX.Palette15[*src++];
+				*dst++ = Palette15[*src++];
 		}
 	}
 }
 
-void	GFX_Update (void)
+void	Update (void)
 {
-	if (!GFX.DirectDraw)
+	if (!DirectDraw)
 		return;
-	GFX_Try(IDirectDrawSurface7_Lock(GFX.SecondarySurf,NULL,&GFX.SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),_T("Failed to lock secondary surface"))
+	Try(IDirectDrawSurface7_Lock(SecondarySurf,NULL,&SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),_T("Failed to lock secondary surface"))
 
-	if (GFX.Fullscreen || GFX.Scanlines)
-		GFX_Draw2x();
-	else	GFX_Draw1x();
+	if (Fullscreen || Scanlines)
+		Draw2x();
+	else	Draw1x();
 
-	GFX_Try(IDirectDrawSurface7_Unlock(GFX.SecondarySurf,NULL),_T("Failed to unlock secondary surface"))
-	GFX_Repaint();
+	Try(IDirectDrawSurface7_Unlock(SecondarySurf,NULL),_T("Failed to unlock secondary surface"))
+	Repaint();
 }
 
-void	GFX_Repaint (void)
+void	Repaint (void)
 {
-	if (!GFX.DirectDraw)
+	if (!DirectDraw)
 		return;
 
-	if (GFX.Fullscreen)
-		GFX_Try(IDirectDrawSurface7_Flip(GFX.PrimarySurf, NULL, DDFLIP_WAIT),_T("Failed to flip to primary surface"))
+	if (Fullscreen)
+		Try(IDirectDrawSurface7_Flip(PrimarySurf, NULL, DDFLIP_WAIT),_T("Failed to flip to primary surface"))
 	else
 	{
 		RECT rect;
@@ -497,14 +526,14 @@ void	GFX_Repaint (void)
 		rect.right += pt.x;
 		rect.top += pt.y;
 		rect.bottom += pt.y;
-		GFX_Try(IDirectDrawSurface7_Blt(GFX.PrimarySurf,&rect,GFX.SecondarySurf,NULL,DDBLT_WAIT,NULL),_T("Failed to blit to primary surface"))
+		Try(IDirectDrawSurface7_Blt(PrimarySurf,&rect,SecondarySurf,NULL,DDBLT_WAIT,NULL),_T("Failed to blit to primary surface"))
 	}
 }
 
-void	GFX_GetCursorPos (POINT *pos)
+void	GetCursorPos (POINT *pos)
 {
-	GetCursorPos(pos);
-	if (GFX.Fullscreen)
+	::GetCursorPos(pos);
+	if (Fullscreen)
 	{
 		pos->x /= 2;
 		pos->y /= 2;
@@ -521,12 +550,12 @@ void	GFX_GetCursorPos (POINT *pos)
 	
 }
 
-void	GFX_SetCursorPos (int x, int y)
+void	SetCursorPos (int x, int y)
 {
 	POINT pos;
 	pos.x = x;
 	pos.y = y;
-	if (!GFX.Fullscreen)
+	if (!Fullscreen)
 	{
 		RECT rect;
 		GetClientRect(hMainWnd,&rect);
@@ -535,17 +564,17 @@ void	GFX_SetCursorPos (int x, int y)
 		ClientToScreen(hMainWnd,&pos);
 	}
 	else	pos.x += 32;
-	SetCursorPos(pos.x, pos.y);
+	::SetCursorPos(pos.x, pos.y);
 }
 
 enum PALETTE { PALETTE_NTSC, PALETTE_PAL, PALETTE_PC10, PALETTE_VS1, PALETTE_VS2, PALETTE_VS3, PALETTE_VS4, PALETTE_EXT, PALETTE_MAX };
 
-BOOL	GFX_ZapperHit (int color)
+BOOL	ZapperHit (int color)
 {
 	int val = 0;
-	val += (int)(GFX.RawPalette[(color >> 6) & 0x7][color & 0x3F][0] * 0.299);
-	val += (int)(GFX.RawPalette[(color >> 6) & 0x7][color & 0x3F][1] * 0.587);
-	val += (int)(GFX.RawPalette[(color >> 6) & 0x7][color & 0x3F][2] * 0.114);
+	val += (int)(RawPalette[(color >> 6) & 0x7][color & 0x3F][0] * 0.299);
+	val += (int)(RawPalette[(color >> 6) & 0x7][color & 0x3F][1] * 0.587);
+	val += (int)(RawPalette[(color >> 6) & 0x7][color & 0x3F][2] * 0.114);
 	return (val >= 0x40);
 }
 
@@ -917,7 +946,7 @@ static	int	getPhase (double *wave)
 	return (int)angle;
 }
 
-static	void	GFX_GenerateNTSC (int hue, int sat)
+static	void	GenerateNTSC (int hue, int sat)
 {
 	const double black = 0.519;
 	const double white = 1.443;
@@ -996,36 +1025,36 @@ static	void	GFX_GenerateNTSC (int hue, int sat)
 				G *= 256;
 				B *= 256;
 
-				GFX.RawPalette[x][(y << 4) | z][0] = (unsigned char)CLIP(R,0,255);
-				GFX.RawPalette[x][(y << 4) | z][1] = (unsigned char)CLIP(G,0,255);
-				GFX.RawPalette[x][(y << 4) | z][2] = (unsigned char)CLIP(B,0,255);
+				RawPalette[x][(y << 4) | z][0] = (unsigned char)CLIP(R,0,255);
+				RawPalette[x][(y << 4) | z][1] = (unsigned char)CLIP(G,0,255);
+				RawPalette[x][(y << 4) | z][2] = (unsigned char)CLIP(B,0,255);
 			}
 		}
 	}
 }
 
-static	void	GFX_GeneratePAL (int sat)
+static	void	GeneratePAL (int sat)
 {
-	memcpy(GFX.RawPalette,Palette_PAL,sizeof(GFX.RawPalette));
+	memcpy(RawPalette,Palette_PAL,sizeof(RawPalette));
 	/* todo - implement */
 }
 
-static	void	GFX_GenerateRGB (int pal)
+static	void	GenerateRGB (int pal)
 {
 	if (pal == PALETTE_PC10)
-		memcpy(GFX.RawPalette,Palette_PC10,sizeof(GFX.RawPalette));
+		memcpy(RawPalette,Palette_PC10,sizeof(RawPalette));
 	else if (pal == PALETTE_VS1)
-		memcpy(GFX.RawPalette,Palette_VS_0001,sizeof(GFX.RawPalette));
+		memcpy(RawPalette,Palette_VS_0001,sizeof(RawPalette));
 	else if (pal == PALETTE_VS2)
-		memcpy(GFX.RawPalette,Palette_VS_0002,sizeof(GFX.RawPalette));
+		memcpy(RawPalette,Palette_VS_0002,sizeof(RawPalette));
 	else if (pal == PALETTE_VS3)
-		memcpy(GFX.RawPalette,Palette_VS_0003,sizeof(GFX.RawPalette));
+		memcpy(RawPalette,Palette_VS_0003,sizeof(RawPalette));
 	else if (pal == PALETTE_VS4)
-		memcpy(GFX.RawPalette,Palette_VS_0004,sizeof(GFX.RawPalette));
+		memcpy(RawPalette,Palette_VS_0004,sizeof(RawPalette));
 	else	MessageBox(hMainWnd,_T("Illegal palette selected!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 }
 
-static	BOOL	GFX_ImportPalette (TCHAR *filename, BOOL load)
+static	BOOL	ImportPalette (TCHAR *filename, BOOL load)
 {
 	int i, j;
 	FILE *pal;
@@ -1052,9 +1081,9 @@ static	BOOL	GFX_ImportPalette (TCHAR *filename, BOOL load)
 		{
 			for (i = 0; i < 64; i++)
 			{
-				fread(&GFX.RawPalette[j][i][0],1,1,pal);
-				fread(&GFX.RawPalette[j][i][1],1,1,pal);
-				fread(&GFX.RawPalette[j][i][2],1,1,pal);
+				fread(&RawPalette[j][i][0],1,1,pal);
+				fread(&RawPalette[j][i][1],1,1,pal);
+				fread(&RawPalette[j][i][2],1,1,pal);
 			}
 		}
 	}
@@ -1063,14 +1092,14 @@ static	BOOL	GFX_ImportPalette (TCHAR *filename, BOOL load)
 		fseek(pal,0,SEEK_SET);
 		for (i = 0; i < 64; i++)
 		{
-			fread(&GFX.RawPalette[0][i][0],1,1,pal);
-			fread(&GFX.RawPalette[0][i][1],1,1,pal);
-			fread(&GFX.RawPalette[0][i][2],1,1,pal);
+			fread(&RawPalette[0][i][0],1,1,pal);
+			fread(&RawPalette[0][i][1],1,1,pal);
+			fread(&RawPalette[0][i][2],1,1,pal);
 			for (j = 1; j < 8; j++)
 			{
-				GFX.RawPalette[j][i][0] = (unsigned char)CLIP(GFX.RawPalette[0][i][0] * Emphasis[j][0],0,255);
-				GFX.RawPalette[j][i][1] = (unsigned char)CLIP(GFX.RawPalette[0][i][1] * Emphasis[j][1],0,255);
-				GFX.RawPalette[j][i][2] = (unsigned char)CLIP(GFX.RawPalette[0][i][2] * Emphasis[j][2],0,255);
+				RawPalette[j][i][0] = (unsigned char)CLIP(RawPalette[0][i][0] * Emphasis[j][0],0,255);
+				RawPalette[j][i][1] = (unsigned char)CLIP(RawPalette[0][i][1] * Emphasis[j][1],0,255);
+				RawPalette[j][i][2] = (unsigned char)CLIP(RawPalette[0][i][2] * Emphasis[j][2],0,255);
 			}
 		}
 	}
@@ -1078,39 +1107,39 @@ static	BOOL	GFX_ImportPalette (TCHAR *filename, BOOL load)
 	return TRUE;
 }
 
-void	GFX_LoadPalette (int PalNum)
+void	LoadPalette (int PalNum)
 {
 	unsigned int RV, GV, BV;
 	int i;
 	if (PalNum == PALETTE_NTSC)
-		GFX_GenerateNTSC(GFX.NTSChue,GFX.NTSCsat);
+		GenerateNTSC(NTSChue,NTSCsat);
 	else if (PalNum == PALETTE_PAL)
-		GFX_GeneratePAL(GFX.PALsat);
+		GeneratePAL(PALsat);
 	else if (PalNum == PALETTE_EXT)
 	{
-		if (!GFX_ImportPalette(PPU.IsPAL ? GFX.CustPalettePAL : GFX.CustPaletteNTSC, TRUE))
+		if (!ImportPalette(PPU.IsPAL ? CustPalettePAL : CustPaletteNTSC, TRUE))
 		{
 			MessageBox(hMainWnd,_T("Unable to load the specified palette! Reverting to default!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			if (PPU.IsPAL)
-				GFX.PalettePAL = PalNum = PALETTE_PAL;
-			else	GFX.PaletteNTSC = PalNum = PALETTE_NTSC;
+				PalettePAL = PalNum = PALETTE_PAL;
+			else	PaletteNTSC = PalNum = PALETTE_NTSC;
 		}
 	}
-	else	GFX_GenerateRGB(PalNum);
+	else	GenerateRGB(PalNum);
 
 	for (i = 0; i < 0x200; i++)
 	{
-		RV = GFX.RawPalette[i >> 6][i & 0x3F][0];
-		GV = GFX.RawPalette[i >> 6][i & 0x3F][1];
-		BV = GFX.RawPalette[i >> 6][i & 0x3F][2];
+		RV = RawPalette[i >> 6][i & 0x3F][0];
+		GV = RawPalette[i >> 6][i & 0x3F][1];
+		BV = RawPalette[i >> 6][i & 0x3F][2];
 
-		GFX.Palette15[i] = (unsigned short)(((RV << 7) & 0x7C00) | ((GV << 2) & 0x03E0) | (BV >> 3));
-		GFX.Palette16[i] = (unsigned short)(((RV << 8) & 0xF800) | ((GV << 3) & 0x07E0) | (BV >> 3));
-		GFX.Palette32[i] = (RV << 16) | (GV << 8) | BV;
+		Palette15[i] = (unsigned short)(((RV << 7) & 0x7C00) | ((GV << 2) & 0x03E0) | (BV >> 3));
+		Palette16[i] = (unsigned short)(((RV << 8) & 0xF800) | ((GV << 3) & 0x07E0) | (BV >> 3));
+		Palette32[i] = (RV << 16) | (GV << 8) | BV;
 	}
 	// redraw the screen with the new palette, but only if emulation isn't active
 	if (!NES.Running)
-		GFX_Update();
+		Update();
 }
 #undef CLIP
 
@@ -1156,11 +1185,11 @@ void	UpdatePalette (HWND hDlg, int pal)
 		SetDlgItemText(hDlg,IDC_PAL_SAT,_T("N/A"));
 	}
 
-	if (GFX_ImportPalette(extfn, FALSE))
+	if (ImportPalette(extfn, FALSE))
 	{
 		EnableWindow(GetDlgItem(hDlg,IDC_PAL_EXT),TRUE);
 		if (pal == PALETTE_EXT)
-			GFX_ImportPalette(extfn, TRUE);
+			ImportPalette(extfn, TRUE);
 	}
 	else	EnableWindow(GetDlgItem(hDlg,IDC_PAL_EXT),FALSE);
 
@@ -1191,19 +1220,19 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_INITDIALOG:
 		inUpdate = TRUE;
 		ispal = PPU.IsPAL;
-		hue = GFX.NTSChue;
-		nsat = GFX.NTSCsat;
-		psat = GFX.PALsat;
-		pal = ispal ? GFX.PalettePAL : GFX.PaletteNTSC;
-		_tcscpy(extfn,ispal ? GFX.CustPalettePAL : GFX.CustPaletteNTSC);
+		hue = NTSChue;
+		nsat = NTSCsat;
+		psat = PALsat;
+		pal = ispal ? PalettePAL : PaletteNTSC;
+		_tcscpy(extfn,ispal ? CustPalettePAL : CustPaletteNTSC);
 
 		if (pal == PALETTE_NTSC)
-			GFX_GenerateNTSC(hue,nsat);
+			GenerateNTSC(hue,nsat);
 		else if (pal == PALETTE_PAL)
-			GFX_GeneratePAL(psat);
+			GeneratePAL(psat);
 		else if (pal == PALETTE_EXT)
 		{
-			if (!GFX_ImportPalette(extfn, TRUE))
+			if (!ImportPalette(extfn, TRUE))
 			{
 				MessageBox(hMainWnd,_T("Unable to load the specified palette! Reverting to default!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 				if (ispal)
@@ -1211,7 +1240,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				else	pal = PALETTE_NTSC;
 			}
 		}
-		else	GFX_GenerateRGB(pal);
+		else	GenerateRGB(pal);
 
 		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETRANGE,FALSE,MAKELONG(-30,30));
 		SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_SETTICFREQ,5,0);
@@ -1232,17 +1261,17 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 		case IDC_PAL_NTSC:
 			pal = PALETTE_NTSC;
-			GFX_GenerateNTSC(hue,nsat);
+			GenerateNTSC(hue,nsat);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_PAL:
 			pal = PALETTE_PAL;
-			GFX_GeneratePAL(psat);
+			GeneratePAL(psat);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_PC10:
 			pal = PALETTE_PC10;
-			GFX_GenerateRGB(pal);
+			GenerateRGB(pal);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_EXTFILE:
@@ -1250,7 +1279,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_EXT:
-			if (GFX_ImportPalette(extfn, TRUE))
+			if (ImportPalette(extfn, TRUE))
 			{
 				pal = PALETTE_EXT;
 				UpdatePalette(hDlg,pal);
@@ -1258,22 +1287,22 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			break;
 		case IDC_PAL_VS1:
 			pal = PALETTE_VS1;
-			GFX_GenerateRGB(pal);
+			GenerateRGB(pal);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_VS2:
 			pal = PALETTE_VS2;
-			GFX_GenerateRGB(pal);
+			GenerateRGB(pal);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_VS3:
 			pal = PALETTE_VS3;
-			GFX_GenerateRGB(pal);
+			GenerateRGB(pal);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_VS4:
 			pal = PALETTE_VS4;
-			GFX_GenerateRGB(pal);
+			GenerateRGB(pal);
 			UpdatePalette(hDlg,pal);
 			break;
 		case IDC_PAL_BROWSE:
@@ -1298,7 +1327,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			{
 				_tcscpy(Path_PAL,extfn);
 				Path_PAL[ofn.nFileOffset-1] = 0;
-				if (GFX_ImportPalette(extfn,TRUE))
+				if (ImportPalette(extfn,TRUE))
 				{
 					pal = PALETTE_EXT;
 					CheckRadioButton(hDlg,paltable[0],paltable[PALETTE_MAX-1],paltable[pal]);
@@ -1316,24 +1345,24 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		case IDOK:
 			if (pal == PALETTE_NTSC)
 			{
-				GFX.NTSChue = hue;
-				GFX.NTSCsat = nsat;
+				NTSChue = hue;
+				NTSCsat = nsat;
 			}
 			if (pal == PALETTE_PAL)
-				GFX.PALsat = psat;
+				PALsat = psat;
 			if (pal == PALETTE_EXT)
-				_tcscpy(ispal ? GFX.CustPalettePAL : GFX.CustPaletteNTSC,extfn);
+				_tcscpy(ispal ? CustPalettePAL : CustPaletteNTSC,extfn);
 			if (ispal)
-				GFX.PalettePAL = pal;
-			else	GFX.PaletteNTSC = pal;
-			GFX_LoadPalette(pal);
+				PalettePAL = pal;
+			else	PaletteNTSC = pal;
+			LoadPalette(pal);
 			EndDialog(hDlg,0);
 			break;
 		case IDCANCEL:
 			if (ispal)
-				pal = GFX.PalettePAL;
-			else	pal = GFX.PaletteNTSC;
-			GFX_LoadPalette(pal);
+				pal = PalettePAL;
+			else	pal = PaletteNTSC;
+			LoadPalette(pal);
 			EndDialog(hDlg,0);
 			break;
 		};
@@ -1343,7 +1372,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 			hue = SendDlgItemMessage(hDlg,IDC_PAL_HUESLIDER,TBM_GETPOS,0,0);
 			SetDlgItemInt(hDlg,IDC_PAL_HUE,hue,TRUE);
-			GFX_GenerateNTSC(hue,nsat);
+			GenerateNTSC(hue,nsat);
 			UpdatePalette(hDlg,pal);
 		}
 		if (lParam == (LPARAM)GetDlgItem(hDlg,IDC_PAL_SATSLIDER))
@@ -1352,13 +1381,13 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			{
 				nsat = SendDlgItemMessage(hDlg,IDC_PAL_SATSLIDER,TBM_GETPOS,0,0);
 				SetDlgItemInt(hDlg,IDC_PAL_SAT,nsat,FALSE);
-				GFX_GenerateNTSC(hue,nsat);
+				GenerateNTSC(hue,nsat);
 			}
 			else if (pal == PALETTE_PAL)
 			{
 				psat = SendDlgItemMessage(hDlg,IDC_PAL_SATSLIDER,TBM_GETPOS,0,0);
 				SetDlgItemInt(hDlg,IDC_PAL_SAT,psat,FALSE);
-				GFX_GeneratePAL(psat);
+				GeneratePAL(psat);
 			}
 			UpdatePalette(hDlg,pal);
 		}
@@ -1387,7 +1416,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					((IsDlgButtonChecked(hDlg,IDC_PAL_ER) == BST_CHECKED) ? 0x1 : 0x0) |
 					((IsDlgButtonChecked(hDlg,IDC_PAL_EG) == BST_CHECKED) ? 0x2 : 0x0) |
 					((IsDlgButtonChecked(hDlg,IDC_PAL_EB) == BST_CHECKED) ? 0x4 : 0x0);
-				unsigned int R = GFX.RawPalette[emp][i][0], G = GFX.RawPalette[emp][i][1], B = GFX.RawPalette[emp][i][2];
+				unsigned int R = RawPalette[emp][i][0], G = RawPalette[emp][i][1], B = RawPalette[emp][i][2];
 				brush = CreateSolidBrush(RGB(R,G,B));
 				GetWindowRect(dlgitem,&rect);
 				rect.top -= wcl.y + wrect.top;
@@ -1407,7 +1436,8 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 
 	return FALSE;
 }
-void	GFX_PaletteConfig (void)
+void	PaletteConfig (void)
 {
 	DialogBox(hInst,(LPCTSTR)IDD_PALETTE,hMainWnd,PaletteConfigProc);
 }
+} // namespace GFX

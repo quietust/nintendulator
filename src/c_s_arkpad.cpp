@@ -31,7 +31,7 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 	}
 	else
 	{
-		GFX_SetCursorPos(128,220);
+		GFX::SetCursorPos(128,220);
 		Cont->Button = IsPressed(Cont->Buttons[0]);
 		Cont->Pos += MouseState.lX;
 		if (Cont->Pos < 196)

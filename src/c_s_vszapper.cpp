@@ -31,11 +31,11 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 		Cont->PosX = Cont->MovData[0];
 		Cont->PosY = Cont->MovData[1];
 		Cont->Button = Cont->MovData[2];
-		GFX_SetCursorPos(Cont->PosX, Cont->PosY);
+		GFX::SetCursorPos(Cont->PosX, Cont->PosY);
 	}
 	else
 	{
-		GFX_GetCursorPos(&pos);
+		GFX::GetCursorPos(&pos);
 		Cont->PosX = pos.x;
 		Cont->PosY = pos.y;
 		if ((Cont->PosX < 0) || (Cont->PosX > 255) || (Cont->PosY < 0) || (Cont->PosY > 239))
@@ -100,7 +100,7 @@ static	void	Write (struct tStdPort *Cont, unsigned char Val)
 					X = 0;
 				if (X > 255)
 					break;
-				if (GFX_ZapperHit(DrawArray[Y * 256 + X]))
+				if (GFX::ZapperHit(DrawArray[Y * 256 + X]))
 					WhiteCount++;
 			}
 		}
@@ -146,7 +146,7 @@ void	StdPort_SetVSZapper (struct tStdPort *Cont)
 	Cont->Bits = 0x10;
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
-	GFX_SetFrameskip(-1);
+	GFX::SetFrameskip(-1);
 }
 #undef	Button
 #undef	PosY

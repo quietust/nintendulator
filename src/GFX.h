@@ -11,53 +11,40 @@
 #define	DIRECTDRAW_VERSION 0x0700
 #include <ddraw.h>
 
-struct tGFX
+namespace GFX
 {
-	unsigned char RawPalette[8][64][3];
-	unsigned short Palette15[512];
-	unsigned short Palette16[512];
-	unsigned long Palette32[512];
-	char Depth;
-	BOOL Fullscreen, Scanlines;
+extern unsigned char RawPalette[8][64][3];
+extern unsigned long Palette32[512];
+extern BOOL Fullscreen, Scanlines;
 
-	LARGE_INTEGER ClockFreq;
-	LARGE_INTEGER LastClockVal;
-	int FPSnum, FPSCnt, FSkip;
-	BOOL aFSkip;
+extern int FPSnum, FPSCnt, FSkip;
+extern BOOL aFSkip;
 
-	int Pitch;
-	int WantFPS;
-	int aFPScnt, aFPSnum;
+extern int WantFPS;
 
-	BOOL SlowDown;
-	int SlowRate;
+extern BOOL SlowDown;
+extern int SlowRate;
 
-	int PaletteNTSC, PalettePAL;
-	int NTSChue, NTSCsat, PALsat;
-	TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
+extern int PaletteNTSC, PalettePAL;
+extern int NTSChue, NTSCsat, PALsat;
+extern TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
 
-	LPDIRECTDRAW7		DirectDraw;
-	LPDIRECTDRAWSURFACE7	PrimarySurf, SecondarySurf;
-	LPDIRECTDRAWCLIPPER	Clipper;
-	DDSURFACEDESC2		SurfDesc;
-	DWORD			SurfSize;
-};
+extern LPDIRECTDRAW7 DirectDraw;
 
-extern struct tGFX GFX;
+void	Init (void);
+void	Create (void);
+void	Release (void);
+void	DrawScreen (void);
+void	Draw1x (void);
+void	Draw2x (void);
+void	Update (void);
+void	Repaint (void);
+void	LoadPalette (int);
+void	SetFrameskip (int);
+void	PaletteConfig (void);
+void	GetCursorPos (POINT *);
+void	SetCursorPos (int,int);
+BOOL	ZapperHit (int);
 
-void	GFX_Init (void);
-void	GFX_Create (void);
-void	GFX_Release (void);
-void	GFX_DrawScreen (void);
-void	GFX_Draw1x (void);
-void	GFX_Draw2x (void);
-void	GFX_Update (void);
-void	GFX_Repaint (void);
-void	GFX_LoadPalette (int);
-void	GFX_SetFrameskip (int);
-void	GFX_PaletteConfig (void);
-void	GFX_GetCursorPos (POINT *);
-void	GFX_SetCursorPos (int,int);
-BOOL	GFX_ZapperHit (int);
-
+} // namespace GFX
 #endif	/* !GFX_H */

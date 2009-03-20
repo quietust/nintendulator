@@ -34,7 +34,7 @@ void	NES_Init (void)
 	SetWindowPos(hMainWnd,HWND_TOP,0,0,256,240,SWP_NOZORDER);
 	MapperInterface_Init();
 	APU::Init();
-	GFX_Init();
+	GFX::Init();
 	AVI::Init();
 #ifdef	ENABLE_DEBUGGER
 	Debugger::Init();
@@ -47,7 +47,7 @@ void	NES_Init (void)
 	NES_LoadSettings();
 	NES_SetupDataPath();
 
-	GFX_Create();
+	GFX::Create();
 
 	NES_CloseFile();
 
@@ -67,7 +67,7 @@ void	NES_Release (void)
 	APU::Release();
 	if (APU::buffer)	// this really should go in APU.cpp
 		free(APU::buffer);
-	GFX_Release();
+	GFX::Release();
 	Controllers::Release();
 	MapperInterface_Release();
 
@@ -796,7 +796,7 @@ const char *	NES_OpenFileNFRF (char *filename)
 		sprintf(err,"Boardset \"%s\" not supported!",RI.NRFF_BoardName);
 		return err;
 	}
-	GFX_ShowText("NFRF image loaded (%s, %i PRG/%i CHR)",BoardName,EI.PRG_ROM_Size >> 10,EI.CHR_ROM_Size >> 10);
+	GFX::ShowText("NFRF image loaded (%s, %i PRG/%i CHR)",BoardName,EI.PRG_ROM_Size >> 10,EI.CHR_ROM_Size >> 10);
 	free(BoardName);
 	return NULL;
 }
@@ -810,8 +810,8 @@ void	NES_SetCPUMode (int NewMode)
 		PPU.SLEndFrame = 262;
 		if (PPU.SLnum >= PPU.SLEndFrame - 1)	/* if we switched from PAL, scanline number could be invalid */
 			PPU.SLnum = PPU.SLEndFrame - 2;
-		GFX.WantFPS = 60;
-		GFX_LoadPalette(GFX.PaletteNTSC);
+		GFX::WantFPS = 60;
+		GFX::LoadPalette(GFX::PaletteNTSC);
 		APU::SetFPS(60);
 		EI.DbgOut(_T("Emulation switched to NTSC"));
 	}
@@ -820,8 +820,8 @@ void	NES_SetCPUMode (int NewMode)
 		PPU.IsPAL = TRUE;
 		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
 		PPU.SLEndFrame = 312;
-		GFX.WantFPS = 50;
-		GFX_LoadPalette(GFX.PalettePAL);
+		GFX::WantFPS = 50;
+		GFX::LoadPalette(GFX::PalettePAL);
 		APU::SetFPS(50);
 		EI.DbgOut(_T("Emulation switched to PAL"));
 	}
@@ -1032,14 +1032,14 @@ void	NES_LoadSettings (void)
 	/* Load Defaults */
 	SizeMult = 1;
 	NES.SoundEnabled = 1;
-	GFX.aFSkip = 1;
-	GFX.FSkip = 0;
-	GFX.PaletteNTSC = 0;
-	GFX.PalettePAL = 1;
-	GFX.NTSChue = 0;
-	GFX.NTSCsat = 50;
-	GFX.PALsat = 50;
-	GFX.CustPaletteNTSC[0] = GFX.CustPalettePAL[0] = 0;
+	GFX::aFSkip = 1;
+	GFX::FSkip = 0;
+	GFX::PaletteNTSC = 0;
+	GFX::PalettePAL = 1;
+	GFX::NTSChue = 0;
+	GFX::NTSCsat = 50;
+	GFX::PALsat = 50;
+	GFX::CustPaletteNTSC[0] = GFX::CustPalettePAL[0] = 0;
 	Controllers::Port1.Type = 0;
 	ZeroMemory(Controllers::Port1.Buttons,sizeof(Controllers::Port1.Buttons));
 	Controllers::Port2.Type = 0;
@@ -1047,8 +1047,8 @@ void	NES_LoadSettings (void)
 	Controllers::ExpPort.Type = 0;
 	ZeroMemory(Controllers::ExpPort.Buttons,sizeof(Controllers::ExpPort.Buttons));
 
-	GFX.SlowDown = FALSE;
-	GFX.SlowRate = 2;
+	GFX::SlowDown = FALSE;
+	GFX::SlowRate = 2;
 	CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_2,MF_BYCOMMAND);
 
 	NES.FrameStep = FALSE;
@@ -1058,24 +1058,24 @@ void	NES_LoadSettings (void)
 
 	RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("SoundEnabled"),0,NULL,(LPBYTE)&NES.SoundEnabled,&Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("aFSkip")      ,0,NULL,(LPBYTE)&GFX.aFSkip      ,&Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("aFSkip")      ,0,NULL,(LPBYTE)&GFX::aFSkip     ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("PPUMode")     ,0,NULL,(LPBYTE)&PPU.IsPAL       ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("AutoRun")     ,0,NULL,(LPBYTE)&NES.AutoRun     ,&Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("Scanlines")   ,0,NULL,(LPBYTE)&GFX.Scanlines   ,&Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("Scanlines")   ,0,NULL,(LPBYTE)&GFX::Scanlines  ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("UDLR")        ,0,NULL,(LPBYTE)&Controllers::EnableOpposites,&Size);
 
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("SizeMult")    ,0,NULL,(LPBYTE)&SizeMult        ,&Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("FSkip")       ,0,NULL,(LPBYTE)&GFX.FSkip       ,&Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("FSkip")       ,0,NULL,(LPBYTE)&GFX::FSkip      ,&Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("PosX")        ,0,NULL,(LPBYTE)&PosX            ,&Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("PosY")        ,0,NULL,(LPBYTE)&PosY            ,&Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("PaletteNTSC") ,0,NULL,(LPBYTE)&GFX.PaletteNTSC ,&Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("PalettePAL")  ,0,NULL,(LPBYTE)&GFX.PalettePAL  ,&Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("NTSChue")     ,0,NULL,(LPBYTE)&GFX.NTSChue     ,&Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("NTSCsat")     ,0,NULL,(LPBYTE)&GFX.NTSCsat     ,&Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("PALsat")      ,0,NULL,(LPBYTE)&GFX.PALsat      ,&Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("PaletteNTSC") ,0,NULL,(LPBYTE)&GFX::PaletteNTSC,&Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("PalettePAL")  ,0,NULL,(LPBYTE)&GFX::PalettePAL ,&Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("NTSChue")     ,0,NULL,(LPBYTE)&GFX::NTSChue    ,&Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("NTSCsat")     ,0,NULL,(LPBYTE)&GFX::NTSCsat    ,&Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("PALsat")      ,0,NULL,(LPBYTE)&GFX::PALsat     ,&Size);
 
-	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase,_T("CustPaletteNTSC"),0,NULL,(LPBYTE)&GFX.CustPaletteNTSC,&Size);
-	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase,_T("CustPalettePAL") ,0,NULL,(LPBYTE)&GFX.CustPalettePAL ,&Size);
+	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase,_T("CustPaletteNTSC"),0,NULL,(LPBYTE)&GFX::CustPaletteNTSC,&Size);
+	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase,_T("CustPalettePAL") ,0,NULL,(LPBYTE)&GFX::CustPalettePAL ,&Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase,_T("Path_ROM"),0,NULL,(LPBYTE)&Path_ROM,&Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase,_T("Path_NMV"),0,NULL,(LPBYTE)&Path_NMV,&Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase,_T("Path_AVI"),0,NULL,(LPBYTE)&Path_AVI,&Size);
@@ -1119,10 +1119,10 @@ void	NES_LoadSettings (void)
 	if (NES.AutoRun)
 		CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_CHECKED);
 
-	if (GFX.NTSChue >= 300)		// old hue settings were 300 to 360
-		GFX.NTSChue -= 330;	// new settings are -30 to +30
+	if (GFX::NTSChue >= 300)		// old hue settings were 300 to 360
+		GFX::NTSChue -= 330;	// new settings are -30 to +30
 
-	GFX_SetFrameskip(-1);
+	GFX::SetFrameskip(-1);
 
 	switch (SizeMult)
 	{
@@ -1133,7 +1133,7 @@ void	NES_LoadSettings (void)
 	case 4:	CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);	break;
 	}
 
-	if (GFX.Scanlines)
+	if (GFX::Scanlines)
 		CheckMenuItem(hMenu, ID_PPU_SCANLINES, MF_CHECKED);
 
 	if (PPU.IsPAL)
@@ -1155,28 +1155,28 @@ void	NES_SaveSettings (void)
 		RegCreateKeyEx(HKEY_CURRENT_USER,_T("SOFTWARE\\Nintendulator\\"),0,_T("NintendulatorClass"),REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,&SettingsBase,NULL);
 	RegSetValueEx(SettingsBase,_T("SoundEnabled"),0,REG_DWORD,(LPBYTE)&NES.SoundEnabled,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("SizeMult")    ,0,REG_DWORD,(LPBYTE)&SizeMult        ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("FSkip")       ,0,REG_DWORD,(LPBYTE)&GFX.FSkip       ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("aFSkip")      ,0,REG_DWORD,(LPBYTE)&GFX.aFSkip      ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("FSkip")       ,0,REG_DWORD,(LPBYTE)&GFX::FSkip      ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("aFSkip")      ,0,REG_DWORD,(LPBYTE)&GFX::aFSkip     ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("PPUMode")     ,0,REG_DWORD,(LPBYTE)&PPU.IsPAL       ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("AutoRun")     ,0,REG_DWORD,(LPBYTE)&NES.AutoRun     ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("PosX")        ,0,REG_DWORD,(LPBYTE)&wRect.left      ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("PosY")        ,0,REG_DWORD,(LPBYTE)&wRect.top       ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("Scanlines")   ,0,REG_DWORD,(LPBYTE)&GFX.Scanlines   ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("Scanlines")   ,0,REG_DWORD,(LPBYTE)&GFX::Scanlines  ,sizeof(DWORD));
 
-	RegSetValueEx(SettingsBase,_T("PaletteNTSC") ,0,REG_DWORD,(LPBYTE)&GFX.PaletteNTSC ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("PalettePAL")  ,0,REG_DWORD,(LPBYTE)&GFX.PalettePAL  ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("NTSChue")     ,0,REG_DWORD,(LPBYTE)&GFX.NTSChue     ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("NTSCsat")     ,0,REG_DWORD,(LPBYTE)&GFX.NTSCsat     ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("PALsat")      ,0,REG_DWORD,(LPBYTE)&GFX.PALsat      ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("PaletteNTSC") ,0,REG_DWORD,(LPBYTE)&GFX::PaletteNTSC,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("PalettePAL")  ,0,REG_DWORD,(LPBYTE)&GFX::PalettePAL ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("NTSChue")     ,0,REG_DWORD,(LPBYTE)&GFX::NTSChue    ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("NTSCsat")     ,0,REG_DWORD,(LPBYTE)&GFX::NTSCsat    ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("PALsat")      ,0,REG_DWORD,(LPBYTE)&GFX::PALsat     ,sizeof(DWORD));
 
 	RegSetValueEx(SettingsBase,_T("UDLR")        ,0,REG_DWORD,(LPBYTE)&Controllers::EnableOpposites,sizeof(DWORD));
 
-	RegSetValueEx(SettingsBase,_T("CustPaletteNTSC"),0,REG_SZ,(LPBYTE)GFX.CustPaletteNTSC,(DWORD)(sizeof(TCHAR) * _tcslen(GFX.CustPaletteNTSC)));
-	RegSetValueEx(SettingsBase,_T("CustPalettePAL") ,0,REG_SZ,(LPBYTE)GFX.CustPalettePAL ,(DWORD)(sizeof(TCHAR) * _tcslen(GFX.CustPalettePAL)));
-	RegSetValueEx(SettingsBase,_T("Path_ROM")       ,0,REG_SZ,(LPBYTE)Path_ROM           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_ROM)));
-	RegSetValueEx(SettingsBase,_T("Path_NMV")       ,0,REG_SZ,(LPBYTE)Path_NMV           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_NMV)));
-	RegSetValueEx(SettingsBase,_T("Path_AVI")       ,0,REG_SZ,(LPBYTE)Path_AVI           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_AVI)));
-	RegSetValueEx(SettingsBase,_T("Path_PAL")       ,0,REG_SZ,(LPBYTE)Path_PAL           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_PAL)));
+	RegSetValueEx(SettingsBase,_T("CustPaletteNTSC"),0,REG_SZ,(LPBYTE)GFX::CustPaletteNTSC,(DWORD)(sizeof(TCHAR) * _tcslen(GFX::CustPaletteNTSC)));
+	RegSetValueEx(SettingsBase,_T("CustPalettePAL") ,0,REG_SZ,(LPBYTE)GFX::CustPalettePAL ,(DWORD)(sizeof(TCHAR) * _tcslen(GFX::CustPalettePAL)));
+	RegSetValueEx(SettingsBase,_T("Path_ROM")       ,0,REG_SZ,(LPBYTE)Path_ROM            ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_ROM)));
+	RegSetValueEx(SettingsBase,_T("Path_NMV")       ,0,REG_SZ,(LPBYTE)Path_NMV            ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_NMV)));
+	RegSetValueEx(SettingsBase,_T("Path_AVI")       ,0,REG_SZ,(LPBYTE)Path_AVI            ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_AVI)));
+	RegSetValueEx(SettingsBase,_T("Path_PAL")       ,0,REG_SZ,(LPBYTE)Path_PAL            ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_PAL)));
 
 	RegSetValueEx(SettingsBase,_T("Port1T")  ,0,REG_DWORD,(LPBYTE)&Controllers::Port1.Type  ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("Port2T")  ,0,REG_DWORD,(LPBYTE)&Controllers::Port2.Type  ,sizeof(DWORD));

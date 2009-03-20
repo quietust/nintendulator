@@ -765,7 +765,7 @@ void	Debug_DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch)
 			byte1 <<= 1;
 			if (color)
 				color |= palette << 2;
-			color = GFX.Palette32[PPU.Palette[color]];
+			color = GFX::Palette32[PPU.Palette[color]];
 			dest[sx] = color;
 		}
 		dest += pitch;
@@ -787,7 +787,7 @@ void	Debug_DrawTileStretch (unsigned long *dest, int PPUaddr, int palette, int w
 			byte1 <<= 1;
 			if (color)
 				color |= palette << 2;
-			color = GFX.Palette32[PPU.Palette[color]];
+			color = GFX::Palette32[PPU.Palette[color]];
 			for (py = 0; py < height; py++)
 				for (px = 0; px < width; px++)
 					dest[px + sx * width + py * pitch] = color;
@@ -822,7 +822,7 @@ void	UpdatePPU (void)
 				rect.bottom = rect.top + (D_PAL_H / 2);
 				rect.left = x * (D_PAL_W / 16);
 				rect.right = rect.left + (D_PAL_W / 16);
-				brush = CreateSolidBrush(RGB(GFX.RawPalette[0][color][0], GFX.RawPalette[0][color][1], GFX.RawPalette[0][color][2]));
+				brush = CreateSolidBrush(RGB(GFX::RawPalette[0][color][0], GFX::RawPalette[0][color][1], GFX::RawPalette[0][color][2]));
 				FillRect(PaletteDC, &rect, brush);
 				DeleteObject(brush);
 			}
@@ -1146,7 +1146,7 @@ void	UpdatePPU (void)
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP6VAL, _T(""));
 
 			GetClientRect(GetDlgItem(PPUWnd, IDC_DEBUG_PPU_TILE), &rect);
-			brush = CreateSolidBrush(RGB(GFX.RawPalette[0][color][0], GFX.RawPalette[0][color][1], GFX.RawPalette[0][color][2]));
+			brush = CreateSolidBrush(RGB(GFX::RawPalette[0][color][0], GFX::RawPalette[0][color][1], GFX::RawPalette[0][color][2]));
 			FillRect(TileDC, &rect, brush);
 			DeleteObject(brush);
 			break;

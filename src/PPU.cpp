@@ -558,7 +558,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			else if (PPU.SLnum == 241)
 			{
 				PPU_GetGFXPtr();
-				GFX_DrawScreen();
+				GFX::DrawScreen();
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
 					CPU::WantNMI = TRUE;
@@ -892,7 +892,7 @@ __inline static	void	RunSkip (int NumTicks)
 			else if (PPU.SLnum == 241)
 			{
 				PPU_GetGFXPtr();
-				GFX_DrawScreen();
+				GFX::DrawScreen();
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
 					CPU::WantNMI = TRUE;
@@ -1140,13 +1140,13 @@ void	PPU_Run (void)
 			PPU.PALsubticks = 0;
 			cycles = 4;
 		}
-		if (GFX.FPSCnt < GFX.FSkip)
+		if (GFX::FPSCnt < GFX::FSkip)
 			RunSkip(cycles);
 		else	RunNoSkip(cycles);
 	}
 	else
 	{
-		if (GFX.FPSCnt < GFX.FSkip)
+		if (GFX::FPSCnt < GFX::FSkip)
 			RunSkip(3);
 		else	RunNoSkip(3);
 	}
