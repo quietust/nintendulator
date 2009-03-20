@@ -67,19 +67,19 @@ static	FCPURead	MAPINT	GetCPUReadHandler (int Page)
 static	void	MAPINT	SetPPUWriteHandler (int Page, FPPUWrite New)
 {
 #ifndef	NSFPLAYER
-	PPU.WriteHandler[Page] = New;
+	PPU::WriteHandler[Page] = New;
 #endif	/* !NSFPLAYER */
 }
 static	void	MAPINT	SetPPUReadHandler (int Page, FPPURead New)
 {
 #ifndef	NSFPLAYER
-	PPU.ReadHandler[Page] = New;
+	PPU::ReadHandler[Page] = New;
 #endif	/* !NSFPLAYER */
 }
 static	FPPUWrite	MAPINT	GetPPUWriteHandler (int Page)
 {
 #ifndef	NSFPLAYER
-	return PPU.WriteHandler[Page];
+	return PPU::WriteHandler[Page];
 #else	/* NSFPLAYER */
 	return NULL;
 #endif	/* !NSFPLAYER */
@@ -87,7 +87,7 @@ static	FPPUWrite	MAPINT	GetPPUWriteHandler (int Page)
 static	FPPURead	MAPINT	GetPPUReadHandler (int Page)
 {
 #ifndef	NSFPLAYER
-	return PPU.ReadHandler[Page];
+	return PPU::ReadHandler[Page];
 #else	/* NSFPLAYER */
 	return NULL;
 #endif	/* !NSFPLAYER */
@@ -200,8 +200,8 @@ static	__inline void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
 #ifndef	NSFPLAYER
 	if (!NES::CHRMask)
 		return;
-	PPU.CHRPointer[Bank] = NES::CHR_ROM[Val & NES::CHRMask];
-	PPU.Writable[Bank] = FALSE;
+	PPU::CHRPointer[Bank] = NES::CHR_ROM[Val & NES::CHRMask];
+	PPU::Writable[Bank] = FALSE;
 #ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger::NTabChanged = TRUE;
@@ -238,7 +238,7 @@ static	void	MAPINT	SetCHR_ROM8 (int Bank, int Val)
 static	int	MAPINT	GetCHR_ROM1 (int Bank)	/* -1 if no ROM mapped */
 {
 #ifndef	NSFPLAYER
-	int tpi = (int)((PPU.CHRPointer[Bank] - NES::CHR_ROM[0]) >> 10);
+	int tpi = (int)((PPU::CHRPointer[Bank] - NES::CHR_ROM[0]) >> 10);
 	if ((tpi < 0) || (tpi > NES::CHRMask)) return -1;
 	else return tpi;
 #else	/* NSFPLAYER */
@@ -251,8 +251,8 @@ static	int	MAPINT	GetCHR_ROM1 (int Bank)	/* -1 if no ROM mapped */
 static	__inline void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
-	PPU.CHRPointer[Bank] = NES::CHR_RAM[Val & 0x1F];
-	PPU.Writable[Bank] = TRUE;
+	PPU::CHRPointer[Bank] = NES::CHR_RAM[Val & 0x1F];
+	PPU::Writable[Bank] = TRUE;
 #ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger::NTabChanged = TRUE;
@@ -289,7 +289,7 @@ static	void	MAPINT	SetCHR_RAM8 (int Bank, int Val)
 static	int	MAPINT	GetCHR_RAM1 (int Bank)	/* -1 if no ROM mapped */
 {
 #ifndef	NSFPLAYER
-	int tpi = (int)((PPU.CHRPointer[Bank] - NES::CHR_RAM[0]) >> 10);
+	int tpi = (int)((PPU::CHRPointer[Bank] - NES::CHR_RAM[0]) >> 10);
 	if ((tpi < 0) || (tpi > MAX_CHRRAM_MASK)) return -1;
 	else return tpi;
 #else	/* NSFPLAYER */
@@ -302,8 +302,8 @@ static	int	MAPINT	GetCHR_RAM1 (int Bank)	/* -1 if no ROM mapped */
 static	__inline void	MAPINT	SetCHR_NT1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
-	PPU.CHRPointer[Bank] = PPU_VRAM[Val & 3];
-	PPU.Writable[Bank] = TRUE;
+	PPU::CHRPointer[Bank] = PPU::VRAM[Val & 3];
+	PPU::Writable[Bank] = TRUE;
 #ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger::NTabChanged = TRUE;
@@ -314,7 +314,7 @@ static	__inline void	MAPINT	SetCHR_NT1 (int Bank, int Val)
 static	int	MAPINT	GetCHR_NT1 (int Bank)	/* -1 if no ROM mapped */
 {
 #ifndef	NSFPLAYER
-	int tpi = (int)((PPU.CHRPointer[Bank] - PPU_VRAM[0]) >> 10);
+	int tpi = (int)((PPU::CHRPointer[Bank] - PPU::VRAM[0]) >> 10);
 	if ((tpi < 0) || (tpi > 4)) return -1;
 	else return tpi;
 #else	/* NSFPLAYER */
@@ -327,7 +327,7 @@ static	int	MAPINT	GetCHR_NT1 (int Bank)	/* -1 if no ROM mapped */
 static	unsigned char *	MAPINT	GetCHR_Ptr1 (int Bank)
 {
 #ifndef	NSFPLAYER
-	return PPU.CHRPointer[Bank];
+	return PPU::CHRPointer[Bank];
 #else	/* NSFPLAYER */
 	return NULL;
 #endif	/* !NSFPLAYER */
@@ -336,8 +336,8 @@ static	unsigned char *	MAPINT	GetCHR_Ptr1 (int Bank)
 static	void	MAPINT	SetCHR_Ptr1 (int Bank, unsigned char *Data, BOOL Writable)
 {
 #ifndef	NSFPLAYER
-	PPU.CHRPointer[Bank] = Data;
-	PPU.Writable[Bank] = Writable;
+	PPU::CHRPointer[Bank] = Data;
+	PPU::Writable[Bank] = Writable;
 #ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger::NTabChanged = TRUE;
@@ -349,8 +349,8 @@ static	void	MAPINT	SetCHR_Ptr1 (int Bank, unsigned char *Data, BOOL Writable)
 static	void	MAPINT	SetCHR_OB1 (int Bank)
 {
 #ifndef	NSFPLAYER
-	PPU.CHRPointer[Bank] = PPU_OpenBus;
-	PPU.Writable[Bank] = FALSE;
+	PPU::CHRPointer[Bank] = PPU::OpenBus;
+	PPU::Writable[Bank] = FALSE;
 #ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
 		Debugger::NTabChanged = TRUE;

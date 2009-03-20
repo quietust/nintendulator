@@ -309,8 +309,8 @@ unsigned char DebugMemCPU (unsigned short Addr)
 unsigned char DebugMemPPU (unsigned short Addr)
 {
 	int Bank = (Addr >> 10) & 0xF;
-	FPPURead Read = PPU.ReadHandler[Bank];
-	if (Read == PPU_BusRead)
+	FPPURead Read = PPU::ReadHandler[Bank];
+	if (Read == PPU::BusRead)
 		return (unsigned char)Read(Bank, Addr & 0x3FF);
 	else	return 0xFF;
 }
@@ -521,12 +521,12 @@ void	UpdateCPU (void)
 	CheckDlgButton(CPUWnd, IDC_DEBUG_IRQ_FRAME, (CPU::WantIRQ & IRQ_FRAME) ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(CPUWnd, IDC_DEBUG_IRQ_DEBUG, (CPU::WantIRQ & IRQ_DEBUG) ? BST_CHECKED : BST_UNCHECKED);
 
-	SetDlgItemInt(CPUWnd, IDC_DEBUG_TIMING_SCANLINE, PPU.SLnum, TRUE);
+	SetDlgItemInt(CPUWnd, IDC_DEBUG_TIMING_SCANLINE, PPU::SLnum, TRUE);
 
-	_stprintf(tps, _T("%04X"), PPU.VRAMAddr);
+	_stprintf(tps, _T("%04X"), PPU::VRAMAddr);
 	SetDlgItemText(CPUWnd, IDC_DEBUG_TIMING_VRAM, tps);
 
-	_stprintf(tps, _T("%i/%.3f"), PPU.Clockticks, PPU.Clockticks / (PPU.IsPAL ? 3.2 : 3.0));
+	_stprintf(tps, _T("%i/%.3f"), PPU::Clockticks, PPU::Clockticks / (PPU::IsPAL ? 3.2 : 3.0));
 	SetDlgItemText(CPUWnd, IDC_DEBUG_TIMING_CPU, tps);
 
 	for (i = 0; i < 16; i++)
@@ -677,22 +677,22 @@ void	UpdateCPU (void)
 				break;
 			_stprintf(tps, _T("%02X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
 				(MemOffset + i) * 0x10,
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x0],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x1],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x2],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x3],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x4],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x5],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x6],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x7],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x8],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0x9],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0xA],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0xB],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0xC],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0xD],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0xE],
-				PPU.Sprite[(MemOffset + i) * 0x10 + 0xF]);
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x0],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x1],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x2],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x3],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x4],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x5],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x6],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x7],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x8],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0x9],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0xA],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0xB],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0xC],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0xD],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0xE],
+				PPU::Sprite[(MemOffset + i) * 0x10 + 0xF]);
 			SendDlgItemMessage(CPUWnd, IDC_DEBUG_MEM_LIST, LB_ADDSTRING, 0, (LPARAM)tps);
 		}
 	}
@@ -711,22 +711,22 @@ void	UpdateCPU (void)
 				break;
 			_stprintf(tps, _T("%02X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
 				(MemOffset + i) * 0x10,
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x0],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x1],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x2],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x3],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x4],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x5],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x6],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x7],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x8],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0x9],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0xA],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0xB],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0xC],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0xD],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0xE],
-				PPU.Palette[(MemOffset + i) * 0x10 + 0xF]);
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x0],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x1],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x2],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x3],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x4],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x5],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x6],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x7],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x8],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0x9],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0xA],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0xB],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0xC],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0xD],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0xE],
+				PPU::Palette[(MemOffset + i) * 0x10 + 0xF]);
 			SendDlgItemMessage(CPUWnd, IDC_DEBUG_MEM_LIST, LB_ADDSTRING, 0, (LPARAM)tps);
 		}
 	}
@@ -745,7 +745,7 @@ void	AddInst (void)
 		DecodeInstruction(Addr, tps, NULL);
 		fwrite(tps, 1, strlen(tps), LogFile);
 		CPU::JoinFlags();
-		sprintf(tps, "  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n", CPU::A, CPU::X, CPU::Y, CPU::P, CPU::SP, PPU.Clockticks, PPU.SLnum);
+		sprintf(tps, "  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n", CPU::A, CPU::X, CPU::Y, CPU::P, CPU::SP, PPU::Clockticks, PPU::SLnum);
 		fwrite(tps, 1, strlen(tps), LogFile);
 	}
 }
@@ -765,7 +765,7 @@ void	Debug_DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch)
 			byte1 <<= 1;
 			if (color)
 				color |= palette << 2;
-			color = GFX::Palette32[PPU.Palette[color]];
+			color = GFX::Palette32[PPU::Palette[color]];
 			dest[sx] = color;
 		}
 		dest += pitch;
@@ -787,7 +787,7 @@ void	Debug_DrawTileStretch (unsigned long *dest, int PPUaddr, int palette, int w
 			byte1 <<= 1;
 			if (color)
 				color |= palette << 2;
-			color = GFX::Palette32[PPU.Palette[color]];
+			color = GFX::Palette32[PPU::Palette[color]];
 			for (py = 0; py < height; py++)
 				for (px = 0; px < width; px++)
 					dest[px + sx * width + py * pitch] = color;
@@ -817,7 +817,7 @@ void	UpdatePPU (void)
 			{
 				HBRUSH brush;
 				RECT rect;
-				color = PPU.Palette[y * 16 + x];
+				color = PPU::Palette[y * 16 + x];
 				rect.top = y * (D_PAL_H / 2);
 				rect.bottom = rect.top + (D_PAL_H / 2);
 				rect.left = x * (D_PAL_W / 16);
@@ -887,8 +887,8 @@ void	UpdatePPU (void)
 			for (x = 0; x < 32; x++)
 			{
 				AttribNum = (((x & 2) >> 1) | (y & 2)) << 1;
-				AttribVal = (PPU.CHRPointer[8 | NT][0x3C0 | ((y << 1) & 0x38) | (x >> 2)] >> AttribNum) & 3;
-				MemAddr = ((PPU.Reg2000 & 0x10) << 8) | (PPU.CHRPointer[8 | NT][x | (y << 5)] << 4);
+				AttribVal = (PPU::CHRPointer[8 | NT][0x3C0 | ((y << 1) & 0x38) | (x >> 2)] >> AttribNum) & 3;
+				MemAddr = ((PPU::Reg2000 & 0x10) << 8) | (PPU::CHRPointer[8 | NT][x | (y << 5)] << 4);
 				Debug_DrawTile(NameArray + y * 8 * D_NAM_W + x * 8, MemAddr, AttribVal, D_NAM_W);
 			}
 		}
@@ -930,9 +930,9 @@ void	UpdatePPU (void)
 			for (x = 0; x < 16; x++)
 			{
 				SprNum = (y << 4) | x;
-				TileNum = PPU.Sprite[(SprNum << 2) | 1];
-				Attr = PPU.Sprite[(SprNum << 2) | 2];
-				if (PPU.Reg2000 & 0x20)
+				TileNum = PPU::Sprite[(SprNum << 2) | 1];
+				Attr = PPU::Sprite[(SprNum << 2) | 2];
+				if (PPU::Reg2000 & 0x20)
 				{
 					MemAddr = ((TileNum & 0xFE) << 4) | ((TileNum & 0x01) << 12);
 					Debug_DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), D_SPR_W);
@@ -940,7 +940,7 @@ void	UpdatePPU (void)
 				}
 				else
 				{
-					MemAddr = (TileNum << 4) | ((PPU.Reg2000 & 0x08) << 9);
+					MemAddr = (TileNum << 4) | ((PPU::Reg2000 & 0x08) << 9);
 					Debug_DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), D_SPR_W);
 				}
 			}
@@ -1028,13 +1028,13 @@ void	UpdatePPU (void)
 			_stprintf(tpstr, _T("%i"), color);
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP6VAL, tpstr);
 
-			MemAddr = (tile << 4) | ((PPU.Reg2000 & 0x10) << 8);
+			MemAddr = (tile << 4) | ((PPU::Reg2000 & 0x10) << 8);
 			Debug_DrawTileStretch(TileArray, MemAddr, color, 8, 8, D_TIL_W);
 			DrawBitmap = TRUE;
 			break;
 		case DEBUG_DETAIL_SPRITE:
-			tile = PPU.Sprite[(DetailNum << 2) | 1];
-			color = PPU.Sprite[(DetailNum << 2) | 2] & 3;
+			tile = PPU::Sprite[(DetailNum << 2) | 1];
+			color = PPU::Sprite[(DetailNum << 2) | 2] & 3;
 
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_SELTYPE, _T("Sprite"));
 
@@ -1043,11 +1043,11 @@ void	UpdatePPU (void)
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP1VAL, tpstr);
 
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP2TYPE, _T("X"));
-			_stprintf(tpstr, _T("%02X"), PPU.Sprite[(DetailNum << 2) | 3]);
+			_stprintf(tpstr, _T("%02X"), PPU::Sprite[(DetailNum << 2) | 3]);
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP2VAL, tpstr);
 
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP3TYPE, _T("Y"));
-			_stprintf(tpstr, _T("%02X"), PPU.Sprite[(DetailNum << 2) | 0]);
+			_stprintf(tpstr, _T("%02X"), PPU::Sprite[(DetailNum << 2) | 0]);
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP3VAL, tpstr);
 
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP4TYPE, _T("Tile"));
@@ -1060,15 +1060,15 @@ void	UpdatePPU (void)
 
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP6TYPE, _T("Flags"));
 			tpstr[0] = 0;
-			if (PPU.Sprite[(DetailNum << 2) | 2] & 0x40)
+			if (PPU::Sprite[(DetailNum << 2) | 2] & 0x40)
 				_tcscat(tpstr, _T("H "));
-			if (PPU.Sprite[(DetailNum << 2) | 2] & 0x80)
+			if (PPU::Sprite[(DetailNum << 2) | 2] & 0x80)
 				_tcscat(tpstr, _T("V "));
-			if (PPU.Sprite[(DetailNum << 2) | 2] & 0x20)
+			if (PPU::Sprite[(DetailNum << 2) | 2] & 0x20)
 				_tcscat(tpstr, _T("BG "));
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP6VAL, tpstr);
 
-			if (PPU.Reg2000 & 0x20)
+			if (PPU::Reg2000 & 0x20)
 			{
 				MemAddr = ((tile & 0xFE) << 4) | ((tile & 0x01) << 12);
 				Debug_DrawTileStretch(TileArray + 16, MemAddr, color | 4, 4, 4, D_TIL_W);
@@ -1076,7 +1076,7 @@ void	UpdatePPU (void)
 			}
 			else
 			{
-				MemAddr = (tile << 4) | ((PPU.Reg2000 & 0x08) << 9);
+				MemAddr = (tile << 4) | ((PPU::Reg2000 & 0x08) << 9);
 				Debug_DrawTileStretch(TileArray, MemAddr, color | 4, 8, 8, D_TIL_W);
 			}
 			DrawBitmap = TRUE;
@@ -1105,11 +1105,11 @@ void	UpdatePPU (void)
 
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP5TYPE, _T("Usage"));
 			tpstr[0] = 0;
-			if (((PPU.Reg2000 & 0x10) << 4) == (DetailNum & 0x100))
+			if (((PPU::Reg2000 & 0x10) << 4) == (DetailNum & 0x100))
 				_tcscat(tpstr, _T("BG "));
-			if (PPU.Reg2000 & 0x20)
+			if (PPU::Reg2000 & 0x20)
 				_tcscat(tpstr, _T("SPR16 "));
-			else if (((PPU.Reg2000 & 0x08) << 5) == (DetailNum & 0x100))
+			else if (((PPU::Reg2000 & 0x08) << 5) == (DetailNum & 0x100))
 				_tcscat(tpstr, _T("SPR "));
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP5VAL, tpstr);
 
@@ -1120,7 +1120,7 @@ void	UpdatePPU (void)
 			DrawBitmap = TRUE;
 			break;
 		case DEBUG_DETAIL_PALETTE:
-			color = PPU.Palette[DetailNum];
+			color = PPU::Palette[DetailNum];
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_SELTYPE, _T("Palette"));
 
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP1TYPE, _T("Address"));
@@ -1231,9 +1231,9 @@ void	DumpPPU (void)
 		newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 	out = _tfopen(filename, _T("wb"));
 	for (i = 0; i < 12; i++)
-		fwrite(PPU.CHRPointer[i], 1, 0x400, out);
-	fwrite(PPU.Sprite, 1, 0x100, out);
-	fwrite(PPU.Palette, 1, 0x20, out);
+		fwrite(PPU::CHRPointer[i], 1, 0x400, out);
+	fwrite(PPU::Sprite, 1, 0x100, out);
+	fwrite(PPU::Palette, 1, 0x20, out);
 	fclose(out);
 }
 
@@ -2085,7 +2085,7 @@ INT_PTR CALLBACK PPUProc_Sprite (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	WNDPROC proc;
 	if (uMsg == WM_MOUSEMOVE)
 	{
-		int height = (PPU.Reg2000 & 0x20) ? 16 : 8;
+		int height = (PPU::Reg2000 & 0x20) ? 16 : 8;
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
 		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 96) && ((point.x % 16) < 8) && ((point.y % 24) < height))

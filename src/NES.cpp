@@ -320,10 +320,10 @@ void	CloseFile (void)
 		CPU::WriteHandler[i] = CPU::WritePRG;
 		CPU::Readable[i] = FALSE;
 		CPU::Writable[i] = FALSE;
-		PPU.CHRPointer[i] = CHR_RAM[0];
-		PPU.ReadHandler[i] = PPU_BusRead;
-		PPU.WriteHandler[i] = PPU_BusWriteCHR;
-		PPU.Writable[i] = FALSE;
+		PPU::CHRPointer[i] = CHR_RAM[0];
+		PPU::ReadHandler[i] = PPU::BusRead;
+		PPU::WriteHandler[i] = PPU::BusWriteCHR;
+		PPU::Writable[i] = FALSE;
 	}
 }
 
@@ -818,11 +818,11 @@ void	SetCPUMode (int NewMode)
 {
 	if (NewMode == 0)
 	{
-		PPU.IsPAL = FALSE;
+		PPU::IsPAL = FALSE;
 		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
-		PPU.SLEndFrame = 262;
-		if (PPU.SLnum >= PPU.SLEndFrame - 1)	/* if we switched from PAL, scanline number could be invalid */
-			PPU.SLnum = PPU.SLEndFrame - 2;
+		PPU::SLEndFrame = 262;
+		if (PPU::SLnum >= PPU::SLEndFrame - 1)	/* if we switched from PAL, scanline number could be invalid */
+			PPU::SLnum = PPU::SLEndFrame - 2;
 		GFX::WantFPS = 60;
 		GFX::LoadPalette(GFX::PaletteNTSC);
 		APU::SetFPS(60);
@@ -830,9 +830,9 @@ void	SetCPUMode (int NewMode)
 	}
 	else
 	{
-		PPU.IsPAL = TRUE;
+		PPU::IsPAL = TRUE;
 		CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
-		PPU.SLEndFrame = 312;
+		PPU::SLEndFrame = 312;
 		GFX::WantFPS = 50;
 		GFX::LoadPalette(GFX::PalettePAL);
 		APU::SetFPS(50);
@@ -853,24 +853,24 @@ void	Reset (RESET_TYPE ResetType)
 	}
 	CPU::ReadHandler[0] = CPU::ReadRAM;	CPU::WriteHandler[0] = CPU::WriteRAM;
 	CPU::ReadHandler[1] = CPU::ReadRAM;	CPU::WriteHandler[1] = CPU::WriteRAM;
-	CPU::ReadHandler[2] = PPU_IntRead;	CPU::WriteHandler[2] = PPU_IntWrite;
-	CPU::ReadHandler[3] = PPU_IntRead;	CPU::WriteHandler[3] = PPU_IntWrite;
+	CPU::ReadHandler[2] = PPU::IntRead;	CPU::WriteHandler[2] = PPU::IntWrite;
+	CPU::ReadHandler[3] = PPU::IntRead;	CPU::WriteHandler[3] = PPU::IntWrite;
 	CPU::ReadHandler[4] = CPU::Read4k;	CPU::WriteHandler[4] = CPU::Write4k;
 	if (!GameGenie)
 		Genie::CodeStat = 0;
 	for (i = 0x0; i < 0x8; i++)
 	{
-		PPU.ReadHandler[i] = PPU_BusRead;
-		PPU.WriteHandler[i] = PPU_BusWriteCHR;
-		PPU.CHRPointer[i] = PPU_OpenBus;
-		PPU.Writable[i] = FALSE;
+		PPU::ReadHandler[i] = PPU::BusRead;
+		PPU::WriteHandler[i] = PPU::BusWriteCHR;
+		PPU::CHRPointer[i] = PPU::OpenBus;
+		PPU::Writable[i] = FALSE;
 	}
 	for (i = 0x8; i < 0x10; i++)
 	{
-		PPU.ReadHandler[i] = PPU_BusRead;
-		PPU.WriteHandler[i] = PPU_BusWriteNT;
-		PPU.CHRPointer[i] = PPU_OpenBus;
-		PPU.Writable[i] = FALSE;
+		PPU::ReadHandler[i] = PPU::BusRead;
+		PPU::WriteHandler[i] = PPU::BusWriteNT;
+		PPU::CHRPointer[i] = PPU::OpenBus;
+		PPU::Writable[i] = FALSE;
 	}
 	switch (ResetType)
 	{
@@ -884,7 +884,7 @@ void	Reset (RESET_TYPE ResetType)
 			MI2 = NULL;
 		}
 		CPU::PowerOn();
-		PPU_PowerOn();
+		PPU::PowerOn();
 		if (GameGenie)
 			Genie::Reset();
 		else	if ((MI) && (MI->Reset))
@@ -909,7 +909,7 @@ void	Reset (RESET_TYPE ResetType)
 	}
 	APU::Reset();
 	CPU::Reset();
-	PPU_Reset();
+	PPU::Reset();
 	CPU::WantNMI = FALSE;
 #ifdef	ENABLE_DEBUGGER
 	if (Debugger::Enabled)
@@ -949,7 +949,7 @@ DWORD	WINAPI	Thread (void *param)
 	if ((!DoStop) && (SoundEnabled))
 		APU::SoundON();	// don't turn on sound if we're only stepping 1 instruction
 
-	if ((PPU.SLnum == 240) && (FrameStep))
+	if ((PPU::SLnum == 240) && (FrameStep))
 	{	// if we save or load while paused, we want to end up here
 		// so we don't end up advancing another frame
 		GotStep = FALSE;
@@ -972,7 +972,7 @@ DWORD	WINAPI	Thread (void *param)
 		if (Scanline)
 		{
 			Scanline = FALSE;
-			if (PPU.SLnum == 240)
+			if (PPU::SLnum == 240)
 			{
 #ifdef	ENABLE_DEBUGGER
 				if (Debugger::Enabled)
@@ -986,7 +986,7 @@ DWORD	WINAPI	Thread (void *param)
 						Sleep(1);
 				}
 			}
-			else if (PPU.SLnum == 241)
+			else if (PPU::SLnum == 241)
 				Controllers::UpdateInput();
 		}
 	}
@@ -1072,7 +1072,7 @@ void	LoadSettings (void)
 	RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("SoundEnabled"),0,NULL,(LPBYTE)&SoundEnabled,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("aFSkip")      ,0,NULL,(LPBYTE)&GFX::aFSkip     ,&Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("PPUMode")     ,0,NULL,(LPBYTE)&PPU.IsPAL       ,&Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("PPUMode")     ,0,NULL,(LPBYTE)&PPU::IsPAL       ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("AutoRun")     ,0,NULL,(LPBYTE)&AutoRun     ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("Scanlines")   ,0,NULL,(LPBYTE)&GFX::Scanlines  ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("UDLR")        ,0,NULL,(LPBYTE)&Controllers::EnableOpposites,&Size);
@@ -1149,7 +1149,7 @@ void	LoadSettings (void)
 	if (GFX::Scanlines)
 		CheckMenuItem(hMenu, ID_PPU_SCANLINES, MF_CHECKED);
 
-	if (PPU.IsPAL)
+	if (PPU::IsPAL)
 		SetCPUMode(1);
 	else	SetCPUMode(0);
 
@@ -1170,7 +1170,7 @@ void	SaveSettings (void)
 	RegSetValueEx(SettingsBase,_T("SizeMult")    ,0,REG_DWORD,(LPBYTE)&SizeMult        ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("FSkip")       ,0,REG_DWORD,(LPBYTE)&GFX::FSkip      ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("aFSkip")      ,0,REG_DWORD,(LPBYTE)&GFX::aFSkip     ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("PPUMode")     ,0,REG_DWORD,(LPBYTE)&PPU.IsPAL       ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("PPUMode")     ,0,REG_DWORD,(LPBYTE)&PPU::IsPAL       ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("AutoRun")     ,0,REG_DWORD,(LPBYTE)&AutoRun     ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("PosX")        ,0,REG_DWORD,(LPBYTE)&wRect.left      ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("PosY")        ,0,REG_DWORD,(LPBYTE)&wRect.top       ,sizeof(DWORD));

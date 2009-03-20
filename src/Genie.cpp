@@ -241,15 +241,15 @@ void	MAPINT	Write (int Bank, int Addr, int Val)
 			}
 			for (i = 0; i < 0x10; i++)
 			{	// and CHR banks
-				PPU.Writable[i] = FALSE;
-				PPU.CHRPointer[i] = PPU_OpenBus;
+				PPU::Writable[i] = FALSE;
+				PPU::CHRPointer[i] = PPU::OpenBus;
 			}
 			CPU::WriteHandler[0x8] = CPU::WritePRG;	// and the PRG write handler for $8000-$8FFF
 
 			Init();	// map in the appropriate [optimized] read handlers
 			MI = MI2;	// swap in the REAL mapper
 			CPU::GetHandlers();	// grab a copy of CPUCycle
-			PPU_GetHandlers();	// ...and PPUCycle
+			PPU::GetHandlers();	// ...and PPUCycle
 			if ((MI) && (MI->Reset))	// then hard-reset the mapper
 				MI->Reset(RESET_HARD);
 		}
@@ -300,13 +300,13 @@ void	Reset (void)
 	CPU::WriteHandler[0x8] = Write;
 	for (i = 0; i < 8; i++)
 	{
-		PPU.Writable[i] = FALSE;
-		PPU.CHRPointer[i] = CHR;
+		PPU::Writable[i] = FALSE;
+		PPU::CHRPointer[i] = CHR;
 	}
 	EI.Mirror_V();
 	MI2 = MI;
 	MI = NULL;
-	PPU_GetHandlers();
+	PPU::GetHandlers();
 	CPU::GetHandlers();
 }
 

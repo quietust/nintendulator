@@ -60,14 +60,14 @@ static	unsigned char	Read (struct tStdPort *Cont)
 	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
 		return Bits | 0x08;
 
-	if (PPU.IsRendering && PPU.OnScreen)
+	if (PPU::IsRendering && PPU::OnScreen)
 		for (Y = y - 8; Y < y + 8; Y++)
 		{
 			if (Y < 0)
 				Y = 0;
-			if (Y < PPU.SLnum - 32)
+			if (Y < PPU::SLnum - 32)
 				continue;
-			if (Y >= PPU.SLnum)
+			if (Y >= PPU::SLnum)
 				break;
 			for (X = x - 8; X < x + 8; X++)
 			{
@@ -75,7 +75,7 @@ static	unsigned char	Read (struct tStdPort *Cont)
 					X = 0;
 				if (X > 255)
 					break;
-				if (GFX::ZapperHit(DrawArray[Y * 256 + X]))
+				if (GFX::ZapperHit(PPU::DrawArray[Y * 256 + X]))
 					WhiteCount++;
 			}
 		}

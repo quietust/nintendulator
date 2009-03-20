@@ -82,7 +82,7 @@ static	void	Write (struct tStdPort *Cont, unsigned char Val)
 	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
 		return;
 
-	if (PPU.IsRendering && PPU.OnScreen)
+	if (PPU::IsRendering && PPU::OnScreen)
 	{
 		int X, Y;
 		int WhiteCount = 0;
@@ -90,9 +90,9 @@ static	void	Write (struct tStdPort *Cont, unsigned char Val)
 		{
 			if (Y < 0)
 				Y = 0;
-			if (Y < PPU.SLnum - 32)
+			if (Y < PPU::SLnum - 32)
 				continue;
-			if (Y >= PPU.SLnum)
+			if (Y >= PPU::SLnum)
 				break;
 			for (X = x - 8; X < x + 8; X++)
 			{
@@ -100,7 +100,7 @@ static	void	Write (struct tStdPort *Cont, unsigned char Val)
 					X = 0;
 				if (X > 255)
 					break;
-				if (GFX::ZapperHit(DrawArray[Y * 256 + X]))
+				if (GFX::ZapperHit(PPU::DrawArray[Y * 256 + X]))
 					WhiteCount++;
 			}
 		}

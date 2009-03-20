@@ -393,7 +393,7 @@ void	Start (void)
 	wfx.wBitsPerSample = 16;
 	wfx.cbSize = 0;
 
-	if (PPU.IsPAL)
+	if (PPU::IsPAL)
 		handle = CreateAvi(FileName, 19997209, &wfx);	// 50.006978 fps
 	else	handle = CreateAvi(FileName, 16639263, &wfx);	// 60.098816 fps
 
@@ -434,7 +434,7 @@ void	AddVideo (void)
 		return;
 	}
 	{
-		register unsigned short *src = DrawArray;
+		register unsigned short *src = PPU::DrawArray;
 		int x, y;
 		for (y = 0; y < 240; y++)
 		{

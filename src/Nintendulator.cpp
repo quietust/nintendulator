@@ -336,7 +336,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CPU_SAVESTATE:
 			NES::Stop();
-			while (PPU.SLnum != 240)
+			while (PPU::SLnum != 240)
 			{
 				if (NES::FrameStep && !NES::GotStep)
 					MessageBox(hMainWnd,_T("Impossible: savestate is advancing to scanline 240 in framestep mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);

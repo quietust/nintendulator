@@ -62,7 +62,7 @@ namespace GFX
 		MessageBox(hMainWnd,errormsg _T(", retrying"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);\
 		Fullscreen = FALSE;\
 		Create();\
-		PPU_GetGFXPtr();\
+		PPU::GetGFXPtr();\
 		if (FAILED(action))\
 		{\
 			MessageBox(hMainWnd,_T("Error: ") errormsg,_T("Nintendulator"),MB_OK | MB_ICONERROR);\
@@ -251,7 +251,7 @@ void	Create (void)
 	}
 
 	// this will automatically call Update()
-	LoadPalette(PPU.IsPAL ? PalettePAL : PaletteNTSC);
+	LoadPalette(PPU::IsPAL ? PalettePAL : PaletteNTSC);
 	EI.DbgOut(_T("Created %ix%i %i-bit display surface (%s)"), SurfDesc.dwWidth, SurfDesc.dwHeight, Depth, Fullscreen ? _T("fullscreen") : _T("windowed"));
 }
 
@@ -341,7 +341,7 @@ void	SetFrameskip (int skip)
 
 void	Draw2x (void)
 {
-	register unsigned short *src = DrawArray;
+	register unsigned short *src = PPU::DrawArray;
 	if (Depth == 32)
 	{
 		int x, y;
@@ -460,7 +460,7 @@ void	Draw2x (void)
 
 void	Draw1x (void)
 {
-	register unsigned short *src = DrawArray;
+	register unsigned short *src = PPU::DrawArray;
 	if (Depth == 32)
 	{
 		int x, y;
@@ -1117,10 +1117,10 @@ void	LoadPalette (int PalNum)
 		GeneratePAL(PALsat);
 	else if (PalNum == PALETTE_EXT)
 	{
-		if (!ImportPalette(PPU.IsPAL ? CustPalettePAL : CustPaletteNTSC, TRUE))
+		if (!ImportPalette(PPU::IsPAL ? CustPalettePAL : CustPaletteNTSC, TRUE))
 		{
 			MessageBox(hMainWnd,_T("Unable to load the specified palette! Reverting to default!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-			if (PPU.IsPAL)
+			if (PPU::IsPAL)
 				PalettePAL = PalNum = PALETTE_PAL;
 			else	PaletteNTSC = PalNum = PALETTE_NTSC;
 		}
@@ -1219,7 +1219,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 	case WM_INITDIALOG:
 		inUpdate = TRUE;
-		ispal = PPU.IsPAL;
+		ispal = PPU::IsPAL;
 		hue = NTSChue;
 		nsat = NTSCsat;
 		psat = PALsat;

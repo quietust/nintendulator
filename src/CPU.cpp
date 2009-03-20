@@ -80,7 +80,7 @@ static	__forceinline void	RunCycle (void)
 	CPUCycle();
 #ifndef	CPU_BENCHMARK
 #ifndef	NSFPLAYER
-	PPU_Run();
+	PPU::Run();
 #endif	/* !NSFPLAYER */
 	APU::Run();
 #endif	/* !CPU_BENCHMARK */
