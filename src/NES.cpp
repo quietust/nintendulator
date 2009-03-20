@@ -40,7 +40,7 @@ void	NES_Init (void)
 	Debugger_Init();
 #endif	/* ENABLE_DEBUGGER */
 	States_Init();
-	Controllers_Init();
+	Controllers::Init();
 #ifdef	ENABLE_DEBUGGER
 	Debugger_SetMode(0);
 #endif	/* ENABLE_DEBUGGER */
@@ -68,7 +68,7 @@ void	NES_Release (void)
 	if (APU::buffer)	// this really should go in APU.cpp
 		free(APU::buffer);
 	GFX_Release();
-	Controllers_Release();
+	Controllers::Release();
 	MapperInterface_Release();
 
 	NES_SaveSettings();
@@ -973,7 +973,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 				}
 			}
 			else if (PPU.SLnum == 241)
-				Controllers_UpdateInput();
+				Controllers::UpdateInput();
 		}
 	}
 
@@ -1024,7 +1024,7 @@ void	NES_LoadSettings (void)
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
 	int PosX, PosY;
 
-	Controllers_UnAcquire();
+	Controllers::UnAcquire();
 
 	/* Load Defaults */
 	SizeMult = 1;
@@ -1037,12 +1037,12 @@ void	NES_LoadSettings (void)
 	GFX.NTSCsat = 50;
 	GFX.PALsat = 50;
 	GFX.CustPaletteNTSC[0] = GFX.CustPalettePAL[0] = 0;
-	Controllers.Port1.Type = 0;
-	ZeroMemory(Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
-	Controllers.Port2.Type = 0;
-	ZeroMemory(Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
-	Controllers.ExpPort.Type = 0;
-	ZeroMemory(Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
+	Controllers::Port1.Type = 0;
+	ZeroMemory(Controllers::Port1.Buttons,sizeof(Controllers::Port1.Buttons));
+	Controllers::Port2.Type = 0;
+	ZeroMemory(Controllers::Port2.Buttons,sizeof(Controllers::Port2.Buttons));
+	Controllers::ExpPort.Type = 0;
+	ZeroMemory(Controllers::ExpPort.Buttons,sizeof(Controllers::ExpPort.Buttons));
 
 	GFX.SlowDown = FALSE;
 	GFX.SlowRate = 2;
@@ -1059,7 +1059,7 @@ void	NES_LoadSettings (void)
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("PPUMode")     ,0,NULL,(LPBYTE)&PPU.IsPAL       ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("AutoRun")     ,0,NULL,(LPBYTE)&NES.AutoRun     ,&Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("Scanlines")   ,0,NULL,(LPBYTE)&GFX.Scanlines   ,&Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("UDLR")        ,0,NULL,(LPBYTE)&Controllers.EnableOpposites,&Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase,_T("UDLR")        ,0,NULL,(LPBYTE)&Controllers::EnableOpposites,&Size);
 
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("SizeMult")    ,0,NULL,(LPBYTE)&SizeMult        ,&Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("FSkip")       ,0,NULL,(LPBYTE)&GFX.FSkip       ,&Size);
@@ -1086,27 +1086,27 @@ void	NES_LoadSettings (void)
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("FSPort4T"),0,NULL,(LPBYTE)&FSPort4T,&Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("ExpPortT"),0,NULL,(LPBYTE)&ExpPortT,&Size);
 
-	if ((Port1T == STD_FOURSCORE) || (Port2T == STD_FOURSCORE))
-		StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
+	if ((Port1T == Controllers::STD_FOURSCORE) || (Port2T == Controllers::STD_FOURSCORE))
+		StdPort_SetControllerType(&Controllers::Port1,Controllers::STD_FOURSCORE);
 	else
 	{
-		StdPort_SetControllerType(&Controllers.Port1,Port1T);
-		StdPort_SetControllerType(&Controllers.Port2,Port2T);
+		StdPort_SetControllerType(&Controllers::Port1,Port1T);
+		StdPort_SetControllerType(&Controllers::Port2,Port2T);
 	}
-	StdPort_SetControllerType(&Controllers.FSPort1,FSPort1T);
-	StdPort_SetControllerType(&Controllers.FSPort2,FSPort2T);
-	StdPort_SetControllerType(&Controllers.FSPort3,FSPort3T);
-	StdPort_SetControllerType(&Controllers.FSPort4,FSPort4T);
-	ExpPort_SetControllerType(&Controllers.ExpPort,ExpPortT);
+	StdPort_SetControllerType(&Controllers::FSPort1,FSPort1T);
+	StdPort_SetControllerType(&Controllers::FSPort2,FSPort2T);
+	StdPort_SetControllerType(&Controllers::FSPort3,FSPort3T);
+	StdPort_SetControllerType(&Controllers::FSPort4,FSPort4T);
+	ExpPort_SetControllerType(&Controllers::ExpPort,ExpPortT);
 
-	Size = sizeof(Controllers.Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("Port1D")  ,0,NULL,(LPBYTE)Controllers.Port1.Buttons  ,&Size);
-	Size = sizeof(Controllers.Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("Port2D")  ,0,NULL,(LPBYTE)Controllers.Port2.Buttons  ,&Size);
-	Size = sizeof(Controllers.Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort1D"),0,NULL,(LPBYTE)Controllers.FSPort1.Buttons,&Size);
-	Size = sizeof(Controllers.Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort2D"),0,NULL,(LPBYTE)Controllers.FSPort2.Buttons,&Size);
-	Size = sizeof(Controllers.Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort3D"),0,NULL,(LPBYTE)Controllers.FSPort3.Buttons,&Size);
-	Size = sizeof(Controllers.Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort4D"),0,NULL,(LPBYTE)Controllers.FSPort4.Buttons,&Size);
-	Size = sizeof(Controllers.ExpPort.Buttons);	RegQueryValueEx(SettingsBase,_T("ExpPortD"),0,NULL,(LPBYTE)Controllers.ExpPort.Buttons,&Size);
-	Controllers_SetDeviceUsed();
+	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("Port1D")  ,0,NULL,(LPBYTE)Controllers::Port1.Buttons  ,&Size);
+	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("Port2D")  ,0,NULL,(LPBYTE)Controllers::Port2.Buttons  ,&Size);
+	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort1D"),0,NULL,(LPBYTE)Controllers::FSPort1.Buttons,&Size);
+	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort2D"),0,NULL,(LPBYTE)Controllers::FSPort2.Buttons,&Size);
+	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort3D"),0,NULL,(LPBYTE)Controllers::FSPort3.Buttons,&Size);
+	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort4D"),0,NULL,(LPBYTE)Controllers::FSPort4.Buttons,&Size);
+	Size = sizeof(Controllers::ExpPort.Buttons);	RegQueryValueEx(SettingsBase,_T("ExpPortD"),0,NULL,(LPBYTE)Controllers::ExpPort.Buttons,&Size);
+	Controllers::SetDeviceUsed();
 
 	RegCloseKey(SettingsBase);
 
@@ -1139,7 +1139,7 @@ void	NES_LoadSettings (void)
 
 	SetWindowPos(hMainWnd,HWND_TOP,PosX,PosY,0,0,SWP_NOSIZE | SWP_NOZORDER);
 
-	Controllers_Acquire();
+	Controllers::Acquire();
 	NES_UpdateInterface();
 }
 
@@ -1166,7 +1166,7 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,_T("NTSCsat")     ,0,REG_DWORD,(LPBYTE)&GFX.NTSCsat     ,sizeof(DWORD));
 	RegSetValueEx(SettingsBase,_T("PALsat")      ,0,REG_DWORD,(LPBYTE)&GFX.PALsat      ,sizeof(DWORD));
 
-	RegSetValueEx(SettingsBase,_T("UDLR")        ,0,REG_DWORD,(LPBYTE)&Controllers.EnableOpposites,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("UDLR")        ,0,REG_DWORD,(LPBYTE)&Controllers::EnableOpposites,sizeof(DWORD));
 
 	RegSetValueEx(SettingsBase,_T("CustPaletteNTSC"),0,REG_SZ,(LPBYTE)GFX.CustPaletteNTSC,(DWORD)(sizeof(TCHAR) * _tcslen(GFX.CustPaletteNTSC)));
 	RegSetValueEx(SettingsBase,_T("CustPalettePAL") ,0,REG_SZ,(LPBYTE)GFX.CustPalettePAL ,(DWORD)(sizeof(TCHAR) * _tcslen(GFX.CustPalettePAL)));
@@ -1175,21 +1175,21 @@ void	NES_SaveSettings (void)
 	RegSetValueEx(SettingsBase,_T("Path_AVI")       ,0,REG_SZ,(LPBYTE)Path_AVI           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_AVI)));
 	RegSetValueEx(SettingsBase,_T("Path_PAL")       ,0,REG_SZ,(LPBYTE)Path_PAL           ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_PAL)));
 
-	RegSetValueEx(SettingsBase,_T("Port1T")  ,0,REG_DWORD,(LPBYTE)&Controllers.Port1.Type  ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("Port2T")  ,0,REG_DWORD,(LPBYTE)&Controllers.Port2.Type  ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("FSPort1T"),0,REG_DWORD,(LPBYTE)&Controllers.FSPort1.Type,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("FSPort2T"),0,REG_DWORD,(LPBYTE)&Controllers.FSPort2.Type,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("FSPort3T"),0,REG_DWORD,(LPBYTE)&Controllers.FSPort3.Type,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("FSPort4T"),0,REG_DWORD,(LPBYTE)&Controllers.FSPort4.Type,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("ExpPortT"),0,REG_DWORD,(LPBYTE)&Controllers.ExpPort.Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("Port1T")  ,0,REG_DWORD,(LPBYTE)&Controllers::Port1.Type  ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("Port2T")  ,0,REG_DWORD,(LPBYTE)&Controllers::Port2.Type  ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("FSPort1T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort1.Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("FSPort2T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort2.Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("FSPort3T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort3.Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("FSPort4T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort4.Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("ExpPortT"),0,REG_DWORD,(LPBYTE)&Controllers::ExpPort.Type,sizeof(DWORD));
 
-	RegSetValueEx(SettingsBase,_T("Port1D")  ,0,REG_BINARY,(LPBYTE)Controllers.Port1.Buttons  ,sizeof(Controllers.Port1.Buttons));
-	RegSetValueEx(SettingsBase,_T("Port2D")  ,0,REG_BINARY,(LPBYTE)Controllers.Port2.Buttons  ,sizeof(Controllers.Port2.Buttons));
-	RegSetValueEx(SettingsBase,_T("FSPort1D"),0,REG_BINARY,(LPBYTE)Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));
-	RegSetValueEx(SettingsBase,_T("FSPort2D"),0,REG_BINARY,(LPBYTE)Controllers.FSPort2.Buttons,sizeof(Controllers.FSPort2.Buttons));
-	RegSetValueEx(SettingsBase,_T("FSPort3D"),0,REG_BINARY,(LPBYTE)Controllers.FSPort3.Buttons,sizeof(Controllers.FSPort3.Buttons));
-	RegSetValueEx(SettingsBase,_T("FSPort4D"),0,REG_BINARY,(LPBYTE)Controllers.FSPort4.Buttons,sizeof(Controllers.FSPort4.Buttons));
-	RegSetValueEx(SettingsBase,_T("ExpPortD"),0,REG_BINARY,(LPBYTE)Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
+	RegSetValueEx(SettingsBase,_T("Port1D")  ,0,REG_BINARY,(LPBYTE)Controllers::Port1.Buttons  ,sizeof(Controllers::Port1.Buttons));
+	RegSetValueEx(SettingsBase,_T("Port2D")  ,0,REG_BINARY,(LPBYTE)Controllers::Port2.Buttons  ,sizeof(Controllers::Port2.Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort1D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort1.Buttons,sizeof(Controllers::FSPort1.Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort2D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort2.Buttons,sizeof(Controllers::FSPort2.Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort3D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort3.Buttons,sizeof(Controllers::FSPort3.Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort4D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort4.Buttons,sizeof(Controllers::FSPort4.Buttons));
+	RegSetValueEx(SettingsBase,_T("ExpPortD"),0,REG_BINARY,(LPBYTE)Controllers::ExpPort.Buttons,sizeof(Controllers::ExpPort.Buttons));
 
 	RegCloseKey(SettingsBase);
 }

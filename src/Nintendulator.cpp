@@ -522,7 +522,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_INPUT_SETUP:
 			NES_Stop();
-			Controllers_OpenConfig();
+			Controllers::OpenConfig();
 			if (running)	NES_Start(FALSE);
 			break;
 #ifdef	ENABLE_DEBUGGER

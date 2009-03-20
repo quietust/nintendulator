@@ -13,18 +13,52 @@
 #include "Controllers.h"
 #include <commdlg.h>
 
+void	StdPort_SetUnconnected		(struct Controllers::tStdPort *);
+void	StdPort_SetStdController	(struct Controllers::tStdPort *);
+void	StdPort_SetZapper		(struct Controllers::tStdPort *);
+void	StdPort_SetArkanoidPaddle	(struct Controllers::tStdPort *);
+void	StdPort_SetPowerPad		(struct Controllers::tStdPort *);
+void	StdPort_SetFourScore		(struct Controllers::tStdPort *);
+void	StdPort_SetSnesController	(struct Controllers::tStdPort *);
+void	StdPort_SetVSZapper		(struct Controllers::tStdPort *);
+
+void	ExpPort_SetUnconnected		(struct Controllers::tExpPort *);
+void	ExpPort_SetFami4Play		(struct Controllers::tExpPort *);
+void	ExpPort_SetArkanoidPaddle	(struct Controllers::tExpPort *);
+void	ExpPort_SetFamilyBasicKeyboard	(struct Controllers::tExpPort *);
+void	ExpPort_SetAltKeyboard		(struct Controllers::tExpPort *);
+void	ExpPort_SetFamTrainer		(struct Controllers::tExpPort *);
+void	ExpPort_SetTablet		(struct Controllers::tExpPort *);
+
+namespace Controllers
+{
 static	HWND key;
 
-struct	tControllers	Controllers;
+struct tStdPort Port1, Port2;
+struct tStdPort FSPort1, FSPort2, FSPort3, FSPort4;
+struct tExpPort ExpPort;
 
-void	StdPort_SetUnconnected		(struct tStdPort *);
-void	StdPort_SetStdController	(struct tStdPort *);
-void	StdPort_SetZapper		(struct tStdPort *);
-void	StdPort_SetArkanoidPaddle	(struct tStdPort *);
-void	StdPort_SetPowerPad		(struct tStdPort *);
-void	StdPort_SetFourScore		(struct tStdPort *);
-void	StdPort_SetSnesController	(struct tStdPort *);
-void	StdPort_SetVSZapper		(struct tStdPort *);
+BOOL	EnableOpposites;
+
+int	NumDevices;
+BOOL	DeviceUsed[MAX_CONTROLLERS];
+TCHAR	*DeviceName[MAX_CONTROLLERS];
+
+int	NumButtons[MAX_CONTROLLERS];
+BYTE	AxisFlags[MAX_CONTROLLERS],
+	POVFlags[MAX_CONTROLLERS];
+	
+TCHAR	*ButtonNames[MAX_CONTROLLERS][128],
+	*AxisNames[MAX_CONTROLLERS][8],
+	*POVNames[MAX_CONTROLLERS][4],
+	*KeyNames[256];
+
+LPDIRECTINPUT7		DirectInput;
+LPDIRECTINPUTDEVICE7	DIDevices[MAX_CONTROLLERS];
+
+BYTE		KeyState[256];
+DIMOUSESTATE2	MouseState;
+DIJOYSTATE2	JoyState[MAX_CONTROLLERS];	// first 2 entries are unused
 
 void	StdPort_SetControllerType (struct tStdPort *Cont, int Type)
 {
@@ -54,14 +88,6 @@ void	StdPort_SetMappings (void)
 	StdPort_Mappings[STD_SNESCONTROLLER] = _T("SNES Controller");
 	StdPort_Mappings[STD_VSZAPPER] = _T("VS Unisystem Zapper");
 }
-
-void	ExpPort_SetUnconnected		(struct tExpPort *);
-void	ExpPort_SetFami4Play		(struct tExpPort *);
-void	ExpPort_SetArkanoidPaddle	(struct tExpPort *);
-void	ExpPort_SetFamilyBasicKeyboard	(struct tExpPort *);
-void	ExpPort_SetAltKeyboard		(struct tExpPort *);
-void	ExpPort_SetFamTrainer		(struct tExpPort *);
-void	ExpPort_SetTablet		(struct tExpPort *);
 
 void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
 {
@@ -106,13 +132,13 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 			SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[i]);
 			SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[i]);
 		}
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers.Port1.Type,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.Port2.Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1.Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2.Type,0);
 
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_RESETCONTENT,0,0);
 		for (i = 0; i < EXP_MAX; i++)
 			SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)ExpPort_Mappings[i]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_SETCURSEL,Controllers.ExpPort.Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_SETCURSEL,ExpPort.Type,0);
 		if (Movie.Mode)
 		{
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
@@ -126,7 +152,7 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SEXPPORT),TRUE);
 		}
 
-		if (Controllers.EnableOpposites)
+		if (EnableOpposites)
 			CheckDlgButton(hDlg,IDC_CONT_UDLR,BST_CHECKED);
 		else	CheckDlgButton(hDlg,IDC_CONT_UDLR,BST_UNCHECKED);
 
@@ -141,7 +167,7 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 			POVAxis = (IsDlgButtonChecked(hDlg,IDC_CONT_POV) == BST_CHECKED);
 			break;
 		case IDOK:
-			Controllers.EnableOpposites = (IsDlgButtonChecked(hDlg,IDC_CONT_UDLR) == BST_CHECKED);
+			EnableOpposites = (IsDlgButtonChecked(hDlg,IDC_CONT_UDLR) == BST_CHECKED);
 			POVAxis = FALSE;
 			EndDialog(hDlg,1);
 			break;
@@ -151,22 +177,22 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 				int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0);
 				if (Type == STD_FOURSCORE)
 				{
-					StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
-					StdPort_SetControllerType(&Controllers.FSPort2,Controllers.Port2.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
-					memcpy(Controllers.FSPort1.Buttons,Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
-					memcpy(Controllers.FSPort2.Buttons,Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
-					StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-					StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+					StdPort_SetControllerType(&FSPort1,Port1.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
+					StdPort_SetControllerType(&FSPort2,Port2.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
+					memcpy(FSPort1.Buttons,Port1.Buttons,sizeof(Port1.Buttons));
+					memcpy(FSPort2.Buttons,Port2.Buttons,sizeof(Port2.Buttons));
+					StdPort_SetControllerType(&Port1,STD_FOURSCORE);
+					StdPort_SetControllerType(&Port2,STD_FOURSCORE);
 					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,STD_FOURSCORE,0);
 				}
-				else if (Controllers.Port1.Type	== STD_FOURSCORE)
+				else if (Port1.Type	== STD_FOURSCORE)
 				{
-					StdPort_SetControllerType(&Controllers.Port1,Type);
-					StdPort_SetControllerType(&Controllers.Port2,Controllers.FSPort2.Type);
-					memcpy(Controllers.Port2.Buttons,Controllers.FSPort2.Buttons,sizeof(Controllers.FSPort2.Buttons));
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.Port2.Type,0);
+					StdPort_SetControllerType(&Port1,Type);
+					StdPort_SetControllerType(&Port2,FSPort2.Type);
+					memcpy(Port2.Buttons,FSPort2.Buttons,sizeof(FSPort2.Buttons));
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2.Type,0);
 				}
-				else	StdPort_SetControllerType(&Controllers.Port1,Type);
+				else	StdPort_SetControllerType(&Port1,Type);
 			}
 			break;
 		case IDC_CONT_SPORT2:
@@ -175,39 +201,39 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 				int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0);
 				if (Type == STD_FOURSCORE)
 				{
-					StdPort_SetControllerType(&Controllers.FSPort1,Controllers.Port1.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
-					StdPort_SetControllerType(&Controllers.FSPort2,Controllers.Port2.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
-					memcpy(Controllers.FSPort1.Buttons,Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
-					memcpy(Controllers.FSPort2.Buttons,Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
-					StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-					StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+					StdPort_SetControllerType(&FSPort1,Port1.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
+					StdPort_SetControllerType(&FSPort2,Port2.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
+					memcpy(FSPort1.Buttons,Port1.Buttons,sizeof(Port1.Buttons));
+					memcpy(FSPort2.Buttons,Port2.Buttons,sizeof(Port2.Buttons));
+					StdPort_SetControllerType(&Port1,STD_FOURSCORE);
+					StdPort_SetControllerType(&Port2,STD_FOURSCORE);
 					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,STD_FOURSCORE,0);
 				}
-				else if (Controllers.Port2.Type	== STD_FOURSCORE)
+				else if (Port2.Type	== STD_FOURSCORE)
 				{
-					StdPort_SetControllerType(&Controllers.Port1,Controllers.FSPort1.Type);
-					memcpy(Controllers.Port1.Buttons,Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));
-					StdPort_SetControllerType(&Controllers.Port2,Type);
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers.Port1.Type,0);
+					StdPort_SetControllerType(&Port1,FSPort1.Type);
+					memcpy(Port1.Buttons,FSPort1.Buttons,sizeof(FSPort1.Buttons));
+					StdPort_SetControllerType(&Port2,Type);
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1.Type,0);
 				}
-				else	StdPort_SetControllerType(&Controllers.Port2,Type);
+				else	StdPort_SetControllerType(&Port2,Type);
 			}
 			break;
 		case IDC_CONT_SEXPPORT:
 			if (wmEvent == CBN_SELCHANGE)
 			{
 				int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_GETCURSEL,0,0);
-				ExpPort_SetControllerType(&Controllers.ExpPort,Type);
+				ExpPort_SetControllerType(&ExpPort,Type);
 			}
 			break;
 		case IDC_CONT_CPORT1:
-			Controllers.Port1.Config(&Controllers.Port1,hDlg);
+			Port1.Config(&Port1,hDlg);
 			break;
 		case IDC_CONT_CPORT2:
-			Controllers.Port2.Config(&Controllers.Port2,hDlg);
+			Port2.Config(&Port2,hDlg);
 			break;
 		case IDC_CONT_CEXPPORT:
-			Controllers.ExpPort.Config(&Controllers.ExpPort,hDlg);
+			ExpPort.Config(&ExpPort,hDlg);
 			break;
 		};
 		break;
@@ -215,12 +241,12 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
 	return FALSE;
 }
-void	Controllers_OpenConfig (void)
+void	OpenConfig (void)
 {
-	Controllers_UnAcquire();
+	UnAcquire();
 	DialogBox(hInst,(LPCTSTR)IDD_CONTROLLERS,hMainWnd,ControllerProc);
-	Controllers_SetDeviceUsed();
-	Controllers_Acquire();
+	SetDeviceUsed();
+	Acquire();
 }
 
 static	BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
@@ -230,7 +256,7 @@ static	BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 	{
 		ItemNum = lpddoi->dwOfs;
 		if ((ItemNum >= 0) && (ItemNum < 256))
-			Controllers.KeyNames[ItemNum] = _tcsdup(lpddoi->tszName);
+			KeyNames[ItemNum] = _tcsdup(lpddoi->tszName);
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid keyboard key ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 	return DIENUM_CONTINUE;
@@ -241,24 +267,24 @@ static	BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi,
 	int ItemNum = 0;
 	if (IsEqualGUID(lpddoi->guidType,GUID_XAxis))
 	{
-		Controllers.AxisFlags[1] |= 0x01;
-		Controllers.AxisNames[1][AXIS_X] = _tcsdup(lpddoi->tszName);
+		AxisFlags[1] |= 0x01;
+		AxisNames[1][AXIS_X] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_YAxis))
 	{
-		Controllers.AxisFlags[1] |= 0x02;
-		Controllers.AxisNames[1][AXIS_Y] = _tcsdup(lpddoi->tszName);
+		AxisFlags[1] |= 0x02;
+		AxisNames[1][AXIS_Y] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_ZAxis))
 	{
-		Controllers.AxisFlags[1] |= 0x04;
-		Controllers.AxisNames[1][AXIS_Z] = _tcsdup(lpddoi->tszName);
+		AxisFlags[1] |= 0x04;
+		AxisNames[1][AXIS_Z] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_Button))
 	{
-		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.MouseState.rgbButtons - (BYTE *)&Controllers.MouseState)) / sizeof(Controllers.MouseState.rgbButtons[0]);
+		ItemNum = (lpddoi->dwOfs - ((BYTE *)&MouseState.rgbButtons - (BYTE *)&MouseState)) / sizeof(MouseState.rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 8))
-			Controllers.ButtonNames[1][ItemNum] = _tcsdup(lpddoi->tszName);
+			ButtonNames[1][ItemNum] = _tcsdup(lpddoi->tszName);
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid mouse button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 
@@ -267,68 +293,68 @@ static	BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi,
 
 static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
-	int DevNum = Controllers.NumDevices;
+	int DevNum = NumDevices;
 	int ItemNum = 0;
 	if (IsEqualGUID(lpddoi->guidType,GUID_XAxis))
 	{
-		Controllers.AxisFlags[DevNum] |= 0x01;
-		Controllers.AxisNames[DevNum][AXIS_X] = _tcsdup(lpddoi->tszName);
+		AxisFlags[DevNum] |= 0x01;
+		AxisNames[DevNum][AXIS_X] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_YAxis))
 	{
-		Controllers.AxisFlags[DevNum] |= 0x02;
-		Controllers.AxisNames[DevNum][AXIS_Y] = _tcsdup(lpddoi->tszName);
+		AxisFlags[DevNum] |= 0x02;
+		AxisNames[DevNum][AXIS_Y] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_ZAxis))
 	{
-		Controllers.AxisFlags[DevNum] |= 0x04;
-		Controllers.AxisNames[DevNum][AXIS_Z] = _tcsdup(lpddoi->tszName);
+		AxisFlags[DevNum] |= 0x04;
+		AxisNames[DevNum][AXIS_Z] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_RxAxis))
 	{
-		Controllers.AxisFlags[DevNum] |= 0x08;
-		Controllers.AxisNames[DevNum][AXIS_RX] = _tcsdup(lpddoi->tszName);
+		AxisFlags[DevNum] |= 0x08;
+		AxisNames[DevNum][AXIS_RX] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_RyAxis))
 	{
-		Controllers.AxisFlags[DevNum] |= 0x10;
-		Controllers.AxisNames[DevNum][AXIS_RY] = _tcsdup(lpddoi->tszName);
+		AxisFlags[DevNum] |= 0x10;
+		AxisNames[DevNum][AXIS_RY] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_RzAxis))
 	{
-		Controllers.AxisFlags[DevNum] |= 0x20;
-		Controllers.AxisNames[DevNum][AXIS_RZ] = _tcsdup(lpddoi->tszName);
+		AxisFlags[DevNum] |= 0x20;
+		AxisNames[DevNum][AXIS_RZ] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_Slider))
 	{
-		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.JoyState[0].rglSlider - (BYTE *)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rglSlider[0]);
+		ItemNum = (lpddoi->dwOfs - ((BYTE *)&JoyState[0].rglSlider - (BYTE *)&JoyState[0])) / sizeof(JoyState[0].rglSlider[0]);
 		if (ItemNum == 0)
 		{
-			Controllers.AxisFlags[DevNum] |= 0x40;
-			Controllers.AxisNames[DevNum][AXIS_S0] = _tcsdup(lpddoi->tszName);
+			AxisFlags[DevNum] |= 0x40;
+			AxisNames[DevNum][AXIS_S0] = _tcsdup(lpddoi->tszName);
 		}
 		else if (ItemNum == 1)
 		{
-			Controllers.AxisFlags[DevNum] |= 0x80;
-			Controllers.AxisNames[DevNum][AXIS_S1] = _tcsdup(lpddoi->tszName);
+			AxisFlags[DevNum] |= 0x80;
+			AxisNames[DevNum][AXIS_S1] = _tcsdup(lpddoi->tszName);
 		}
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid slider ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_POV))
 	{
-		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.JoyState[0].rgdwPOV - (BYTE *)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rgdwPOV[0]);
+		ItemNum = (lpddoi->dwOfs - ((BYTE *)&JoyState[0].rgdwPOV - (BYTE *)&JoyState[0])) / sizeof(JoyState[0].rgdwPOV[0]);
 		if ((ItemNum >= 0) && (ItemNum < 4))
 		{
-			Controllers.POVFlags[DevNum] |= 0x01 << ItemNum;
-			Controllers.POVNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
+			POVFlags[DevNum] |= 0x01 << ItemNum;
+			POVNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
 		}
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid POV hat ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 	if (IsEqualGUID(lpddoi->guidType,GUID_Button))
 	{
-		ItemNum = (lpddoi->dwOfs - ((BYTE *)&Controllers.JoyState[0].rgbButtons - (BYTE *)&Controllers.JoyState[0])) / sizeof(Controllers.JoyState[0].rgbButtons[0]);
+		ItemNum = (lpddoi->dwOfs - ((BYTE *)&JoyState[0].rgbButtons - (BYTE *)&JoyState[0])) / sizeof(JoyState[0].rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 128))
-			Controllers.ButtonNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
+			ButtonNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid joystick button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 
@@ -338,32 +364,32 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 static	BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
 	HRESULT hr;
-	int DevNum = Controllers.NumDevices;
-	if (SUCCEEDED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,lpddi->guidInstance,IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[DevNum],NULL)))
+	int DevNum = NumDevices;
+	if (SUCCEEDED(IDirectInput7_CreateDeviceEx(DirectInput,lpddi->guidInstance,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[DevNum],NULL)))
 	{
 		DIDEVCAPS caps;
-		if (FAILED(hr = IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[DevNum],&c_dfDIJoystick2)))
+		if (FAILED(hr = IDirectInputDevice7_SetDataFormat(DIDevices[DevNum],&c_dfDIJoystick2)))
 			goto end;
-		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[DevNum],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(DIDevices[DevNum],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 			goto end;
 		caps.dwSize = sizeof(DIDEVCAPS);
-		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(Controllers.DIDevices[DevNum],&caps)))
+		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(DIDevices[DevNum],&caps)))
 			goto end;
 
-		Controllers.NumButtons[DevNum] = caps.dwButtons;
-		Controllers.AxisFlags[DevNum] = 0;
-		Controllers.POVFlags[DevNum] = 0;
-		Controllers.DeviceName[DevNum] = _tcsdup(lpddi->tszProductName);
+		NumButtons[DevNum] = caps.dwButtons;
+		AxisFlags[DevNum] = 0;
+		POVFlags[DevNum] = 0;
+		DeviceName[DevNum] = _tcsdup(lpddi->tszProductName);
 
-		IDirectInputDevice7_EnumObjects(Controllers.DIDevices[DevNum],EnumJoystickObjectsCallback,NULL,DIDFT_ALL);
+		IDirectInputDevice7_EnumObjects(DIDevices[DevNum],EnumJoystickObjectsCallback,NULL,DIDFT_ALL);
 		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), lpddi->tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
-		Controllers.NumDevices++;
+		NumDevices++;
 	}
 	return DIENUM_CONTINUE;
 
 end:
-	IDirectInputDevice7_Release(Controllers.DIDevices[DevNum]);
-	Controllers.DIDevices[DevNum] = NULL;
+	IDirectInputDevice7_Release(DIDevices[DevNum]);
+	DIDevices[DevNum] = NULL;
 	return hr;
 }
 
@@ -371,33 +397,33 @@ static	BOOL	InitKeyboard (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,GUID_SysKeyboard,IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[0],NULL)))
+	if (FAILED(IDirectInput7_CreateDeviceEx(DirectInput,GUID_SysKeyboard,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[0],NULL)))
 		return FALSE;
-	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[0],&c_dfDIKeyboard)))
+	if (FAILED(IDirectInputDevice7_SetDataFormat(DIDevices[0],&c_dfDIKeyboard)))
 		goto end;
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[0],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(DIDevices[0],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 		goto end;
 
 	caps.dwSize = sizeof(DIDEVCAPS);
-	if (FAILED(IDirectInputDevice7_GetCapabilities(Controllers.DIDevices[0],&caps)))
+	if (FAILED(IDirectInputDevice7_GetCapabilities(DIDevices[0],&caps)))
 		goto end;
 
 	inst.dwSize = sizeof(DIDEVICEINSTANCE);
-	if (FAILED(IDirectInputDevice7_GetDeviceInfo(Controllers.DIDevices[0],&inst)))
+	if (FAILED(IDirectInputDevice7_GetDeviceInfo(DIDevices[0],&inst)))
 		goto end;
 
-	Controllers.NumButtons[0] = 256;// normally, I would use caps.dwButtons
-	Controllers.AxisFlags[0] = 0;	// no axes
-	Controllers.POVFlags[0] = 0;	// no POV hats
-	Controllers.DeviceName[0] = _tcsdup(inst.tszProductName);
+	NumButtons[0] = 256;// normally, I would use caps.dwButtons
+	AxisFlags[0] = 0;	// no axes
+	POVFlags[0] = 0;	// no POV hats
+	DeviceName[0] = _tcsdup(inst.tszProductName);
 
-	IDirectInputDevice7_EnumObjects(Controllers.DIDevices[0],EnumKeyboardObjectsCallback,NULL,DIDFT_ALL);
+	IDirectInputDevice7_EnumObjects(DIDevices[0],EnumKeyboardObjectsCallback,NULL,DIDFT_ALL);
 	EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 	return TRUE;
 
 end:
-	IDirectInputDevice7_Release(Controllers.DIDevices[0]);
-	Controllers.DIDevices[0] = NULL;
+	IDirectInputDevice7_Release(DIDevices[0]);
+	DIDevices[0] = NULL;
 	return FALSE;
 }
 
@@ -405,70 +431,70 @@ static	BOOL	InitMouse (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(IDirectInput7_CreateDeviceEx(Controllers.DirectInput,GUID_SysMouse,IID_IDirectInputDevice7,(LPVOID *)&Controllers.DIDevices[1],NULL)))
+	if (FAILED(IDirectInput7_CreateDeviceEx(DirectInput,GUID_SysMouse,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[1],NULL)))
 		return FALSE;
-	if (FAILED(IDirectInputDevice7_SetDataFormat(Controllers.DIDevices[1],&c_dfDIMouse2)))
+	if (FAILED(IDirectInputDevice7_SetDataFormat(DIDevices[1],&c_dfDIMouse2)))
 		goto end;
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(Controllers.DIDevices[1],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(DIDevices[1],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 		goto end;
 	caps.dwSize = sizeof(DIDEVCAPS);
-	if (FAILED(IDirectInputDevice7_GetCapabilities(Controllers.DIDevices[1],&caps)))
+	if (FAILED(IDirectInputDevice7_GetCapabilities(DIDevices[1],&caps)))
 		goto end;
 
 	inst.dwSize = sizeof(DIDEVICEINSTANCE);
-	if (FAILED(IDirectInputDevice7_GetDeviceInfo(Controllers.DIDevices[1],&inst)))
+	if (FAILED(IDirectInputDevice7_GetDeviceInfo(DIDevices[1],&inst)))
 		goto end;
 
-	Controllers.NumButtons[1] = caps.dwButtons;
-	Controllers.AxisFlags[1] = 0;
-	Controllers.POVFlags[1] = 0;
-	Controllers.DeviceName[1] = _tcsdup(inst.tszProductName);
+	NumButtons[1] = caps.dwButtons;
+	AxisFlags[1] = 0;
+	POVFlags[1] = 0;
+	DeviceName[1] = _tcsdup(inst.tszProductName);
 
-	IDirectInputDevice7_EnumObjects(Controllers.DIDevices[1],EnumMouseObjectsCallback,NULL,DIDFT_ALL);
+	IDirectInputDevice7_EnumObjects(DIDevices[1],EnumMouseObjectsCallback,NULL,DIDFT_ALL);
 	EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 	return TRUE;
 
 end:
-	IDirectInputDevice7_Release(Controllers.DIDevices[1]);
-	Controllers.DIDevices[1] = NULL;
+	IDirectInputDevice7_Release(DIDevices[1]);
+	DIDevices[1] = NULL;
 	return FALSE;
 }
 
-void	Controllers_Init (void)
+void	Init (void)
 {
 	int i;
 	
-	for (i = 0; i < Controllers.NumDevices; i++)
+	for (i = 0; i < NumDevices; i++)
 	{
-		Controllers.DeviceUsed[i] = FALSE;
-		Controllers.DIDevices[i] = NULL;
-		Controllers.DeviceName[i] = NULL;
-		memset(Controllers.AxisNames[i],0,sizeof(Controllers.AxisNames[i]));
-		memset(Controllers.ButtonNames[i],0,sizeof(Controllers.ButtonNames[i]));
-		memset(Controllers.POVNames[i],0,sizeof(Controllers.POVNames[i]));
+		DeviceUsed[i] = FALSE;
+		DIDevices[i] = NULL;
+		DeviceName[i] = NULL;
+		memset(AxisNames[i],0,sizeof(AxisNames[i]));
+		memset(ButtonNames[i],0,sizeof(ButtonNames[i]));
+		memset(POVNames[i],0,sizeof(POVNames[i]));
 	}
-	memset(Controllers.KeyNames,0,sizeof(Controllers.KeyNames));
+	memset(KeyNames,0,sizeof(KeyNames));
 
 	StdPort_SetMappings();
 	ExpPort_SetMappings();
 
-	ZeroMemory(Controllers.Port1.Buttons,sizeof(Controllers.Port1.Buttons));
-	ZeroMemory(Controllers.Port2.Buttons,sizeof(Controllers.Port2.Buttons));
-	ZeroMemory(Controllers.FSPort1.Buttons,sizeof(Controllers.FSPort1.Buttons));
-	ZeroMemory(Controllers.FSPort2.Buttons,sizeof(Controllers.FSPort2.Buttons));
-	ZeroMemory(Controllers.FSPort3.Buttons,sizeof(Controllers.FSPort3.Buttons));
-	ZeroMemory(Controllers.FSPort4.Buttons,sizeof(Controllers.FSPort4.Buttons));
-	ZeroMemory(Controllers.ExpPort.Buttons,sizeof(Controllers.ExpPort.Buttons));
+	ZeroMemory(Port1.Buttons,sizeof(Port1.Buttons));
+	ZeroMemory(Port2.Buttons,sizeof(Port2.Buttons));
+	ZeroMemory(FSPort1.Buttons,sizeof(FSPort1.Buttons));
+	ZeroMemory(FSPort2.Buttons,sizeof(FSPort2.Buttons));
+	ZeroMemory(FSPort3.Buttons,sizeof(FSPort3.Buttons));
+	ZeroMemory(FSPort4.Buttons,sizeof(FSPort4.Buttons));
+	ZeroMemory(ExpPort.Buttons,sizeof(ExpPort.Buttons));
 
-	StdPort_SetUnconnected(&Controllers.Port1);
-	StdPort_SetUnconnected(&Controllers.Port2);
-	StdPort_SetUnconnected(&Controllers.FSPort1);
-	StdPort_SetUnconnected(&Controllers.FSPort2);
-	StdPort_SetUnconnected(&Controllers.FSPort3);
-	StdPort_SetUnconnected(&Controllers.FSPort4);
-	ExpPort_SetUnconnected(&Controllers.ExpPort);
+	StdPort_SetUnconnected(&Port1);
+	StdPort_SetUnconnected(&Port2);
+	StdPort_SetUnconnected(&FSPort1);
+	StdPort_SetUnconnected(&FSPort2);
+	StdPort_SetUnconnected(&FSPort3);
+	StdPort_SetUnconnected(&FSPort4);
+	ExpPort_SetUnconnected(&ExpPort);
 	
-	if (FAILED(DirectInputCreateEx(hInst,DIRECTINPUT_VERSION,IID_IDirectInput7,(LPVOID *)&Controllers.DirectInput,NULL)))
+	if (FAILED(DirectInputCreateEx(hInst,DIRECTINPUT_VERSION,IID_IDirectInput7,(LPVOID *)&DirectInput,NULL)))
 	{
 		MessageBox(hMainWnd,_T("Unable to initialize DirectInput!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return;
@@ -479,201 +505,201 @@ void	Controllers_Init (void)
 	if (!InitMouse())
 		MessageBox(hMainWnd,_T("Failed to initialize mouse!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 
-	Controllers.NumDevices = 2;	// joysticks start at slot 2
-	IDirectInput7_EnumDevices(Controllers.DirectInput,DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
+	NumDevices = 2;	// joysticks start at slot 2
+	IDirectInput7_EnumDevices(DirectInput,DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
 
 	Movie.Mode = 0;
-	Controllers_Acquire();
+	Acquire();
 }
 
-void	Controllers_Release (void)
+void	Release (void)
 {
 	int i, j;
-	Controllers_UnAcquire();
-	Controllers.Port1.Unload(&Controllers.Port1);
-	Controllers.Port2.Unload(&Controllers.Port2);
-	Controllers.FSPort1.Unload(&Controllers.FSPort1);
-	Controllers.FSPort2.Unload(&Controllers.FSPort2);
-	Controllers.FSPort3.Unload(&Controllers.FSPort3);
-	Controllers.FSPort4.Unload(&Controllers.FSPort4);
-	Controllers.ExpPort.Unload(&Controllers.ExpPort);
-	for (i = 0; i < Controllers.NumDevices; i++)
+	UnAcquire();
+	Port1.Unload(&Port1);
+	Port2.Unload(&Port2);
+	FSPort1.Unload(&FSPort1);
+	FSPort2.Unload(&FSPort2);
+	FSPort3.Unload(&FSPort3);
+	FSPort4.Unload(&FSPort4);
+	ExpPort.Unload(&ExpPort);
+	for (i = 0; i < NumDevices; i++)
 	{
-		if (Controllers.DIDevices[i])
+		if (DIDevices[i])
 		{
-			IDirectInputDevice7_Unacquire(Controllers.DIDevices[i]);
-			IDirectInputDevice7_Release(Controllers.DIDevices[i]);
+			IDirectInputDevice7_Unacquire(DIDevices[i]);
+			IDirectInputDevice7_Release(DIDevices[i]);
 		}
-		free(Controllers.DeviceName[i]);
-		Controllers.DeviceName[i] = NULL;
+		free(DeviceName[i]);
+		DeviceName[i] = NULL;
 		for (j = 0; j < 128; j++)
 		{
-			free(Controllers.ButtonNames[i][j]);
-			Controllers.ButtonNames[i][j] = NULL;
+			free(ButtonNames[i][j]);
+			ButtonNames[i][j] = NULL;
 		}
 		for (j = 0; j < 8; j++)
 		{
-			free(Controllers.AxisNames[i][j]);
-			Controllers.AxisNames[i][j] = NULL;
+			free(AxisNames[i][j]);
+			AxisNames[i][j] = NULL;
 		}
 		for (j = 0; j < 4; j++)
 		{
-			free(Controllers.POVNames[i][j]);
-			Controllers.POVNames[i][j] = NULL;
+			free(POVNames[i][j]);
+			POVNames[i][j] = NULL;
 		}
 	}
 	for (j = 0; j < 256; j++)
 	{
-		free(Controllers.KeyNames[j]);
-		Controllers.KeyNames[j] = NULL;
+		free(KeyNames[j]);
+		KeyNames[j] = NULL;
 	}
 
-	IDirectInput7_Release(Controllers.DirectInput);
+	IDirectInput7_Release(DirectInput);
 }
 
-void	Controllers_Write (unsigned char Val)
+void	Write (unsigned char Val)
 {
-	Controllers.Port1.Write(&Controllers.Port1,Val & 0x1);
-	Controllers.Port2.Write(&Controllers.Port2,Val & 0x1);
-	Controllers.ExpPort.Write(&Controllers.ExpPort,Val);
+	Port1.Write(&Port1,Val & 0x1);
+	Port2.Write(&Port2,Val & 0x1);
+	ExpPort.Write(&ExpPort,Val);
 }
 
-int	Controllers_Save (FILE *out)
+int	Save (FILE *out)
 {
 	int clen = 0;
-	fwrite(&Controllers.FSPort1.Type,4,1,out);	clen += 4;
-	fwrite(&Controllers.FSPort2.Type,4,1,out);	clen += 4;
-	fwrite(&Controllers.FSPort3.Type,4,1,out);	clen += 4;
-	fwrite(&Controllers.FSPort4.Type,4,1,out);	clen += 4;
-	fwrite(&Controllers.Port1.Type,4,1,out);	clen += 4;
-	fwrite(&Controllers.Port2.Type,4,1,out);	clen += 4;
-	fwrite(&Controllers.ExpPort.Type,4,1,out);	clen += 4;
-	fwrite(Controllers.Port1.Data,Controllers.Port1.DataLen,1,out);		clen += Controllers.Port1.DataLen;
-	fwrite(Controllers.Port2.Data,Controllers.Port2.DataLen,1,out);		clen += Controllers.Port2.DataLen;
-	fwrite(Controllers.FSPort1.Data,Controllers.FSPort1.DataLen,1,out);	clen += Controllers.FSPort1.DataLen;
-	fwrite(Controllers.FSPort2.Data,Controllers.FSPort2.DataLen,1,out);	clen += Controllers.FSPort2.DataLen;
-	fwrite(Controllers.FSPort3.Data,Controllers.FSPort3.DataLen,1,out);	clen += Controllers.FSPort3.DataLen;
-	fwrite(Controllers.FSPort4.Data,Controllers.FSPort4.DataLen,1,out);	clen += Controllers.FSPort4.DataLen;
-	fwrite(Controllers.ExpPort.Data,Controllers.ExpPort.DataLen,1,out);	clen += Controllers.ExpPort.DataLen;
+	fwrite(&FSPort1.Type,4,1,out);	clen += 4;
+	fwrite(&FSPort2.Type,4,1,out);	clen += 4;
+	fwrite(&FSPort3.Type,4,1,out);	clen += 4;
+	fwrite(&FSPort4.Type,4,1,out);	clen += 4;
+	fwrite(&Port1.Type,4,1,out);	clen += 4;
+	fwrite(&Port2.Type,4,1,out);	clen += 4;
+	fwrite(&ExpPort.Type,4,1,out);	clen += 4;
+	fwrite(Port1.Data,Port1.DataLen,1,out);		clen += Port1.DataLen;
+	fwrite(Port2.Data,Port2.DataLen,1,out);		clen += Port2.DataLen;
+	fwrite(FSPort1.Data,FSPort1.DataLen,1,out);	clen += FSPort1.DataLen;
+	fwrite(FSPort2.Data,FSPort2.DataLen,1,out);	clen += FSPort2.DataLen;
+	fwrite(FSPort3.Data,FSPort3.DataLen,1,out);	clen += FSPort3.DataLen;
+	fwrite(FSPort4.Data,FSPort4.DataLen,1,out);	clen += FSPort4.DataLen;
+	fwrite(ExpPort.Data,ExpPort.DataLen,1,out);	clen += ExpPort.DataLen;
 	return clen;
 }
 
-int	Controllers_Load (FILE *in)
+int	Load (FILE *in)
 {
 	int clen = 0;
 	int tpi;
 	Movie.ControllerTypes[3] = 1;	// denotes that controller state has been loaded
 					// if we're playing a movie, this means we should
 					// SKIP the controller info in the movie block
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort1,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort2,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort3,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.FSPort4,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.Port1,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Controllers.Port2,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	ExpPort_SetControllerType(&Controllers.ExpPort,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&FSPort1,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&FSPort2,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&FSPort3,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&FSPort4,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Port1,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Port2,tpi);	clen += 4;
+	fread(&tpi,4,1,in);	ExpPort_SetControllerType(&ExpPort,tpi);	clen += 4;
 
-	fread(Controllers.Port1.Data,Controllers.Port1.DataLen,1,in);		clen += Controllers.Port1.DataLen;
-	fread(Controllers.Port2.Data,Controllers.Port2.DataLen,1,in);		clen += Controllers.Port2.DataLen;
-	fread(Controllers.FSPort1.Data,Controllers.FSPort1.DataLen,1,in);	clen += Controllers.FSPort1.DataLen;
-	fread(Controllers.FSPort2.Data,Controllers.FSPort2.DataLen,1,in);	clen += Controllers.FSPort2.DataLen;
-	fread(Controllers.FSPort3.Data,Controllers.FSPort3.DataLen,1,in);	clen += Controllers.FSPort3.DataLen;
-	fread(Controllers.FSPort4.Data,Controllers.FSPort4.DataLen,1,in);	clen += Controllers.FSPort4.DataLen;
-	fread(Controllers.ExpPort.Data,Controllers.ExpPort.DataLen,1,in);	clen += Controllers.ExpPort.DataLen;
+	fread(Port1.Data,Port1.DataLen,1,in);		clen += Port1.DataLen;
+	fread(Port2.Data,Port2.DataLen,1,in);		clen += Port2.DataLen;
+	fread(FSPort1.Data,FSPort1.DataLen,1,in);	clen += FSPort1.DataLen;
+	fread(FSPort2.Data,FSPort2.DataLen,1,in);	clen += FSPort2.DataLen;
+	fread(FSPort3.Data,FSPort3.DataLen,1,in);	clen += FSPort3.DataLen;
+	fread(FSPort4.Data,FSPort4.DataLen,1,in);	clen += FSPort4.DataLen;
+	fread(ExpPort.Data,ExpPort.DataLen,1,in);	clen += ExpPort.DataLen;
 	return clen;
 }
 
-void	Controllers_SetDeviceUsed (void)
+void	SetDeviceUsed (void)
 {
 	int i;
 
-	for (i = 0; i < Controllers.NumDevices; i++)
-		Controllers.DeviceUsed[i] = FALSE;
+	for (i = 0; i < NumDevices; i++)
+		DeviceUsed[i] = FALSE;
 
 	for (i = 0; i < CONTROLLERS_MAXBUTTONS; i++)
 	{
-		if (Controllers.Port1.Type == STD_FOURSCORE)
+		if (Port1.Type == STD_FOURSCORE)
 		{
-			if (i < Controllers.FSPort1.NumButtons)
-				Controllers.DeviceUsed[Controllers.FSPort1.Buttons[i] >> 16] = TRUE;
-			if (i < Controllers.FSPort2.NumButtons)
-				Controllers.DeviceUsed[Controllers.FSPort2.Buttons[i] >> 16] = TRUE;
-			if (i < Controllers.FSPort3.NumButtons)
-				Controllers.DeviceUsed[Controllers.FSPort3.Buttons[i] >> 16] = TRUE;
-			if (i < Controllers.FSPort4.NumButtons)
-				Controllers.DeviceUsed[Controllers.FSPort4.Buttons[i] >> 16] = TRUE;
+			if (i < FSPort1.NumButtons)
+				DeviceUsed[FSPort1.Buttons[i] >> 16] = TRUE;
+			if (i < FSPort2.NumButtons)
+				DeviceUsed[FSPort2.Buttons[i] >> 16] = TRUE;
+			if (i < FSPort3.NumButtons)
+				DeviceUsed[FSPort3.Buttons[i] >> 16] = TRUE;
+			if (i < FSPort4.NumButtons)
+				DeviceUsed[FSPort4.Buttons[i] >> 16] = TRUE;
 		}
 		else
 		{
-			if (i < Controllers.Port1.NumButtons)
-				Controllers.DeviceUsed[Controllers.Port1.Buttons[i] >> 16] = TRUE;
-			if (i < Controllers.Port2.NumButtons)
-				Controllers.DeviceUsed[Controllers.Port2.Buttons[i] >> 16] = TRUE;
+			if (i < Port1.NumButtons)
+				DeviceUsed[Port1.Buttons[i] >> 16] = TRUE;
+			if (i < Port2.NumButtons)
+				DeviceUsed[Port2.Buttons[i] >> 16] = TRUE;
 		}
-		if (i < Controllers.ExpPort.NumButtons)
-			Controllers.DeviceUsed[Controllers.ExpPort.Buttons[i] >> 16] = TRUE;
+		if (i < ExpPort.NumButtons)
+			DeviceUsed[ExpPort.Buttons[i] >> 16] = TRUE;
 	}
-	if ((Controllers.Port1.Type == STD_ARKANOIDPADDLE) || (Controllers.Port2.Type == STD_ARKANOIDPADDLE) || (Controllers.ExpPort.Type == EXP_ARKANOIDPADDLE))
-		Controllers.DeviceUsed[1] = TRUE;
+	if ((Port1.Type == STD_ARKANOIDPADDLE) || (Port2.Type == STD_ARKANOIDPADDLE) || (ExpPort.Type == EXP_ARKANOIDPADDLE))
+		DeviceUsed[1] = TRUE;
 
-	if ((Controllers.ExpPort.Type == EXP_FAMILYBASICKEYBOARD) || (Controllers.ExpPort.Type == EXP_ALTKEYBOARD))
-		Controllers.DeviceUsed[0] = TRUE;
+	if ((ExpPort.Type == EXP_FAMILYBASICKEYBOARD) || (ExpPort.Type == EXP_ALTKEYBOARD))
+		DeviceUsed[0] = TRUE;
 }
 
-void	Controllers_Acquire (void)
+void	Acquire (void)
 {
 	int i;
-	for (i = 0; i < Controllers.NumDevices; i++)
-		if (Controllers.DIDevices[i])
-			IDirectInputDevice7_Acquire(Controllers.DIDevices[i]);
-	if ((Controllers.ExpPort.Type == EXP_FAMILYBASICKEYBOARD) || (Controllers.ExpPort.Type == EXP_ALTKEYBOARD))
+	for (i = 0; i < NumDevices; i++)
+		if (DIDevices[i])
+			IDirectInputDevice7_Acquire(DIDevices[i]);
+	if ((ExpPort.Type == EXP_FAMILYBASICKEYBOARD) || (ExpPort.Type == EXP_ALTKEYBOARD))
 		MaskKeyboard = 1;
 }
-void	Controllers_UnAcquire (void)
+void	UnAcquire (void)
 {
 	int i;
-	for (i = 0; i < Controllers.NumDevices; i++)
-		if (Controllers.DIDevices[i])
-			IDirectInputDevice7_Unacquire(Controllers.DIDevices[i]);
+	for (i = 0; i < NumDevices; i++)
+		if (DIDevices[i])
+			IDirectInputDevice7_Unacquire(DIDevices[i]);
 	MaskKeyboard = 0;
 }
 
-void	Controllers_UpdateInput (void)
+void	UpdateInput (void)
 {
 	HRESULT hr;
 	int i;
 	unsigned char Cmd = 0;
-	if (Controllers.DeviceUsed[0])
+	if (DeviceUsed[0])
 	{
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIDevices[0],256,Controllers.KeyState);
+		hr = IDirectInputDevice7_GetDeviceState(DIDevices[0],256,KeyState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
-			IDirectInputDevice7_Acquire(Controllers.DIDevices[0]);
-			ZeroMemory(Controllers.KeyState,sizeof(Controllers.KeyState));
+			IDirectInputDevice7_Acquire(DIDevices[0]);
+			ZeroMemory(KeyState,sizeof(KeyState));
 		}
 	}
-	if (Controllers.DeviceUsed[1])
+	if (DeviceUsed[1])
 	{
-		hr = IDirectInputDevice7_GetDeviceState(Controllers.DIDevices[1],sizeof(DIMOUSESTATE2),&Controllers.MouseState);
+		hr = IDirectInputDevice7_GetDeviceState(DIDevices[1],sizeof(DIMOUSESTATE2),&MouseState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
-			IDirectInputDevice7_Acquire(Controllers.DIDevices[1]);
-			ZeroMemory(&Controllers.MouseState,sizeof(Controllers.MouseState));
+			IDirectInputDevice7_Acquire(DIDevices[1]);
+			ZeroMemory(&MouseState,sizeof(MouseState));
 		}
 	}
-	for (i = 2; i < Controllers.NumDevices; i++)
-		if (Controllers.DeviceUsed[i])
+	for (i = 2; i < NumDevices; i++)
+		if (DeviceUsed[i])
 		{
-			hr = IDirectInputDevice7_Poll(Controllers.DIDevices[i]);
+			hr = IDirectInputDevice7_Poll(DIDevices[i]);
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 			{
-				IDirectInputDevice7_Acquire(Controllers.DIDevices[i]);
-				ZeroMemory(&Controllers.JoyState[i],sizeof(DIJOYSTATE2));
+				IDirectInputDevice7_Acquire(DIDevices[i]);
+				ZeroMemory(&JoyState[i],sizeof(DIJOYSTATE2));
 				continue;
 			}
-			hr = IDirectInputDevice7_GetDeviceState(Controllers.DIDevices[i],sizeof(DIJOYSTATE2),&Controllers.JoyState[i]);
+			hr = IDirectInputDevice7_GetDeviceState(DIDevices[i],sizeof(DIJOYSTATE2),&JoyState[i]);
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
-				ZeroMemory(&Controllers.JoyState[i],sizeof(DIJOYSTATE2));
+				ZeroMemory(&JoyState[i],sizeof(DIJOYSTATE2));
 		}
 
 	if (Movie.Mode & MOV_PLAY)
@@ -683,18 +709,18 @@ void	Controllers_UpdateInput (void)
 		if ((MI) && (MI->Config))
 			Cmd = MI->Config(CFG_QUERY,0);
 	}
-	Controllers.Port1.Frame(&Controllers.Port1,Movie.Mode);
-	Controllers.Port2.Frame(&Controllers.Port2,Movie.Mode);
-	Controllers.ExpPort.Frame(&Controllers.ExpPort,Movie.Mode);
+	Port1.Frame(&Port1,Movie.Mode);
+	Port2.Frame(&Port2,Movie.Mode);
+	ExpPort.Frame(&ExpPort,Movie.Mode);
 	if ((Cmd) && (MI) && (MI->Config))
 		MI->Config(CFG_CMD,Cmd);
 	if (Movie.Mode & MOV_RECORD)
 		Movie_SaveInput(Cmd);
 }
 
-int	Controllers_GetConfigButton (HWND hWnd, int DevNum)
+int	GetConfigButton (HWND hWnd, int DevNum)
 {
-	LPDIRECTINPUTDEVICE7 dev = Controllers.DIDevices[DevNum];
+	LPDIRECTINPUTDEVICE7 dev = DIDevices[DevNum];
 	HRESULT hr;
 	int i;
 	int Key = -1;
@@ -729,17 +755,17 @@ int	Controllers_GetConfigButton (HWND hWnd, int DevNum)
 	while (Key == -1)
 	{
 		if (DevNum == 0)
-			hr = IDirectInputDevice7_GetDeviceState(dev,256,Controllers.KeyState);
+			hr = IDirectInputDevice7_GetDeviceState(dev,256,KeyState);
 		else if (DevNum == 1)
-			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
+			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIMOUSESTATE2),&MouseState);
 		else
 		{
 			hr = IDirectInputDevice7_Poll(dev);
-			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIJOYSTATE2),&Controllers.JoyState[DevNum]);
+			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIJOYSTATE2),&JoyState[DevNum]);
 		}
-		for (i = 0; i < Controllers.NumButtons[DevNum]; i++)
+		for (i = 0; i < NumButtons[DevNum]; i++)
 		{
-			if (Controllers_IsPressed((DevNum << 16) | i))
+			if (IsPressed((DevNum << 16) | i))
 			{
 				Key = i;
 				break;
@@ -749,7 +775,7 @@ int	Controllers_GetConfigButton (HWND hWnd, int DevNum)
 			break;
 		for (i = FirstAxis; i < LastAxis; i++)
 		{
-			if (Controllers_IsPressed((DevNum << 16) | i))
+			if (IsPressed((DevNum << 16) | i))
 			{
 				Key = i;
 				break;
@@ -759,7 +785,7 @@ int	Controllers_GetConfigButton (HWND hWnd, int DevNum)
 			break;
 		for (i = FirstPOV; i < LastPOV; i++)
 		{
-			if (Controllers_IsPressed((DevNum << 16) | i))
+			if (IsPressed((DevNum << 16) | i))
 			{
 				Key = i;
 				break;
@@ -769,23 +795,23 @@ int	Controllers_GetConfigButton (HWND hWnd, int DevNum)
 	{
 waitrelease:
 		if (DevNum == 0)
-			hr = IDirectInputDevice7_GetDeviceState(dev,256,Controllers.KeyState);
+			hr = IDirectInputDevice7_GetDeviceState(dev,256,KeyState);
 		else if (DevNum == 1)
-			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIMOUSESTATE2),&Controllers.MouseState);
+			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIMOUSESTATE2),&MouseState);
 		else
 		{
 			hr = IDirectInputDevice7_Poll(dev);
-			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIJOYSTATE2),&Controllers.JoyState[DevNum]);
+			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIJOYSTATE2),&JoyState[DevNum]);
 		}
 		// don't need to reset FirstAxis/LastAxis or FirstPOV/LastPOV, since they were set in the previous loop
-		for (i = 0; i < Controllers.NumButtons[DevNum]; i++)
-			if (Controllers_IsPressed((DevNum << 16) | i))
+		for (i = 0; i < NumButtons[DevNum]; i++)
+			if (IsPressed((DevNum << 16) | i))
 				goto waitrelease;
 		for (i = FirstAxis; i < LastAxis; i++)
-			if (Controllers_IsPressed((DevNum << 16) | i))
+			if (IsPressed((DevNum << 16) | i))
 				goto waitrelease;
 		for (i = FirstPOV; i < LastPOV; i++)
-			if (Controllers_IsPressed((DevNum << 16) | i))
+			if (IsPressed((DevNum << 16) | i))
 				goto waitrelease;
 	}
 	IDirectInputDevice7_Unacquire(dev);
@@ -797,14 +823,14 @@ waitrelease:
 	return Key;
 }
 
-TCHAR *	Controllers_GetButtonLabel (int DevNum, int Button)
+TCHAR *	GetButtonLabel (int DevNum, int Button)
 {
 	static TCHAR str[256];
 	_tcscpy(str, _T("???"));
 	if (DevNum == 0)
 	{
-		if (Controllers.KeyNames[Button])
-			_tcscpy(str,Controllers.KeyNames[Button]);
+		if (KeyNames[Button])
+			_tcscpy(str,KeyNames[Button]);
 		return str;
 	}
 	else if (DevNum == 1)
@@ -812,14 +838,14 @@ TCHAR *	Controllers_GetButtonLabel (int DevNum, int Button)
 		if (Button & 0x08)
 		{
 			Button &= 0x07;
-			if (Controllers.AxisNames[1][Button >> 1])
-				_stprintf(str, _T("%s %s"), Controllers.AxisNames[1][Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
+			if (AxisNames[1][Button >> 1])
+				_stprintf(str, _T("%s %s"), AxisNames[1][Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
 			return str;
 		}
 		else
 		{
-			if (Controllers.ButtonNames[1][Button])
-				_tcscpy(str,Controllers.ButtonNames[1][Button]);
+			if (ButtonNames[1][Button])
+				_tcscpy(str,ButtonNames[1][Button]);
 			return str;
 		}
 	}
@@ -828,36 +854,36 @@ TCHAR *	Controllers_GetButtonLabel (int DevNum, int Button)
 		if ((Button & 0xE0) == 0x80)
 		{
 			Button &= 0x0F;
-			if (Controllers.AxisNames[DevNum][Button >> 1])
-				_stprintf(str,_T("%s %s"), Controllers.AxisNames[DevNum][Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
+			if (AxisNames[DevNum][Button >> 1])
+				_stprintf(str,_T("%s %s"), AxisNames[DevNum][Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
 			return str;
 		}
 		else if ((Button & 0xE0) == 0xC0)
 		{
 			const TCHAR *POVs[8] = {_T("(N)"), _T("(NE)"), _T("(E)"), _T("(SE)"), _T("(S)"), _T("(SW)"), _T("(W)"), _T("(NW)") };
 			Button &= 0x1F;
-			if (Controllers.POVNames[DevNum][Button >> 3])
-				_stprintf(str,_T("%s %s"), Controllers.POVNames[DevNum][Button >> 3], POVs[Button & 0x7]);
+			if (POVNames[DevNum][Button >> 3])
+				_stprintf(str,_T("%s %s"), POVNames[DevNum][Button >> 3], POVs[Button & 0x7]);
 			return str;
 		}
 		else if ((Button & 0xE0) == 0xE0)
 		{
 			const TCHAR *POVs[4] = {_T("Y (-)"), _T("X (+)"), _T("Y (+)"), _T("X (-)") };
 			Button &= 0xF;
-			if (Controllers.POVNames[DevNum][Button >> 2])
-				_stprintf(str,_T("%s %s"), Controllers.POVNames[DevNum][Button >> 2], POVs[Button & 0x3]);
+			if (POVNames[DevNum][Button >> 2])
+				_stprintf(str,_T("%s %s"), POVNames[DevNum][Button >> 2], POVs[Button & 0x3]);
 			return str;
 		}
 		else
 		{
-			if (Controllers.ButtonNames[DevNum][Button])
-				_tcscpy(str,Controllers.ButtonNames[DevNum][Button]);
+			if (ButtonNames[DevNum][Button])
+				_tcscpy(str,ButtonNames[DevNum][Button]);
 			return str;
 		}
 	}
 }
 
-void	Controllers_ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
+void	ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 {
 	*Button &= 0xFFFF;
 	if (getKey)	/* this way, we can just re-label the button */
@@ -865,36 +891,36 @@ void	Controllers_ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 		key = CreateDialog(hInst,(LPCTSTR)IDD_KEYCONFIG,hDlg,NULL);
 		ShowWindow(key,TRUE);	/* FIXME - center this window properly */
 		ProcessMessages();	/* let the "Press a key..." dialog display itself */
-		*Button = Controllers_GetConfigButton(key,Device);
+		*Button = GetConfigButton(key,Device);
 		ProcessMessages();	/* flush all keypresses - don't want them going back to the parent dialog */
 		DestroyWindow(key);	/* close the little window */
 		key = NULL;
 	}
-	SetWindowText(hDlg,(LPCTSTR)Controllers_GetButtonLabel(Device,*Button));
+	SetWindowText(hDlg,(LPCTSTR)GetButtonLabel(Device,*Button));
 	*Button |= Device << 16;	/* add the device ID */
 }
 
-BOOL	Controllers_IsPressed (int Button)
+BOOL	IsPressed (int Button)
 {
 	int DevNum = (Button & 0xFFFF0000) >> 16;
 	if (DevNum == 0)
-		return (Controllers.KeyState[Button & 0xFF] & 0x80) ? TRUE : FALSE;
+		return (KeyState[Button & 0xFF] & 0x80) ? TRUE : FALSE;
 	else if (DevNum == 1)
 	{
 		if (Button & 0x8)	/* axis selected */
 		{
 			switch (Button & 0x7)
 			{
-			case 0x0:	return ((Controllers.AxisFlags[1] & (1 << AXIS_X)) && (Controllers.MouseState.lX < -1)) ? TRUE : FALSE;	break;
-			case 0x1:	return ((Controllers.AxisFlags[1] & (1 << AXIS_X)) && (Controllers.MouseState.lX > +1)) ? TRUE : FALSE;	break;
-			case 0x2:	return ((Controllers.AxisFlags[1] & (1 << AXIS_Y)) && (Controllers.MouseState.lY < -1)) ? TRUE : FALSE;	break;
-			case 0x3:	return ((Controllers.AxisFlags[1] & (1 << AXIS_Y)) && (Controllers.MouseState.lY > +1)) ? TRUE : FALSE;	break;
-			case 0x4:	return ((Controllers.AxisFlags[1] & (1 << AXIS_Z)) && (Controllers.MouseState.lZ < -1)) ? TRUE : FALSE;	break;
-			case 0x5:	return ((Controllers.AxisFlags[1] & (1 << AXIS_Z)) && (Controllers.MouseState.lZ > +1)) ? TRUE : FALSE;	break;
+			case 0x0:	return ((AxisFlags[1] & (1 << AXIS_X)) && (MouseState.lX < -1)) ? TRUE : FALSE;	break;
+			case 0x1:	return ((AxisFlags[1] & (1 << AXIS_X)) && (MouseState.lX > +1)) ? TRUE : FALSE;	break;
+			case 0x2:	return ((AxisFlags[1] & (1 << AXIS_Y)) && (MouseState.lY < -1)) ? TRUE : FALSE;	break;
+			case 0x3:	return ((AxisFlags[1] & (1 << AXIS_Y)) && (MouseState.lY > +1)) ? TRUE : FALSE;	break;
+			case 0x4:	return ((AxisFlags[1] & (1 << AXIS_Z)) && (MouseState.lZ < -1)) ? TRUE : FALSE;	break;
+			case 0x5:	return ((AxisFlags[1] & (1 << AXIS_Z)) && (MouseState.lZ > +1)) ? TRUE : FALSE;	break;
 			default:	return FALSE;
 			}
 		}
-		else	return (Controllers.MouseState.rgbButtons[Button & 0x7] & 0x80) ? TRUE : FALSE;
+		else	return (MouseState.rgbButtons[Button & 0x7] & 0x80) ? TRUE : FALSE;
 	}
 	else
 	{
@@ -902,22 +928,22 @@ BOOL	Controllers_IsPressed (int Button)
 		{	/* axis */
 			switch (Button & 0xF)
 			{
-			case 0x0:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_X)) && (Controllers.JoyState[DevNum].lX < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x1:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_X)) && (Controllers.JoyState[DevNum].lX > 0xC000)) ? TRUE : FALSE;	break;
-			case 0x2:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_Y)) && (Controllers.JoyState[DevNum].lY < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x3:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_Y)) && (Controllers.JoyState[DevNum].lY > 0xC000)) ? TRUE : FALSE;	break;
-			case 0x4:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_Z)) && (Controllers.JoyState[DevNum].lZ < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x5:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_Z)) && (Controllers.JoyState[DevNum].lZ > 0xC000)) ? TRUE : FALSE;	break;
-			case 0x6:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_RX)) && (Controllers.JoyState[DevNum].lRx < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x7:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_RX)) && (Controllers.JoyState[DevNum].lRx > 0xC000)) ? TRUE : FALSE;	break;
-			case 0x8:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_RY)) && (Controllers.JoyState[DevNum].lRy < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x9:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_RY)) && (Controllers.JoyState[DevNum].lRy > 0xC000)) ? TRUE : FALSE;	break;
-			case 0xA:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_RZ)) && (Controllers.JoyState[DevNum].lRz < 0x4000)) ? TRUE : FALSE;	break;
-			case 0xB:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_RZ)) && (Controllers.JoyState[DevNum].lRz > 0xC000)) ? TRUE : FALSE;	break;
-			case 0xC:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_S0)) && (Controllers.JoyState[DevNum].rglSlider[0] < 0x4000)) ? TRUE : FALSE;	break;
-			case 0xD:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_S0)) && (Controllers.JoyState[DevNum].rglSlider[0] > 0xC000)) ? TRUE : FALSE;	break;
-			case 0xE:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_S1)) && (Controllers.JoyState[DevNum].rglSlider[1] < 0x4000)) ? TRUE : FALSE;	break;
-			case 0xF:	return ((Controllers.AxisFlags[DevNum] & (1 << AXIS_S1)) && (Controllers.JoyState[DevNum].rglSlider[1] > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x0:	return ((AxisFlags[DevNum] & (1 << AXIS_X)) && (JoyState[DevNum].lX < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x1:	return ((AxisFlags[DevNum] & (1 << AXIS_X)) && (JoyState[DevNum].lX > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x2:	return ((AxisFlags[DevNum] & (1 << AXIS_Y)) && (JoyState[DevNum].lY < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x3:	return ((AxisFlags[DevNum] & (1 << AXIS_Y)) && (JoyState[DevNum].lY > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x4:	return ((AxisFlags[DevNum] & (1 << AXIS_Z)) && (JoyState[DevNum].lZ < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x5:	return ((AxisFlags[DevNum] & (1 << AXIS_Z)) && (JoyState[DevNum].lZ > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x6:	return ((AxisFlags[DevNum] & (1 << AXIS_RX)) && (JoyState[DevNum].lRx < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x7:	return ((AxisFlags[DevNum] & (1 << AXIS_RX)) && (JoyState[DevNum].lRx > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x8:	return ((AxisFlags[DevNum] & (1 << AXIS_RY)) && (JoyState[DevNum].lRy < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x9:	return ((AxisFlags[DevNum] & (1 << AXIS_RY)) && (JoyState[DevNum].lRy > 0xC000)) ? TRUE : FALSE;	break;
+			case 0xA:	return ((AxisFlags[DevNum] & (1 << AXIS_RZ)) && (JoyState[DevNum].lRz < 0x4000)) ? TRUE : FALSE;	break;
+			case 0xB:	return ((AxisFlags[DevNum] & (1 << AXIS_RZ)) && (JoyState[DevNum].lRz > 0xC000)) ? TRUE : FALSE;	break;
+			case 0xC:	return ((AxisFlags[DevNum] & (1 << AXIS_S0)) && (JoyState[DevNum].rglSlider[0] < 0x4000)) ? TRUE : FALSE;	break;
+			case 0xD:	return ((AxisFlags[DevNum] & (1 << AXIS_S0)) && (JoyState[DevNum].rglSlider[0] > 0xC000)) ? TRUE : FALSE;	break;
+			case 0xE:	return ((AxisFlags[DevNum] & (1 << AXIS_S1)) && (JoyState[DevNum].rglSlider[1] < 0x4000)) ? TRUE : FALSE;	break;
+			case 0xF:	return ((AxisFlags[DevNum] & (1 << AXIS_S1)) && (JoyState[DevNum].rglSlider[1] > 0xC000)) ? TRUE : FALSE;	break;
 			default:	return FALSE;
 			}
 		}
@@ -927,38 +953,38 @@ BOOL	Controllers_IsPressed (int Button)
 				return FALSE;
 			switch (Button & 0x1F)
 			{
-			case 0x00:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 33750) || (Controllers.JoyState[DevNum].rgdwPOV[0] <  2250)) && (Controllers.JoyState[DevNum].rgdwPOV[0] != -1)) ? TRUE : FALSE;	break;
-			case 0x01:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[0] <  6750))) ? TRUE : FALSE;	break;
-			case 0x02:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] >  6750) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 11250))) ? TRUE : FALSE;	break;
-			case 0x03:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 15750))) ? TRUE : FALSE;	break;
-			case 0x04:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 15750) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 20250))) ? TRUE : FALSE;	break;
-			case 0x05:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 24750))) ? TRUE : FALSE;	break;
-			case 0x06:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 24750) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 29250))) ? TRUE : FALSE;	break;
-			case 0x07:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 29250) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 33750))) ? TRUE : FALSE;	break;
-			case 0x08:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 33750) || (Controllers.JoyState[DevNum].rgdwPOV[1] <  2250)) && (Controllers.JoyState[DevNum].rgdwPOV[1] != -1)) ? TRUE : FALSE;	break;
-			case 0x09:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[1] <  6750))) ? TRUE : FALSE;	break;
-			case 0x0A:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] >  6750) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 11250))) ? TRUE : FALSE;	break;
-			case 0x0B:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 15750))) ? TRUE : FALSE;	break;
-			case 0x0C:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 15750) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 20250))) ? TRUE : FALSE;	break;
-			case 0x0D:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 24750))) ? TRUE : FALSE;	break;
-			case 0x0E:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 24750) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 29250))) ? TRUE : FALSE;	break;
-			case 0x0F:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 29250) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 33750))) ? TRUE : FALSE;	break;
-			case 0x10:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 33750) || (Controllers.JoyState[DevNum].rgdwPOV[2] <  2250)) && (Controllers.JoyState[DevNum].rgdwPOV[2] != -1)) ? TRUE : FALSE;	break;
-			case 0x11:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[2] <  6750))) ? TRUE : FALSE;	break;
-			case 0x12:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] >  6750) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 11250))) ? TRUE : FALSE;	break;
-			case 0x13:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 15750))) ? TRUE : FALSE;	break;
-			case 0x14:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 15750) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 20250))) ? TRUE : FALSE;	break;
-			case 0x15:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 24750))) ? TRUE : FALSE;	break;
-			case 0x16:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 24750) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 29250))) ? TRUE : FALSE;	break;
-			case 0x17:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 29250) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 33750))) ? TRUE : FALSE;	break;
-			case 0x18:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 33750) || (Controllers.JoyState[DevNum].rgdwPOV[3] <  2250)) && (Controllers.JoyState[DevNum].rgdwPOV[3] != -1)) ? TRUE : FALSE;	break;
-			case 0x19:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[3] <  6750))) ? TRUE : FALSE;	break;
-			case 0x1A:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] >  6750) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 11250))) ? TRUE : FALSE;	break;
-			case 0x1B:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 15750))) ? TRUE : FALSE;	break;
-			case 0x1C:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 15750) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 20250))) ? TRUE : FALSE;	break;
-			case 0x1D:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 24750))) ? TRUE : FALSE;	break;
-			case 0x1E:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 24750) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 29250))) ? TRUE : FALSE;	break;
-			case 0x1F:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 29250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 33750))) ? TRUE : FALSE;	break;
+			case 0x00:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 33750) || (JoyState[DevNum].rgdwPOV[0] <  2250)) && (JoyState[DevNum].rgdwPOV[0] != -1)) ? TRUE : FALSE;	break;
+			case 0x01:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] >  2250) && (JoyState[DevNum].rgdwPOV[0] <  6750))) ? TRUE : FALSE;	break;
+			case 0x02:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] >  6750) && (JoyState[DevNum].rgdwPOV[0] < 11250))) ? TRUE : FALSE;	break;
+			case 0x03:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 11250) && (JoyState[DevNum].rgdwPOV[0] < 15750))) ? TRUE : FALSE;	break;
+			case 0x04:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 15750) && (JoyState[DevNum].rgdwPOV[0] < 20250))) ? TRUE : FALSE;	break;
+			case 0x05:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 20250) && (JoyState[DevNum].rgdwPOV[0] < 24750))) ? TRUE : FALSE;	break;
+			case 0x06:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 24750) && (JoyState[DevNum].rgdwPOV[0] < 29250))) ? TRUE : FALSE;	break;
+			case 0x07:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 29250) && (JoyState[DevNum].rgdwPOV[0] < 33750))) ? TRUE : FALSE;	break;
+			case 0x08:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 33750) || (JoyState[DevNum].rgdwPOV[1] <  2250)) && (JoyState[DevNum].rgdwPOV[1] != -1)) ? TRUE : FALSE;	break;
+			case 0x09:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] >  2250) && (JoyState[DevNum].rgdwPOV[1] <  6750))) ? TRUE : FALSE;	break;
+			case 0x0A:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] >  6750) && (JoyState[DevNum].rgdwPOV[1] < 11250))) ? TRUE : FALSE;	break;
+			case 0x0B:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 11250) && (JoyState[DevNum].rgdwPOV[1] < 15750))) ? TRUE : FALSE;	break;
+			case 0x0C:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 15750) && (JoyState[DevNum].rgdwPOV[1] < 20250))) ? TRUE : FALSE;	break;
+			case 0x0D:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 20250) && (JoyState[DevNum].rgdwPOV[1] < 24750))) ? TRUE : FALSE;	break;
+			case 0x0E:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 24750) && (JoyState[DevNum].rgdwPOV[1] < 29250))) ? TRUE : FALSE;	break;
+			case 0x0F:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 29250) && (JoyState[DevNum].rgdwPOV[1] < 33750))) ? TRUE : FALSE;	break;
+			case 0x10:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 33750) || (JoyState[DevNum].rgdwPOV[2] <  2250)) && (JoyState[DevNum].rgdwPOV[2] != -1)) ? TRUE : FALSE;	break;
+			case 0x11:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] >  2250) && (JoyState[DevNum].rgdwPOV[2] <  6750))) ? TRUE : FALSE;	break;
+			case 0x12:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] >  6750) && (JoyState[DevNum].rgdwPOV[2] < 11250))) ? TRUE : FALSE;	break;
+			case 0x13:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 11250) && (JoyState[DevNum].rgdwPOV[2] < 15750))) ? TRUE : FALSE;	break;
+			case 0x14:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 15750) && (JoyState[DevNum].rgdwPOV[2] < 20250))) ? TRUE : FALSE;	break;
+			case 0x15:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 20250) && (JoyState[DevNum].rgdwPOV[2] < 24750))) ? TRUE : FALSE;	break;
+			case 0x16:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 24750) && (JoyState[DevNum].rgdwPOV[2] < 29250))) ? TRUE : FALSE;	break;
+			case 0x17:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 29250) && (JoyState[DevNum].rgdwPOV[2] < 33750))) ? TRUE : FALSE;	break;
+			case 0x18:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 33750) || (JoyState[DevNum].rgdwPOV[3] <  2250)) && (JoyState[DevNum].rgdwPOV[3] != -1)) ? TRUE : FALSE;	break;
+			case 0x19:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] >  2250) && (JoyState[DevNum].rgdwPOV[3] <  6750))) ? TRUE : FALSE;	break;
+			case 0x1A:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] >  6750) && (JoyState[DevNum].rgdwPOV[3] < 11250))) ? TRUE : FALSE;	break;
+			case 0x1B:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 11250) && (JoyState[DevNum].rgdwPOV[3] < 15750))) ? TRUE : FALSE;	break;
+			case 0x1C:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 15750) && (JoyState[DevNum].rgdwPOV[3] < 20250))) ? TRUE : FALSE;	break;
+			case 0x1D:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 20250) && (JoyState[DevNum].rgdwPOV[3] < 24750))) ? TRUE : FALSE;	break;
+			case 0x1E:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 24750) && (JoyState[DevNum].rgdwPOV[3] < 29250))) ? TRUE : FALSE;	break;
+			case 0x1F:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 29250) && (JoyState[DevNum].rgdwPOV[3] < 33750))) ? TRUE : FALSE;	break;
 			default:	return FALSE;
 			}
 		}
@@ -966,29 +992,29 @@ BOOL	Controllers_IsPressed (int Button)
 		{	/* POV trigger (axis mode) */
 			switch (Button & 0x0F)
 			{
-			case 0x0:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 29250) || (Controllers.JoyState[DevNum].rgdwPOV[0] <  6750)) && (Controllers.JoyState[DevNum].rgdwPOV[0] != -1)) ? TRUE : FALSE;	break;
-			case 0x1:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 15750))) ? TRUE : FALSE;	break;
-			case 0x2:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 24750))) ? TRUE : FALSE;	break;
-			case 0x3:	return ((Controllers.POVFlags[DevNum] & (1 << 0)) && ((Controllers.JoyState[DevNum].rgdwPOV[0] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[0] < 33750))) ? TRUE : FALSE;	break;
-			case 0x4:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 29250) || (Controllers.JoyState[DevNum].rgdwPOV[1] <  6750)) && (Controllers.JoyState[DevNum].rgdwPOV[1] != -1)) ? TRUE : FALSE;	break;
-			case 0x5:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 15750))) ? TRUE : FALSE;	break;
-			case 0x6:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 24750))) ? TRUE : FALSE;	break;
-			case 0x7:	return ((Controllers.POVFlags[DevNum] & (1 << 1)) && ((Controllers.JoyState[DevNum].rgdwPOV[1] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[1] < 33750))) ? TRUE : FALSE;	break;
-			case 0x8:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 29250) || (Controllers.JoyState[DevNum].rgdwPOV[2] <  6750)) && (Controllers.JoyState[DevNum].rgdwPOV[2] != -1)) ? TRUE : FALSE;	break;
-			case 0x9:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 15750))) ? TRUE : FALSE;	break;
-			case 0xA:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 24750))) ? TRUE : FALSE;	break;
-			case 0xB:	return ((Controllers.POVFlags[DevNum] & (1 << 2)) && ((Controllers.JoyState[DevNum].rgdwPOV[2] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[2] < 33750))) ? TRUE : FALSE;	break;
-			case 0xC:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 29250) || (Controllers.JoyState[DevNum].rgdwPOV[3] <  6750)) && (Controllers.JoyState[DevNum].rgdwPOV[3] != -1)) ? TRUE : FALSE;	break;
-			case 0xD:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] >  2250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 15750))) ? TRUE : FALSE;	break;
-			case 0xE:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 11250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 24750))) ? TRUE : FALSE;	break;
-			case 0xF:	return ((Controllers.POVFlags[DevNum] & (1 << 3)) && ((Controllers.JoyState[DevNum].rgdwPOV[3] > 20250) && (Controllers.JoyState[DevNum].rgdwPOV[3] < 33750))) ? TRUE : FALSE;	break;
+			case 0x0:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 29250) || (JoyState[DevNum].rgdwPOV[0] <  6750)) && (JoyState[DevNum].rgdwPOV[0] != -1)) ? TRUE : FALSE;	break;
+			case 0x1:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] >  2250) && (JoyState[DevNum].rgdwPOV[0] < 15750))) ? TRUE : FALSE;	break;
+			case 0x2:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 11250) && (JoyState[DevNum].rgdwPOV[0] < 24750))) ? TRUE : FALSE;	break;
+			case 0x3:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 20250) && (JoyState[DevNum].rgdwPOV[0] < 33750))) ? TRUE : FALSE;	break;
+			case 0x4:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 29250) || (JoyState[DevNum].rgdwPOV[1] <  6750)) && (JoyState[DevNum].rgdwPOV[1] != -1)) ? TRUE : FALSE;	break;
+			case 0x5:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] >  2250) && (JoyState[DevNum].rgdwPOV[1] < 15750))) ? TRUE : FALSE;	break;
+			case 0x6:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 11250) && (JoyState[DevNum].rgdwPOV[1] < 24750))) ? TRUE : FALSE;	break;
+			case 0x7:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 20250) && (JoyState[DevNum].rgdwPOV[1] < 33750))) ? TRUE : FALSE;	break;
+			case 0x8:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 29250) || (JoyState[DevNum].rgdwPOV[2] <  6750)) && (JoyState[DevNum].rgdwPOV[2] != -1)) ? TRUE : FALSE;	break;
+			case 0x9:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] >  2250) && (JoyState[DevNum].rgdwPOV[2] < 15750))) ? TRUE : FALSE;	break;
+			case 0xA:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 11250) && (JoyState[DevNum].rgdwPOV[2] < 24750))) ? TRUE : FALSE;	break;
+			case 0xB:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 20250) && (JoyState[DevNum].rgdwPOV[2] < 33750))) ? TRUE : FALSE;	break;
+			case 0xC:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 29250) || (JoyState[DevNum].rgdwPOV[3] <  6750)) && (JoyState[DevNum].rgdwPOV[3] != -1)) ? TRUE : FALSE;	break;
+			case 0xD:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] >  2250) && (JoyState[DevNum].rgdwPOV[3] < 15750))) ? TRUE : FALSE;	break;
+			case 0xE:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 11250) && (JoyState[DevNum].rgdwPOV[3] < 24750))) ? TRUE : FALSE;	break;
+			case 0xF:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 20250) && (JoyState[DevNum].rgdwPOV[3] < 33750))) ? TRUE : FALSE;	break;
 			default:	return FALSE;
 			}
 		}
-		else	return (Controllers.JoyState[DevNum].rgbButtons[Button & 0x7F] & 0x80) ? TRUE : FALSE;
+		else	return (JoyState[DevNum].rgbButtons[Button & 0x7F] & 0x80) ? TRUE : FALSE;
 	}
 }
-void	Controllers_ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButtons, int *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButtons, int *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId = LOWORD(wParam);
 	int wmEvent = HIWORD(wParam);
@@ -1001,10 +1027,10 @@ void	Controllers_ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, 
 		{
 			int j;
 			SendDlgItemMessage(hDlg,dlgDevices[i],CB_RESETCONTENT,0,0);		/* clear the listbox */
-			for (j = 0; j < Controllers.NumDevices; j++)
-				SendDlgItemMessage(hDlg,dlgDevices[i],CB_ADDSTRING,0,(LPARAM)Controllers.DeviceName[j]);	/* add each device */
+			for (j = 0; j < NumDevices; j++)
+				SendDlgItemMessage(hDlg,dlgDevices[i],CB_ADDSTRING,0,(LPARAM)DeviceName[j]);	/* add each device */
 			SendDlgItemMessage(hDlg,dlgDevices[i],CB_SETCURSEL,Buttons[i] >> 16,0);	/* select the one we want */
-			Controllers_ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),FALSE);	/* and label the corresponding button */
+			ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),FALSE);	/* and label the corresponding button */
 		}
 	}
 	if (uMsg != WM_COMMAND)
@@ -1021,9 +1047,10 @@ void	Controllers_ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, 
 			if (wmEvent != CBN_SELCHANGE)
 				break;
 			Buttons[i] = 0;
-			Controllers_ConfigButton(&Buttons[i],(int)SendMessage((HWND)lParam,CB_GETCURSEL,0,0),GetDlgItem(hDlg,dlgButtons[i]),FALSE);
+			ConfigButton(&Buttons[i],(int)SendMessage((HWND)lParam,CB_GETCURSEL,0,0),GetDlgItem(hDlg,dlgButtons[i]),FALSE);
 		}
 		if (wmId == dlgButtons[i])
-			Controllers_ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),TRUE);
+			ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),TRUE);
 	}
 }
+} // namespace Controllers

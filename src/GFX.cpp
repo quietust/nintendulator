@@ -285,8 +285,8 @@ void	GFX_SetFrameskip (int skip)
 	if (skip != -1)
 		GFX.FSkip = skip;
 
-	if ((Controllers.Port1.Type == STD_ZAPPER) || (Controllers.Port1.Type == STD_VSZAPPER) ||
-		(Controllers.Port2.Type == STD_ZAPPER) || (Controllers.Port2.Type == STD_VSZAPPER))
+	if ((Controllers::Port1.Type == Controllers::STD_ZAPPER) || (Controllers::Port1.Type == Controllers::STD_VSZAPPER) ||
+		(Controllers::Port2.Type == Controllers::STD_ZAPPER) || (Controllers::Port2.Type == Controllers::STD_VSZAPPER))
 	{	// if Zapper, force it to zero frameskip, otherwise it won't work
 		GFX.FSkip = 0;
 		GFX.aFSkip = 0;

@@ -14,71 +14,71 @@
 #define	BitPtr	Data[0]
 #define	Strobe	Data[1]
 #define	PortNum	Data[2]
-static	void	AllocMov (struct tStdPort *Cont)
+static	void	AllocMov (struct Controllers::tStdPort *Cont)
 {
 	free(Cont->MovData);
 	if (Cont->PortNum == 0)
-		Cont->MovLen = Controllers.FSPort1.MovLen + Controllers.FSPort3.MovLen;
+		Cont->MovLen = Controllers::FSPort1.MovLen + Controllers::FSPort3.MovLen;
 	if (Cont->PortNum == 1)
-		Cont->MovLen = Controllers.FSPort2.MovLen + Controllers.FSPort4.MovLen;
+		Cont->MovLen = Controllers::FSPort2.MovLen + Controllers::FSPort4.MovLen;
 	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
 	ZeroMemory(Cont->MovData,Cont->MovLen);
 }
 
-static	void	Frame (struct tStdPort *Cont, unsigned char mode)
+static	void	Frame (struct Controllers::tStdPort *Cont, unsigned char mode)
 {
 	int x = 0, y;
 	if (Cont->PortNum == 0)
 	{
 		if (mode & MOV_PLAY)
 		{
-			for (y = 0; x < Controllers.FSPort1.MovLen; x++, y++)
-				Cont->MovData[x] = Controllers.FSPort1.MovData[y];
-			for (y = 0; x < Controllers.FSPort3.MovLen; x++, y++)
-				Cont->MovData[x] = Controllers.FSPort3.MovData[y];
+			for (y = 0; x < Controllers::FSPort1.MovLen; x++, y++)
+				Cont->MovData[x] = Controllers::FSPort1.MovData[y];
+			for (y = 0; x < Controllers::FSPort3.MovLen; x++, y++)
+				Cont->MovData[x] = Controllers::FSPort3.MovData[y];
 		}
-		Controllers.FSPort1.Frame(&Controllers.FSPort1,mode);
-		Controllers.FSPort3.Frame(&Controllers.FSPort3,mode);
+		Controllers::FSPort1.Frame(&Controllers::FSPort1,mode);
+		Controllers::FSPort3.Frame(&Controllers::FSPort3,mode);
 		if (mode & MOV_RECORD)
 		{
-			for (y = 0; x < Controllers.FSPort1.MovLen; x++, y++)
-				Controllers.FSPort1.MovData[y] = Cont->MovData[x];
-			for (y = 0; x < Controllers.FSPort3.MovLen; x++, y++)
-				Controllers.FSPort3.MovData[y] = Cont->MovData[x];
+			for (y = 0; x < Controllers::FSPort1.MovLen; x++, y++)
+				Controllers::FSPort1.MovData[y] = Cont->MovData[x];
+			for (y = 0; x < Controllers::FSPort3.MovLen; x++, y++)
+				Controllers::FSPort3.MovData[y] = Cont->MovData[x];
 		}
 	}
 	if (Cont->PortNum == 1)
 	{
 		if (mode & MOV_PLAY)
 		{
-			for (y = 0; x < Controllers.FSPort2.MovLen; x++, y++)
-				Cont->MovData[x] = Controllers.FSPort2.MovData[y];
-			for (y = 0; x < Controllers.FSPort4.MovLen; x++, y++)
-				Cont->MovData[x] = Controllers.FSPort4.MovData[y];
+			for (y = 0; x < Controllers::FSPort2.MovLen; x++, y++)
+				Cont->MovData[x] = Controllers::FSPort2.MovData[y];
+			for (y = 0; x < Controllers::FSPort4.MovLen; x++, y++)
+				Cont->MovData[x] = Controllers::FSPort4.MovData[y];
 		}
-		Controllers.FSPort2.Frame(&Controllers.FSPort2,mode);
-		Controllers.FSPort4.Frame(&Controllers.FSPort4,mode);
+		Controllers::FSPort2.Frame(&Controllers::FSPort2,mode);
+		Controllers::FSPort4.Frame(&Controllers::FSPort4,mode);
 		if (mode & MOV_RECORD)
 		{
-			for (y = 0; x < Controllers.FSPort2.MovLen; x++, y++)
-				Controllers.FSPort2.MovData[y] = Cont->MovData[x];
-			for (y = 0; x < Controllers.FSPort4.MovLen; x++, y++)
-				Controllers.FSPort4.MovData[y] = Cont->MovData[x];
+			for (y = 0; x < Controllers::FSPort2.MovLen; x++, y++)
+				Controllers::FSPort2.MovData[y] = Cont->MovData[x];
+			for (y = 0; x < Controllers::FSPort4.MovLen; x++, y++)
+				Controllers::FSPort4.MovData[y] = Cont->MovData[x];
 		}
 	}
 }
 
-static	unsigned char	Read (struct tStdPort *Cont)
+static	unsigned char	Read (struct Controllers::tStdPort *Cont)
 {
 	unsigned char result = 0;
-	struct tStdPort *Port1 = NULL, *Port2 = NULL;
+	struct Controllers::tStdPort *Port1 = NULL, *Port2 = NULL;
 	switch (Cont->PortNum)
 	{
-	case 0:	Port1 = &Controllers.FSPort1;
-		Port2 = &Controllers.FSPort3;
+	case 0:	Port1 = &Controllers::FSPort1;
+		Port2 = &Controllers::FSPort3;
 		break;
-	case 1:	Port1 = &Controllers.FSPort2;
-		Port2 = &Controllers.FSPort4;
+	case 1:	Port1 = &Controllers::FSPort2;
+		Port2 = &Controllers::FSPort4;
 		break;
 	default:break;
 	}
@@ -103,16 +103,16 @@ static	unsigned char	Read (struct tStdPort *Cont)
 		Cont->BitPtr++;
 	return result;
 }
-static	void	Write (struct tStdPort *Cont, unsigned char Val)
+static	void	Write (struct Controllers::tStdPort *Cont, unsigned char Val)
 {
-	struct tStdPort *Port1 = NULL, *Port2 = NULL;
+	struct Controllers::tStdPort *Port1 = NULL, *Port2 = NULL;
 	switch (Cont->PortNum)
 	{
-	case 0:	Port1 = &Controllers.FSPort1;
-		Port2 = &Controllers.FSPort3;
+	case 0:	Port1 = &Controllers::FSPort1;
+		Port2 = &Controllers::FSPort3;
 		break;
-	case 1:	Port1 = &Controllers.FSPort2;
-		Port2 = &Controllers.FSPort4;
+	case 1:	Port1 = &Controllers::FSPort2;
+		Port2 = &Controllers::FSPort4;
 		break;
 	default:break;
 	}
@@ -132,18 +132,18 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_RESETCONTENT,0,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_RESETCONTENT,0,0);
 		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_RESETCONTENT,0,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers.FSPort1.Type,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers.FSPort2.Type,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_SETCURSEL,Controllers.FSPort3.Type,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_SETCURSEL,Controllers.FSPort4.Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)Controllers::StdPort_Mappings[Controllers::STD_UNCONNECTED]);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)Controllers::StdPort_Mappings[Controllers::STD_UNCONNECTED]);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)Controllers::StdPort_Mappings[Controllers::STD_UNCONNECTED]);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)Controllers::StdPort_Mappings[Controllers::STD_UNCONNECTED]);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)Controllers::StdPort_Mappings[Controllers::STD_STDCONTROLLER]);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)Controllers::StdPort_Mappings[Controllers::STD_STDCONTROLLER]);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)Controllers::StdPort_Mappings[Controllers::STD_STDCONTROLLER]);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)Controllers::StdPort_Mappings[Controllers::STD_STDCONTROLLER]);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Controllers::FSPort1.Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Controllers::FSPort2.Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_SETCURSEL,Controllers::FSPort3.Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_SETCURSEL,Controllers::FSPort4.Type,0);
 		if (Movie.Mode)
 		{
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
@@ -167,44 +167,44 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		case IDOK:
 			EndDialog(hDlg,1);
 			break;
-		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort1,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0)); AllocMov(&Controllers.Port1); AllocMov(&Controllers.Port2); }	break;
-		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort2,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0)); AllocMov(&Controllers.Port1); AllocMov(&Controllers.Port2); }	break;
-		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort3,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_GETCURSEL,0,0)); AllocMov(&Controllers.Port1); AllocMov(&Controllers.Port2); }	break;
-		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { StdPort_SetControllerType(&Controllers.FSPort4,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_GETCURSEL,0,0)); AllocMov(&Controllers.Port1); AllocMov(&Controllers.Port2); }	break;
-		case IDC_CONT_CPORT1:	Controllers.FSPort1.Config(&Controllers.FSPort1,hDlg);	break;
-		case IDC_CONT_CPORT2:	Controllers.FSPort2.Config(&Controllers.FSPort2,hDlg);	break;
-		case IDC_CONT_CPORT3:	Controllers.FSPort3.Config(&Controllers.FSPort3,hDlg);	break;
-		case IDC_CONT_CPORT4:	Controllers.FSPort4.Config(&Controllers.FSPort4,hDlg);	break;
+		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { Controllers::StdPort_SetControllerType(&Controllers::FSPort1,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0)); AllocMov(&Controllers::Port1); AllocMov(&Controllers::Port2); }	break;
+		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { Controllers::StdPort_SetControllerType(&Controllers::FSPort2,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0)); AllocMov(&Controllers::Port1); AllocMov(&Controllers::Port2); }	break;
+		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { Controllers::StdPort_SetControllerType(&Controllers::FSPort3,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_GETCURSEL,0,0)); AllocMov(&Controllers::Port1); AllocMov(&Controllers::Port2); }	break;
+		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { Controllers::StdPort_SetControllerType(&Controllers::FSPort4,(int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_GETCURSEL,0,0)); AllocMov(&Controllers::Port1); AllocMov(&Controllers::Port2); }	break;
+		case IDC_CONT_CPORT1:	Controllers::FSPort1.Config(&Controllers::FSPort1,hDlg);	break;
+		case IDC_CONT_CPORT2:	Controllers::FSPort2.Config(&Controllers::FSPort2,hDlg);	break;
+		case IDC_CONT_CPORT3:	Controllers::FSPort3.Config(&Controllers::FSPort3,hDlg);	break;
+		case IDC_CONT_CPORT4:	Controllers::FSPort4.Config(&Controllers::FSPort4,hDlg);	break;
 		}
 		break;
 	}
 
 	return FALSE;
 }
-static	void	Config (struct tStdPort *Cont, HWND hWnd)
+static	void	Config (struct Controllers::tStdPort *Cont, HWND hWnd)
 {
 	DialogBox(hInst,(LPCTSTR)IDD_STDPORT_FOURSCORE,hWnd,ConfigProc);
 }
-static	void	Unload (struct tStdPort *Cont)
+static	void	Unload (struct Controllers::tStdPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	StdPort_SetFourScore (struct tStdPort *Cont)
+void	StdPort_SetFourScore (struct Controllers::tStdPort *Cont)
 {
 	Cont->Read = Read;
 	Cont->Write = Write;
 	Cont->Config = Config;
 	Cont->Unload = Unload;
 	Cont->Frame = Frame;
-	Cont->Type = STD_FOURSCORE;
+	Cont->Type = Controllers::STD_FOURSCORE;
 	Cont->DataLen = 3;
 	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
 	Cont->BitPtr = 0;
 	Cont->Strobe = 0;
-	if (Cont == &Controllers.Port1)
+	if (Cont == &Controllers::Port1)
 		Cont->PortNum = 0;
-	if (Cont == &Controllers.Port2)
+	if (Cont == &Controllers::Port2)
 		Cont->PortNum = 1;
 	Cont->MovData = NULL;
 	AllocMov(Cont);

@@ -14,6 +14,9 @@
 #define	CONTROLLERS_MAXBUTTONS	32
 #define	MAX_CONTROLLERS	32	// this includes keyboard and mouse
 
+namespace Controllers
+{
+
 struct tStdPort
 {
 	unsigned char	(*Read)		(struct tStdPort *);
@@ -55,49 +58,29 @@ extern const TCHAR	*ExpPort_Mappings[EXP_MAX];
 
 enum	JOY_AXIS	{ AXIS_X, AXIS_Y, AXIS_Z, AXIS_RX, AXIS_RY, AXIS_RZ, AXIS_S0, AXIS_S1 };
 
-struct tControllers
-{
-	struct tStdPort Port1, Port2;
-	struct tStdPort FSPort1, FSPort2, FSPort3, FSPort4;
-	struct tExpPort ExpPort;
+extern struct tStdPort Port1, Port2;
+extern struct tStdPort FSPort1, FSPort2, FSPort3, FSPort4;
+extern struct tExpPort ExpPort;
 
-	BOOL	EnableOpposites;
+extern BOOL	EnableOpposites;
 
-	int	NumDevices;
-	BOOL	DeviceUsed[MAX_CONTROLLERS];
-	TCHAR	*DeviceName[MAX_CONTROLLERS];
+extern BYTE		KeyState[256];
+extern DIMOUSESTATE2	MouseState;
 
-	int	NumButtons[MAX_CONTROLLERS];
-	BYTE	AxisFlags[MAX_CONTROLLERS],
-		POVFlags[MAX_CONTROLLERS];
-	
-	TCHAR	*ButtonNames[MAX_CONTROLLERS][128],
-		*AxisNames[MAX_CONTROLLERS][8],
-		*POVNames[MAX_CONTROLLERS][4],
-		*KeyNames[256];
+void	OpenConfig (void);
+void	Init (void);
+void	Release (void);
+void	Write (unsigned char);
+int	Save (FILE *);
+int	Load (FILE *);
+void	SetDeviceUsed (void);
+void	Acquire (void);
+void	UnAcquire (void);
+void	UpdateInput (void);
+void	ConfigButton (int *,int,HWND,BOOL);
 
-	LPDIRECTINPUT7		DirectInput;
-	LPDIRECTINPUTDEVICE7	DIDevices[MAX_CONTROLLERS];
+BOOL	IsPressed (int);
+void	ParseConfigMessages (HWND,int,int *,int *,int *,UINT,WPARAM,LPARAM);
 
-	BYTE		KeyState[256];
-	DIMOUSESTATE2	MouseState;
-	DIJOYSTATE2	JoyState[MAX_CONTROLLERS];	// first 2 entries are unused
-};
-extern struct tControllers Controllers;
-
-void	Controllers_OpenConfig (void);
-void	Controllers_Init (void);
-void	Controllers_Release (void);
-void	Controllers_Write (unsigned char);
-int	Controllers_Save (FILE *);
-int	Controllers_Load (FILE *);
-void	Controllers_SetDeviceUsed (void);
-void	Controllers_Acquire (void);
-void	Controllers_UnAcquire (void);
-void	Controllers_UpdateInput (void);
-void	Controllers_ConfigButton (int *,int,HWND,BOOL);
-
-BOOL	Controllers_IsPressed (int);
-void	Controllers_ParseConfigMessages (HWND,int,int *,int *,int *,UINT,WPARAM,LPARAM);
-
+} // namespace Controllers
 #endif	/* !CONTROLLERS_H */

@@ -18,7 +18,7 @@
 #define	Strobe	Data[3]
 #define	Button	Data[4]
 #define	NewBits	Data[5]
-static	void	Frame (struct tExpPort *Cont, unsigned char mode)
+static	void	Frame (struct Controllers::tExpPort *Cont, unsigned char mode)
 {
 	int x, i;
 	if (mode & MOV_PLAY)
@@ -29,8 +29,8 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 	else
 	{
 		GFX_SetCursorPos(128, 220);
-		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);
-		Cont->Pos += Controllers.MouseState.lX;
+		Cont->Button = Controllers::IsPressed(Cont->Buttons[0]);
+		Cont->Pos += Controllers::MouseState.lX;
 		if (Cont->Pos < 196)
 			Cont->Pos = 196;
 		if (Cont->Pos > 484)
@@ -50,19 +50,19 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 		x >>= 1;
 	}
 }
-static	unsigned char	Read1 (struct tExpPort *Cont)
+static	unsigned char	Read1 (struct Controllers::tExpPort *Cont)
 {
 	if (Cont->Button)
 		return 0x02;
 	else	return 0;
 }
-static	unsigned char	Read2 (struct tExpPort *Cont)
+static	unsigned char	Read2 (struct Controllers::tExpPort *Cont)
 {
 	if (Cont->BitPtr < 8)
 		return (unsigned char)(((Cont->Bits >> Cont->BitPtr++) & 1) << 1);
 	else	return 0x02;
 }
-static	void	Write (struct tExpPort *Cont, unsigned char Val)
+static	void	Write (struct Controllers::tExpPort *Cont, unsigned char Val)
 {
 	if ((!Cont->Strobe) && (Val & 1))
 	{
@@ -75,22 +75,22 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
-	static struct tExpPort *Cont = NULL;
+	static struct Controllers::tExpPort *Cont = NULL;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct tExpPort *)lParam;
-	Controllers_ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+		Cont = (struct Controllers::tExpPort *)lParam;
+	Controllers::ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct tExpPort *Cont, HWND hWnd)
+static	void	Config (struct Controllers::tExpPort *Cont, HWND hWnd)
 {
 	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE,hWnd,ConfigProc,(LPARAM)Cont);
 }
-static	void	Unload (struct tExpPort *Cont)
+static	void	Unload (struct Controllers::tExpPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
+void	ExpPort_SetArkanoidPaddle (struct Controllers::tExpPort *Cont)
 {
 	Cont->Read1 = Read1;
 	Cont->Read2 = Read2;

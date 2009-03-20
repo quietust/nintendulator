@@ -8,30 +8,30 @@
 #include "stdafx.h"
 #include "Controllers.h"
 
-static	void	Frame (struct tExpPort *Cont, unsigned char mode)
+static	void	Frame (struct Controllers::tExpPort *Cont, unsigned char mode)
 {
 }
-static	unsigned char	Read1 (struct tExpPort *Cont)
-{
-	return 0;
-}
-static	unsigned char	Read2 (struct tExpPort *Cont)
+static	unsigned char	Read1 (struct Controllers::tExpPort *Cont)
 {
 	return 0;
 }
-static	void	Write (struct tExpPort *Cont, unsigned char Val)
+static	unsigned char	Read2 (struct Controllers::tExpPort *Cont)
+{
+	return 0;
+}
+static	void	Write (struct Controllers::tExpPort *Cont, unsigned char Val)
 {
 }
-static	void	Config (struct tExpPort *Cont, HWND hWnd)
+static	void	Config (struct Controllers::tExpPort *Cont, HWND hWnd)
 {
 	MessageBox(hWnd,_T("No configuration necessary!"),_T("Nintendulator"),MB_OK);
 }
-static	void	Unload (struct tExpPort *Cont)
+static	void	Unload (struct Controllers::tExpPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	ExpPort_SetUnconnected (struct tExpPort *Cont)
+void	ExpPort_SetUnconnected (struct Controllers::tExpPort *Cont)
 {
 	Cont->Read1 = Read1;
 	Cont->Read2 = Read2;

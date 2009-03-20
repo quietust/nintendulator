@@ -234,17 +234,17 @@ void	Movie_Play (void)
 		return;
 	}
 
-	Movie.ControllerTypes[0] = (unsigned char)Controllers.Port1.Type;
-	Movie.ControllerTypes[1] = (unsigned char)Controllers.Port2.Type;
-	Movie.ControllerTypes[2] = (unsigned char)Controllers.ExpPort.Type;
+	Movie.ControllerTypes[0] = (unsigned char)Controllers::Port1.Type;
+	Movie.ControllerTypes[1] = (unsigned char)Controllers::Port2.Type;
+	Movie.ControllerTypes[2] = (unsigned char)Controllers::ExpPort.Type;
 
-	if (Controllers.Port1.Type == STD_FOURSCORE)
+	if (Controllers::Port1.Type == Controllers::STD_FOURSCORE)
 	{
 		Movie.ControllerTypes[1] = 0;
-		if (Controllers.FSPort1.Type)	Movie.ControllerTypes[1] |= 0x01;
-		if (Controllers.FSPort2.Type)	Movie.ControllerTypes[1] |= 0x02;
-		if (Controllers.FSPort3.Type)	Movie.ControllerTypes[1] |= 0x04;
-		if (Controllers.FSPort4.Type)	Movie.ControllerTypes[1] |= 0x08;
+		if (Controllers::FSPort1.Type)	Movie.ControllerTypes[1] |= 0x01;
+		if (Controllers::FSPort2.Type)	Movie.ControllerTypes[1] |= 0x02;
+		if (Controllers::FSPort3.Type)	Movie.ControllerTypes[1] |= 0x04;
+		if (Controllers::FSPort4.Type)	Movie.ControllerTypes[1] |= 0x08;
 	}
 
 	Movie.ControllerTypes[3] = 0;	// Reset 'loaded controller state' flag
@@ -289,33 +289,33 @@ void	Movie_Play (void)
 
 	if (!Movie.ControllerTypes[3])	// ONLY parse this if we did NOT encounter a controller state block
 	{				// otherwise, it would mess up the original states of the controllers
-		if (buf[0] == STD_FOURSCORE)
+		if (buf[0] == Controllers::STD_FOURSCORE)
 		{
 			if (buf[1] & 0x01)
-				StdPort_SetControllerType(&Controllers.FSPort1, STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort1, STD_UNCONNECTED);
+				StdPort_SetControllerType(&Controllers::FSPort1, Controllers::STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers::FSPort1, Controllers::STD_UNCONNECTED);
 			if (buf[1] & 0x02)
-				StdPort_SetControllerType(&Controllers.FSPort2, STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort2, STD_UNCONNECTED);
+				StdPort_SetControllerType(&Controllers::FSPort2, Controllers::STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers::FSPort2, Controllers::STD_UNCONNECTED);
 			if (buf[1] & 0x04)
-				StdPort_SetControllerType(&Controllers.FSPort3, STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort3, STD_UNCONNECTED);
+				StdPort_SetControllerType(&Controllers::FSPort3, Controllers::STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers::FSPort3, Controllers::STD_UNCONNECTED);
 			if (buf[1] & 0x08)
-				StdPort_SetControllerType(&Controllers.FSPort4, STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers.FSPort4, STD_UNCONNECTED);
-			StdPort_SetControllerType(&Controllers.Port1, STD_FOURSCORE);
-			StdPort_SetControllerType(&Controllers.Port2, STD_FOURSCORE);
+				StdPort_SetControllerType(&Controllers::FSPort4, Controllers::STD_STDCONTROLLER);
+			else	StdPort_SetControllerType(&Controllers::FSPort4, Controllers::STD_UNCONNECTED);
+			StdPort_SetControllerType(&Controllers::Port1, Controllers::STD_FOURSCORE);
+			StdPort_SetControllerType(&Controllers::Port2, Controllers::STD_FOURSCORE);
 		}
 		else
 		{
-			StdPort_SetControllerType(&Controllers.Port1, buf[0]);
-			StdPort_SetControllerType(&Controllers.Port2, buf[1]);
+			StdPort_SetControllerType(&Controllers::Port1, buf[0]);
+			StdPort_SetControllerType(&Controllers::Port2, buf[1]);
 		}
-		ExpPort_SetControllerType(&Controllers.ExpPort, buf[2]);
+		ExpPort_SetControllerType(&Controllers::ExpPort, buf[2]);
 	}
 	NES_SetCPUMode(buf[3] >> 7);	// Set to NTSC or PAL
 
-	Movie.FrameLen = Controllers.Port1.MovLen + Controllers.Port2.MovLen + Controllers.ExpPort.MovLen;
+	Movie.FrameLen = Controllers::Port1.MovLen + Controllers::Port2.MovLen + Controllers::ExpPort.MovLen;
 	if (NES.HasMenu)
 		Movie.FrameLen++;
 	if (Movie.FrameLen != (buf[3] & 0x3F))
@@ -355,12 +355,12 @@ void	Movie_Play (void)
 	EnableMenuItem(hMenu, ID_PPU_MODE_PAL, MF_GRAYED);
 	EnableMenuItem(hMenu, ID_GAME, MF_GRAYED);
 	EnableMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_GRAYED);
-	if (Controllers.Port1.MovLen)
-		memset(Controllers.Port1.MovData, 0, Controllers.Port1.MovLen);
-	if (Controllers.Port2.MovLen)
-		memset(Controllers.Port2.MovData, 0, Controllers.Port2.MovLen);
-	if (Controllers.ExpPort.MovLen)
-		memset(Controllers.ExpPort.MovData, 0, Controllers.ExpPort.MovLen);
+	if (Controllers::Port1.MovLen)
+		memset(Controllers::Port1.MovData, 0, Controllers::Port1.MovLen);
+	if (Controllers::Port2.MovLen)
+		memset(Controllers::Port2.MovData, 0, Controllers::Port2.MovLen);
+	if (Controllers::ExpPort.MovLen)
+		memset(Controllers::ExpPort.MovData, 0, Controllers::ExpPort.MovLen);
 }
 
 INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -373,22 +373,22 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
-		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, StdPort_Mappings[Controllers.Port1.Type]);
-		if (Controllers.Port1.Type == STD_FOURSCORE)
+		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, Controllers::StdPort_Mappings[Controllers::Port1.Type]);
+		if (Controllers::Port1.Type == Controllers::STD_FOURSCORE)
 		{
 			TCHAR conts[16] = {0};
-			if (Controllers.FSPort1.Type)
+			if (Controllers::FSPort1.Type)
 				_tcscat(conts, _T(",1"));
-			if (Controllers.FSPort2.Type)
+			if (Controllers::FSPort2.Type)
 				_tcscat(conts, _T(",2"));
-			if (Controllers.FSPort3.Type)
+			if (Controllers::FSPort3.Type)
 				_tcscat(conts, _T(",3"));
-			if (Controllers.FSPort4.Type)
+			if (Controllers::FSPort4.Type)
 				_tcscat(conts, _T(",4"));
 			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, &conts[1]);
 		}
-		else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, StdPort_Mappings[Controllers.Port2.Type]);
-		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, ExpPort_Mappings[Controllers.ExpPort.Type]);
+		else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, Controllers::StdPort_Mappings[Controllers::Port2.Type]);
+		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, Controllers::ExpPort_Mappings[Controllers::ExpPort.Type]);
 		CheckRadioButton(hDlg, IDC_MOVIE_RECORD_RESET, IDC_MOVIE_RECORD_CURRENT, IDC_MOVIE_RECORD_RESET);
 #ifdef	UNICODE
 		EnableWindow(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION), FALSE);
@@ -430,23 +430,23 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_FILE, filename);
 			break;
 		case IDC_MOVIE_RECORD_CONT_CONFIG:
-			Controllers_OpenConfig();
-			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, StdPort_Mappings[Controllers.Port1.Type]);
-			if (Controllers.Port1.Type == STD_FOURSCORE)
+			Controllers::OpenConfig();
+			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, Controllers::StdPort_Mappings[Controllers::Port1.Type]);
+			if (Controllers::Port1.Type == Controllers::STD_FOURSCORE)
 			{
 				TCHAR conts[16] = {0};
-				if (Controllers.FSPort1.Type)
+				if (Controllers::FSPort1.Type)
 					_tcscat(conts, _T(",1"));
-				if (Controllers.FSPort2.Type)
+				if (Controllers::FSPort2.Type)
 					_tcscat(conts, _T(",2"));
-				if (Controllers.FSPort3.Type)
+				if (Controllers::FSPort3.Type)
 					_tcscat(conts, _T(",3"));
-				if (Controllers.FSPort4.Type)
+				if (Controllers::FSPort4.Type)
 					_tcscat(conts, _T(",4"));
 				SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, &conts[1]);
 			}
-			else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, StdPort_Mappings[Controllers.Port2.Type]);
-			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, ExpPort_Mappings[Controllers.ExpPort.Type]);
+			else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, Controllers::StdPort_Mappings[Controllers::Port2.Type]);
+			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, Controllers::ExpPort_Mappings[Controllers::ExpPort.Type]);
 			break;
 		case IDOK:
 			GetDlgItemText(hDlg, IDC_MOVIE_RECORD_FILE, Movie.Filename, MAX_PATH);
@@ -534,24 +534,24 @@ void	Movie_Record (void)
 	fwrite("NMOV", 1, 4, Movie.Data);
 	fwrite(&len, 1, 4, Movie.Data);
 	
-	Movie.ControllerTypes[0] = (unsigned char)Controllers.Port1.Type;
-	Movie.ControllerTypes[1] = (unsigned char)Controllers.Port2.Type;
-	Movie.ControllerTypes[2] = (unsigned char)Controllers.ExpPort.Type;
+	Movie.ControllerTypes[0] = (unsigned char)Controllers::Port1.Type;
+	Movie.ControllerTypes[1] = (unsigned char)Controllers::Port2.Type;
+	Movie.ControllerTypes[2] = (unsigned char)Controllers::ExpPort.Type;
 
-	if (Movie.ControllerTypes[0] == STD_FOURSCORE)
+	if (Movie.ControllerTypes[0] == Controllers::STD_FOURSCORE)
 	{
 		Movie.ControllerTypes[1] = 0;
-		if (Controllers.FSPort1.Type)	Movie.ControllerTypes[1] |= 0x01;
-		if (Controllers.FSPort2.Type)	Movie.ControllerTypes[1] |= 0x02;
-		if (Controllers.FSPort3.Type)	Movie.ControllerTypes[1] |= 0x04;
-		if (Controllers.FSPort4.Type)	Movie.ControllerTypes[1] |= 0x08;
+		if (Controllers::FSPort1.Type)	Movie.ControllerTypes[1] |= 0x01;
+		if (Controllers::FSPort2.Type)	Movie.ControllerTypes[1] |= 0x02;
+		if (Controllers::FSPort3.Type)	Movie.ControllerTypes[1] |= 0x04;
+		if (Controllers::FSPort4.Type)	Movie.ControllerTypes[1] |= 0x08;
 	}
 	fwrite(Movie.ControllerTypes, 1, 3, Movie.Data);
 	x = PPU.IsPAL ? 0x80 : 0x00;
 	Movie.FrameLen = 0;
-	Movie.FrameLen += Controllers.Port1.MovLen;
-	Movie.FrameLen += Controllers.Port2.MovLen;
-	Movie.FrameLen += Controllers.ExpPort.MovLen;
+	Movie.FrameLen += Controllers::Port1.MovLen;
+	Movie.FrameLen += Controllers::Port2.MovLen;
+	Movie.FrameLen += Controllers::ExpPort.MovLen;
 	if (NES.HasMenu)
 		Movie.FrameLen++;
 	x |= Movie.FrameLen;
@@ -647,29 +647,29 @@ static	void	EndMovie (void)
 	Movie.Mode = 0;
 
 	// Restore controller types to whatever was configured prior to movie playback
-	if (Movie.ControllerTypes[0] == STD_FOURSCORE)
+	if (Movie.ControllerTypes[0] == Controllers::STD_FOURSCORE)
 	{
 		if (Movie.ControllerTypes[1] & 0x01)
-			StdPort_SetControllerType(&Controllers.FSPort1,STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers.FSPort1,STD_UNCONNECTED);
+			StdPort_SetControllerType(&Controllers::FSPort1,Controllers::STD_STDCONTROLLER);
+		else	StdPort_SetControllerType(&Controllers::FSPort1,Controllers::STD_UNCONNECTED);
 		if (Movie.ControllerTypes[1] & 0x02)
-			StdPort_SetControllerType(&Controllers.FSPort2,STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers.FSPort2,STD_UNCONNECTED);
+			StdPort_SetControllerType(&Controllers::FSPort2,Controllers::STD_STDCONTROLLER);
+		else	StdPort_SetControllerType(&Controllers::FSPort2,Controllers::STD_UNCONNECTED);
 		if (Movie.ControllerTypes[1] & 0x04)
-			StdPort_SetControllerType(&Controllers.FSPort3,STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers.FSPort3,STD_UNCONNECTED);
+			StdPort_SetControllerType(&Controllers::FSPort3,Controllers::STD_STDCONTROLLER);
+		else	StdPort_SetControllerType(&Controllers::FSPort3,Controllers::STD_UNCONNECTED);
 		if (Movie.ControllerTypes[1] & 0x08)
-			StdPort_SetControllerType(&Controllers.FSPort4,STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers.FSPort4,STD_UNCONNECTED);
-		StdPort_SetControllerType(&Controllers.Port1,STD_FOURSCORE);
-		StdPort_SetControllerType(&Controllers.Port2,STD_FOURSCORE);
+			StdPort_SetControllerType(&Controllers::FSPort4,Controllers::STD_STDCONTROLLER);
+		else	StdPort_SetControllerType(&Controllers::FSPort4,Controllers::STD_UNCONNECTED);
+		StdPort_SetControllerType(&Controllers::Port1,Controllers::STD_FOURSCORE);
+		StdPort_SetControllerType(&Controllers::Port2,Controllers::STD_FOURSCORE);
 	}
 	else
 	{
-		StdPort_SetControllerType(&Controllers.Port1,Movie.ControllerTypes[0]);
-		StdPort_SetControllerType(&Controllers.Port2,Movie.ControllerTypes[1]);
+		StdPort_SetControllerType(&Controllers::Port1,Movie.ControllerTypes[0]);
+		StdPort_SetControllerType(&Controllers::Port2,Movie.ControllerTypes[1]);
 	}
-	ExpPort_SetControllerType(&Controllers.ExpPort,Movie.ControllerTypes[2]);
+	ExpPort_SetControllerType(&Controllers::ExpPort,Movie.ControllerTypes[2]);
 	if ((MI) && (MI->Config))
 		EnableMenuItem(hMenu,ID_GAME,MF_ENABLED);
 	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_ENABLED);
@@ -699,12 +699,12 @@ unsigned char	Movie_LoadInput (void)
 		else	PrintTitlebar(_T("Unexpected EOF in movie!"));
 		EndMovie();
 	}
-	if (Controllers.Port1.MovLen)
-		fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,Movie.Data);		Movie.Pos += Controllers.Port1.MovLen;
-	if (Controllers.Port2.MovLen)
-		fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,Movie.Data);		Movie.Pos += Controllers.Port2.MovLen;
-	if (Controllers.ExpPort.MovLen)
-		fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,Movie.Data);	Movie.Pos += Controllers.ExpPort.MovLen;
+	if (Controllers::Port1.MovLen)
+		fread(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,Movie.Data);		Movie.Pos += Controllers::Port1.MovLen;
+	if (Controllers::Port2.MovLen)
+		fread(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,Movie.Data);		Movie.Pos += Controllers::Port2.MovLen;
+	if (Controllers::ExpPort.MovLen)
+		fread(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,Movie.Data);	Movie.Pos += Controllers::ExpPort.MovLen;
 	if (NES.HasMenu)
 	{
 		fread(&Cmd,1,1,Movie.Data);
@@ -716,12 +716,12 @@ unsigned char	Movie_LoadInput (void)
 void	Movie_SaveInput (unsigned char Cmd)
 {
 	int len = 0;
-	if (Controllers.Port1.MovLen)
-		fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,Movie.Data);	len += Controllers.Port1.MovLen;
-	if (Controllers.Port2.MovLen)
-		fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,Movie.Data);	len += Controllers.Port2.MovLen;
-	if (Controllers.ExpPort.MovLen)
-		fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,Movie.Data);	len += Controllers.ExpPort.MovLen;
+	if (Controllers::Port1.MovLen)
+		fwrite(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,Movie.Data);	len += Controllers::Port1.MovLen;
+	if (Controllers::Port2.MovLen)
+		fwrite(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,Movie.Data);	len += Controllers::Port2.MovLen;
+	if (Controllers::ExpPort.MovLen)
+		fwrite(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,Movie.Data);	len += Controllers::ExpPort.MovLen;
 	if (NES.HasMenu)
 	{
 		fwrite(&Cmd,1,1,Movie.Data);
@@ -805,23 +805,23 @@ int	Movie_Load (FILE *in)
 		Cmd = 0;
 		while (tpi > 0)
 		{
-			if (Controllers.Port1.MovLen)
+			if (Controllers::Port1.MovLen)
 			{
-				fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,in);
-				fwrite(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,Movie.Data);
-				tpi -= Controllers.Port1.MovLen;
+				fread(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,in);
+				fwrite(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,Movie.Data);
+				tpi -= Controllers::Port1.MovLen;
 			}
-			if (Controllers.Port2.MovLen)
+			if (Controllers::Port2.MovLen)
 			{
-				fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,in);
-				fwrite(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,Movie.Data);
-				tpi -= Controllers.Port2.MovLen;
+				fread(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,in);
+				fwrite(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,Movie.Data);
+				tpi -= Controllers::Port2.MovLen;
 			}
-			if (Controllers.ExpPort.MovLen)
+			if (Controllers::ExpPort.MovLen)
 			{
-				fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,in);
-				fwrite(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,Movie.Data);
-				tpi -= Controllers.ExpPort.MovLen;
+				fread(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,in);
+				fwrite(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,Movie.Data);
+				tpi -= Controllers::ExpPort.MovLen;
 			}
 			if (NES.HasMenu)
 			{
@@ -830,9 +830,9 @@ int	Movie_Load (FILE *in)
 				tpi--;
 			}
 		}
-		Controllers.Port1.Frame(&Controllers.Port1,MOV_PLAY);
-		Controllers.Port2.Frame(&Controllers.Port2,MOV_PLAY);
-		Controllers.ExpPort.Frame(&Controllers.ExpPort,MOV_PLAY);
+		Controllers::Port1.Frame(&Controllers::Port1,MOV_PLAY);
+		Controllers::Port2.Frame(&Controllers::Port2,MOV_PLAY);
+		Controllers::ExpPort.Frame(&Controllers::ExpPort,MOV_PLAY);
 		if ((Cmd) && (MI) && (MI->Config))
 			MI->Config(CFG_CMD,Cmd);
 	}
@@ -848,20 +848,20 @@ int	Movie_Load (FILE *in)
 		Cmd = 0;
 		while (tpi > 0)
 		{
-			if (Controllers.Port1.MovLen)
+			if (Controllers::Port1.MovLen)
 			{
-				fread(Controllers.Port1.MovData,1,Controllers.Port1.MovLen,in);
-				tpi -= Controllers.Port1.MovLen;
+				fread(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,in);
+				tpi -= Controllers::Port1.MovLen;
 			}
-			if (Controllers.Port2.MovLen)
+			if (Controllers::Port2.MovLen)
 			{
-				fread(Controllers.Port2.MovData,1,Controllers.Port2.MovLen,in);
-				tpi -= Controllers.Port2.MovLen;
+				fread(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,in);
+				tpi -= Controllers::Port2.MovLen;
 			}
-			if (Controllers.ExpPort.MovLen)
+			if (Controllers::ExpPort.MovLen)
 			{
-				fread(Controllers.ExpPort.MovData,1,Controllers.ExpPort.MovLen,in);
-				tpi -= Controllers.ExpPort.MovLen;
+				fread(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,in);
+				tpi -= Controllers::ExpPort.MovLen;
 			}
 			if (NES.HasMenu)
 			{
@@ -869,9 +869,9 @@ int	Movie_Load (FILE *in)
 				tpi--;
 			}
 		}
-		Controllers.Port1.Frame(&Controllers.Port1,MOV_PLAY);
-		Controllers.Port2.Frame(&Controllers.Port2,MOV_PLAY);
-		Controllers.ExpPort.Frame(&Controllers.ExpPort,MOV_PLAY);
+		Controllers::Port1.Frame(&Controllers::Port1,MOV_PLAY);
+		Controllers::Port2.Frame(&Controllers::Port2,MOV_PLAY);
+		Controllers::ExpPort.Frame(&Controllers::ExpPort,MOV_PLAY);
 		if ((Cmd) && (MI) && (MI->Config))
 			MI->Config(CFG_CMD,Cmd);
 	}

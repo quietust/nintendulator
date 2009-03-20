@@ -17,7 +17,7 @@
 #define	PosX	Data[0]
 #define	PosY	Data[1]
 #define	Button	Data[2]
-static	void	Frame (struct tStdPort *Cont, unsigned char mode)
+static	void	Frame (struct Controllers::tStdPort *Cont, unsigned char mode)
 {
 	static POINT pos;
 	if (mode & MOV_PLAY)
@@ -34,7 +34,7 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 		Cont->PosY = pos.y;
 		if ((Cont->PosX < 0) || (Cont->PosX > 255) || (Cont->PosY < 0) || (Cont->PosY > 239))
 			Cont->PosX = Cont->PosY = 255;	// if it's off-screen, push it to the bottom
-		Cont->Button = Controllers_IsPressed(Cont->Buttons[0]);
+		Cont->Button = Controllers::IsPressed(Cont->Buttons[0]);
 	}
 	if (mode & MOV_RECORD)
 	{
@@ -44,7 +44,7 @@ static	void	Frame (struct tStdPort *Cont, unsigned char mode)
 	}
 }
 
-static	unsigned char	Read (struct tStdPort *Cont)
+static	unsigned char	Read (struct Controllers::tStdPort *Cont)
 {
 	int x = Cont->PosX, y = Cont->PosY, z = Cont->Button;
 	int WhiteCount = 0;
@@ -80,29 +80,29 @@ static	unsigned char	Read (struct tStdPort *Cont)
 		Bits |= 0x08;
 	return Bits;
 }
-static	void	Write (struct tStdPort *Cont, unsigned char Val)
+static	void	Write (struct Controllers::tStdPort *Cont, unsigned char Val)
 {
 }
 static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
-	static struct tStdPort *Cont = NULL;
+	static struct Controllers::tStdPort *Cont = NULL;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct tStdPort *)lParam;
-	Controllers_ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+		Cont = (struct Controllers::tStdPort *)lParam;
+	Controllers::ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct tStdPort *Cont, HWND hWnd)
+static	void	Config (struct Controllers::tStdPort *Cont, HWND hWnd)
 {
 	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_ZAPPER,hWnd,ConfigProc,(LPARAM)Cont);
 }
-static	void	Unload (struct tStdPort *Cont)
+static	void	Unload (struct Controllers::tStdPort *Cont)
 {
 	free(Cont->Data);
 	free(Cont->MovData);
 }
-void	StdPort_SetZapper (struct tStdPort *Cont)
+void	StdPort_SetZapper (struct Controllers::tStdPort *Cont)
 {
 	Cont->Read = Read;
 	Cont->Write = Write;

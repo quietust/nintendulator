@@ -280,11 +280,11 @@ int	MAPINT	CPU_Read4k (int Bank, int Addr)
 	case 0x015:	return APU::Read4015();						break;
 #ifndef	NSFPLAYER
 	case 0x016:	return (CPU.LastRead & 0xC0) |
-			(Controllers.Port1.Read(&Controllers.Port1) & 0x19) |
-			(Controllers.ExpPort.Read1(&Controllers.ExpPort) & 0x1F);	break;
+			(Controllers::Port1.Read(&Controllers::Port1) & 0x19) |
+			(Controllers::ExpPort.Read1(&Controllers::ExpPort) & 0x1F);	break;
 	case 0x017:	return (CPU.LastRead & 0xC0) |
-			(Controllers.Port2.Read(&Controllers.Port2) & 0x19) |
-			(Controllers.ExpPort.Read2(&Controllers.ExpPort) & 0x1F);	break;
+			(Controllers::Port2.Read(&Controllers::Port2) & 0x19) |
+			(Controllers::ExpPort.Read2(&Controllers::ExpPort) & 0x1F);	break;
 #else	/* NSFPLAYER */
 	case 0x016:
 	case 0x017:	return (CPU.LastRead & 0xC0);					break;
@@ -309,7 +309,7 @@ void	MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
 				CPU_MemSet(0x2004,CPU_MemGet((Val << 8) | i));
 			CPU_MemGet(CPU.PC);	break;
 #ifndef	NSFPLAYER
-	case 0x016:	Controllers_Write((unsigned char)Val);	break;
+	case 0x016:	Controllers::Write((unsigned char)Val);	break;
 #endif	/* !NSFPLAYER */
 	}
 }
