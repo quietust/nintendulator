@@ -37,12 +37,12 @@ void	NES_Init (void)
 	GFX_Init();
 	AVI::Init();
 #ifdef	ENABLE_DEBUGGER
-	Debugger_Init();
+	Debugger::Init();
 #endif	/* ENABLE_DEBUGGER */
 	States_Init();
 	Controllers::Init();
 #ifdef	ENABLE_DEBUGGER
-	Debugger_SetMode(0);
+	Debugger::SetMode(0);
 #endif	/* ENABLE_DEBUGGER */
 	NES_LoadSettings();
 	NES_SetupDataPath();
@@ -144,9 +144,10 @@ void	NES_OpenFile (TCHAR *filename)
 	DrawMenuBar(hMainWnd);
 
 #ifdef	ENABLE_DEBUGGER
-	Debugger.NTabChanged = TRUE;
-	Debugger.PalChanged = TRUE;
-	Debugger.PatChanged = TRUE;
+	Debugger::NTabChanged = TRUE;
+	Debugger::PalChanged = TRUE;
+	Debugger::PatChanged = TRUE;
+	Debugger::SprChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 
 	NES_Reset(RESET_HARD);
@@ -898,8 +899,8 @@ void	NES_Reset (RESET_TYPE ResetType)
 	PPU_Reset();
 	CPU::WantNMI = FALSE;
 #ifdef	ENABLE_DEBUGGER
-	if (Debugger.Enabled)
-		Debugger_Update();
+	if (Debugger::Enabled)
+		Debugger::Update();
 #endif	/* ENABLE_DEBUGGER */
 	NES.Scanline = FALSE;
 	EI.DbgOut(_T("Reset complete."));
@@ -947,13 +948,13 @@ DWORD	WINAPI	NES_Thread (void *param)
 	while (!NES.Stop)
 	{
 #ifdef	ENABLE_DEBUGGER
-		if (Debugger.Enabled)
-			Debugger_AddInst();
+		if (Debugger::Enabled)
+			Debugger::AddInst();
 #endif	/* ENABLE_DEBUGGER */
 		CPU::ExecOp();
 #ifdef	ENABLE_DEBUGGER
-		if (Debugger.Enabled)
-			Debugger_Update();
+		if (Debugger::Enabled)
+			Debugger::Update();
 #endif	/* ENABLE_DEBUGGER */
 		if (NES.Scanline)
 		{
@@ -961,8 +962,8 @@ DWORD	WINAPI	NES_Thread (void *param)
 			if (PPU.SLnum == 240)
 			{
 #ifdef	ENABLE_DEBUGGER
-				if (Debugger.Enabled)
-					Debugger_Update();
+				if (Debugger::Enabled)
+					Debugger::Update();
 #endif	/* ENABLE_DEBUGGER */
 				if (NES.FrameStep)	// if we pause during emulation
 				{	// it'll get caught down here at scanline 240
@@ -991,7 +992,9 @@ void	NES_Start (BOOL step)
 	if (NES.Running)
 		return;
 	NES.Running = TRUE;
-	Debugger.Step = step;
+#ifdef	ENABLE_DEBUGGER
+	Debugger::Step = step;
+#endif	/* ENABLE_DEBUGGER */
 	NES.Stop = FALSE;
 	CloseHandle(CreateThread(NULL,0,NES_Thread,NULL,0,&ThreadID));
 }

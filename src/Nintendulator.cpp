@@ -343,16 +343,16 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				do
 				{
 #ifdef	ENABLE_DEBUGGER
-					if (Debugger.Enabled)
-						Debugger_AddInst();
+					if (Debugger::Enabled)
+						Debugger::AddInst();
 #endif	/* ENABLE_DEBUGGER */
 					CPU::ExecOp();
 				} while (!NES.Scanline);
 				NES.Scanline = FALSE;
 			}
 #ifdef	ENABLE_DEBUGGER
-			if (Debugger.Enabled)
-				Debugger_Update();
+			if (Debugger::Enabled)
+				Debugger::Update();
 #endif	/* ENABLE_DEBUGGER */
 			States_SaveState();
 			if (running)	NES_Start(FALSE);
@@ -527,10 +527,10 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 #ifdef	ENABLE_DEBUGGER
 		case ID_DEBUG_CPU:
-			Debugger_SetMode(Debugger.Mode ^ DEBUG_MODE_CPU);
+			Debugger::SetMode(Debugger::Mode ^ DEBUG_MODE_CPU);
 			break;
 		case ID_DEBUG_PPU:
-			Debugger_SetMode(Debugger.Mode ^ DEBUG_MODE_PPU);
+			Debugger::SetMode(Debugger::Mode ^ DEBUG_MODE_PPU);
 			break;
 		case ID_DEBUG_STATWND:
 			ShowDebug();

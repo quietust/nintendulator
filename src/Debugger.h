@@ -31,66 +31,22 @@
 #define	DEBUG_DETAIL_PATTERN	3
 #define	DEBUG_DETAIL_PALETTE	4
 
-struct tBreakpoint
+namespace Debugger
 {
-	TCHAR desc[32];
-	unsigned short addr_start, addr_end;
-	unsigned char opcode;
-	unsigned char type;
-	unsigned char enabled;
-	struct tBreakpoint *prev, *next;
-};
+extern BOOL	Enabled;
+extern int	Mode;
 
-struct tDebugger
-{
-	BOOL	Enabled;
-	int	Mode;
+extern BOOL	NTabChanged, PalChanged, PatChanged, SprChanged;
 
-	BOOL	NTabChanged, PalChanged, PatChanged, SprChanged, DetChanged;
+extern BOOL	Step;
 
-	int	DetailType, DetailNum;
-	int	DetailTypeSave, DetailNumSave;
+void	Init (void);
+void	Release (void);
+void	SetMode(int NewMode);
+void	Update (void);
+void	AddInst (void);
 
-	BOOL	Logging, Step;
-
-	int	Depth;
-
-	int	Palette, Nametable;
-
-	HDC	PaletteDC;	/* Palette */
-	HBITMAP	PaletteBMP;
-
-	HDC	PatternDC;	/* Pattern tables */
-	HBITMAP	PatternBMP;
-
-	HDC	NameDC;		/* Nametable */
-	HBITMAP	NameBMP;
-
-	HDC	SpriteDC;	/* Sprites */
-	HBITMAP	SpriteBMP;
-
-	HDC	TileDC;		/* Preview Tile */
-	HBITMAP	TileBMP;
-
-	HWND	CPUWnd;
-	HWND	PPUWnd;
-
-	int	TraceOffset;	/* -1 to center on PC, otherwise center on TraceOffset */
-	int	MemOffset;
-
-	FILE	*LogFile;
-	unsigned char	BPcache[0x10101];
-	struct tBreakpoint *Breakpoints;
-};
-
-extern struct tDebugger Debugger;
-
-void	Debugger_Init (void);
-void	Debugger_Release (void);
-void	Debugger_SetMode(int NewMode);
-void	Debugger_Update (void);
-void	Debugger_AddInst (void);
-
+} // namespace Debugger
 #endif	/* !ENABLE_DEBUGGER */
 
 #endif	/* !DEBUGGER_H */

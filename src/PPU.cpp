@@ -164,7 +164,7 @@ void	MAPINT	PPU_BusWriteCHR (int Bank, int Addr, int Val)
 	if (!PPU.Writable[Bank])
 		return;
 #ifdef	ENABLE_DEBUGGER
-	Debugger.PatChanged = TRUE;
+	Debugger::PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 	PPU.CHRPointer[Bank][Addr] = (unsigned char)Val;
 }
@@ -174,7 +174,7 @@ void	MAPINT	PPU_BusWriteNT (int Bank, int Addr, int Val)
 	if (!PPU.Writable[Bank])
 		return;
 #ifdef	ENABLE_DEBUGGER
-	Debugger.NTabChanged = TRUE;
+	Debugger::NTabChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 	PPU.CHRPointer[Bank][Addr] = (unsigned char)Val;
 }
@@ -1231,8 +1231,8 @@ static	void	__fastcall	Write0 (int Val)
 	PPU.IntReg &= 0x73FF;
 	PPU.IntReg |= (Val & 3) << 10;
 #ifdef	ENABLE_DEBUGGER
-	Debugger.NTabChanged = TRUE;
-	Debugger.SprChanged = TRUE;
+	Debugger::NTabChanged = TRUE;
+	Debugger::SprChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 }
 
@@ -1263,7 +1263,7 @@ static	void	__fastcall	Write4 (int Val)
 		Val &= 0xE3;
 	PPU.Sprite[PPU.SprAddr++] = (unsigned char)Val;
 #ifdef	ENABLE_DEBUGGER
-	Debugger.SprChanged = TRUE;
+	Debugger::SprChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 }
 
@@ -1307,7 +1307,7 @@ static	void	__fastcall	Write7 (int Val)
 		register unsigned char Addr = (unsigned char)PPU.VRAMAddr & 0x1F;
 		Val = Val & 0x3F;
 #ifdef	ENABLE_DEBUGGER
-		Debugger.PalChanged = TRUE;
+		Debugger::PalChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 		PPU.Palette[Addr] = (unsigned char)Val;
 		if (!(Addr & 0x3))
