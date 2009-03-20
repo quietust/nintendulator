@@ -354,23 +354,23 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (Debugger::Enabled)
 				Debugger::Update();
 #endif	/* ENABLE_DEBUGGER */
-			States_SaveState();
+			States::SaveState();
 			if (running)	NES::Start(FALSE);
 			break;
 		case ID_CPU_LOADSTATE:
 			NES::Stop();
-			States_LoadState();
+			States::LoadState();
 			if (running)	NES::Start(FALSE);
 			break;
 		case ID_CPU_PREVSTATE:
-			States.SelSlot += 9;
-			States.SelSlot %= 10;
-			States_SetSlot(States.SelSlot);
+			States::SelSlot += 9;
+			States::SelSlot %= 10;
+			States::SetSlot(States::SelSlot);
 			break;
 		case ID_CPU_NEXTSTATE:
-			States.SelSlot += 1;
-			States.SelSlot %= 10;
-			States_SetSlot(States.SelSlot);
+			States::SelSlot += 1;
+			States::SelSlot %= 10;
+			States::SetSlot(States::SelSlot);
 			break;
 		case ID_CPU_GAMEGENIE:
 			NES::GameGenie = !NES::GameGenie;

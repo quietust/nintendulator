@@ -19,27 +19,30 @@
 #include "GFX.h"
 #include "Genie.h"
 
-struct	tStates	States;
-
-extern FILE *movie;
-
-void	States_Init (void)
+namespace States
 {
-	States.SelSlot = 0;
+	TCHAR BaseFilename[MAX_PATH];
+	int SelSlot;
+
+//extern FILE *movie;
+
+void	Init (void)
+{
+	SelSlot = 0;
 }
 
-void	States_SetFilename (TCHAR *Filename)
+void	SetFilename (TCHAR *Filename)
 {
 	// all we need is the base filename
-	_tsplitpath(Filename, NULL, NULL, States.BaseFilename, NULL);
+	_tsplitpath(Filename, NULL, NULL, BaseFilename, NULL);
 }
 
-void	States_SetSlot (int Slot)
+void	SetSlot (int Slot)
 {
 	TCHAR tpchr[MAX_PATH];
 	FILE *tmp;
-	States.SelSlot = Slot;
-	_stprintf(tpchr, _T("%s\\States\\%s.ns%i"), DataPath, States.BaseFilename, States.SelSlot);
+	SelSlot = Slot;
+	_stprintf(tpchr, _T("%s\\States\\%s.ns%i"), DataPath, BaseFilename, SelSlot);
 	tmp = _tfopen(tpchr,_T("rb"));
 	if (tmp)
 	{
@@ -49,7 +52,7 @@ void	States_SetSlot (int Slot)
 	else	PrintTitlebar(_T("State Selected: %i (empty)"), Slot);
 }
 
-int	States_SaveData (FILE *out)
+int	SaveData (FILE *out)
 {
 	int flen = 0, clen;
 	{
@@ -155,7 +158,7 @@ int	States_SaveData (FILE *out)
 	return flen;
 }
 
-void	States_SaveState (void)
+void	SaveState (void)
 {
 	TCHAR tps[MAX_PATH];
 	int flen;
@@ -167,7 +170,7 @@ void	States_SaveState (void)
 		return;
 	}
 
-	_stprintf(tps, _T("%s\\States\\%s.ns%i"), DataPath, States.BaseFilename, States.SelSlot);
+	_stprintf(tps, _T("%s\\States\\%s.ns%i"), DataPath, BaseFilename, SelSlot);
 	out = _tfopen(tps,_T("w+b"));
 	flen = 0;
 
@@ -178,18 +181,18 @@ void	States_SaveState (void)
 		fwrite("NREC",1,4,out);
 	else	fwrite("NSAV",1,4,out);
 
-	flen = States_SaveData(out);
+	flen = SaveData(out);
 
 	// Write final filesize
 	fseek(out,8,SEEK_SET);
 	fwrite(&flen,1,4,out);
 	fclose(out);
 
-	PrintTitlebar(_T("State saved: %i"), States.SelSlot);
+	PrintTitlebar(_T("State saved: %i"), SelSlot);
 	Movie::ShowFrame();
 }
 
-BOOL	States_LoadData (FILE *in, int flen)
+BOOL	LoadData (FILE *in, int flen)
 {
 	char csig[4];
 	int clen;
@@ -253,18 +256,18 @@ BOOL	States_LoadData (FILE *in, int flen)
 	return SSOK;
 }
 
-void	States_LoadState (void)
+void	LoadState (void)
 {
 	TCHAR tps[MAX_PATH];
 	char tpc[5];
 	FILE *in;
 	int flen;
 
-	_stprintf(tps, _T("%s\\States\\%s.ns%i"), DataPath, States.BaseFilename, States.SelSlot);
+	_stprintf(tps, _T("%s\\States\\%s.ns%i"), DataPath, BaseFilename, SelSlot);
 	in = _tfopen(tps,_T("rb"));
 	if (!in)
 	{
-		PrintTitlebar(_T("No such save state: %i"), States.SelSlot);
+		PrintTitlebar(_T("No such save state: %i"), SelSlot);
 		return;
 	}
 
@@ -272,7 +275,7 @@ void	States_LoadState (void)
 	if (memcmp(tpc,"NSS\x1a",4))
 	{
 		fclose(in);
-		PrintTitlebar(_T("Not a valid savestate file: %i"), States.SelSlot);
+		PrintTitlebar(_T("Not a valid savestate file: %i"), SelSlot);
 		return;
 	}
 	fread(tpc,1,4,in);
@@ -280,7 +283,7 @@ void	States_LoadState (void)
 	{
 		fclose(in);
 		tpc[4] = 0;
-		PrintTitlebar(_T("Incorrect savestate version (%hs): %i"), tpc, States.SelSlot);
+		PrintTitlebar(_T("Incorrect savestate version (%hs): %i"), tpc, SelSlot);
 		return;
 	}
 	fread(&flen,4,1,in);
@@ -289,7 +292,7 @@ void	States_LoadState (void)
 	if (!memcmp(tpc,"NMOV",4))
 	{
 		fclose(in);
-		PrintTitlebar(_T("Selected savestate (%i) is a movie file - cannot load!"), States.SelSlot);
+		PrintTitlebar(_T("Selected savestate (%i) is a movie file - cannot load!"), SelSlot);
 		return;
 	}
 	else if (!memcmp(tpc,"NREC",4))
@@ -302,7 +305,7 @@ void	States_LoadState (void)
 		if (Movie::Mode)
 		{
 			fclose(in);
-			PrintTitlebar(_T("Selected savestate (%i) does not contain movie data!"), States.SelSlot);
+			PrintTitlebar(_T("Selected savestate (%i) does not contain movie data!"), SelSlot);
 			return;
 		}
 	}
@@ -310,7 +313,7 @@ void	States_LoadState (void)
 	{
 		fclose(in);
 		tpc[4] = 0;
-		PrintTitlebar(_T("Selected savestate (%i) has unknown type! (%hs)"), States.SelSlot, tpc);
+		PrintTitlebar(_T("Selected savestate (%i) has unknown type! (%hs)"), SelSlot, tpc);
 		return;
 	}
 
@@ -323,9 +326,10 @@ void	States_LoadState (void)
 	NES::GameGenie = FALSE;	/* If the savestate uses it, it'll turn back on shortly */
 	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
 
-	if (States_LoadData(in, flen))
-		PrintTitlebar(_T("State loaded: %i"), States.SelSlot);
-	else	PrintTitlebar(_T("State loaded with errors: %i"), States.SelSlot);
+	if (LoadData(in, flen))
+		PrintTitlebar(_T("State loaded: %i"), SelSlot);
+	else	PrintTitlebar(_T("State loaded with errors: %i"), SelSlot);
 	Movie::ShowFrame();
 	fclose(in);
 }
+} // namespace States

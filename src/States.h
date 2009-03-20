@@ -12,20 +12,17 @@
 #define	STATES_BETA	"0965"
 #define	STATES_PREV	"0960"
 
-struct tStates
+namespace States
 {
-	TCHAR BaseFilename[MAX_PATH];
-	int SelSlot;
-};
+extern TCHAR BaseFilename[MAX_PATH];
+extern int SelSlot;
 
-extern	struct	tStates	States;
-
-void	States_Init (void);
-void	States_SetFilename (TCHAR *);
-void	States_SetSlot (int Slot);
-int	States_SaveData (FILE *);
-BOOL	States_LoadData (FILE *, int);
-void	States_SaveState (void);
-void	States_LoadState (void);
-
+void	Init (void);
+void	SetFilename (TCHAR *);
+void	SetSlot (int Slot);
+int	SaveData (FILE *);
+BOOL	LoadData (FILE *, int);
+void	SaveState (void);
+void	LoadState (void);
+} // namespace States
 #endif	/* !STATES_H */

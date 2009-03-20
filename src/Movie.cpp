@@ -282,7 +282,7 @@ void	Play (void)
 		MI->Load();
 	NES::Reset(RESET_HARD);
 	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
-	if (!States_LoadData(Data, len))
+	if (!States::LoadData(Data, len))
 	{
 		MessageBox(hMainWnd, _T("Failed to load movie!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		fclose(Data);
@@ -526,7 +526,7 @@ void	Record (void)
 	fwrite("NMOV", 1, 4, Data);
 
 	if (fromState)
-		States_SaveData(Data);
+		States::SaveData(Data);
 	else
 	{
 		// cycle the mapper - special stuff might happen on load that we NEED to perform

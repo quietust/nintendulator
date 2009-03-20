@@ -283,7 +283,7 @@ void	StartLogging (void)
 	time(&aclock);
 	newtime = localtime(&aclock);
 
-	_stprintf(filename, _T("%s\\Dumps\\%s.%04i%02i%02i_%02i%02i%02i.debug"), DataPath, States.BaseFilename,
+	_stprintf(filename, _T("%s\\Dumps\\%s.%04i%02i%02i_%02i%02i%02i.debug"), DataPath, States::BaseFilename,
 		newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 
 	Logging = TRUE;
@@ -1203,7 +1203,7 @@ void	DumpCPU (void)
 	time(&aclock);
 	newtime = localtime(&aclock);
 
-	_stprintf(filename, _T("%s\\Dumps\\%s.%04i%02i%02i_%02i%02i%02i.cpumem"), DataPath, States.BaseFilename, 
+	_stprintf(filename, _T("%s\\Dumps\\%s.%04i%02i%02i_%02i%02i%02i.cpumem"), DataPath, States::BaseFilename, 
 		newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 	out = _tfopen(filename, _T("wb"));
 	fwrite(CPU::RAM, 1, 0x800, out);
@@ -1227,7 +1227,7 @@ void	DumpPPU (void)
 	time(&aclock);
 	newtime = localtime(&aclock);
 
-	_stprintf(filename, _T("%s\\Dumps\\%s.%04i%02i%02i_%02i%02i%02i.ppumem"), DataPath, States.BaseFilename, 
+	_stprintf(filename, _T("%s\\Dumps\\%s.%04i%02i%02i_%02i%02i%02i.ppumem"), DataPath, States::BaseFilename, 
 		newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 	out = _tfopen(filename, _T("wb"));
 	for (i = 0; i < 12; i++)

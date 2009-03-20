@@ -52,7 +52,7 @@ void	Init (void)
 #ifdef	ENABLE_DEBUGGER
 	Debugger::Init();
 #endif	/* ENABLE_DEBUGGER */
-	States_Init();
+	States::Init();
 	Controllers::Init();
 #ifdef	ENABLE_DEBUGGER
 	Debugger::SetMode(0);
@@ -116,7 +116,7 @@ void	OpenFile (TCHAR *filename)
 	}
 	ROMLoaded = TRUE;
 	EI.DbgOut(_T("Loaded successfully!"));
-	States_SetFilename(filename);
+	States::SetFilename(filename);
 
 	HasMenu = FALSE;
 	if (MI->Config)
@@ -216,8 +216,8 @@ void	SaveSRAM (void)
 	if (!SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
-		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States.BaseFilename);
-	else	_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States.BaseFilename);
+		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States::BaseFilename);
+	else	_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States::BaseFilename);
 	SRAMFile = _tfopen(Filename,_T("wb"));
 	if (RI.ROMType == ROM_FDS)
 	{
@@ -239,8 +239,8 @@ void	LoadSRAM (void)
 	if (!SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
-		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States.BaseFilename);
-	else	_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States.BaseFilename);
+		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States::BaseFilename);
+	else	_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States::BaseFilename);
 	SRAMFile = _tfopen(Filename,_T("rb"));
 	if (!SRAMFile)
 		return;
