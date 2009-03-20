@@ -346,7 +346,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if (Debugger.Enabled)
 						Debugger_AddInst();
 #endif	/* ENABLE_DEBUGGER */
-					CPU_ExecOp();
+					CPU::ExecOp();
 				} while (!NES.Scanline);
 				NES.Scanline = FALSE;
 			}

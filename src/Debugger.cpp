@@ -251,8 +251,8 @@ void	Debugger_StopLogging (void)
 unsigned char DebugMemCPU (unsigned short Addr)
 {
 	int Bank = (Addr >> 12) & 0xF;
-	FCPURead Read = CPU.ReadHandler[Bank];
-	if ((Read == CPU_ReadRAM) || (Read == CPU_ReadPRG) || (Read == GenieRead) || (Read == GenieRead1) || (Read == GenieRead2) || (Read == GenieRead3))
+	FCPURead Read = CPU::ReadHandler[Bank];
+	if ((Read == CPU::ReadRAM) || (Read == CPU::ReadPRG) || (Read == GenieRead) || (Read == GenieRead1) || (Read == GenieRead2) || (Read == GenieRead3))
 		return (unsigned char)Read(Bank, Addr & 0xFFF);
 	else	return 0xFF;
 }
@@ -294,12 +294,12 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 	case ABX:
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);Operand = OpData[1] | (OpData[2] << 8);
-		EffectiveAddr = Operand + CPU.X;
+		EffectiveAddr = Operand + CPU::X;
 		break;
 	case ABY:
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);Operand = OpData[1] | (OpData[2] << 8);
-		EffectiveAddr = Operand + CPU.Y;
+		EffectiveAddr = Operand + CPU::Y;
 		break;
 	case IMM:
 		OpData[1] = DebugMemCPU(Addr+1);
@@ -313,24 +313,24 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 	case ZPX:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
-		EffectiveAddr = (Operand + CPU.X) & 0xFF;
+		EffectiveAddr = (Operand + CPU::X) & 0xFF;
 		break;
 	case ZPY:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
-		EffectiveAddr = (Operand + CPU.Y) & 0xFF;
+		EffectiveAddr = (Operand + CPU::Y) & 0xFF;
 		break;
 	case INX:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
-		MidAddr = (Operand + CPU.X) & 0xFF;
+		MidAddr = (Operand + CPU::X) & 0xFF;
 		EffectiveAddr = DebugMemCPU(MidAddr) | (DebugMemCPU((MidAddr+1) & 0xFF) << 8);
 		break;
 	case INY:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
 		MidAddr = DebugMemCPU(Operand) | (DebugMemCPU((Operand+1) & 0xFF) << 8);
-		EffectiveAddr = MidAddr + CPU.Y;
+		EffectiveAddr = MidAddr + CPU::Y;
 		break;
 	case IMP:
 		break;
@@ -406,11 +406,11 @@ void	Debugger_UpdateCPU (void)
 	{
 		int BreakAddr;
 		/* PC has execution breakpoint */
-		if (Debugger.BPcache[CPU.PC] & DEBUG_BREAK_EXEC)
+		if (Debugger.BPcache[CPU::PC] & DEBUG_BREAK_EXEC)
 			NES.Stop = TRUE;
 		/* I/O break */
-		BreakAddr = DecodeInstruction((unsigned short)CPU.PC, NULL, NULL);
-		TpVal = DebugMemCPU((unsigned short)CPU.PC);
+		BreakAddr = DecodeInstruction((unsigned short)CPU::PC, NULL, NULL);
+		TpVal = DebugMemCPU((unsigned short)CPU::PC);
 		/* */
 		if (BreakAddr != -1)
 		{
@@ -425,13 +425,13 @@ void	Debugger_UpdateCPU (void)
 		if (Debugger.BPcache[0x10000 | TpVal] & DEBUG_BREAK_OPCODE)
 			NES.Stop = TRUE;
 		/* interrupt breakpoints */
-		if ((CPU.GotInterrupt == INTERRUPT_NMI) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_NMI))
+		if ((CPU::GotInterrupt == INTERRUPT_NMI) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_NMI))
 			NES.Stop = TRUE;
-/*		if ((CPU.GotInterrupt == INTERRUPT_RST) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_RST))
+/*		if ((CPU::GotInterrupt == INTERRUPT_RST) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_RST))
 			NES.Stop = TRUE;*/
-		if ((CPU.GotInterrupt == INTERRUPT_IRQ) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_IRQ))
+		if ((CPU::GotInterrupt == INTERRUPT_IRQ) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_IRQ))
 			NES.Stop = TRUE;
-		if ((CPU.GotInterrupt == INTERRUPT_BRK) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_BRK))
+		if ((CPU::GotInterrupt == INTERRUPT_BRK) && (Debugger.BPcache[0x10100] & DEBUG_BREAK_BRK))
 			NES.Stop = TRUE;
 
 	}
@@ -441,36 +441,36 @@ void	Debugger_UpdateCPU (void)
 
 	inUpdate = TRUE;
 
-	_stprintf(tps, _T("%04X"), CPU.PC);
+	_stprintf(tps, _T("%04X"), CPU::PC);
 	SetDlgItemText(Debugger.CPUWnd, IDC_DEBUG_REG_PC, tps);
 
-	_stprintf(tps, _T("%02X"), CPU.A);
+	_stprintf(tps, _T("%02X"), CPU::A);
 	SetDlgItemText(Debugger.CPUWnd, IDC_DEBUG_REG_A, tps);
 
-	_stprintf(tps, _T("%02X"), CPU.X);
+	_stprintf(tps, _T("%02X"), CPU::X);
 	SetDlgItemText(Debugger.CPUWnd, IDC_DEBUG_REG_X, tps);
 
-	_stprintf(tps, _T("%02X"), CPU.Y);
+	_stprintf(tps, _T("%02X"), CPU::Y);
 	SetDlgItemText(Debugger.CPUWnd, IDC_DEBUG_REG_Y, tps);
 
-	_stprintf(tps, _T("%02X"), CPU.SP);
+	_stprintf(tps, _T("%02X"), CPU::SP);
 	SetDlgItemText(Debugger.CPUWnd, IDC_DEBUG_REG_SP, tps);
 
-	CPU_JoinFlags();
-	_stprintf(tps, _T("%02X"), CPU.P);
+	CPU::JoinFlags();
+	_stprintf(tps, _T("%02X"), CPU::P);
 	SetDlgItemText(Debugger.CPUWnd, IDC_DEBUG_REG_P, tps);
 
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_N, CPU.FN ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_V, CPU.FV ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_D, CPU.FD ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_I, CPU.FI ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_Z, CPU.FZ ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_C, CPU.FC ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_N, CPU::FN ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_V, CPU::FV ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_D, CPU::FD ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_I, CPU::FI ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_Z, CPU::FZ ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_FLAG_C, CPU::FC ? BST_CHECKED : BST_UNCHECKED);
 
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_IRQ_EXT, (CPU.WantIRQ & IRQ_EXTERNAL) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_IRQ_PCM, (CPU.WantIRQ & IRQ_DPCM) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_IRQ_FRAME, (CPU.WantIRQ & IRQ_FRAME) ? BST_CHECKED : BST_UNCHECKED);
-	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_IRQ_DEBUG, (CPU.WantIRQ & IRQ_DEBUG) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_IRQ_EXT, (CPU::WantIRQ & IRQ_EXTERNAL) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_IRQ_PCM, (CPU::WantIRQ & IRQ_DPCM) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_IRQ_FRAME, (CPU::WantIRQ & IRQ_FRAME) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(Debugger.CPUWnd, IDC_DEBUG_IRQ_DEBUG, (CPU::WantIRQ & IRQ_DEBUG) ? BST_CHECKED : BST_UNCHECKED);
 
 	SetDlgItemInt(Debugger.CPUWnd, IDC_DEBUG_TIMING_SCANLINE, PPU.SLnum, TRUE);
 
@@ -518,7 +518,7 @@ void	Debugger_UpdateCPU (void)
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, WM_SETREDRAW, FALSE, 0);
 	SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, LB_RESETCONTENT, 0, 0);
 
-	Addr = (unsigned short)((Debugger.TraceOffset == -1) ? CPU.PC : Debugger.TraceOffset);
+	Addr = (unsigned short)((Debugger.TraceOffset == -1) ? CPU::PC : Debugger.TraceOffset);
 	TpVal = -1;
 
 	sinfo.cbSize = sizeof(SCROLLINFO);
@@ -528,7 +528,7 @@ void	Debugger_UpdateCPU (void)
 
 	for (i = 0; i < DEBUG_TRACELINES; i++)
 	{
-		if (Addr == CPU.PC)
+		if (Addr == CPU::PC)
 			TpVal = i;
 		DecodeInstruction(Addr, NULL, tps);
 		SendDlgItemMessage(Debugger.CPUWnd, IDC_DEBUG_TRACE_LIST, LB_ADDSTRING, 0, (LPARAM)tps);
@@ -691,12 +691,12 @@ void	Debugger_AddInst (void)
 {
 	if (Debugger.Logging)
 	{
-		unsigned short Addr = (unsigned short)CPU.PC;
+		unsigned short Addr = (unsigned short)CPU::PC;
 		char tps[64];
 		DecodeInstruction(Addr, tps, NULL);
 		fwrite(tps, 1, strlen(tps), Debugger.LogFile);
-		CPU_JoinFlags();
-		sprintf(tps, "  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n", CPU.A, CPU.X, CPU.Y, CPU.P, CPU.SP, PPU.Clockticks, PPU.SLnum);
+		CPU::JoinFlags();
+		sprintf(tps, "  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n", CPU::A, CPU::X, CPU::Y, CPU::P, CPU::SP, PPU.Clockticks, PPU.SLnum);
 		fwrite(tps, 1, strlen(tps), Debugger.LogFile);
 	}
 }
@@ -1157,10 +1157,10 @@ void	Debugger_DumpCPU (void)
 	_stprintf(filename, _T("%s\\Dumps\\%s.%04i%02i%02i_%02i%02i%02i.cpumem"), DataPath, States.BaseFilename, 
 		newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 	out = _tfopen(filename, _T("wb"));
-	fwrite(CPU_RAM, 1, 0x800, out);
+	fwrite(CPU::RAM, 1, 0x800, out);
 	for (i = 4; i < 16; i++)
-		if (CPU.PRGPointer[i])
-			fwrite(CPU.PRGPointer[i], 1, 0x1000, out);
+		if (CPU::PRGPointer[i])
+			fwrite(CPU::PRGPointer[i], 1, 0x1000, out);
 	fclose(out);
 }
 
@@ -1591,7 +1591,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (NES.Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_A, tpc, 3);
-			CPU.A = (unsigned char)_tcstol(tpc, NULL, 16);
+			CPU::A = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
@@ -1599,7 +1599,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (NES.Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_X, tpc, 3);
-			CPU.X = (unsigned char)_tcstol(tpc, NULL, 16);
+			CPU::X = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
@@ -1607,7 +1607,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (NES.Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_Y, tpc, 3);
-			CPU.Y = (unsigned char)_tcstol(tpc, NULL, 16);
+			CPU::Y = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
@@ -1615,8 +1615,8 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (NES.Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_P, tpc, 3);
-			CPU.P = (unsigned char)_tcstol(tpc, NULL, 16);
-			CPU_SplitFlags();
+			CPU::P = (unsigned char)_tcstol(tpc, NULL, 16);
+			CPU::SplitFlags();
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
@@ -1624,7 +1624,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (NES.Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_SP, tpc, 3);
-			CPU.SP = (unsigned char)_tcstol(tpc, NULL, 16);
+			CPU::SP = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
@@ -1632,37 +1632,37 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (NES.Running)
 				break;
 			GetDlgItemText(hwndDlg, IDC_DEBUG_REG_PC, tpc, 5);
-			CPU.PC = _tcstol(tpc, NULL, 16);
+			CPU::PC = _tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				Debugger_UpdateCPU();
 			break;
 
 		case IDC_DEBUG_IRQ_EXT:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_IRQ_EXT) == BST_CHECKED)
-				CPU.WantIRQ |= IRQ_EXTERNAL;
-			else	CPU.WantIRQ &= ~IRQ_EXTERNAL;
+				CPU::WantIRQ |= IRQ_EXTERNAL;
+			else	CPU::WantIRQ &= ~IRQ_EXTERNAL;
 			break;
 		case IDC_DEBUG_IRQ_PCM:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_IRQ_PCM) == BST_CHECKED)
-				CPU.WantIRQ |= IRQ_DPCM;
-			else	CPU.WantIRQ &= ~IRQ_DPCM;
+				CPU::WantIRQ |= IRQ_DPCM;
+			else	CPU::WantIRQ &= ~IRQ_DPCM;
 			break;
 		case IDC_DEBUG_IRQ_FRAME:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_IRQ_FRAME) == BST_CHECKED)
-				CPU.WantIRQ |= IRQ_FRAME;
-			else	CPU.WantIRQ &= ~IRQ_FRAME;
+				CPU::WantIRQ |= IRQ_FRAME;
+			else	CPU::WantIRQ &= ~IRQ_FRAME;
 			break;
 		case IDC_DEBUG_IRQ_DEBUG:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_IRQ_DEBUG) == BST_CHECKED)
-				CPU.WantIRQ |= IRQ_DEBUG;
-			else	CPU.WantIRQ &= ~IRQ_DEBUG;
+				CPU::WantIRQ |= IRQ_DEBUG;
+			else	CPU::WantIRQ &= ~IRQ_DEBUG;
 			break;
 
 		case IDC_DEBUG_FLAG_N:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_N) == BST_CHECKED)
-				CPU.FN = 1;
-			else	CPU.FN = 0;
-			CPU_JoinFlags();
+				CPU::FN = 1;
+			else	CPU::FN = 0;
+			CPU::JoinFlags();
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_V:
@@ -1670,45 +1670,45 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (NES.Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_V) == BST_CHECKED)
-				CPU.FV = 1;
-			else	CPU.FV = 0;
-			CPU_JoinFlags();
+				CPU::FV = 1;
+			else	CPU::FV = 0;
+			CPU::JoinFlags();
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_D:
 			if (NES.Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_D) == BST_CHECKED)
-				CPU.FD = 1;
-			else	CPU.FD = 0;
-			CPU_JoinFlags();
+				CPU::FD = 1;
+			else	CPU::FD = 0;
+			CPU::JoinFlags();
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_I:
 			if (NES.Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_I) == BST_CHECKED)
-				CPU.FI = 1;
-			else	CPU.FI = 0;
-			CPU_JoinFlags();
+				CPU::FI = 1;
+			else	CPU::FI = 0;
+			CPU::JoinFlags();
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_Z:
 			if (NES.Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_Z) == BST_CHECKED)
-				CPU.FZ = 1;
-			else	CPU.FZ = 0;
-			CPU_JoinFlags();
+				CPU::FZ = 1;
+			else	CPU::FZ = 0;
+			CPU::JoinFlags();
 			Debugger_UpdateCPU();
 			break;
 		case IDC_DEBUG_FLAG_C:
 			if (NES.Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_C) == BST_CHECKED)
-				CPU.FC = 1;
-			else	CPU.FC = 0;
-			CPU_JoinFlags();
+				CPU::FC = 1;
+			else	CPU::FC = 0;
+			CPU::JoinFlags();
 			Debugger_UpdateCPU();
 			break;
 
@@ -1898,7 +1898,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sinfo.fMask = SIF_PAGE | SIF_POS | SIF_RANGE;
 			GetScrollInfo((HWND)lParam, SB_CTL, &sinfo);
 			if (Debugger.TraceOffset == -1)
-				Debugger.TraceOffset = CPU.PC;
+				Debugger.TraceOffset = CPU::PC;
 			switch (LOWORD(wParam))
 			{
 			case SB_LINEUP:

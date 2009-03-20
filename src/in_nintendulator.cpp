@@ -92,20 +92,20 @@ void	NES_Reset (void)
 	int i;
 	for (i = 0x0; i < 0x10; i++)
 	{
-		CPU.ReadHandler[i] = CPU_ReadPRG;
-		CPU.WriteHandler[i] = CPU_WritePRG;
-		CPU.Readable[i] = FALSE;
-		CPU.Writable[i] = FALSE;
+		CPU::ReadHandler[i] = CPU::ReadPRG;
+		CPU::WriteHandler[i] = CPU::WritePRG;
+		CPU::Readable[i] = FALSE;
+		CPU::Writable[i] = FALSE;
 	}
-	CPU.ReadHandler[0] = CPU_ReadRAM;	CPU.WriteHandler[0] = CPU_WriteRAM;
-	CPU.ReadHandler[1] = CPU_ReadRAM;	CPU.WriteHandler[1] = CPU_WriteRAM;
-	CPU.ReadHandler[4] = CPU_Read4k;	CPU.WriteHandler[4] = CPU_Write4k;
+	CPU::ReadHandler[0] = CPU::ReadRAM;	CPU::WriteHandler[0] = CPU::WriteRAM;
+	CPU::ReadHandler[1] = CPU::ReadRAM;	CPU::WriteHandler[1] = CPU::WriteRAM;
+	CPU::ReadHandler[4] = CPU::Read4k;	CPU::WriteHandler[4] = CPU::Write4k;
 
-	CPU_PowerOn();
+	CPU::PowerOn();
 	if (MI->Reset)
 		MI->Reset(RESET_HARD);
 	APU::Reset();
-	CPU_Reset();
+	CPU::Reset();
 }
 
 int play(char *fn) 
@@ -300,7 +300,7 @@ DWORD	WINAPI	PlayThread (void *param)
 	while (!killPlayThread)
 	{
 		while (!APU::sample_ok)
-			CPU_ExecOp();
+			CPU::ExecOp();
 		APU::sample_ok = FALSE;
 		((short *)&sample_buffer)[bufpos] = APU::sample_pos;
 		bufpos++;

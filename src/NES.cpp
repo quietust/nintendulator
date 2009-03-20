@@ -301,11 +301,11 @@ void	NES_CloseFile (void)
 	NES.SRAM_Size = 0;
 	for (i = 0; i < 16; i++)
 	{
-		CPU.PRGPointer[i] = PRG_RAM[0];
-		CPU.ReadHandler[i] = CPU_ReadPRG;
-		CPU.WriteHandler[i] = CPU_WritePRG;
-		CPU.Readable[i] = FALSE;
-		CPU.Writable[i] = FALSE;
+		CPU::PRGPointer[i] = PRG_RAM[0];
+		CPU::ReadHandler[i] = CPU::ReadPRG;
+		CPU::WriteHandler[i] = CPU::WritePRG;
+		CPU::Readable[i] = FALSE;
+		CPU::Writable[i] = FALSE;
 		PPU.CHRPointer[i] = CHR_RAM[0];
 		PPU.ReadHandler[i] = PPU_BusRead;
 		PPU.WriteHandler[i] = PPU_BusWriteCHR;
@@ -831,17 +831,17 @@ void	NES_Reset (RESET_TYPE ResetType)
 	int i;
 	for (i = 0x0; i < 0x10; i++)
 	{
-		CPU.ReadHandler[i] = CPU_ReadPRG;
-		CPU.WriteHandler[i] = CPU_WritePRG;
-		CPU.Readable[i] = FALSE;
-		CPU.Writable[i] = FALSE;
-		CPU.PRGPointer[i] = NULL;
+		CPU::ReadHandler[i] = CPU::ReadPRG;
+		CPU::WriteHandler[i] = CPU::WritePRG;
+		CPU::Readable[i] = FALSE;
+		CPU::Writable[i] = FALSE;
+		CPU::PRGPointer[i] = NULL;
 	}
-	CPU.ReadHandler[0] = CPU_ReadRAM;	CPU.WriteHandler[0] = CPU_WriteRAM;
-	CPU.ReadHandler[1] = CPU_ReadRAM;	CPU.WriteHandler[1] = CPU_WriteRAM;
-	CPU.ReadHandler[2] = PPU_IntRead;	CPU.WriteHandler[2] = PPU_IntWrite;
-	CPU.ReadHandler[3] = PPU_IntRead;	CPU.WriteHandler[3] = PPU_IntWrite;
-	CPU.ReadHandler[4] = CPU_Read4k;	CPU.WriteHandler[4] = CPU_Write4k;
+	CPU::ReadHandler[0] = CPU::ReadRAM;	CPU::WriteHandler[0] = CPU::WriteRAM;
+	CPU::ReadHandler[1] = CPU::ReadRAM;	CPU::WriteHandler[1] = CPU::WriteRAM;
+	CPU::ReadHandler[2] = PPU_IntRead;	CPU::WriteHandler[2] = PPU_IntWrite;
+	CPU::ReadHandler[3] = PPU_IntRead;	CPU::WriteHandler[3] = PPU_IntWrite;
+	CPU::ReadHandler[4] = CPU::Read4k;	CPU::WriteHandler[4] = CPU::Write4k;
 	if (!NES.GameGenie)
 		Genie.CodeStat = 0;
 	for (i = 0x0; i < 0x8; i++)
@@ -869,7 +869,7 @@ void	NES_Reset (RESET_TYPE ResetType)
 			MI = MI2;
 			MI2 = NULL;
 		}
-		CPU_PowerOn();
+		CPU::PowerOn();
 		PPU_PowerOn();
 		if (NES.GameGenie)
 			Genie_Reset();
@@ -894,9 +894,9 @@ void	NES_Reset (RESET_TYPE ResetType)
 		break;
 	}
 	APU::Reset();
-	CPU_Reset();
+	CPU::Reset();
 	PPU_Reset();
-	CPU.WantNMI = FALSE;
+	CPU::WantNMI = FALSE;
 #ifdef	ENABLE_DEBUGGER
 	if (Debugger.Enabled)
 		Debugger_Update();
@@ -916,16 +916,16 @@ DWORD	WINAPI	NES_Thread (void *param)
 	QueryPerformanceCounter(&ClockVal1);
 	for (i = 0; i < 454211; i++)
 	{
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
-		CPU_ExecOp();
+		CPU::ExecOp();
+		CPU::ExecOp();
+		CPU::ExecOp();
+		CPU::ExecOp();
+		CPU::ExecOp();
+		CPU::ExecOp();
+		CPU::ExecOp();
+		CPU::ExecOp();
+		CPU::ExecOp();
+		CPU::ExecOp();
 	}
 	QueryPerformanceCounter(&ClockVal2);
 
@@ -950,7 +950,7 @@ DWORD	WINAPI	NES_Thread (void *param)
 		if (Debugger.Enabled)
 			Debugger_AddInst();
 #endif	/* ENABLE_DEBUGGER */
-		CPU_ExecOp();
+		CPU::ExecOp();
 #ifdef	ENABLE_DEBUGGER
 		if (Debugger.Enabled)
 			Debugger_Update();

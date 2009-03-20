@@ -181,7 +181,7 @@ unsigned char GameGenieCHR[0x400] = {
 
 int	MAPINT	GenieRead (int Bank, int Addr)
 {
-	int result = CPU_ReadPRG(Bank,Addr);
+	int result = CPU::ReadPRG(Bank,Addr);
 	if (NES.GameGenie)
 	{
 		if ((Genie.CodeStat & 0x10) && (Bank == Genie.Code1B) && (Addr == Genie.Code1A) && ((Genie.CodeStat & 0x02) || (result == Genie.Code1O)))
@@ -195,21 +195,21 @@ int	MAPINT	GenieRead (int Bank, int Addr)
 }
 int	MAPINT	GenieRead1 (int Bank, int Addr)
 {
-	int result = CPU_ReadPRG(Bank,Addr);
+	int result = CPU::ReadPRG(Bank,Addr);
 	if ((NES.GameGenie) && ((Addr == Genie.Code1A) && ((Genie.CodeStat & 0x02) || (result == Genie.Code1O))))
 		return Genie.Code1V;
 	else	return result;
 }
 int	MAPINT	GenieRead2 (int Bank, int Addr)
 {
-	int result = CPU_ReadPRG(Bank,Addr);
+	int result = CPU::ReadPRG(Bank,Addr);
 	if ((NES.GameGenie) && ((Addr == Genie.Code2A) && ((Genie.CodeStat & 0x04) || (result == Genie.Code2O))))
 		return Genie.Code2V;
 	else	return result;
 }
 int	MAPINT	GenieRead3 (int Bank, int Addr)
 {
-	int result = CPU_ReadPRG(Bank,Addr);
+	int result = CPU::ReadPRG(Bank,Addr);
 	if ((NES.GameGenie) && ((Addr == Genie.Code3A) && ((Genie.CodeStat & 0x08) || (result == Genie.Code3O))))
 		return Genie.Code3V;
 	else	return result;
@@ -229,19 +229,19 @@ void	MAPINT	GenieWrite (int Bank, int Addr, int Val)
 
 			for (i = 0x8; i < 0x10; i++)
 			{	// reset PRG banks
-				CPU.Readable[i] = FALSE;
-				CPU.PRGPointer[i] = NULL;
+				CPU::Readable[i] = FALSE;
+				CPU::PRGPointer[i] = NULL;
 			}
 			for (i = 0; i < 0x10; i++)
 			{	// and CHR banks
 				PPU.Writable[i] = FALSE;
 				PPU.CHRPointer[i] = PPU_OpenBus;
 			}
-			CPU.WriteHandler[0x8] = CPU_WritePRG;	// and the PRG write handler for $8000-$8FFF
+			CPU::WriteHandler[0x8] = CPU::WritePRG;	// and the PRG write handler for $8000-$8FFF
 
 			Genie_Init();	// map in the appropriate [optimized] read handlers
 			MI = MI2;	// swap in the REAL mapper
-			CPU_GetHandlers();	// grab a copy of CPUCycle
+			CPU::GetHandlers();	// grab a copy of CPUCycle
 			PPU_GetHandlers();	// ...and PPUCycle
 			if ((MI) && (MI->Reset))	// then hard-reset the mapper
 				MI->Reset(RESET_HARD);
@@ -287,10 +287,10 @@ void	Genie_Reset (void)
 	Genie.CodeStat = 0x80;
 	for (i = 0x8; i < 0x10; i++)
 	{
-		CPU.Readable[i] = TRUE;
-		CPU.PRGPointer[i] = GameGeniePRG;
+		CPU::Readable[i] = TRUE;
+		CPU::PRGPointer[i] = GameGeniePRG;
 	}
-	CPU.WriteHandler[0x8] = GenieWrite;
+	CPU::WriteHandler[0x8] = GenieWrite;
 	for (i = 0; i < 8; i++)
 	{
 		PPU.Writable[i] = FALSE;
@@ -300,7 +300,7 @@ void	Genie_Reset (void)
 	MI2 = MI;
 	MI = NULL;
 	PPU_GetHandlers();
-	CPU_GetHandlers();
+	CPU::GetHandlers();
 }
 
 void	Genie_Init (void)
@@ -315,23 +315,23 @@ void	Genie_Init (void)
 	if (Genie.CodeStat & 0x10)
 	{
 		if (IsCode[Genie.Code1B - 8] > 1)
-			CPU.ReadHandler[Genie.Code1B] = GenieRead;
+			CPU::ReadHandler[Genie.Code1B] = GenieRead;
 		else 
-			CPU.ReadHandler[Genie.Code1B] = GenieRead1;
+			CPU::ReadHandler[Genie.Code1B] = GenieRead1;
 	}
 	if (Genie.CodeStat & 0x20)
 	{
 		if (IsCode[Genie.Code2B - 8] > 1)
-			CPU.ReadHandler[Genie.Code2B] = GenieRead;
+			CPU::ReadHandler[Genie.Code2B] = GenieRead;
 		else 
-			CPU.ReadHandler[Genie.Code2B] = GenieRead2;
+			CPU::ReadHandler[Genie.Code2B] = GenieRead2;
 	}
 	if (Genie.CodeStat & 0x40)
 	{
 		if (IsCode[Genie.Code3B - 8] > 1)
-			CPU.ReadHandler[Genie.Code3B] = GenieRead;
+			CPU::ReadHandler[Genie.Code3B] = GenieRead;
 		else 
-			CPU.ReadHandler[Genie.Code3B] = GenieRead3;
+			CPU::ReadHandler[Genie.Code3B] = GenieRead3;
 	}
 }
 

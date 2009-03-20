@@ -570,7 +570,7 @@ inline void	Write (int Reg, unsigned char Val)
 		wavehold = (Val >> 6) & 0x1;
 		doirq = Val >> 7;
 		if (!doirq)
-			CPU.WantIRQ &= ~IRQ_DPCM;
+			CPU::WantIRQ &= ~IRQ_DPCM;
 		break;
 	case 1:	pcmdata = Val & 0x7F;
 		Pos = (pcmdata - 0x40) * 3;
@@ -588,7 +588,7 @@ inline void	Write (int Reg, unsigned char Val)
 			}
 		}
 		else	LengthCtr = 0;
-		CPU.WantIRQ &= ~IRQ_DPCM;
+		CPU::WantIRQ &= ~IRQ_DPCM;
 		break;
 	}
 }
@@ -620,7 +620,7 @@ inline void	Run (void)
 				outmode = TRUE;
 				shiftreg = buffer;
 				buffull = FALSE;
-				CPU.PCMCycles = 4;
+				CPU::PCMCycles = 4;
 			}
 			else	outmode = FALSE;
 		}
@@ -629,7 +629,7 @@ inline void	Run (void)
 
 void	Fetch (void)
 {
-	buffer = CPU_MemGet(CurAddr);
+	buffer = CPU::MemGet(CurAddr);
 	buffull = TRUE;
 	if (++CurAddr == 0x10000)
 		CurAddr = 0x8000;
@@ -641,7 +641,7 @@ void	Fetch (void)
 			LengthCtr = (len << 4) + 1;
 		}
 		else if (doirq)
-			CPU.WantIRQ |= IRQ_DPCM;
+			CPU::WantIRQ |= IRQ_DPCM;
 	}
 }
 } // namespace DPCM
@@ -671,7 +671,7 @@ inline void	Write (unsigned char Val)
 		Cycles += 2;
 	else	Cycles++;
 	if (Bits & 0x40)
-		CPU.WantIRQ &= ~IRQ_FRAME;
+		CPU::WantIRQ &= ~IRQ_FRAME;
 }
 inline void	Run (void)
 {
@@ -715,7 +715,7 @@ inline void	Run (void)
 				Noise::HalfFrame();
 			}
 			if (((Num == 3) || (Num == 4) || (Num == 5)) && !(Bits & 0x40))
-				CPU.WantIRQ |= IRQ_FRAME;
+				CPU::WantIRQ |= IRQ_FRAME;
 			Cycles = CycleTable_0[Num + 1];
 			Num++;
 			if (Num == 6)
@@ -811,9 +811,9 @@ unsigned char	Read4015 (void)
 		((           Triangle::Timer) ? 0x04 : 0) |
 		((              Noise::Timer) ? 0x08 : 0) |
 		((           DPCM::LengthCtr) ? 0x10 : 0) |
-		(((CPU.WantIRQ & IRQ_FRAME)) ? 0x40 : 0) |
-		(((CPU.WantIRQ &  IRQ_DPCM)) ? 0x80 : 0);
-	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
+		(((CPU::WantIRQ & IRQ_FRAME)) ? 0x40 : 0) |
+		(((CPU::WantIRQ &  IRQ_DPCM)) ? 0x80 : 0);
+	CPU::WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 	return result;
 }
 
@@ -1011,7 +1011,7 @@ void	Reset  (void)
 	Noise::Reset();
 	DPCM::Reset();
 	Cycles = 1;
-	CPU.WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
+	CPU::WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 	InternalClock = 0;
 }
 
@@ -1112,7 +1112,7 @@ int	Save (FILE *out)
 	fwrite(&Frame::Cycles,2,1,out);		clen += 2;	//	uint16		Frame counter cycles
 	fwrite(&Frame::Num,1,1,out);		clen++;		//	uint8		Frame counter phase
 
-	tpc = CPU.WantIRQ & (IRQ_DPCM | IRQ_FRAME);
+	tpc = CPU::WantIRQ & (IRQ_DPCM | IRQ_FRAME);
 	fwrite(&tpc,1,1,out);			clen++;		//	uint8		APU-related IRQs (PCM and FRAME, as-is)
 
 	return clen;
@@ -1201,7 +1201,7 @@ int	Load (FILE *in)
 	fread(&Frame::Num,1,1,in);		clen++;		//	uint8		Frame counter phase
 
 	fread(&tpc,1,1,in);			clen++;		//	uint8		APU-related IRQs (PCM and FRAME, as-is)
-	CPU.WantIRQ |= tpc;		// so we can reload them here
+	CPU::WantIRQ |= tpc;		// so we can reload them here
 	
 	return clen;
 }

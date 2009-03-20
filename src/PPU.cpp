@@ -561,7 +561,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				GFX_DrawScreen();
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
-					CPU.WantNMI = TRUE;
+					CPU::WantNMI = TRUE;
 				PPU.SprAddr = 0;
 			}
 			else if (PPU.SLnum == PPU.SLEndFrame - 1)
@@ -895,7 +895,7 @@ __inline static	void	RunSkip (int NumTicks)
 				GFX_DrawScreen();
 				PPU.Reg2002 |= 0x80;
 				if (PPU.Reg2000 & 0x80)
-					CPU.WantNMI = TRUE;
+					CPU::WantNMI = TRUE;
 				PPU.SprAddr = 0;
 			}
 			else if (PPU.SLnum == PPU.SLEndFrame - 1)
@@ -1170,7 +1170,7 @@ static	int	__fastcall	Read2 (void)
 		if ((PPU.Clockticks == 0))
 			tmp &= ~0x80;
 		if (PPU.Clockticks < 3)
-			CPU.WantNMI = FALSE;
+			CPU::WantNMI = FALSE;
 	}
 	return PPU.ppuLatch = tmp;
 }
@@ -1223,10 +1223,10 @@ int	MAPINT	PPU_IntRead (int Bank, int Addr)
 static	void	__fastcall	Write0 (int Val)
 {
 	if ((Val & 0x80) && !(PPU.Reg2000 & 0x80) && (PPU.Reg2002 & 0x80))
-		CPU.WantNMI = TRUE;
+		CPU::WantNMI = TRUE;
 	// race condition
 	if ((PPU.SLnum == 241) && !(Val & 0x80) && (PPU.Clockticks < 3))
-		CPU.WantNMI = FALSE;
+		CPU::WantNMI = FALSE;
 	PPU.Reg2000 = (unsigned char)Val;
 	PPU.IntReg &= 0x73FF;
 	PPU.IntReg |= (Val & 3) << 10;

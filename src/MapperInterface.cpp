@@ -49,19 +49,19 @@ struct	tMapperDLL
 
 static	void	MAPINT	SetCPUWriteHandler (int Page, FCPUWrite New)
 {
-	CPU.WriteHandler[Page] = New;
+	CPU::WriteHandler[Page] = New;
 }
 static	void	MAPINT	SetCPUReadHandler (int Page, FCPURead New)
 {
-	CPU.ReadHandler[Page] = New;
+	CPU::ReadHandler[Page] = New;
 }
 static	FCPUWrite	MAPINT	GetCPUWriteHandler (int Page)
 {
-	return CPU.WriteHandler[Page];
+	return CPU::WriteHandler[Page];
 }
 static	FCPURead	MAPINT	GetCPUReadHandler (int Page)
 {
-	return CPU.ReadHandler[Page];
+	return CPU::ReadHandler[Page];
 }
 
 static	void	MAPINT	SetPPUWriteHandler (int Page, FPPUWrite New)
@@ -97,9 +97,9 @@ static	FPPURead	MAPINT	GetPPUReadHandler (int Page)
 
 static	__inline void	MAPINT	SetPRG_ROM4 (int Bank, int Val)
 {
-	CPU.PRGPointer[Bank] = PRG_ROM[Val & NES.PRGMask];
-	CPU.Readable[Bank] = TRUE;
-	CPU.Writable[Bank] = FALSE;
+	CPU::PRGPointer[Bank] = PRG_ROM[Val & NES.PRGMask];
+	CPU::Readable[Bank] = TRUE;
+	CPU::Writable[Bank] = FALSE;
 }
 static	void	MAPINT	SetPRG_ROM8 (int Bank, int Val)
 {
@@ -129,7 +129,7 @@ static	void	MAPINT	SetPRG_ROM32 (int Bank, int Val)
 }
 static	int	MAPINT	GetPRG_ROM4 (int Bank)	/* -1 if no ROM mapped */
 {
-	int tpi = (int)((CPU.PRGPointer[Bank] - PRG_ROM[0]) >> 12);
+	int tpi = (int)((CPU::PRGPointer[Bank] - PRG_ROM[0]) >> 12);
 	if ((tpi < 0) || (tpi > NES.PRGMask)) return -1;
 	else return tpi;
 }
@@ -138,9 +138,9 @@ static	int	MAPINT	GetPRG_ROM4 (int Bank)	/* -1 if no ROM mapped */
 
 static	__inline void	MAPINT	SetPRG_RAM4 (int Bank, int Val)
 {
-	CPU.PRGPointer[Bank] = PRG_RAM[Val & 0xF];
-	CPU.Readable[Bank] = TRUE;
-	CPU.Writable[Bank] = TRUE;
+	CPU::PRGPointer[Bank] = PRG_RAM[Val & 0xF];
+	CPU::Readable[Bank] = TRUE;
+	CPU::Writable[Bank] = TRUE;
 }
 static	void	MAPINT	SetPRG_RAM8 (int Bank, int Val)
 {
@@ -170,7 +170,7 @@ static	void	MAPINT	SetPRG_RAM32 (int Bank, int Val)
 }
 static	int	MAPINT	GetPRG_RAM4 (int Bank)	/* -1 if no RAM mapped */
 {
-	int tpi = (int)((CPU.PRGPointer[Bank] - PRG_RAM[0]) >> 12);
+	int tpi = (int)((CPU::PRGPointer[Bank] - PRG_RAM[0]) >> 12);
 	if ((tpi < 0) || (tpi > MAX_PRGRAM_MASK)) return -1;
 	else return tpi;
 }
@@ -179,18 +179,18 @@ static	int	MAPINT	GetPRG_RAM4 (int Bank)	/* -1 if no RAM mapped */
 
 static	unsigned char *	MAPINT	GetPRG_Ptr4 (int Bank)
 {
-	return CPU.PRGPointer[Bank];
+	return CPU::PRGPointer[Bank];
 }
 static	void	MAPINT	SetPRG_Ptr4 (int Bank, unsigned char *Data, BOOL Writable)
 {
-	CPU.PRGPointer[Bank] = Data;
-	CPU.Readable[Bank] = TRUE;
-	CPU.Writable[Bank] = Writable;
+	CPU::PRGPointer[Bank] = Data;
+	CPU::Readable[Bank] = TRUE;
+	CPU::Writable[Bank] = Writable;
 }
 static	void	MAPINT	SetPRG_OB4 (int Bank)	/* Open bus */
 {
-	CPU.Readable[Bank] = FALSE;
-	CPU.Writable[Bank] = FALSE;
+	CPU::Readable[Bank] = FALSE;
+	CPU::Writable[Bank] = FALSE;
 }
 
 /******************************************************************************/
@@ -431,8 +431,8 @@ static	void	MAPINT	Set_SRAMSize (int Size)	/* Sets the size of the SRAM (in byte
 static	void	MAPINT	SetIRQ (int IRQstate)
 {
 	if (IRQstate)
-		CPU.WantIRQ &= ~IRQ_EXTERNAL;
-	else	CPU.WantIRQ |= IRQ_EXTERNAL;
+		CPU::WantIRQ &= ~IRQ_EXTERNAL;
+	else	CPU::WantIRQ |= IRQ_EXTERNAL;
 }
 
 static	void	MAPINT	DbgOut (TCHAR *text, ...)
@@ -561,7 +561,7 @@ void	MapperInterface_Init (void)
 	EI.Set_SRAMSize = Set_SRAMSize;
 	EI.DbgOut = DbgOut;
 	EI.StatusOut = StatusOut;
-	EI.OpenBus = &CPU.LastRead;
+	EI.OpenBus = &CPU::LastRead;
 	MI = NULL;
 #ifndef	NSFPLAYER
 	MI2 = NULL;

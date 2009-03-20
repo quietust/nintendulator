@@ -21,8 +21,27 @@
 # include "Controllers.h"
 #endif	/* NSFPLAYER */
 
-struct tCPU CPU;
-unsigned char CPU_RAM[0x800];
+namespace CPU
+{
+FCPURead	ReadHandler[0x10];
+FCPUWrite	WriteHandler[0x10];
+unsigned char *	PRGPointer[0x10];
+BOOL	Readable[0x10], Writable[0x10];
+
+#ifndef	NSFPLAYER
+unsigned char WantNMI;
+#endif	/* !NSFPLAYER */
+unsigned char WantIRQ;
+unsigned char PCMCycles;
+#ifdef	ENABLE_DEBUGGER
+unsigned char GotInterrupt;
+#endif	/* ENABLE_DEBUGGER */
+
+unsigned char A, X, Y, SP, P;
+unsigned char FC, FZ, FI, FD, FV, FN;
+unsigned char LastRead;
+union SplitReg rPC;
+unsigned char RAM[0x800];
 
 union SplitReg rCalcAddr;
 union SplitReg rTmpAddr;
@@ -38,7 +57,7 @@ signed char BranchOffset;
 
 static	__forceinline void	FixPC (void)
 {
-	CPU.rPC.Segment[2] = 0;
+	rPC.Segment[2] = 0;
 }
 
 unsigned char TmpData;
@@ -46,8 +65,8 @@ unsigned char TmpData;
 unsigned char Opcode;
 unsigned long OpAddr;
 
-static	void	(MAPINT *CPU_CPUCycle)		(void);
-void	MAPINT	CPU_NoCPUCycle (void) { }
+static	void	(MAPINT *CPUCycle)		(void);
+void	MAPINT	NoCPUCycle (void) { }
 
 static	BOOL LastNMI;
 static	BOOL LastIRQ;
@@ -55,10 +74,10 @@ static	BOOL LastIRQ;
 static	__forceinline void	RunCycle (void)
 {
 #ifndef	NSFPLAYER
-	LastNMI = CPU.WantNMI;
+	LastNMI = WantNMI;
 #endif	/* !NSFPLAYER */
-	LastIRQ = CPU.WantIRQ && !CPU.FI;
-	CPU_CPUCycle();
+	LastIRQ = WantIRQ && !FI;
+	CPUCycle();
 #ifndef	CPU_BENCHMARK
 #ifndef	NSFPLAYER
 	PPU_Run();
@@ -66,234 +85,234 @@ static	__forceinline void	RunCycle (void)
 	APU::Run();
 #endif	/* !CPU_BENCHMARK */
 }
-#define	CPU_MemGetCode	CPU_MemGet
-unsigned char	__fastcall	CPU_MemGet (unsigned int Addr)
+#define	MemGetCode	MemGet
+unsigned char	__fastcall	MemGet (unsigned int Addr)
 {
 	static int buf;
-	if (CPU.PCMCycles)
+	if (PCMCycles)
 	{
-		int PCMCycles = CPU.PCMCycles;
-		CPU.PCMCycles = 0;
+		int _PCMCycles = PCMCycles;
+		PCMCycles = 0;
 		if ((Addr == 0x4016) || (Addr == 0x4017))
 		{
 			// Consecutive controller port reads from this are treated as one
-			if (PCMCycles--)
-				CPU_MemGet(Addr);
-			while (--PCMCycles)
+			if (_PCMCycles--)
+				MemGet(Addr);
+			while (--_PCMCycles)
 				RunCycle();
 		}
 		else
 		{
 			// but other addresses see multiple reads as expected
-			while (--PCMCycles)
-				CPU_MemGet(Addr);
+			while (--_PCMCycles)
+				MemGet(Addr);
 		}
 		APU::DPCM::Fetch();
 	}
 
 	RunCycle();
 
-	if (CPU.ReadHandler[(Addr >> 12) & 0xF] == CPU_ReadPRG)
+	if (ReadHandler[(Addr >> 12) & 0xF] == ReadPRG)
 	{
-		if (CPU.Readable[(Addr >> 12) & 0xF])
-			buf = CPU.PRGPointer[(Addr >> 12) & 0xF][Addr & 0xFFF];
+		if (Readable[(Addr >> 12) & 0xF])
+			buf = PRGPointer[(Addr >> 12) & 0xF][Addr & 0xFFF];
 		else	buf = -1;
 		if (buf != -1)
-			CPU.LastRead = (unsigned char)buf;
-		return CPU.LastRead;
+			LastRead = (unsigned char)buf;
+		return LastRead;
 	}
-	buf = CPU.ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF,Addr & 0xFFF);
+	buf = ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF,Addr & 0xFFF);
 	if (buf != -1)
-		CPU.LastRead = (unsigned char)buf;
-	return CPU.LastRead;
+		LastRead = (unsigned char)buf;
+	return LastRead;
 }
-void	__fastcall	CPU_MemSet (unsigned int Addr, unsigned char Val)
+void	__fastcall	MemSet (unsigned int Addr, unsigned char Val)
 {
 	RunCycle();
-	if (CPU.PCMCycles)
-		CPU.PCMCycles--;
-	CPU.WriteHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF,Addr & 0xFFF,Val);
+	if (PCMCycles)
+		PCMCycles--;
+	WriteHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF,Addr & 0xFFF,Val);
 }
 static	__forceinline void	Push (unsigned char Val)
 {
-	CPU_MemSet(0x100 | CPU.SP--,Val);
+	MemSet(0x100 | SP--,Val);
 }
 static	__forceinline unsigned char	Pull (void)
 {
-	return CPU_MemGet(0x100 | ++CPU.SP);
+	return MemGet(0x100 | ++SP);
 }
-void	CPU_JoinFlags (void)
+void	JoinFlags (void)
 {
-	CPU.P = 0x20;
-	if (CPU.FC) CPU.P |= 0x01;
-	if (CPU.FZ) CPU.P |= 0x02;
-	if (CPU.FI) CPU.P |= 0x04;
-	if (CPU.FD) CPU.P |= 0x08;
-	if (CPU.FV) CPU.P |= 0x40;
-	if (CPU.FN) CPU.P |= 0x80;
+	P = 0x20;
+	if (FC) P |= 0x01;
+	if (FZ) P |= 0x02;
+	if (FI) P |= 0x04;
+	if (FD) P |= 0x08;
+	if (FV) P |= 0x40;
+	if (FN) P |= 0x80;
 }
-void	CPU_SplitFlags (void)
+void	SplitFlags (void)
 {
 	__asm
 	{
-		mov	al,CPU.P
+		mov	al,P
 		shr	al,1
-		setc	CPU.FC
+		setc	FC
 		shr	al,1
-		setc	CPU.FZ
+		setc	FZ
 		shr	al,1
-		setc	CPU.FI
+		setc	FI
 		shr	al,1
-		setc	CPU.FD
+		setc	FD
 		shr	al,3
-		setc	CPU.FV
+		setc	FV
 		shr	al,1
-		setc	CPU.FN
+		setc	FN
 	}
 }
 #ifndef	NSFPLAYER
 static	__forceinline void	DoNMI (void)
 {
-	CPU_MemGetCode(CPU.PC);
-	CPU_MemGetCode(CPU.PC);
-	Push(CPU.PCH);
-	Push(CPU.PCL);
-	CPU_JoinFlags();
-	Push(CPU.P & 0xEF);
-	CPU.FI = 1;
+	MemGetCode(PC);
+	MemGetCode(PC);
+	Push(PCH);
+	Push(PCL);
+	JoinFlags();
+	Push(P & 0xEF);
+	FI = 1;
 
-	CPU.PCL = CPU_MemGet(0xFFFA);
-	CPU.PCH = CPU_MemGet(0xFFFB);
+	PCL = MemGet(0xFFFA);
+	PCH = MemGet(0xFFFB);
 #ifdef	ENABLE_DEBUGGER
-	CPU.GotInterrupt = INTERRUPT_NMI;
+	GotInterrupt = INTERRUPT_NMI;
 #endif	/* ENABLE_DEBUGGER */
 }
 #endif	/* !NSFPLAYER */
 static	__forceinline void	DoIRQ (void)
 {
-	CPU_MemGetCode(CPU.PC);
-	CPU_MemGetCode(CPU.PC);
-	Push(CPU.PCH);
-	Push(CPU.PCL);
-	CPU_JoinFlags();
-	Push(CPU.P & 0xEF);
-	CPU.FI = 1;
+	MemGetCode(PC);
+	MemGetCode(PC);
+	Push(PCH);
+	Push(PCL);
+	JoinFlags();
+	Push(P & 0xEF);
+	FI = 1;
 
-	CPU.PCL = CPU_MemGet(0xFFFE);
-	CPU.PCH = CPU_MemGet(0xFFFF);
+	PCL = MemGet(0xFFFE);
+	PCH = MemGet(0xFFFF);
 #ifdef	ENABLE_DEBUGGER
-	CPU.GotInterrupt = INTERRUPT_IRQ;
+	GotInterrupt = INTERRUPT_IRQ;
 #endif	/* ENABLE_DEBUGGER */
 }
 
-void	CPU_GetHandlers (void)
+void	GetHandlers (void)
 {
 	if ((MI) && (MI->CPUCycle))
-		CPU_CPUCycle = MI->CPUCycle;
-	else	CPU_CPUCycle = CPU_NoCPUCycle;
+		CPUCycle = MI->CPUCycle;
+	else	CPUCycle = NoCPUCycle;
 }
 
-void	CPU_PowerOn (void)
+void	PowerOn (void)
 {
-	ZeroMemory(CPU_RAM,sizeof(CPU_RAM));
-	CPU.A = 0;
-	CPU.X = 0;
-	CPU.Y = 0;
-	CPU.PC = 0;
-	CPU.SP = 0;
-	CPU.P = 0x20;
+	ZeroMemory(RAM,sizeof(RAM));
+	A = 0;
+	X = 0;
+	Y = 0;
+	PC = 0;
+	SP = 0;
+	P = 0x20;
 	CalcAddr = 0;
 	TmpAddr = 0;
-	CPU_SplitFlags();
-	CPU_GetHandlers();
+	SplitFlags();
+	GetHandlers();
 }
 
-void	CPU_Reset (void)
+void	Reset (void)
 {
-	CPU_MemGetCode(CPU.PC);
-	CPU_MemGetCode(CPU.PC);
-	CPU_MemGet(0x100 | CPU.SP--);
-	CPU_MemGet(0x100 | CPU.SP--);
-	CPU_MemGet(0x100 | CPU.SP--);
-	CPU.FI = 1;
+	MemGetCode(PC);
+	MemGetCode(PC);
+	MemGet(0x100 | SP--);
+	MemGet(0x100 | SP--);
+	MemGet(0x100 | SP--);
+	FI = 1;
 
-	CPU.PCL = CPU_MemGet(0xFFFC);
-	CPU.PCH = CPU_MemGet(0xFFFD);
+	PCL = MemGet(0xFFFC);
+	PCH = MemGet(0xFFFD);
 #ifdef	ENABLE_DEBUGGER
-	CPU.GotInterrupt = INTERRUPT_RST;
+	GotInterrupt = INTERRUPT_RST;
 #endif	/* ENABLE_DEBUGGER */
 }
 
 #ifndef	NSFPLAYER
-int	CPU_Save (FILE *out)
+int	Save (FILE *out)
 {
 	int clen = 0;
 		//Data
-	fwrite(&CPU.PCH,1,1,out);	clen++;		//	PCL	uint8		Program Counter, low byte
-	fwrite(&CPU.PCL,1,1,out);	clen++;		//	PCH	uint8		Program Counter, high byte
-	fwrite(&CPU.A,1,1,out);		clen++;		//	A	uint8		Accumulator
-	fwrite(&CPU.X,1,1,out);		clen++;		//	X	uint8		X register
-	fwrite(&CPU.Y,1,1,out);		clen++;		//	Y	uint8		Y register
-	fwrite(&CPU.SP,1,1,out);	clen++;		//	SP	uint8		Stack pointer
-	CPU_JoinFlags();
-	fwrite(&CPU.P,1,1,out);		clen++;		//	P	uint8		Processor status register
-	fwrite(&CPU.LastRead,1,1,out);	clen++;		//	BUS	uint8		Last contents of data bus
-	fwrite(&CPU.WantNMI,1,1,out);	clen++;		//	NMI	uint8		TRUE if falling edge detected on /NMI
-	fwrite(&CPU.WantIRQ,1,1,out);	clen++;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
-	fwrite(CPU_RAM,1,0x800,out);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
+	fwrite(&PCH,1,1,out);	clen++;		//	PCL	uint8		Program Counter, low byte
+	fwrite(&PCL,1,1,out);	clen++;		//	PCH	uint8		Program Counter, high byte
+	fwrite(&A,1,1,out);		clen++;		//	A	uint8		Accumulator
+	fwrite(&X,1,1,out);		clen++;		//	X	uint8		X register
+	fwrite(&Y,1,1,out);		clen++;		//	Y	uint8		Y register
+	fwrite(&SP,1,1,out);	clen++;		//	SP	uint8		Stack pointer
+	JoinFlags();
+	fwrite(&P,1,1,out);		clen++;		//	P	uint8		Processor status register
+	fwrite(&LastRead,1,1,out);	clen++;		//	BUS	uint8		Last contents of data bus
+	fwrite(&WantNMI,1,1,out);	clen++;		//	NMI	uint8		TRUE if falling edge detected on /NMI
+	fwrite(&WantIRQ,1,1,out);	clen++;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
+	fwrite(RAM,1,0x800,out);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
 	return clen;
 }
 
-int	CPU_Load (FILE *in)
+int	Load (FILE *in)
 {
 	int clen = 0;
-	fread(&CPU.PCH,1,1,in);		clen++;		//	PCL	uint8		Program Counter, low byte
-	fread(&CPU.PCL,1,1,in);		clen++;		//	PCH	uint8		Program Counter, high byte
-	fread(&CPU.A,1,1,in);		clen++;		//	A	uint8		Accumulator
-	fread(&CPU.X,1,1,in);		clen++;		//	X	uint8		X register
-	fread(&CPU.Y,1,1,in);		clen++;		//	Y	uint8		Y register
-	fread(&CPU.SP,1,1,in);		clen++;		//	SP	uint8		Stack pointer
-	fread(&CPU.P,1,1,in);		clen++;		//	P	uint8		Processor status register
-	CPU_SplitFlags();
-	fread(&CPU.LastRead,1,1,in);	clen++;		//	BUS	uint8		Last contents of data bus
-	fread(&CPU.WantNMI,1,1,in);	clen++;		//	NMI	uint8		TRUE if falling edge detected on /NMI
-	fread(&CPU.WantIRQ,1,1,in);	clen++;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
-	fread(CPU_RAM,1,0x800,in);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
+	fread(&PCH,1,1,in);		clen++;		//	PCL	uint8		Program Counter, low byte
+	fread(&PCL,1,1,in);		clen++;		//	PCH	uint8		Program Counter, high byte
+	fread(&A,1,1,in);		clen++;		//	A	uint8		Accumulator
+	fread(&X,1,1,in);		clen++;		//	X	uint8		X register
+	fread(&Y,1,1,in);		clen++;		//	Y	uint8		Y register
+	fread(&SP,1,1,in);		clen++;		//	SP	uint8		Stack pointer
+	fread(&P,1,1,in);		clen++;		//	P	uint8		Processor status register
+	SplitFlags();
+	fread(&LastRead,1,1,in);	clen++;		//	BUS	uint8		Last contents of data bus
+	fread(&WantNMI,1,1,in);	clen++;		//	NMI	uint8		TRUE if falling edge detected on /NMI
+	fread(&WantIRQ,1,1,in);	clen++;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
+	fread(RAM,1,0x800,in);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
 	return clen;
 }
 #endif	/* !NSFPLAYER */
 
-int	MAPINT	CPU_ReadRAM (int Bank, int Addr)
+int	MAPINT	ReadRAM (int Bank, int Addr)
 {
-	return CPU_RAM[Addr & 0x07FF];
+	return RAM[Addr & 0x07FF];
 }
 
-void	MAPINT	CPU_WriteRAM (int Bank, int Addr, int Val)
+void	MAPINT	WriteRAM (int Bank, int Addr, int Val)
 {
-	CPU_RAM[Addr & 0x07FF] = (unsigned char)Val;
+	RAM[Addr & 0x07FF] = (unsigned char)Val;
 }
 
-int	MAPINT	CPU_Read4k (int Bank, int Addr)
+int	MAPINT	Read4k (int Bank, int Addr)
 {
 	switch (Addr)
 	{
 	case 0x015:	return APU::Read4015();						break;
 #ifndef	NSFPLAYER
-	case 0x016:	return (CPU.LastRead & 0xC0) |
+	case 0x016:	return (LastRead & 0xC0) |
 			(Controllers::Port1.Read(&Controllers::Port1) & 0x19) |
 			(Controllers::ExpPort.Read1(&Controllers::ExpPort) & 0x1F);	break;
-	case 0x017:	return (CPU.LastRead & 0xC0) |
+	case 0x017:	return (LastRead & 0xC0) |
 			(Controllers::Port2.Read(&Controllers::Port2) & 0x19) |
 			(Controllers::ExpPort.Read2(&Controllers::ExpPort) & 0x1F);	break;
 #else	/* NSFPLAYER */
 	case 0x016:
-	case 0x017:	return (CPU.LastRead & 0xC0);					break;
+	case 0x017:	return (LastRead & 0xC0);					break;
 #endif	/* !NSFPLAYER */
-	default:	return CPU.LastRead;						break;
+	default:	return LastRead;						break;
 	}
 }
 
-void	MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
+void	MAPINT	Write4k (int Bank, int Addr, int Val)
 {
 	int i;
 	switch (Addr)
@@ -306,499 +325,499 @@ void	MAPINT	CPU_Write4k (int Bank, int Addr, int Val)
 	case 0x015:case 0x017:
 			APU::WriteReg(Addr,(unsigned char)Val);	break;
 	case 0x014:	for (i = 0; i < 0x100; i++)
-				CPU_MemSet(0x2004,CPU_MemGet((Val << 8) | i));
-			CPU_MemGet(CPU.PC);	break;
+				MemSet(0x2004,MemGet((Val << 8) | i));
+			MemGet(PC);	break;
 #ifndef	NSFPLAYER
 	case 0x016:	Controllers::Write((unsigned char)Val);	break;
 #endif	/* !NSFPLAYER */
 	}
 }
 
-int	MAPINT	CPU_ReadPRG (int Bank, int Addr)
+int	MAPINT	ReadPRG (int Bank, int Addr)
 {
-	if (CPU.Readable[Bank])
-		return CPU.PRGPointer[Bank][Addr];
+	if (Readable[Bank])
+		return PRGPointer[Bank][Addr];
 	else	return -1;
 }
 
-void	MAPINT	CPU_WritePRG (int Bank, int Addr, int Val)
+void	MAPINT	WritePRG (int Bank, int Addr, int Val)
 {
-	if (CPU.Writable[Bank])
-		CPU.PRGPointer[Bank][Addr] = (unsigned char)Val;
+	if (Writable[Bank])
+		PRGPointer[Bank][Addr] = (unsigned char)Val;
 }
 
 static	__forceinline void	AM_IMP (void)
 {
-	CPU_MemGetCode(CPU.PC);
+	MemGetCode(PC);
 }
 static	__forceinline void	AM_IMM (void)
 {
-	CalcAddr = CPU.PC++;
+	CalcAddr = PC++;
 	FixPC();
 }
 static	__forceinline void	AM_ABS (void)
 {
-	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	CalcAddrL = MemGetCode(PC++);
 	FixPC();
-	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	CalcAddrH = MemGetCode(PC++);
 	FixPC();
 }
 
 static	__forceinline void	AM_REL (void)
 {
-	BranchOffset = CPU_MemGetCode(CPU.PC++);
+	BranchOffset = MemGetCode(PC++);
 	FixPC();
 }
 static	__forceinline void	AM_ABX (void)
 {
-	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	CalcAddrL = MemGetCode(PC++);
 	FixPC();
-	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	CalcAddrH = MemGetCode(PC++);
 	FixPC();
 	__asm
 	{
-		mov	al,CPU.X
+		mov	al,X
 		add	CalcAddrL,al
 		jnc	noinc
 		mov	ecx,CalcAddr
-		call	CPU_MemGet
+		call	MemGet
 		inc	CalcAddrH
 noinc:
 	}
 }
 static	__forceinline void	AM_ABXW (void)
 {
-	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	CalcAddrL = MemGetCode(PC++);
 	FixPC();
-	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	CalcAddrH = MemGetCode(PC++);
 	FixPC();
 	__asm
 	{
-		mov	al,CPU.X
+		mov	al,X
 		add	CalcAddrL,al
 		jc	doinc
 		mov	ecx,CalcAddr
-		call	CPU_MemGet
+		call	MemGet
 		jmp	end
 doinc:		mov	ecx,CalcAddr
-		call	CPU_MemGet
+		call	MemGet
 		inc	CalcAddrH
 end:
 	}
 }
 static	__forceinline void	AM_ABY (void)
 {
-	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	CalcAddrL = MemGetCode(PC++);
 	FixPC();
-	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	CalcAddrH = MemGetCode(PC++);
 	FixPC();
 	__asm
 	{
-		mov	al,CPU.Y
+		mov	al,Y
 		add	CalcAddrL,al
 		jnc	noinc
 		mov	ecx,CalcAddr
-		call	CPU_MemGet
+		call	MemGet
 		inc	CalcAddrH
 noinc:
 	}
 }
 static	__forceinline void	AM_ABYW (void)
 {
-	CalcAddrL = CPU_MemGetCode(CPU.PC++);
+	CalcAddrL = MemGetCode(PC++);
 	FixPC();
-	CalcAddrH = CPU_MemGetCode(CPU.PC++);
+	CalcAddrH = MemGetCode(PC++);
 	FixPC();
 	__asm
 	{
-		mov	al,CPU.Y
+		mov	al,Y
 		add	CalcAddrL,al
 		jc	doinc
 		mov	ecx,CalcAddr
-		call	CPU_MemGet
+		call	MemGet
 		jmp	end
 doinc:		mov	ecx,CalcAddr
-		call	CPU_MemGet
+		call	MemGet
 		inc	CalcAddrH
 end:
 	}
 }
 static	__forceinline void	AM_ZPG (void)
 {
-	CalcAddr = CPU_MemGetCode(CPU.PC++);
+	CalcAddr = MemGetCode(PC++);
 	FixPC();
 }
 static	__forceinline void	AM_ZPX (void)
 {
-	CalcAddr = CPU_MemGetCode(CPU.PC++);
+	CalcAddr = MemGetCode(PC++);
 	FixPC();
-	CPU_MemGet(CalcAddr);
-	CalcAddrL = CalcAddrL + CPU.X;
+	MemGet(CalcAddr);
+	CalcAddrL = CalcAddrL + X;
 }
 static	__forceinline void	AM_ZPY (void)
 {
-	CalcAddr = CPU_MemGetCode(CPU.PC++);
+	CalcAddr = MemGetCode(PC++);
 	FixPC();
-	CPU_MemGet(CalcAddr);
-	CalcAddrL = CalcAddrL + CPU.Y;
+	MemGet(CalcAddr);
+	CalcAddrL = CalcAddrL + Y;
 }
 static	__forceinline void	AM_INX (void)
 {
-	TmpAddr = CPU_MemGetCode(CPU.PC++);
+	TmpAddr = MemGetCode(PC++);
 	FixPC();
-	CPU_MemGet(TmpAddr);
-	TmpAddrL = TmpAddrL + CPU.X;
-	CalcAddrL = CPU_MemGet(TmpAddr);
+	MemGet(TmpAddr);
+	TmpAddrL = TmpAddrL + X;
+	CalcAddrL = MemGet(TmpAddr);
 	TmpAddrL++;
-	CalcAddrH = CPU_MemGet(TmpAddr);
+	CalcAddrH = MemGet(TmpAddr);
 }
 static	__forceinline void	AM_INY (void)
 {
-	TmpAddr = CPU_MemGetCode(CPU.PC++);
+	TmpAddr = MemGetCode(PC++);
 	FixPC();
-	CalcAddrL = CPU_MemGet(TmpAddr);
+	CalcAddrL = MemGet(TmpAddr);
 	TmpAddrL++;
-	CalcAddrH = CPU_MemGet(TmpAddr);
+	CalcAddrH = MemGet(TmpAddr);
 	__asm
 	{
-		mov	al,CPU.Y
+		mov	al,Y
 		add	CalcAddrL,al
 		jnc	noinc
 		mov	ecx,CalcAddr
-		call	CPU_MemGet
+		call	MemGet
 		inc	CalcAddrH
 noinc:
 	}
 }
 static	__forceinline void	AM_INYW (void)
 {
-	TmpAddr = CPU_MemGetCode(CPU.PC++);
+	TmpAddr = MemGetCode(PC++);
 	FixPC();
-	CalcAddrL = CPU_MemGet(TmpAddr);
+	CalcAddrL = MemGet(TmpAddr);
 	TmpAddrL++;
-	CalcAddrH = CPU_MemGet(TmpAddr);
+	CalcAddrH = MemGet(TmpAddr);
 	__asm
 	{
-		mov	al,CPU.Y
+		mov	al,Y
 		add	CalcAddrL,al
 		jc	doinc
 		mov	ecx,CalcAddr
-		call	CPU_MemGet
+		call	MemGet
 		jmp	end
 doinc:		mov	ecx,CalcAddr
-		call	CPU_MemGet
+		call	MemGet
 		inc	CalcAddrH
 end:
 	}
 }
 static	__forceinline void	IN_ADC (void)
 {
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	ah,CPU.FC
+		mov	ah,FC
 		add	ah,0xFF
-		mov	al,CPU.LastRead
-		adc	CPU.A,al
-		setc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
-		seto	CPU.FV
+		mov	al,LastRead
+		adc	A,al
+		setc	FC
+		setz	FZ
+		sets	FN
+		seto	FV
 	}
 }
 static	__forceinline void	IN_AND (void)
 {
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	al,CPU.LastRead
-		and	CPU.A,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		mov	al,LastRead
+		and	A,al
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_ASL (void)
 {
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
 		shl	TmpData,1
-		setc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
+		setc	FC
+		setz	FZ
+		sets	FN
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IN_ASL_A (void)
 {
 	__asm
 	{
-		shl	CPU.A,1
-		setc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
+		shl	A,1
+		setc	FC
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_BRANCH (BOOL Condition)
 {
 	if (Condition)
 	{
-		CPU_MemGet(CPU.PC);
+		MemGet(PC);
 		__asm
 		{
 			mov	al,BranchOffset
 			test	al,0x80
 			je	pos
-			add	CPU.PCL,al
+			add	PCL,al
 			jc	end
-			mov	ecx,CPU.PC
-			call	CPU_MemGet
-			dec	CPU.PCH
+			mov	ecx,PC
+			call	MemGet
+			dec	PCH
 			jmp	end
 
-pos:			add	CPU.PCL,al
+pos:			add	PCL,al
 			jnc	end
-			mov	ecx,CPU.PC
-			call	CPU_MemGet
-			inc	CPU.PCH
+			mov	ecx,PC
+			call	MemGet
+			inc	PCH
 end:
 		}
 	}
 }
-static	__forceinline void	IN_BCS (void) {	IN_BRANCH( CPU.FC);	}
-static	__forceinline void	IN_BCC (void) {	IN_BRANCH(!CPU.FC);	}
-static	__forceinline void	IN_BEQ (void) {	IN_BRANCH( CPU.FZ);	}
-static	__forceinline void	IN_BNE (void) {	IN_BRANCH(!CPU.FZ);	}
-static	__forceinline void	IN_BMI (void) {	IN_BRANCH( CPU.FN);	}
-static	__forceinline void	IN_BPL (void) {	IN_BRANCH(!CPU.FN);	}
-static	__forceinline void	IN_BVS (void) {	IN_BRANCH( CPU.FV);	}
-static	__forceinline void	IN_BVC (void) {	IN_BRANCH(!CPU.FV);	}
+static	__forceinline void	IN_BCS (void) {	IN_BRANCH( FC);	}
+static	__forceinline void	IN_BCC (void) {	IN_BRANCH(!FC);	}
+static	__forceinline void	IN_BEQ (void) {	IN_BRANCH( FZ);	}
+static	__forceinline void	IN_BNE (void) {	IN_BRANCH(!FZ);	}
+static	__forceinline void	IN_BMI (void) {	IN_BRANCH( FN);	}
+static	__forceinline void	IN_BPL (void) {	IN_BRANCH(!FN);	}
+static	__forceinline void	IN_BVS (void) {	IN_BRANCH( FV);	}
+static	__forceinline void	IN_BVC (void) {	IN_BRANCH(!FV);	}
 static	__forceinline void	IN_BIT (void)
 {
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	al,CPU.LastRead
+		mov	al,LastRead
 		mov	dl,al
 		shr	al,7
-		setc	CPU.FV
+		setc	FV
 		shr	al,1
-		setc	CPU.FN
-		and	dl,CPU.A
-		setz	CPU.FZ
+		setc	FN
+		and	dl,A
+		setz	FZ
 	}
 }
 static	__forceinline void	IN_BRK (void)
 {
-	CPU_MemGet(CPU.PC);
-	Push(CPU.PCH);
-	Push(CPU.PCL);
-	CPU_JoinFlags();
-	Push(CPU.P | 0x10);
-	CPU.FI = 1;
+	MemGet(PC);
+	Push(PCH);
+	Push(PCL);
+	JoinFlags();
+	Push(P | 0x10);
+	FI = 1;
 #ifndef	NSFPLAYER
-	if (CPU.WantNMI)
+	if (WantNMI)
 	{
-		CPU.WantNMI = FALSE;
-		CPU.PCL = CPU_MemGet(0xFFFA);
-		CPU.PCH = CPU_MemGet(0xFFFB);
+		WantNMI = FALSE;
+		PCL = MemGet(0xFFFA);
+		PCH = MemGet(0xFFFB);
 	}
 	else
 	{
-		CPU.PCL = CPU_MemGet(0xFFFE);
-		CPU.PCH = CPU_MemGet(0xFFFF);
+		PCL = MemGet(0xFFFE);
+		PCH = MemGet(0xFFFF);
 	}
 #else	/* NSFPLAYER */
-	CPU.PCL = CPU_MemGet(0xFFFE);
-	CPU.PCH = CPU_MemGet(0xFFFF);
+	PCL = MemGet(0xFFFE);
+	PCH = MemGet(0xFFFF);
 #endif	/* !NSFPLAYER */
 #ifdef	ENABLE_DEBUGGER
-	CPU.GotInterrupt = INTERRUPT_BRK;
+	GotInterrupt = INTERRUPT_BRK;
 #endif	/* ENABLE_DEBUGGER */
 }
-static	__forceinline void	IN_CLC (void) {	__asm	mov CPU.FC,0	}
-static	__forceinline void	IN_CLD (void) {	__asm	mov CPU.FD,0	}
-static	__forceinline void	IN_CLI (void) {	__asm	mov CPU.FI,0	}
-static	__forceinline void	IN_CLV (void) {	__asm	mov CPU.FV,0	}
+static	__forceinline void	IN_CLC (void) {	__asm	mov FC,0	}
+static	__forceinline void	IN_CLD (void) {	__asm	mov FD,0	}
+static	__forceinline void	IN_CLI (void) {	__asm	mov FI,0	}
+static	__forceinline void	IN_CLV (void) {	__asm	mov FV,0	}
 static	__forceinline void	IN_CMP (void)
 {
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	al,CPU.A
-		sub	al,CPU.LastRead
-		setnc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
+		mov	al,A
+		sub	al,LastRead
+		setnc	FC
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_CPX (void)
 {
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	al,CPU.X
-		sub	al,CPU.LastRead
-		setnc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
+		mov	al,X
+		sub	al,LastRead
+		setnc	FC
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_CPY (void)
 {
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	al,CPU.Y
-		sub	al,CPU.LastRead
-		setnc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
+		mov	al,Y
+		sub	al,LastRead
+		setnc	FC
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_DEC (void)
 {
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
 		dec	TmpData
-		setz	CPU.FZ
-		sets	CPU.FN
+		setz	FZ
+		sets	FN
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IN_DEX (void)
 {
 	__asm
 	{
-		dec	CPU.X
-		setz	CPU.FZ
-		sets	CPU.FN
+		dec	X
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_DEY (void)
 {
 	__asm
 	{
-		dec	CPU.Y
-		setz	CPU.FZ
-		sets	CPU.FN
+		dec	Y
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_EOR (void)
 {
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	al,CPU.LastRead
-		xor	CPU.A,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		mov	al,LastRead
+		xor	A,al
+		setz	FZ
+		sets	FN
  	}
 }
 static	__forceinline void	IN_INC (void)
 {
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
 		inc	TmpData
-		setz	CPU.FZ
-		sets	CPU.FN
+		setz	FZ
+		sets	FN
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IN_INX (void)
 {
 	__asm
 	{
-		inc	CPU.X
-		setz	CPU.FZ
-		sets	CPU.FN
+		inc	X
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_INY (void)
 {
 	__asm
 	{
-		inc	CPU.Y
-		setz	CPU.FZ
-		sets	CPU.FN
+		inc	Y
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_JMP (void)
 {
-	CPU.PC = CalcAddr;
+	PC = CalcAddr;
 }
 static	__forceinline void	IN_JMP_I (void)
 {
-	CPU.PCL = CPU_MemGet(CalcAddr);
+	PCL = MemGet(CalcAddr);
 	CalcAddrL++;
-	CPU.PCH = CPU_MemGet(CalcAddr);
+	PCH = MemGet(CalcAddr);
 }
 static	__forceinline void	IN_JSR (void)
 {
-	TmpAddrL = CPU_MemGetCode(CPU.PC++);
+	TmpAddrL = MemGetCode(PC++);
 	FixPC();
-	CPU_MemGet(0x100 | CPU.SP);
-	Push(CPU.PCH);
-	Push(CPU.PCL);
-	CPU.PCH = CPU_MemGetCode(CPU.PC);
-	CPU.PCL = TmpAddrL;
+	MemGet(0x100 | SP);
+	Push(PCH);
+	Push(PCL);
+	PCH = MemGetCode(PC);
+	PCL = TmpAddrL;
 }
 static	__forceinline void	IN_LDA (void)
 {
-	CPU.A = CPU_MemGet(CalcAddr);
+	A = MemGet(CalcAddr);
 	__asm
 	{
-		test	CPU.A,0xFF
-		setz	CPU.FZ
-		sets	CPU.FN
+		test	A,0xFF
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_LDX (void)
 {
-	CPU.X = CPU_MemGet(CalcAddr);
+	X = MemGet(CalcAddr);
 	__asm
 	{
-		test	CPU.X,0xFF
-		setz	CPU.FZ
-		sets	CPU.FN
+		test	X,0xFF
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_LDY (void)
 {
-	CPU.Y = CPU_MemGet(CalcAddr);
+	Y = MemGet(CalcAddr);
 	__asm
 	{
-		test	CPU.Y,0xFF
-		setz	CPU.FZ
-		sets	CPU.FN
+		test	Y,0xFF
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_LSR (void)
 {
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
 		shr	TmpData,1
-		setc	CPU.FC
-		mov	CPU.FN,0
-		setz	CPU.FZ
+		setc	FC
+		mov	FN,0
+		setz	FZ
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IN_LSR_A (void)
 {
 	__asm
 	{
-		shr	CPU.A,1
-		setc	CPU.FC
-		mov	CPU.FN,0
-		setz	CPU.FZ
+		shr	A,1
+		setc	FC
+		mov	FN,0
+		setz	FZ
 	}
 }
 static	__forceinline void	IN_NOP (void)
@@ -806,206 +825,202 @@ static	__forceinline void	IN_NOP (void)
 }
 static	__forceinline void	IN_ORA (void)
 {
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	al,CPU.LastRead
-		or	CPU.A,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		mov	al,LastRead
+		or	A,al
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_PHA (void)
 {
-	Push(CPU.A);
+	Push(A);
 }
 static	__forceinline void	IN_PHP (void)
 {
-	CPU_JoinFlags();
-	Push(CPU.P | 0x10);
+	JoinFlags();
+	Push(P | 0x10);
 }
 static	__forceinline void	IN_PLA (void)
 {
-	CPU_MemGet(0x100 | CPU.SP);
-	CPU.A = Pull();
+	MemGet(0x100 | SP);
+	A = Pull();
 	__asm
 	{
-		test	CPU.A,0xFF
-		setz	CPU.FZ
-		sets	CPU.FN
+		test	A,0xFF
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_PLP (void)
 {
-	CPU_MemGet(0x100 | CPU.SP);
-	CPU.P = Pull();
-	CPU_SplitFlags();
+	MemGet(0x100 | SP);
+	P = Pull();
+	SplitFlags();
 }
 static	__forceinline void	IN_ROL (void)
 {
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
-		mov	al,CPU.FC
+		mov	al,FC
 		add	al,0xFF
 		rcl	TmpData,1
-		setc	CPU.FC
+		setc	FC
 		test	TmpData,0xFF
-		setz	CPU.FZ
-		sets	CPU.FN
+		setz	FZ
+		sets	FN
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IN_ROL_A (void)
 {
 	__asm
 	{
-		mov	al,CPU.FC
+		mov	al,FC
 		add	al,0xFF
-		rcl	CPU.A,1
-		setc	CPU.FC
-		test	CPU.A,0xFF
-		setz	CPU.FZ
-		sets	CPU.FN
+		rcl	A,1
+		setc	FC
+		test	A,0xFF
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_ROR (void)
 {
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
-		mov	al,CPU.FC
-		mov	CPU.FN,al
+		mov	al,FC
+		mov	FN,al
 		add	al,0xFF
 		rcr	TmpData,1
-		setc	CPU.FC
+		setc	FC
 		test	TmpData,0xFF
-		setz	CPU.FZ
+		setz	FZ
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IN_ROR_A (void)
 {
 	__asm
 	{
-		mov	al,CPU.FC
-		mov	CPU.FN,al
+		mov	al,FC
+		mov	FN,al
 		add	al,0xFF
-		rcr	CPU.A,1
-		setc	CPU.FC
-		test	CPU.A,0xFF
-		setz	CPU.FZ
+		rcr	A,1
+		setc	FC
+		test	A,0xFF
+		setz	FZ
 	}
 }
 static	__forceinline void	IN_RTI (void)
 {
-	CPU_MemGet(0x100 | CPU.SP);
-	CPU.P = Pull();
-	CPU_SplitFlags();
-	CPU.PCL = Pull();
-	CPU.PCH = Pull();
+	MemGet(0x100 | SP);
+	P = Pull();
+	SplitFlags();
+	PCL = Pull();
+	PCH = Pull();
 }
 static	__forceinline void	IN_RTS (void)
 {
-	CPU_MemGet(0x100 | CPU.SP);
-	CPU.PCL = Pull();
-	CPU.PCH = Pull();
-	CPU_MemGet(CPU.PC++);
+	MemGet(0x100 | SP);
+	PCL = Pull();
+	PCH = Pull();
+	MemGet(PC++);
 	FixPC();
 }
 static	__forceinline void	IN_SBC (void)
 {
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	ah,CPU.FC
+		mov	ah,FC
 		sub	ah,1
-		mov	al,CPU.LastRead
-		sbb	CPU.A,al
-		setnc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
-		seto	CPU.FV
+		mov	al,LastRead
+		sbb	A,al
+		setnc	FC
+		setz	FZ
+		sets	FN
+		seto	FV
 	}
 }
-static	__forceinline void	IN_SEC (void) {	__asm	mov CPU.FC,1	}
-static	__forceinline void	IN_SED (void) {	__asm	mov CPU.FD,1	}
-static	__forceinline void	IN_SEI (void) {	__asm	mov CPU.FI,1	}
+static	__forceinline void	IN_SEC (void) {	__asm	mov FC,1	}
+static	__forceinline void	IN_SED (void) {	__asm	mov FD,1	}
+static	__forceinline void	IN_SEI (void) {	__asm	mov FI,1	}
 static	__forceinline void	IN_STA (void)
 {
-	CPU_MemSet(CalcAddr,CPU.A);
+	MemSet(CalcAddr,A);
 }
 static	__forceinline void	IN_STX (void)
 {
-	CPU_MemSet(CalcAddr,CPU.X);
+	MemSet(CalcAddr,X);
 }
 static	__forceinline void	IN_STY (void)
 {
-	CPU_MemSet(CalcAddr,CPU.Y);
+	MemSet(CalcAddr,Y);
 }
 static	__forceinline void	IN_TAX (void)
 {
 	__asm
 	{
-		mov	al,CPU.A
-		mov	CPU.X,al
+		mov	al,A
+		mov	X,al
 		test	al,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_TAY (void)
 {
 	__asm
 	{
-		mov	al,CPU.A
-		mov	CPU.Y,al
+		mov	al,A
+		mov	Y,al
 		test	al,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_TSX (void)
 {
 	__asm
 	{
-		mov	al,CPU.SP
-		mov	CPU.X,al
+		mov	al,CPU::SP
+		mov	X,al
 		test	al,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_TXA (void)
 {
 	__asm
 	{
-		mov	al,CPU.X
-		mov	CPU.A,al
+		mov	al,X
+		mov	A,al
 		test	al,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IN_TXS (void)
 {
-	__asm
-	{
-		mov	al,CPU.X
-		mov	CPU.SP,al
-	}
+	SP = X;
 }
 static	__forceinline void	IN_TYA (void)
 {
 	__asm
 	{
-		mov	al,CPU.Y
-		mov	CPU.A,al
+		mov	al,Y
+		mov	A,al
 		test	al,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		setz	FZ
+		sets	FN
 	}
 }
 
@@ -1025,7 +1040,7 @@ static	__forceinline void	IV_HLT (void)
 static	__forceinline void	IV_NOP (void)
 {
 	EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"),Opcode,OpAddr);
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 }
 static	__forceinline void	IV_NOP2 (void)
 {
@@ -1034,143 +1049,143 @@ static	__forceinline void	IV_NOP2 (void)
 static	__forceinline void	IV_SLO (void)
 {	/* ASL + ORA */
 	EI.DbgOut(_T("Invalid opcode $%02X (SLO) encountered at $%04X"),Opcode,OpAddr);
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
 		shl	TmpData,1
-		setc	CPU.FC
+		setc	FC
 		mov	al,TmpData
-		or	CPU.A,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		or	A,al
+		setz	FZ
+		sets	FN
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IV_RLA (void)
 {	/* ROL + AND */
 	EI.DbgOut(_T("Invalid opcode $%02X (RLA) encountered at $%04X"),Opcode,OpAddr);
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
-		mov	al,CPU.FC
+		mov	al,FC
 		add	al,0xFF
 		rcl	TmpData,1
-		setc	CPU.FC
+		setc	FC
 		mov	al,TmpData
-		and	CPU.A,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		and	A,al
+		setz	FZ
+		sets	FN
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IV_SRE (void)
 {	/* LSR + EOR */
 	EI.DbgOut(_T("Invalid opcode $%02X (SRE) encountered at $%04X"),Opcode,OpAddr);
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
 		shr	TmpData,1
-		setc	CPU.FC
+		setc	FC
 		mov	al,TmpData
-		xor	CPU.A,al
-		setz	CPU.FZ
-		sets	CPU.FN
+		xor	A,al
+		setz	FZ
+		sets	FN
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IV_RRA (void)
 {	/* ROR + ADC */
 	EI.DbgOut(_T("Invalid opcode $%02X (RRA) encountered at $%04X"),Opcode,OpAddr);
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
-		mov	al,CPU.FC
+		mov	al,FC
 		add	al,0xFF
 		rcr	TmpData,1
 		mov	al,TmpData
-		adc	CPU.A,al
-		setc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
-		seto	CPU.FV
+		adc	A,al
+		setc	FC
+		setz	FZ
+		sets	FN
+		seto	FV
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IV_SAX (void)
 {	/* STA + STX */
 	EI.DbgOut(_T("Invalid opcode $%02X (SAX) encountered at $%04X"),Opcode,OpAddr);
-	CPU_MemSet(CalcAddr,CPU.A & CPU.X);
+	MemSet(CalcAddr,A & X);
 }
 static	__forceinline void	IV_LAX (void)
 {	/* LDA + LDX */
 	EI.DbgOut(_T("Invalid opcode $%02X (LAX) encountered at $%04X"),Opcode,OpAddr);
-	CPU.X = CPU.A = CPU_MemGet(CalcAddr);
+	X = A = MemGet(CalcAddr);
 	__asm
 	{
-		test	CPU.A,0xFF
-		setz	CPU.FZ
-		sets	CPU.FN
+		test	A,0xFF
+		setz	FZ
+		sets	FN
 	}
 }
 static	__forceinline void	IV_DCP (void)
 {	/* DEC + CMP */
 	EI.DbgOut(_T("Invalid opcode $%02X (DCP) encountered at $%04X"),Opcode,OpAddr);
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
 		dec	TmpData
-		mov	al,CPU.A
+		mov	al,A
 		sub	al,TmpData
-		setnc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
+		setnc	FC
+		setz	FZ
+		sets	FN
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IV_ISB (void)
 {	/* INC + SBC */
 	EI.DbgOut(_T("Invalid opcode $%02X (ISB) encountered at $%04X"),Opcode,OpAddr);
-	TmpData = CPU_MemGet(CalcAddr);
-	CPU_MemSet(CalcAddr,TmpData);
+	TmpData = MemGet(CalcAddr);
+	MemSet(CalcAddr,TmpData);
 	__asm
 	{
 		inc	TmpData
-		mov	ah,CPU.FC
+		mov	ah,FC
 		sub	ah,1
 		mov	al,TmpData
-		sbb	CPU.A,al
-		setnc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
-		seto	CPU.FV
+		sbb	A,al
+		setnc	FC
+		setz	FZ
+		sets	FN
+		seto	FV
 	}
-	CPU_MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr,TmpData);
 }
 static	__forceinline void	IV_SBC (void)
 {	/* NOP + SBC */
 	EI.DbgOut(_T("Invalid opcode $%02X (SBC) encountered at $%04X"),Opcode,OpAddr);
-	CPU_MemGet(CalcAddr);
+	MemGet(CalcAddr);
 	__asm
 	{
-		mov	ah,CPU.FC
+		mov	ah,FC
 		sub	ah,1
-		mov	al,CPU.LastRead
-		sbb	CPU.A,al
-		setnc	CPU.FC
-		setz	CPU.FZ
-		sets	CPU.FN
-		seto	CPU.FV
+		mov	al,LastRead
+		sbb	A,al
+		setnc	FC
+		setz	FZ
+		sets	FN
+		seto	FV
 	}
 }
 
-void	CPU_ExecOp (void)
+void	ExecOp (void)
 {
-	Opcode = CPU_MemGetCode(OpAddr = CPU.PC++);
+	Opcode = MemGetCode(OpAddr = PC++);
 	FixPC();
 	switch (Opcode)
 	{
@@ -1215,13 +1230,14 @@ case 0xE3:AM_INX();  IV_ISB();break;case 0xF3:AM_INYW(); IV_ISB();break;case 0xE
 	if (LastNMI)
 	{
 		DoNMI();
-		CPU.WantNMI = FALSE;
+		WantNMI = FALSE;
 	}
 	else
 #endif	/* !NSFPLAYER */
 	if (LastIRQ)
 		DoIRQ();
 #ifdef	ENABLE_DEBUGGER
-	else	CPU.GotInterrupt = 0;
+	else	GotInterrupt = 0;
 #endif	/* ENABLE_DEBUGGER */
 }
+} // namespace CPU
