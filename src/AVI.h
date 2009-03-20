@@ -10,18 +10,14 @@
 
 DECLARE_HANDLE(HAVI);
 
-struct tAVI
+namespace AVI
 {
-	HAVI aviout;
-	HBITMAP hbm;
-	unsigned long *videoBuffer;
-};
-extern	struct tAVI AVI;
+extern HAVI handle;
 
-void	AVI_Init	(void);
-void	AVI_Start	(void);
-void	AVI_AddVideo	(void);
-void	AVI_AddAudio	(void);
-void	AVI_End		(void);
-
+void	Init		(void);
+void	Start		(void);
+void	AddVideo	(void);
+void	AddAudio	(void);
+void	End		(void);
+} // namespace AVI
 #endif	/* !AVI_H */

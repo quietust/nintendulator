@@ -540,10 +540,10 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			NES_MapperConfig();
 			break;
 		case ID_MISC_STARTAVICAPTURE:
-			AVI_Start();
+			AVI::Start();
 			break;
 		case ID_MISC_STOPAVICAPTURE:
-			AVI_End();
+			AVI::End();
 			break;
 		case ID_MISC_PLAYMOVIE:
 			Movie_Play();

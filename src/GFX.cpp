@@ -247,8 +247,8 @@ void	GFX_DrawScreen (void)
 {
 	LARGE_INTEGER TmpClockVal;
 	static int TitleDelay = 0;
-	if (AVI.aviout)
-		AVI_AddVideo();
+	if (AVI::handle)
+		AVI::AddVideo();
 	if (GFX.SlowDown)
 		Sleep(GFX.SlowRate * 1000 / GFX.WantFPS);
 	if (++GFX.FPSCnt > GFX.FSkip)
