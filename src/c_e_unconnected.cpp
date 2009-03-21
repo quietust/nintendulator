@@ -33,7 +33,7 @@ ExpPort_Unconnected::~ExpPort_Unconnected (void)
 	free(Data);
 	free(MovData);
 }
-void	ExpPort_Unconnected::Init (int *buttons)
+ExpPort_Unconnected::ExpPort_Unconnected (int *buttons)
 {
 	Type = EXP_UNCONNECTED;
 	NumButtons = 0;

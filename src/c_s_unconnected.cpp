@@ -29,7 +29,7 @@ StdPort_Unconnected::~StdPort_Unconnected (void)
 	free(Data);
 	free(MovData);
 }
-void	StdPort_Unconnected::Init (int *buttons)
+StdPort_Unconnected::StdPort_Unconnected (int *buttons)
 {
 	Type = STD_UNCONNECTED;
 	NumButtons = 0;

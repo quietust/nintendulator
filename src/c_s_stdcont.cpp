@@ -98,7 +98,7 @@ StdPort_StdController::~StdPort_StdController (void)
 	free(Data);
 	free(MovData);
 }
-void	StdPort_StdController::Init (int *buttons)
+StdPort_StdController::StdPort_StdController (int *buttons)
 {
 	Type = STD_STDCONTROLLER;
 	NumButtons = 8;

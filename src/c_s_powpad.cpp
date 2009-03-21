@@ -130,7 +130,7 @@ StdPort_PowerPad::~StdPort_PowerPad (void)
 	free(Data);
 	free(MovData);
 }
-void	StdPort_PowerPad::Init (int *buttons)
+StdPort_PowerPad::StdPort_PowerPad (int *buttons)
 {
 	Type = STD_POWERPAD;
 	NumButtons = 12;

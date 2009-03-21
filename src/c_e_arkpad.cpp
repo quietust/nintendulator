@@ -104,7 +104,7 @@ ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 	free(Data);
 	free(MovData);
 }
-void	ExpPort_ArkanoidPaddle::Init (int *buttons)
+ExpPort_ArkanoidPaddle::ExpPort_ArkanoidPaddle (int *buttons)
 {
 	Type = EXP_ARKANOIDPADDLE;
 	NumButtons = 1;

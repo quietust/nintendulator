@@ -115,7 +115,7 @@ StdPort_Zapper::~StdPort_Zapper (void)
 	free(Data);
 	free(MovData);
 }
-void	StdPort_Zapper::Init (int *buttons)
+StdPort_Zapper::StdPort_Zapper (int *buttons)
 {
 	Type = STD_ZAPPER;
 	NumButtons = 1;

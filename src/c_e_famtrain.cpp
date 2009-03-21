@@ -107,7 +107,7 @@ ExpPort_FamTrainer::~ExpPort_FamTrainer (void)
 	free(Data);
 	free(MovData);
 }
-void	ExpPort_FamTrainer::Init (int *buttons)
+ExpPort_FamTrainer::ExpPort_FamTrainer (int *buttons)
 {
 	Type = EXP_FAMTRAINER;
 	NumButtons = 12;

@@ -209,7 +209,7 @@ ExpPort_AltKeyboard::~ExpPort_AltKeyboard (void)
 	free(Data);
 	free(MovData);
 }
-void	ExpPort_AltKeyboard::Init (int *buttons)
+ExpPort_AltKeyboard::ExpPort_AltKeyboard (int *buttons)
 {
 	Type = EXP_ALTKEYBOARD;
 	NumButtons = 0;

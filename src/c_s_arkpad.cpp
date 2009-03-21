@@ -102,7 +102,7 @@ StdPort_ArkanoidPaddle::~StdPort_ArkanoidPaddle (void)
 	free(Data);
 	free(MovData);
 }
-void StdPort_ArkanoidPaddle::Init (int *buttons)
+StdPort_ArkanoidPaddle::StdPort_ArkanoidPaddle (int *buttons)
 {
 	Type = STD_ARKANOIDPADDLE;
 	NumButtons = 1;

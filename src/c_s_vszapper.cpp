@@ -137,7 +137,7 @@ StdPort_VSZapper::~StdPort_VSZapper (void)
 	free(Data);
 	free(MovData);
 }
-void	StdPort_VSZapper::Init (int *buttons)
+StdPort_VSZapper::StdPort_VSZapper (int *buttons)
 {
 	Type = STD_VSZAPPER;
 	NumButtons = 1;

@@ -132,7 +132,7 @@ ExpPort_Fami4Play::~ExpPort_Fami4Play (void)
 	free(Data);
 	free(MovData);
 }
-void	ExpPort_Fami4Play::Init (int *buttons)
+ExpPort_Fami4Play::ExpPort_Fami4Play (int *buttons)
 {
 	Type = EXP_FAMI4PLAY;
 	NumButtons = 16;

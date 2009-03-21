@@ -123,7 +123,7 @@ ExpPort_Tablet::~ExpPort_Tablet (void)
 	free(Data);
 	free(MovData);
 }
-void	ExpPort_Tablet::Init (int *buttons)
+ExpPort_Tablet::ExpPort_Tablet (int *buttons)
 {
 	Type = EXP_TABLET;
 	NumButtons = 1;

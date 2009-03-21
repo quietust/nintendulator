@@ -34,7 +34,6 @@ class StdPort
 {
 public:
 	virtual			~StdPort(void) {} \
-	virtual void 		Init	(int *) = 0;
 	virtual unsigned char	Read	(void) = 0;
 	virtual void		Write	(unsigned char) = 0;
 	virtual void		Config	(HWND) = 0;
@@ -51,8 +50,7 @@ public:
 class StdPort_##NAME : public StdPort \
 { \
 public: \
-	virtual void 		Init	(int *); \
-	StdPort_##NAME (int *buttons) { Init(buttons); } \
+				StdPort_##NAME (int *); \
 	virtual			~StdPort_##NAME(void); \
 	virtual unsigned char	Read	(void); \
 	virtual void		Write	(unsigned char); \
@@ -89,7 +87,6 @@ class ExpPort
 {
 public:
 	virtual			~ExpPort(void) {} \
-	virtual void 		Init	(int *) = 0;
 	virtual unsigned char	Read1	(void) = 0;
 	virtual unsigned char	Read2	(void) = 0;
 	virtual void		Write	(unsigned char) = 0;
@@ -107,8 +104,7 @@ public:
 class ExpPort_##NAME : public ExpPort \
 { \
 public: \
-	virtual void 		Init	(int *); \
-	ExpPort_##NAME (int *buttons) { Init(buttons); } \
+				ExpPort_##NAME (int *); \
 	virtual			~ExpPort_##NAME(void); \
 	virtual unsigned char	Read1	(void); \
 	virtual unsigned char	Read2	(void); \

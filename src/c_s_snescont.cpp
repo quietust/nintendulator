@@ -112,7 +112,7 @@ StdPort_SnesController::~StdPort_SnesController (void)
 	free(Data);
 	free(MovData);
 }
-void	StdPort_SnesController::Init (int *buttons)
+StdPort_SnesController::StdPort_SnesController (int *buttons)
 {
 	Type = STD_SNESCONTROLLER;
 	NumButtons = 12;
