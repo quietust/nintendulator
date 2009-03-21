@@ -14,110 +14,111 @@
 
 namespace Controllers
 {
-#define	Bits	Data[0]
-#define	Pos	Data[1]
-#define	BitPtr	Data[2]
-#define	Strobe	Data[3]
-#define	Button	Data[4]
-#define	NewBits	Data[5]
-
-static	void	Frame (struct tExpPort *Cont, unsigned char mode)
+#include <pshpack1.h>
+struct ExpPort_ArkanoidPaddle_State
 {
-	int x, i;
+	unsigned char Bits;
+	unsigned short Pos;
+	unsigned char BitPtr;
+	unsigned char Strobe;
+	unsigned char Button;
+	unsigned char NewBits;
+};
+#include <poppack.h>
+#define State ((ExpPort_ArkanoidPaddle_State *)Data)
+
+void	ExpPort_ArkanoidPaddle::Frame (unsigned char mode)
+{
+	int x, i, bits;
 	if (mode & MOV_PLAY)
 	{
-		Cont->Pos = Cont->MovData[0] | ((Cont->MovData[1] << 8) & 0x7F);
-		Cont->Button = Cont->MovData[1] >> 7;
+		State->Pos = MovData[0] | ((MovData[1] << 8) & 0x7F);
+		State->Button = MovData[1] >> 7;
 	}
 	else
 	{
 		GFX::SetCursorPos(128, 220);
-		Cont->Button = IsPressed(Cont->Buttons[0]);
-		Cont->Pos += MouseState.lX;
-		if (Cont->Pos < 196)
-			Cont->Pos = 196;
-		if (Cont->Pos > 484)
-			Cont->Pos = 484;
+		State->Button = IsPressed(Buttons[0]);
+		State->Pos += MouseState.lX;
+		if (State->Pos < 196)
+			State->Pos = 196;
+		if (State->Pos > 484)
+			State->Pos = 484;
 	}
 	if (mode & MOV_RECORD)
 	{
-		Cont->MovData[0] = (unsigned char)(Cont->Pos & 0xFF);
-		Cont->MovData[1] = (unsigned char)((Cont->Pos >> 8) | (Cont->Button << 7));
+		MovData[0] = (unsigned char)(State->Pos & 0xFF);
+		MovData[1] = (unsigned char)((State->Pos >> 8) | (State->Button << 7));
 	}
-	Cont->NewBits = 0;
-	x = ~Cont->Pos;
+	bits = 0;
+	x = ~State->Pos;
 	for (i = 0; i < 9; i++)
 	{
-		Cont->NewBits <<= 1;
-		Cont->NewBits |= x & 1;
+		bits <<= 1;
+		bits |= x & 1;
 		x >>= 1;
 	}
+	State->NewBits = bits;
 }
-static	unsigned char	Read1 (struct tExpPort *Cont)
+unsigned char	ExpPort_ArkanoidPaddle::Read1 (void)
 {
-	if (Cont->Button)
+	if (State->Button)
 		return 0x02;
 	else	return 0;
 }
-static	unsigned char	Read2 (struct tExpPort *Cont)
+unsigned char	ExpPort_ArkanoidPaddle::Read2 (void)
 {
-	if (Cont->BitPtr < 8)
-		return (unsigned char)(((Cont->Bits >> Cont->BitPtr++) & 1) << 1);
+	if (State->BitPtr < 8)
+		return (unsigned char)(((State->Bits >> State->BitPtr++) & 1) << 1);
 	else	return 0x02;
 }
-static	void	Write (struct tExpPort *Cont, unsigned char Val)
+void	ExpPort_ArkanoidPaddle::Write (unsigned char Val)
 {
-	if ((!Cont->Strobe) && (Val & 1))
+	if ((!State->Strobe) && (Val & 1))
 	{
-		Cont->Bits = Cont->NewBits;
-		Cont->BitPtr = 0;
+		State->Bits = State->NewBits;
+		State->BitPtr = 0;
 	}
-	Cont->Strobe = Val & 1;
+	State->Strobe = Val & 1;
 }
 static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
-	static struct tExpPort *Cont = NULL;
+	ExpPort *Cont;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct tExpPort *)lParam;
-	ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+	{
+		SetWindowLongPtr(hDlg, GWL_USERDATA, lParam);
+		Cont = (ExpPort *)lParam;
+	}
+	else	Cont = (ExpPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
+	ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont ? Cont->Buttons : NULL,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct tExpPort *Cont, HWND hWnd)
+void	ExpPort_ArkanoidPaddle::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE,hWnd,ConfigProc,(LPARAM)Cont);
+	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE,hWnd,ConfigProc,(LPARAM)this);
 }
-static	void	Unload (struct tExpPort *Cont)
+ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 {
-	free(Cont->Data);
-	free(Cont->MovData);
+	free(Data);
+	free(MovData);
 }
-void	ExpPort_SetArkanoidPaddle (struct tExpPort *Cont)
+void	ExpPort_ArkanoidPaddle::Init (int *buttons)
 {
-	Cont->Read1 = Read1;
-	Cont->Read2 = Read2;
-	Cont->Write = Write;
-	Cont->Config = Config;
-	Cont->Unload = Unload;
-	Cont->Frame = Frame;
-	Cont->NumButtons = 1;
-	Cont->DataLen = 6;
-	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
-	Cont->MovLen = 2;
-	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
-	ZeroMemory(Cont->MovData,Cont->MovLen);
-	Cont->Bits = 0;
-	Cont->Pos = 340;
-	Cont->BitPtr = 0;
-	Cont->Strobe = 0;
-	Cont->Button = 0;
-	Cont->NewBits = 0;
+	Type = EXP_ARKANOIDPADDLE;
+	NumButtons = 1;
+	Buttons = buttons;
+	DataLen = sizeof(*State);
+	Data = malloc(DataLen);
+	MovLen = 2;
+	MovData = (unsigned char *)malloc(MovLen);
+	ZeroMemory(MovData, MovLen);
+	State->Bits = 0;
+	State->Pos = 340;
+	State->BitPtr = 0;
+	State->Strobe = 0;
+	State->Button = 0;
+	State->NewBits = 0;
 }
-#undef	NewBits
-#undef	Button
-#undef	Strobe
-#undef	BitPtr
-#undef	Pos
-#undef	Bits
 } // namespace Controllers

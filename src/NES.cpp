@@ -46,6 +46,7 @@ void	Init (void)
 {
 	SetWindowPos(hMainWnd,HWND_TOP,0,0,256,240,SWP_NOZORDER);
 	MapperInterface::Init();
+	Controllers::Init();
 	APU::Init();
 	GFX::Init();
 	AVI::Init();
@@ -53,7 +54,6 @@ void	Init (void)
 	Debugger::Init();
 #endif	/* ENABLE_DEBUGGER */
 	States::Init();
-	Controllers::Init();
 #ifdef	ENABLE_DEBUGGER
 	Debugger::SetMode(0);
 #endif	/* ENABLE_DEBUGGER */
@@ -77,6 +77,7 @@ void	Release (void)
 {
 	if (ROMLoaded)
 		CloseFile();
+	SaveSettings();
 	APU::Release();
 	if (APU::buffer)	// this really should go in APU.cpp
 		free(APU::buffer);
@@ -84,7 +85,6 @@ void	Release (void)
 	Controllers::Release();
 	MapperInterface::Release();
 
-	SaveSettings();
 	DestroyWindow(hMainWnd);
 }
 
@@ -1053,12 +1053,6 @@ void	LoadSettings (void)
 	GFX::NTSCsat = 50;
 	GFX::PALsat = 50;
 	GFX::CustPaletteNTSC[0] = GFX::CustPalettePAL[0] = 0;
-	Controllers::Port1.Type = 0;
-	ZeroMemory(Controllers::Port1.Buttons,sizeof(Controllers::Port1.Buttons));
-	Controllers::Port2.Type = 0;
-	ZeroMemory(Controllers::Port2.Buttons,sizeof(Controllers::Port2.Buttons));
-	Controllers::ExpPort.Type = 0;
-	ZeroMemory(Controllers::ExpPort.Buttons,sizeof(Controllers::ExpPort.Buttons));
 
 	GFX::SlowDown = FALSE;
 	GFX::SlowRate = 2;
@@ -1102,26 +1096,29 @@ void	LoadSettings (void)
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("FSPort4T"),0,NULL,(LPBYTE)&FSPort4T,&Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase,_T("ExpPortT"),0,NULL,(LPBYTE)&ExpPortT,&Size);
 
-	if ((Port1T == Controllers::STD_FOURSCORE) || (Port2T == Controllers::STD_FOURSCORE))
-		StdPort_SetControllerType(&Controllers::Port1,Controllers::STD_FOURSCORE);
+	if (Port1T == Controllers::STD_FOURSCORE)
+	{
+		SET_STDCONT(Controllers::Port1,Controllers::STD_FOURSCORE);
+		SET_STDCONT(Controllers::Port1,Controllers::STD_FOURSCORE2);
+	}
 	else
 	{
-		StdPort_SetControllerType(&Controllers::Port1,Port1T);
-		StdPort_SetControllerType(&Controllers::Port2,Port2T);
+		SET_STDCONT(Controllers::Port1,(Controllers::STDCONT_TYPE)Port1T);
+		SET_STDCONT(Controllers::Port2,(Controllers::STDCONT_TYPE)Port2T);
 	}
-	StdPort_SetControllerType(&Controllers::FSPort1,FSPort1T);
-	StdPort_SetControllerType(&Controllers::FSPort2,FSPort2T);
-	StdPort_SetControllerType(&Controllers::FSPort3,FSPort3T);
-	StdPort_SetControllerType(&Controllers::FSPort4,FSPort4T);
-	ExpPort_SetControllerType(&Controllers::ExpPort,ExpPortT);
+	SET_STDCONT(Controllers::FSPort1,(Controllers::STDCONT_TYPE)FSPort1T);
+	SET_STDCONT(Controllers::FSPort2,(Controllers::STDCONT_TYPE)FSPort2T);
+	SET_STDCONT(Controllers::FSPort3,(Controllers::STDCONT_TYPE)FSPort3T);
+	SET_STDCONT(Controllers::FSPort4,(Controllers::STDCONT_TYPE)FSPort4T);
+	SET_EXPCONT(Controllers::PortExp,(Controllers::EXPCONT_TYPE)ExpPortT);
 
-	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("Port1D")  ,0,NULL,(LPBYTE)Controllers::Port1.Buttons  ,&Size);
-	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("Port2D")  ,0,NULL,(LPBYTE)Controllers::Port2.Buttons  ,&Size);
-	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort1D"),0,NULL,(LPBYTE)Controllers::FSPort1.Buttons,&Size);
-	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort2D"),0,NULL,(LPBYTE)Controllers::FSPort2.Buttons,&Size);
-	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort3D"),0,NULL,(LPBYTE)Controllers::FSPort3.Buttons,&Size);
-	Size = sizeof(Controllers::Port1.Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort4D"),0,NULL,(LPBYTE)Controllers::FSPort4.Buttons,&Size);
-	Size = sizeof(Controllers::ExpPort.Buttons);	RegQueryValueEx(SettingsBase,_T("ExpPortD"),0,NULL,(LPBYTE)Controllers::ExpPort.Buttons,&Size);
+	Size = sizeof(Controllers::Port1_Buttons);	RegQueryValueEx(SettingsBase,_T("Port1D")  ,0,NULL,(LPBYTE)Controllers::Port1_Buttons  ,&Size);
+	Size = sizeof(Controllers::Port2_Buttons);	RegQueryValueEx(SettingsBase,_T("Port2D")  ,0,NULL,(LPBYTE)Controllers::Port2_Buttons  ,&Size);
+	Size = sizeof(Controllers::FSPort1_Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort1D"),0,NULL,(LPBYTE)Controllers::FSPort1_Buttons,&Size);
+	Size = sizeof(Controllers::FSPort2_Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort2D"),0,NULL,(LPBYTE)Controllers::FSPort2_Buttons,&Size);
+	Size = sizeof(Controllers::FSPort3_Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort3D"),0,NULL,(LPBYTE)Controllers::FSPort3_Buttons,&Size);
+	Size = sizeof(Controllers::FSPort4_Buttons);	RegQueryValueEx(SettingsBase,_T("FSPort4D"),0,NULL,(LPBYTE)Controllers::FSPort4_Buttons,&Size);
+	Size = sizeof(Controllers::PortExp_Buttons);	RegQueryValueEx(SettingsBase,_T("ExpPortD"),0,NULL,(LPBYTE)Controllers::PortExp_Buttons,&Size);
 	Controllers::SetDeviceUsed();
 
 	RegCloseKey(SettingsBase);
@@ -1191,21 +1188,21 @@ void	SaveSettings (void)
 	RegSetValueEx(SettingsBase,_T("Path_AVI")       ,0,REG_SZ,(LPBYTE)Path_AVI            ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_AVI)));
 	RegSetValueEx(SettingsBase,_T("Path_PAL")       ,0,REG_SZ,(LPBYTE)Path_PAL            ,(DWORD)(sizeof(TCHAR) * _tcslen(Path_PAL)));
 
-	RegSetValueEx(SettingsBase,_T("Port1T")  ,0,REG_DWORD,(LPBYTE)&Controllers::Port1.Type  ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("Port2T")  ,0,REG_DWORD,(LPBYTE)&Controllers::Port2.Type  ,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("FSPort1T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort1.Type,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("FSPort2T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort2.Type,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("FSPort3T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort3.Type,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("FSPort4T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort4.Type,sizeof(DWORD));
-	RegSetValueEx(SettingsBase,_T("ExpPortT"),0,REG_DWORD,(LPBYTE)&Controllers::ExpPort.Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("Port1T")  ,0,REG_DWORD,(LPBYTE)&Controllers::Port1->Type  ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("Port2T")  ,0,REG_DWORD,(LPBYTE)&Controllers::Port2->Type  ,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("FSPort1T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort1->Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("FSPort2T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort2->Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("FSPort3T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort3->Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("FSPort4T"),0,REG_DWORD,(LPBYTE)&Controllers::FSPort4->Type,sizeof(DWORD));
+	RegSetValueEx(SettingsBase,_T("ExpPortT"),0,REG_DWORD,(LPBYTE)&Controllers::PortExp->Type,sizeof(DWORD));
 
-	RegSetValueEx(SettingsBase,_T("Port1D")  ,0,REG_BINARY,(LPBYTE)Controllers::Port1.Buttons  ,sizeof(Controllers::Port1.Buttons));
-	RegSetValueEx(SettingsBase,_T("Port2D")  ,0,REG_BINARY,(LPBYTE)Controllers::Port2.Buttons  ,sizeof(Controllers::Port2.Buttons));
-	RegSetValueEx(SettingsBase,_T("FSPort1D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort1.Buttons,sizeof(Controllers::FSPort1.Buttons));
-	RegSetValueEx(SettingsBase,_T("FSPort2D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort2.Buttons,sizeof(Controllers::FSPort2.Buttons));
-	RegSetValueEx(SettingsBase,_T("FSPort3D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort3.Buttons,sizeof(Controllers::FSPort3.Buttons));
-	RegSetValueEx(SettingsBase,_T("FSPort4D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort4.Buttons,sizeof(Controllers::FSPort4.Buttons));
-	RegSetValueEx(SettingsBase,_T("ExpPortD"),0,REG_BINARY,(LPBYTE)Controllers::ExpPort.Buttons,sizeof(Controllers::ExpPort.Buttons));
+	RegSetValueEx(SettingsBase,_T("Port1D")  ,0,REG_BINARY,(LPBYTE)Controllers::Port1_Buttons  ,sizeof(Controllers::Port1_Buttons));
+	RegSetValueEx(SettingsBase,_T("Port2D")  ,0,REG_BINARY,(LPBYTE)Controllers::Port2_Buttons  ,sizeof(Controllers::Port2_Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort1D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort1_Buttons,sizeof(Controllers::FSPort1_Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort2D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort2_Buttons,sizeof(Controllers::FSPort2_Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort3D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort3_Buttons,sizeof(Controllers::FSPort3_Buttons));
+	RegSetValueEx(SettingsBase,_T("FSPort4D"),0,REG_BINARY,(LPBYTE)Controllers::FSPort4_Buttons,sizeof(Controllers::FSPort4_Buttons));
+	RegSetValueEx(SettingsBase,_T("ExpPortD"),0,REG_BINARY,(LPBYTE)Controllers::PortExp_Buttons,sizeof(Controllers::PortExp_Buttons));
 
 	RegCloseKey(SettingsBase);
 }

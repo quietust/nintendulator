@@ -244,17 +244,17 @@ void	Play (void)
 		return;
 	}
 
-	ControllerTypes[0] = (unsigned char)Controllers::Port1.Type;
-	ControllerTypes[1] = (unsigned char)Controllers::Port2.Type;
-	ControllerTypes[2] = (unsigned char)Controllers::ExpPort.Type;
+	ControllerTypes[0] = (unsigned char)Controllers::Port1->Type;
+	ControllerTypes[1] = (unsigned char)Controllers::Port2->Type;
+	ControllerTypes[2] = (unsigned char)Controllers::PortExp->Type;
 
-	if (Controllers::Port1.Type == Controllers::STD_FOURSCORE)
+	if (Controllers::Port1->Type == Controllers::STD_FOURSCORE)
 	{
 		ControllerTypes[1] = 0;
-		if (Controllers::FSPort1.Type)	ControllerTypes[1] |= 0x01;
-		if (Controllers::FSPort2.Type)	ControllerTypes[1] |= 0x02;
-		if (Controllers::FSPort3.Type)	ControllerTypes[1] |= 0x04;
-		if (Controllers::FSPort4.Type)	ControllerTypes[1] |= 0x08;
+		if (Controllers::FSPort1->Type)	ControllerTypes[1] |= 0x01;
+		if (Controllers::FSPort2->Type)	ControllerTypes[1] |= 0x02;
+		if (Controllers::FSPort3->Type)	ControllerTypes[1] |= 0x04;
+		if (Controllers::FSPort4->Type)	ControllerTypes[1] |= 0x08;
 	}
 
 	ControllerTypes[3] = 0;	// Reset 'loaded controller state' flag
@@ -302,30 +302,30 @@ void	Play (void)
 		if (buf[0] == Controllers::STD_FOURSCORE)
 		{
 			if (buf[1] & 0x01)
-				StdPort_SetControllerType(&Controllers::FSPort1, Controllers::STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers::FSPort1, Controllers::STD_UNCONNECTED);
+				SET_STDCONT(Controllers::FSPort1, Controllers::STD_STDCONTROLLER);
+			else	SET_STDCONT(Controllers::FSPort1, Controllers::STD_UNCONNECTED);
 			if (buf[1] & 0x02)
-				StdPort_SetControllerType(&Controllers::FSPort2, Controllers::STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers::FSPort2, Controllers::STD_UNCONNECTED);
+				SET_STDCONT(Controllers::FSPort2, Controllers::STD_STDCONTROLLER);
+			else	SET_STDCONT(Controllers::FSPort2, Controllers::STD_UNCONNECTED);
 			if (buf[1] & 0x04)
-				StdPort_SetControllerType(&Controllers::FSPort3, Controllers::STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers::FSPort3, Controllers::STD_UNCONNECTED);
+				SET_STDCONT(Controllers::FSPort3, Controllers::STD_STDCONTROLLER);
+			else	SET_STDCONT(Controllers::FSPort3, Controllers::STD_UNCONNECTED);
 			if (buf[1] & 0x08)
-				StdPort_SetControllerType(&Controllers::FSPort4, Controllers::STD_STDCONTROLLER);
-			else	StdPort_SetControllerType(&Controllers::FSPort4, Controllers::STD_UNCONNECTED);
-			StdPort_SetControllerType(&Controllers::Port1, Controllers::STD_FOURSCORE);
-			StdPort_SetControllerType(&Controllers::Port2, Controllers::STD_FOURSCORE);
+				SET_STDCONT(Controllers::FSPort4, Controllers::STD_STDCONTROLLER);
+			else	SET_STDCONT(Controllers::FSPort4, Controllers::STD_UNCONNECTED);
+			SET_STDCONT(Controllers::Port1, Controllers::STD_FOURSCORE);
+			SET_STDCONT(Controllers::Port2, Controllers::STD_FOURSCORE);
 		}
 		else
 		{
-			StdPort_SetControllerType(&Controllers::Port1, buf[0]);
-			StdPort_SetControllerType(&Controllers::Port2, buf[1]);
+			SET_STDCONT(Controllers::Port1, (Controllers::STDCONT_TYPE)buf[0]);
+			SET_STDCONT(Controllers::Port2, (Controllers::STDCONT_TYPE)buf[1]);
 		}
-		ExpPort_SetControllerType(&Controllers::ExpPort, buf[2]);
+		SET_EXPCONT(Controllers::PortExp, (Controllers::EXPCONT_TYPE)buf[2]);
 	}
 	NES::SetCPUMode(buf[3] >> 7);	// Set to NTSC or PAL
 
-	FrameLen = Controllers::Port1.MovLen + Controllers::Port2.MovLen + Controllers::ExpPort.MovLen;
+	FrameLen = Controllers::Port1->MovLen + Controllers::Port2->MovLen + Controllers::PortExp->MovLen;
 	if (NES::HasMenu)
 		FrameLen++;
 	if (FrameLen != (buf[3] & 0x3F))
@@ -365,12 +365,12 @@ void	Play (void)
 	EnableMenuItem(hMenu, ID_PPU_MODE_PAL, MF_GRAYED);
 	EnableMenuItem(hMenu, ID_GAME, MF_GRAYED);
 	EnableMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_GRAYED);
-	if (Controllers::Port1.MovLen)
-		memset(Controllers::Port1.MovData, 0, Controllers::Port1.MovLen);
-	if (Controllers::Port2.MovLen)
-		memset(Controllers::Port2.MovData, 0, Controllers::Port2.MovLen);
-	if (Controllers::ExpPort.MovLen)
-		memset(Controllers::ExpPort.MovData, 0, Controllers::ExpPort.MovLen);
+	if (Controllers::Port1->MovLen)
+		memset(Controllers::Port1->MovData, 0, Controllers::Port1->MovLen);
+	if (Controllers::Port2->MovLen)
+		memset(Controllers::Port2->MovData, 0, Controllers::Port2->MovLen);
+	if (Controllers::PortExp->MovLen)
+		memset(Controllers::PortExp->MovData, 0, Controllers::PortExp->MovLen);
 }
 
 INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -383,22 +383,22 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
-		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, Controllers::StdPort_Mappings[Controllers::Port1.Type]);
-		if (Controllers::Port1.Type == Controllers::STD_FOURSCORE)
+		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, Controllers::StdPort_Mappings[Controllers::Port1->Type]);
+		if (Controllers::Port1->Type == Controllers::STD_FOURSCORE)
 		{
-			TCHAR conts[16] = {0};
-			if (Controllers::FSPort1.Type)
+			TCHAR conts[16] = {0,0};
+			if (Controllers::FSPort1->Type)
 				_tcscat(conts, _T(",1"));
-			if (Controllers::FSPort2.Type)
+			if (Controllers::FSPort2->Type)
 				_tcscat(conts, _T(",2"));
-			if (Controllers::FSPort3.Type)
+			if (Controllers::FSPort3->Type)
 				_tcscat(conts, _T(",3"));
-			if (Controllers::FSPort4.Type)
+			if (Controllers::FSPort4->Type)
 				_tcscat(conts, _T(",4"));
 			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, &conts[1]);
 		}
-		else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, Controllers::StdPort_Mappings[Controllers::Port2.Type]);
-		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, Controllers::ExpPort_Mappings[Controllers::ExpPort.Type]);
+		else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, Controllers::StdPort_Mappings[Controllers::Port2->Type]);
+		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, Controllers::ExpPort_Mappings[Controllers::PortExp->Type]);
 		CheckRadioButton(hDlg, IDC_MOVIE_RECORD_RESET, IDC_MOVIE_RECORD_CURRENT, IDC_MOVIE_RECORD_RESET);
 #ifdef	UNICODE
 		EnableWindow(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION), FALSE);
@@ -441,22 +441,22 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			break;
 		case IDC_MOVIE_RECORD_CONT_CONFIG:
 			Controllers::OpenConfig();
-			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, Controllers::StdPort_Mappings[Controllers::Port1.Type]);
-			if (Controllers::Port1.Type == Controllers::STD_FOURSCORE)
+			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, Controllers::StdPort_Mappings[Controllers::Port1->Type]);
+			if (Controllers::Port1->Type == Controllers::STD_FOURSCORE)
 			{
-				TCHAR conts[16] = {0};
-				if (Controllers::FSPort1.Type)
+				TCHAR conts[16] = {0,0};
+				if (Controllers::FSPort1->Type)
 					_tcscat(conts, _T(",1"));
-				if (Controllers::FSPort2.Type)
+				if (Controllers::FSPort2->Type)
 					_tcscat(conts, _T(",2"));
-				if (Controllers::FSPort3.Type)
+				if (Controllers::FSPort3->Type)
 					_tcscat(conts, _T(",3"));
-				if (Controllers::FSPort4.Type)
+				if (Controllers::FSPort4->Type)
 					_tcscat(conts, _T(",4"));
 				SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, &conts[1]);
 			}
-			else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, Controllers::StdPort_Mappings[Controllers::Port2.Type]);
-			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, Controllers::ExpPort_Mappings[Controllers::ExpPort.Type]);
+			else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, Controllers::StdPort_Mappings[Controllers::Port2->Type]);
+			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, Controllers::ExpPort_Mappings[Controllers::PortExp->Type]);
 			break;
 		case IDOK:
 			GetDlgItemText(hDlg, IDC_MOVIE_RECORD_FILE, Filename, MAX_PATH);
@@ -544,24 +544,24 @@ void	Record (void)
 	fwrite("NMOV", 1, 4, Data);
 	fwrite(&len, 1, 4, Data);
 	
-	ControllerTypes[0] = (unsigned char)Controllers::Port1.Type;
-	ControllerTypes[1] = (unsigned char)Controllers::Port2.Type;
-	ControllerTypes[2] = (unsigned char)Controllers::ExpPort.Type;
+	ControllerTypes[0] = (unsigned char)Controllers::Port1->Type;
+	ControllerTypes[1] = (unsigned char)Controllers::Port2->Type;
+	ControllerTypes[2] = (unsigned char)Controllers::PortExp->Type;
 
 	if (ControllerTypes[0] == Controllers::STD_FOURSCORE)
 	{
 		ControllerTypes[1] = 0;
-		if (Controllers::FSPort1.Type)	ControllerTypes[1] |= 0x01;
-		if (Controllers::FSPort2.Type)	ControllerTypes[1] |= 0x02;
-		if (Controllers::FSPort3.Type)	ControllerTypes[1] |= 0x04;
-		if (Controllers::FSPort4.Type)	ControllerTypes[1] |= 0x08;
+		if (Controllers::FSPort1->Type)	ControllerTypes[1] |= 0x01;
+		if (Controllers::FSPort2->Type)	ControllerTypes[1] |= 0x02;
+		if (Controllers::FSPort3->Type)	ControllerTypes[1] |= 0x04;
+		if (Controllers::FSPort4->Type)	ControllerTypes[1] |= 0x08;
 	}
 	fwrite(ControllerTypes, 1, 3, Data);
 	x = PPU::IsPAL ? 0x80 : 0x00;
 	FrameLen = 0;
-	FrameLen += Controllers::Port1.MovLen;
-	FrameLen += Controllers::Port2.MovLen;
-	FrameLen += Controllers::ExpPort.MovLen;
+	FrameLen += Controllers::Port1->MovLen;
+	FrameLen += Controllers::Port2->MovLen;
+	FrameLen += Controllers::PortExp->MovLen;
 	if (NES::HasMenu)
 		FrameLen++;
 	x |= FrameLen;
@@ -660,26 +660,26 @@ static	void	EndMovie (void)
 	if (ControllerTypes[0] == Controllers::STD_FOURSCORE)
 	{
 		if (ControllerTypes[1] & 0x01)
-			StdPort_SetControllerType(&Controllers::FSPort1,Controllers::STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers::FSPort1,Controllers::STD_UNCONNECTED);
+			SET_STDCONT(Controllers::FSPort1,Controllers::STD_STDCONTROLLER);
+		else	SET_STDCONT(Controllers::FSPort1,Controllers::STD_UNCONNECTED);
 		if (ControllerTypes[1] & 0x02)
-			StdPort_SetControllerType(&Controllers::FSPort2,Controllers::STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers::FSPort2,Controllers::STD_UNCONNECTED);
+			SET_STDCONT(Controllers::FSPort2,Controllers::STD_STDCONTROLLER);
+		else	SET_STDCONT(Controllers::FSPort2,Controllers::STD_UNCONNECTED);
 		if (ControllerTypes[1] & 0x04)
-			StdPort_SetControllerType(&Controllers::FSPort3,Controllers::STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers::FSPort3,Controllers::STD_UNCONNECTED);
+			SET_STDCONT(Controllers::FSPort3,Controllers::STD_STDCONTROLLER);
+		else	SET_STDCONT(Controllers::FSPort3,Controllers::STD_UNCONNECTED);
 		if (ControllerTypes[1] & 0x08)
-			StdPort_SetControllerType(&Controllers::FSPort4,Controllers::STD_STDCONTROLLER);
-		else	StdPort_SetControllerType(&Controllers::FSPort4,Controllers::STD_UNCONNECTED);
-		StdPort_SetControllerType(&Controllers::Port1,Controllers::STD_FOURSCORE);
-		StdPort_SetControllerType(&Controllers::Port2,Controllers::STD_FOURSCORE);
+			SET_STDCONT(Controllers::FSPort4,Controllers::STD_STDCONTROLLER);
+		else	SET_STDCONT(Controllers::FSPort4,Controllers::STD_UNCONNECTED);
+		SET_STDCONT(Controllers::Port1,Controllers::STD_FOURSCORE);
+		SET_STDCONT(Controllers::Port2,Controllers::STD_FOURSCORE);
 	}
 	else
 	{
-		StdPort_SetControllerType(&Controllers::Port1,ControllerTypes[0]);
-		StdPort_SetControllerType(&Controllers::Port2,ControllerTypes[1]);
+		SET_STDCONT(Controllers::Port1,(Controllers::STDCONT_TYPE)ControllerTypes[0]);
+		SET_STDCONT(Controllers::Port2,(Controllers::STDCONT_TYPE)ControllerTypes[1]);
 	}
-	ExpPort_SetControllerType(&Controllers::ExpPort,ControllerTypes[2]);
+	SET_EXPCONT(Controllers::PortExp,(Controllers::EXPCONT_TYPE)ControllerTypes[2]);
 	if ((MI) && (MI->Config))
 		EnableMenuItem(hMenu,ID_GAME,MF_ENABLED);
 	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_ENABLED);
@@ -709,12 +709,12 @@ unsigned char	LoadInput (void)
 		else	PrintTitlebar(_T("Unexpected EOF in movie!"));
 		EndMovie();
 	}
-	if (Controllers::Port1.MovLen)
-		fread(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,Data);		Pos += Controllers::Port1.MovLen;
-	if (Controllers::Port2.MovLen)
-		fread(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,Data);		Pos += Controllers::Port2.MovLen;
-	if (Controllers::ExpPort.MovLen)
-		fread(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,Data);	Pos += Controllers::ExpPort.MovLen;
+	if (Controllers::Port1->MovLen)
+		fread(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,Data);		Pos += Controllers::Port1->MovLen;
+	if (Controllers::Port2->MovLen)
+		fread(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,Data);		Pos += Controllers::Port2->MovLen;
+	if (Controllers::PortExp->MovLen)
+		fread(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,Data);	Pos += Controllers::PortExp->MovLen;
 	if (NES::HasMenu)
 	{
 		fread(&Cmd,1,1,Data);
@@ -726,12 +726,12 @@ unsigned char	LoadInput (void)
 void	SaveInput (unsigned char Cmd)
 {
 	int len = 0;
-	if (Controllers::Port1.MovLen)
-		fwrite(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,Data);	len += Controllers::Port1.MovLen;
-	if (Controllers::Port2.MovLen)
-		fwrite(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,Data);	len += Controllers::Port2.MovLen;
-	if (Controllers::ExpPort.MovLen)
-		fwrite(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,Data);	len += Controllers::ExpPort.MovLen;
+	if (Controllers::Port1->MovLen)
+		fwrite(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,Data);	len += Controllers::Port1->MovLen;
+	if (Controllers::Port2->MovLen)
+		fwrite(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,Data);	len += Controllers::Port2->MovLen;
+	if (Controllers::PortExp->MovLen)
+		fwrite(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,Data);	len += Controllers::PortExp->MovLen;
 	if (NES::HasMenu)
 	{
 		fwrite(&Cmd,1,1,Data);
@@ -815,23 +815,23 @@ int	Load (FILE *in)
 		Cmd = 0;
 		while (tpi > 0)
 		{
-			if (Controllers::Port1.MovLen)
+			if (Controllers::Port1->MovLen)
 			{
-				fread(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,in);
-				fwrite(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,Data);
-				tpi -= Controllers::Port1.MovLen;
+				fread(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,in);
+				fwrite(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,Data);
+				tpi -= Controllers::Port1->MovLen;
 			}
-			if (Controllers::Port2.MovLen)
+			if (Controllers::Port2->MovLen)
 			{
-				fread(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,in);
-				fwrite(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,Data);
-				tpi -= Controllers::Port2.MovLen;
+				fread(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,in);
+				fwrite(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,Data);
+				tpi -= Controllers::Port2->MovLen;
 			}
-			if (Controllers::ExpPort.MovLen)
+			if (Controllers::PortExp->MovLen)
 			{
-				fread(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,in);
-				fwrite(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,Data);
-				tpi -= Controllers::ExpPort.MovLen;
+				fread(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,in);
+				fwrite(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,Data);
+				tpi -= Controllers::PortExp->MovLen;
 			}
 			if (NES::HasMenu)
 			{
@@ -840,9 +840,9 @@ int	Load (FILE *in)
 				tpi--;
 			}
 		}
-		Controllers::Port1.Frame(&Controllers::Port1,MOV_PLAY);
-		Controllers::Port2.Frame(&Controllers::Port2,MOV_PLAY);
-		Controllers::ExpPort.Frame(&Controllers::ExpPort,MOV_PLAY);
+		Controllers::Port1->Frame(MOV_PLAY);
+		Controllers::Port2->Frame(MOV_PLAY);
+		Controllers::PortExp->Frame(MOV_PLAY);
 		if ((Cmd) && (MI) && (MI->Config))
 			MI->Config(CFG_CMD,Cmd);
 	}
@@ -858,20 +858,20 @@ int	Load (FILE *in)
 		Cmd = 0;
 		while (tpi > 0)
 		{
-			if (Controllers::Port1.MovLen)
+			if (Controllers::Port1->MovLen)
 			{
-				fread(Controllers::Port1.MovData,1,Controllers::Port1.MovLen,in);
-				tpi -= Controllers::Port1.MovLen;
+				fread(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,in);
+				tpi -= Controllers::Port1->MovLen;
 			}
-			if (Controllers::Port2.MovLen)
+			if (Controllers::Port2->MovLen)
 			{
-				fread(Controllers::Port2.MovData,1,Controllers::Port2.MovLen,in);
-				tpi -= Controllers::Port2.MovLen;
+				fread(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,in);
+				tpi -= Controllers::Port2->MovLen;
 			}
-			if (Controllers::ExpPort.MovLen)
+			if (Controllers::PortExp->MovLen)
 			{
-				fread(Controllers::ExpPort.MovData,1,Controllers::ExpPort.MovLen,in);
-				tpi -= Controllers::ExpPort.MovLen;
+				fread(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,in);
+				tpi -= Controllers::PortExp->MovLen;
 			}
 			if (NES::HasMenu)
 			{
@@ -879,9 +879,9 @@ int	Load (FILE *in)
 				tpi--;
 			}
 		}
-		Controllers::Port1.Frame(&Controllers::Port1,MOV_PLAY);
-		Controllers::Port2.Frame(&Controllers::Port2,MOV_PLAY);
-		Controllers::ExpPort.Frame(&Controllers::ExpPort,MOV_PLAY);
+		Controllers::Port1->Frame(MOV_PLAY);
+		Controllers::Port2->Frame(MOV_PLAY);
+		Controllers::PortExp->Frame(MOV_PLAY);
 		if ((Cmd) && (MI) && (MI->Config))
 			MI->Config(CFG_CMD,Cmd);
 	}

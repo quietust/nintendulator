@@ -80,7 +80,7 @@ int	SaveData (FILE *out)
 		fseek(out,clen,SEEK_CUR);	flen += clen;
 	}
 	{
-		fwrite("CTRL",1,4,out);		flen += 4;
+		fwrite("CONT",1,4,out);		flen += 4;
 		fwrite(&clen,1,4,out);		flen += 4;
 		clen = Controllers::Save(out);
 		fseek(out,-clen - 4,SEEK_CUR);
@@ -208,7 +208,7 @@ BOOL	LoadData (FILE *in, int flen)
 			clen -= PPU::Load(in);
 		else if (!memcmp(csig,"APUS",4))
 			clen -= APU::Load(in);
-		else if (!memcmp(csig,"CTRL",4))
+		else if (!memcmp(csig,"CONT",4))
 			clen -= Controllers::Load(in);
 		else if (!memcmp(csig,"GENI",4))
 			clen -= Genie::Load(in);

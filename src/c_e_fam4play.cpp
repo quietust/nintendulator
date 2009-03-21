@@ -13,142 +13,141 @@
 
 namespace Controllers
 {
-#define	Bits1	Data[0]
-#define	Bits2	Data[1]
-#define	BitPtr1	Data[2]
-#define	BitPtr2	Data[3]
-#define	Strobe	Data[4]
-#define	NewBit1	Data[5]
-#define	NewBit2	Data[6]
+#include <pshpack1.h>
+struct ExpPort_Fami4Play_State
+{
+	unsigned char Bits1;
+	unsigned char Bits2;
+	unsigned char BitPtr1;
+	unsigned char BitPtr2;
+	unsigned char Strobe;
+	unsigned char NewBit1;
+	unsigned char NewBit2;
+};
+#include <poppack.h>
+#define State ((ExpPort_Fami4Play_State *)Data)
 
-static	void	Frame (struct tExpPort *Cont, unsigned char mode)
+void	ExpPort_Fami4Play::Frame (unsigned char mode)
 {
 	int i;
 	if (mode & MOV_PLAY)
 	{
-		Cont->NewBit1 = Cont->MovData[0];
-		Cont->NewBit2 = Cont->MovData[1];
+		State->NewBit1 = MovData[0];
+		State->NewBit2 = MovData[1];
 	}
 	else
 	{
-		Cont->NewBit1 = 0;
-		Cont->NewBit2 = 0;
+		State->NewBit1 = 0;
+		State->NewBit2 = 0;
 		for (i = 0; i < 8; i++)
 		{
-			if (IsPressed(Cont->Buttons[i]))
-				Cont->NewBit1 |= 1 << i;
-			if (IsPressed(Cont->Buttons[i+8]))
-				Cont->NewBit2 |= 1 << i;
+			if (IsPressed(Buttons[i]))
+				State->NewBit1 |= 1 << i;
+			if (IsPressed(Buttons[i+8]))
+				State->NewBit2 |= 1 << i;
 		}
 		if (!EnableOpposites)
 		{	/* prevent simultaneously pressing left+right or up+down */
-			if ((Cont->NewBit1 & 0xC0) == 0xC0)
-				Cont->NewBit1 &= 0x3F;
-			if ((Cont->NewBit2 & 0xC0) == 0xC0)
-				Cont->NewBit2 &= 0x3F;
+			if ((State->NewBit1 & 0xC0) == 0xC0)
+				State->NewBit1 &= 0x3F;
+			if ((State->NewBit2 & 0xC0) == 0xC0)
+				State->NewBit2 &= 0x3F;
 
-			if ((Cont->NewBit1 & 0x30) == 0x30)
-				Cont->NewBit1 &= 0xCF;
-			if ((Cont->NewBit2 & 0x30) == 0x30)
-				Cont->NewBit2 &= 0xCF;
+			if ((State->NewBit1 & 0x30) == 0x30)
+				State->NewBit1 &= 0xCF;
+			if ((State->NewBit2 & 0x30) == 0x30)
+				State->NewBit2 &= 0xCF;
 		}
 	}
 	if (mode & MOV_RECORD)
 	{
-		Cont->MovData[0] = (unsigned char)Cont->NewBit1;
-		Cont->MovData[1] = (unsigned char)Cont->NewBit2;
+		MovData[0] = State->NewBit1;
+		MovData[1] = State->NewBit2;
 	}
 }
 
-static	unsigned char	Read1 (struct tExpPort *Cont)
+unsigned char	ExpPort_Fami4Play::Read1 (void)
 {
 	unsigned char result = 1;
-	if (Cont->Strobe)
+	if (State->Strobe)
 	{
-		Cont->Bits1 = Cont->NewBit1;
-		Cont->BitPtr1 = 0;
-		result = (unsigned char)(Cont->Bits1 & 1);
+		State->Bits1 = State->NewBit1;
+		State->BitPtr1 = 0;
+		result = (unsigned char)(State->Bits1 & 1);
 	}
 	else
 	{
-		if (Cont->BitPtr1 < 8)
-			result = (unsigned char)(Cont->Bits1 >> Cont->BitPtr1++) & 1;
+		if (State->BitPtr1 < 8)
+			result = (unsigned char)(State->Bits1 >> State->BitPtr1++) & 1;
 	}
 	return result << 1;
 }
-static	unsigned char	Read2 (struct tExpPort *Cont)
+unsigned char	ExpPort_Fami4Play::Read2 (void)
 {
 	unsigned char result = 1;
-	if (Cont->Strobe)
+	if (State->Strobe)
 	{
-		Cont->Bits2 = Cont->NewBit2;
-		Cont->BitPtr2 = 0;
-		result = (unsigned char)(Cont->Bits2 & 1);
+		State->Bits2 = State->NewBit2;
+		State->BitPtr2 = 0;
+		result = (unsigned char)(State->Bits2 & 1);
 	}
 	else
 	{
-		if (Cont->BitPtr2 < 8)
-			result = (unsigned char)(Cont->Bits2 >> Cont->BitPtr2++) & 1;
+		if (State->BitPtr2 < 8)
+			result = (unsigned char)(State->Bits2 >> State->BitPtr2++) & 1;
 	}
 	return result << 1;
 }
-static	void	Write (struct tExpPort *Cont, unsigned char Val)
+void	ExpPort_Fami4Play::Write (unsigned char Val)
 {
-	if ((Cont->Strobe) || (Val & 1))
+	if ((State->Strobe) || (Val & 1))
 	{
-		Cont->Strobe = Val & 1;
-		Cont->Bits1 = Cont->NewBit1;
-		Cont->Bits2 = Cont->NewBit2;
-		Cont->BitPtr1 = 0;
-		Cont->BitPtr2 = 0;
+		State->Strobe = Val & 1;
+		State->Bits1 = State->NewBit1;
+		State->Bits2 = State->NewBit2;
+		State->BitPtr1 = 0;
+		State->BitPtr2 = 0;
 	}
 }
 static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[16] = {IDC_CONT_D0,IDC_CONT_D1,IDC_CONT_D2,IDC_CONT_D3,IDC_CONT_D4,IDC_CONT_D5,IDC_CONT_D6,IDC_CONT_D7,IDC_CONT_D8,IDC_CONT_D9,IDC_CONT_D10,IDC_CONT_D11,IDC_CONT_D12,IDC_CONT_D13,IDC_CONT_D14,IDC_CONT_D15};
 	int dlgButtons[16] = {IDC_CONT_K0,IDC_CONT_K1,IDC_CONT_K2,IDC_CONT_K3,IDC_CONT_K4,IDC_CONT_K5,IDC_CONT_K6,IDC_CONT_K7,IDC_CONT_K8,IDC_CONT_K9,IDC_CONT_K10,IDC_CONT_K11,IDC_CONT_K12,IDC_CONT_K13,IDC_CONT_K14,IDC_CONT_K15};
-	static struct tExpPort *Cont = NULL;
+	ExpPort *Cont;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct tExpPort *)lParam;
-	ParseConfigMessages(hDlg,16,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+	{
+		SetWindowLongPtr(hDlg, GWL_USERDATA, lParam);
+		Cont = (ExpPort *)lParam;
+	}
+	else	Cont = (ExpPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
+	ParseConfigMessages(hDlg,16,dlgLists,dlgButtons,Cont ? Cont->Buttons : NULL,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct tExpPort *Cont, HWND hWnd)
+void	ExpPort_Fami4Play::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_FAMI4PLAY,hWnd,ConfigProc,(LPARAM)Cont);
+	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_FAMI4PLAY,hWnd,ConfigProc,(LPARAM)this);
 }
-static	void	Unload (struct tExpPort *Cont)
+ExpPort_Fami4Play::~ExpPort_Fami4Play (void)
 {
-	free(Cont->Data);
-	free(Cont->MovData);
+	free(Data);
+	free(MovData);
 }
-void	ExpPort_SetFami4Play (struct tExpPort *Cont)
+void	ExpPort_Fami4Play::Init (int *buttons)
 {
-	Cont->Read1 = Read1;
-	Cont->Read2 = Read2;
-	Cont->Write = Write;
-	Cont->Config = Config;
-	Cont->Unload = Unload;
-	Cont->Frame = Frame;
-	Cont->NumButtons = 16;
-	Cont->DataLen = 7;
-	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
-	Cont->MovLen = 2;
-	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
-	ZeroMemory(Cont->MovData,Cont->MovLen);
-	Cont->Bits1 = 0;
-	Cont->Bits2 = 0;
-	Cont->BitPtr1 = 0;
-	Cont->BitPtr2 = 0;
-	Cont->Strobe = 0;
-	Cont->NewBit1 = 0;
-	Cont->NewBit2 = 0;
+	Type = EXP_FAMI4PLAY;
+	NumButtons = 16;
+	Buttons = buttons;
+	DataLen = sizeof(*State);
+	Data = malloc(DataLen);
+	MovLen = 2;
+	MovData = (unsigned char *)malloc(MovLen);
+	ZeroMemory(MovData, MovLen);
+	State->Bits1 = 0;
+	State->Bits2 = 0;
+	State->BitPtr1 = 0;
+	State->BitPtr2 = 0;
+	State->Strobe = 0;
+	State->NewBit1 = 0;
+	State->NewBit2 = 0;
 }
-#undef	NewBit2
-#undef	NewBit1
-#undef	Strobe
-#undef	BitPtr2
-#undef	BitPtr1
-#undef	Bits2
-#undef	Bits1
 } // namespace Controllers

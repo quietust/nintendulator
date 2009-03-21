@@ -17,26 +17,17 @@ namespace Controllers
 {
 static	HWND key;
 
-struct tStdPort Port1, Port2;
-struct tStdPort FSPort1, FSPort2, FSPort3, FSPort4;
-struct tExpPort ExpPort;
+StdPort *Port1, *Port2;
+StdPort *FSPort1, *FSPort2, *FSPort3, *FSPort4;
+ExpPort *PortExp;
 
-void	StdPort_SetUnconnected		(struct tStdPort *);
-void	StdPort_SetStdController	(struct tStdPort *);
-void	StdPort_SetZapper		(struct tStdPort *);
-void	StdPort_SetArkanoidPaddle	(struct tStdPort *);
-void	StdPort_SetPowerPad		(struct tStdPort *);
-void	StdPort_SetFourScore		(struct tStdPort *);
-void	StdPort_SetSnesController	(struct tStdPort *);
-void	StdPort_SetVSZapper		(struct tStdPort *);
-
-void	ExpPort_SetUnconnected		(struct tExpPort *);
-void	ExpPort_SetFami4Play		(struct tExpPort *);
-void	ExpPort_SetArkanoidPaddle	(struct tExpPort *);
-void	ExpPort_SetFamilyBasicKeyboard	(struct tExpPort *);
-void	ExpPort_SetAltKeyboard		(struct tExpPort *);
-void	ExpPort_SetFamTrainer		(struct tExpPort *);
-void	ExpPort_SetTablet		(struct tExpPort *);
+int	Port1_Buttons[CONTROLLERS_MAXBUTTONS],
+	Port2_Buttons[CONTROLLERS_MAXBUTTONS];
+int	FSPort1_Buttons[CONTROLLERS_MAXBUTTONS],
+	FSPort2_Buttons[CONTROLLERS_MAXBUTTONS],
+	FSPort3_Buttons[CONTROLLERS_MAXBUTTONS],
+	FSPort4_Buttons[CONTROLLERS_MAXBUTTONS];
+int	PortExp_Buttons[CONTROLLERS_MAXBUTTONS];
 
 BOOL	EnableOpposites;
 
@@ -60,19 +51,24 @@ BYTE		KeyState[256];
 DIMOUSESTATE2	MouseState;
 DIJOYSTATE2	JoyState[MAX_CONTROLLERS];	// first 2 entries are unused
 
-void	StdPort_SetControllerType (struct tStdPort *Cont, int Type)
+void	StdPort_SetControllerType (StdPort *&Port, STDCONT_TYPE Type, int *buttons)
 {
-	Cont->Unload(Cont);
-	switch (Cont->Type = Type) 
+	if (Port != NULL)
 	{
-	case STD_UNCONNECTED:		StdPort_SetUnconnected(Cont);		break;
-	case STD_STDCONTROLLER:		StdPort_SetStdController(Cont);		break;
-	case STD_ZAPPER:		StdPort_SetZapper(Cont);		break;
-	case STD_ARKANOIDPADDLE:	StdPort_SetArkanoidPaddle(Cont);	break;
-	case STD_POWERPAD:		StdPort_SetPowerPad(Cont);		break;
-	case STD_FOURSCORE:		StdPort_SetFourScore(Cont);		break;
-	case STD_SNESCONTROLLER:	StdPort_SetSnesController(Cont);	break;
-	case STD_VSZAPPER:		StdPort_SetVSZapper(Cont);		break;
+		delete Port;
+		Port = NULL;
+	}
+	switch (Type)
+	{
+	case STD_UNCONNECTED:		Port = new StdPort_Unconnected(buttons);	break;
+	case STD_STDCONTROLLER:		Port = new StdPort_StdController(buttons);	break;
+	case STD_ZAPPER:		Port = new StdPort_Zapper(buttons);		break;
+	case STD_ARKANOIDPADDLE:	Port = new StdPort_ArkanoidPaddle(buttons);	break;
+	case STD_POWERPAD:		Port = new StdPort_PowerPad(buttons);		break;
+	case STD_FOURSCORE:		Port = new StdPort_FourScore(buttons);		break;
+	case STD_SNESCONTROLLER:	Port = new StdPort_SnesController(buttons);	break;
+	case STD_VSZAPPER:		Port = new StdPort_VSZapper(buttons);		break;
+	case STD_FOURSCORE2:		Port = new StdPort_FourScore2(buttons);		break;
 	default:MessageBox(hMainWnd,_T("Error: selected invalid controller type for standard port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
 	}
 }
@@ -84,25 +80,30 @@ void	StdPort_SetMappings (void)
 	StdPort_Mappings[STD_ZAPPER] = _T("Zapper");
 	StdPort_Mappings[STD_ARKANOIDPADDLE] = _T("Arkanoid Paddle");
 	StdPort_Mappings[STD_POWERPAD] = _T("Power Pad");
-	StdPort_Mappings[STD_FOURSCORE] = _T("Four Score");
+	StdPort_Mappings[STD_FOURSCORE] = _T("Four Score (port 1 only)");
 	StdPort_Mappings[STD_SNESCONTROLLER] = _T("SNES Controller");
 	StdPort_Mappings[STD_VSZAPPER] = _T("VS Unisystem Zapper");
+	StdPort_Mappings[STD_FOURSCORE2] = _T("Four Score (port 2 only)");
 }
 
-void	ExpPort_SetControllerType (struct tExpPort *Cont, int Type)
+void    ExpPort_SetControllerType (ExpPort *&Port, EXPCONT_TYPE Type, int *buttons)
 {
-	Cont->Unload(Cont);
-	switch (Cont->Type = Type)
+	if (Port != NULL)
 	{
-	case EXP_UNCONNECTED:		ExpPort_SetUnconnected(Cont);		break;
-	case EXP_FAMI4PLAY:		ExpPort_SetFami4Play(Cont);		break;
-	case EXP_ARKANOIDPADDLE:	ExpPort_SetArkanoidPaddle(Cont);	break;
-	case EXP_FAMILYBASICKEYBOARD:	ExpPort_SetFamilyBasicKeyboard(Cont);	break;
-	case EXP_ALTKEYBOARD:		ExpPort_SetAltKeyboard(Cont);		break;
-	case EXP_FAMTRAINER:		ExpPort_SetFamTrainer(Cont);		break;
-	case EXP_TABLET:		ExpPort_SetTablet(Cont);		break;
-	default:MessageBox(hMainWnd,_T("Error: selected invalid controller type for expansion port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
+		delete Port;
+		Port = NULL;
 	}
+        switch (Type)
+        {
+        case EXP_UNCONNECTED:		Port = new ExpPort_Unconnected(buttons);		break;
+        case EXP_FAMI4PLAY:		Port = new ExpPort_Fami4Play(buttons);			break;
+        case EXP_ARKANOIDPADDLE:	Port = new ExpPort_ArkanoidPaddle(buttons);		break;
+        case EXP_FAMILYBASICKEYBOARD:	Port = new ExpPort_FamilyBasicKeyboard(buttons);	break;
+        case EXP_ALTKEYBOARD:		Port = new ExpPort_AltKeyboard(buttons);		break;
+        case EXP_FAMTRAINER:		Port = new ExpPort_FamTrainer(buttons);			break;
+        case EXP_TABLET:		Port = new ExpPort_Tablet(buttons);			break;
+        default:MessageBox(hMainWnd,_T("Error: selected invalid controller type for expansion port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
+        }
 }
 const TCHAR	*ExpPort_Mappings[EXP_MAX];
 void	ExpPort_SetMappings (void)
@@ -132,13 +133,13 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 			SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[i]);
 			SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[i]);
 		}
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1.Type,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2.Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1->Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2->Type,0);
 
 		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_RESETCONTENT,0,0);
 		for (i = 0; i < EXP_MAX; i++)
 			SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)ExpPort_Mappings[i]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_SETCURSEL,ExpPort.Type,0);
+		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_SETCURSEL,PortExp->Type,0);
 		if (Movie::Mode)
 		{
 			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
@@ -174,66 +175,84 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 		case IDC_CONT_SPORT1:
 			if (wmEvent == CBN_SELCHANGE)
 			{
-				int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0);
-				if (Type == STD_FOURSCORE)
+				STDCONT_TYPE Type = (STDCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0);
+				if (Type == STD_FOURSCORE2)
 				{
-					StdPort_SetControllerType(&FSPort1,Port1.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
-					StdPort_SetControllerType(&FSPort2,Port2.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
-					memcpy(FSPort1.Buttons,Port1.Buttons,sizeof(Port1.Buttons));
-					memcpy(FSPort2.Buttons,Port2.Buttons,sizeof(Port2.Buttons));
-					StdPort_SetControllerType(&Port1,STD_FOURSCORE);
-					StdPort_SetControllerType(&Port2,STD_FOURSCORE);
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,STD_FOURSCORE,0);
+					// undo selection - can NOT set port 1 to this!
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1->Type,0);
 				}
-				else if (Port1.Type	== STD_FOURSCORE)
+				else if (Type == STD_FOURSCORE)
 				{
-					StdPort_SetControllerType(&Port1,Type);
-					StdPort_SetControllerType(&Port2,FSPort2.Type);
-					memcpy(Port2.Buttons,FSPort2.Buttons,sizeof(FSPort2.Buttons));
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2.Type,0);
+					if (Port1->Type == STD_STDCONTROLLER)
+						SET_STDCONT(FSPort1, STD_STDCONTROLLER);
+					else	SET_STDCONT(FSPort1, STD_UNCONNECTED);
+					if (Port2->Type == STD_STDCONTROLLER)
+						SET_STDCONT(FSPort2, STD_STDCONTROLLER);
+					else	SET_STDCONT(FSPort2, STD_UNCONNECTED);
+					memcpy(FSPort1_Buttons, Port1_Buttons, sizeof(Port1_Buttons));
+					memcpy(FSPort2_Buttons, Port2_Buttons, sizeof(Port2_Buttons));
+					SET_STDCONT(Port1, STD_FOURSCORE);
+					SET_STDCONT(Port2, STD_FOURSCORE2);
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,STD_FOURSCORE2,0);
 				}
-				else	StdPort_SetControllerType(&Port1,Type);
+				else if (Port1->Type == STD_FOURSCORE)
+				{
+					SET_STDCONT(Port1, Type);
+					SET_STDCONT(Port2, FSPort2->Type);
+					memcpy(Port2_Buttons, FSPort2_Buttons, sizeof(FSPort2_Buttons));
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2->Type,0);
+				}
+				else	SET_STDCONT(Port1, Type);
 			}
 			break;
 		case IDC_CONT_SPORT2:
 			if (wmEvent == CBN_SELCHANGE)
 			{
-				int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0);
+				STDCONT_TYPE Type = (STDCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0);
 				if (Type == STD_FOURSCORE)
 				{
-					StdPort_SetControllerType(&FSPort1,Port1.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
-					StdPort_SetControllerType(&FSPort2,Port2.Type == STD_STDCONTROLLER ? STD_STDCONTROLLER : STD_UNCONNECTED);
-					memcpy(FSPort1.Buttons,Port1.Buttons,sizeof(Port1.Buttons));
-					memcpy(FSPort2.Buttons,Port2.Buttons,sizeof(Port2.Buttons));
-					StdPort_SetControllerType(&Port1,STD_FOURSCORE);
-					StdPort_SetControllerType(&Port2,STD_FOURSCORE);
+					// undo selection - can NOT set port 1 to this!
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2->Type,0);
+				}
+				else if (Type == STD_FOURSCORE2)
+				{
+					if (Port1->Type == STD_STDCONTROLLER)
+						SET_STDCONT(FSPort1, STD_STDCONTROLLER);
+					else	SET_STDCONT(FSPort1, STD_UNCONNECTED);
+					if (Port2->Type == STD_STDCONTROLLER)
+						SET_STDCONT(FSPort2, STD_STDCONTROLLER);
+					else	SET_STDCONT(FSPort2, STD_UNCONNECTED);
+					memcpy(FSPort1_Buttons, Port1_Buttons, sizeof(Port1_Buttons));
+					memcpy(FSPort2_Buttons, Port2_Buttons, sizeof(Port2_Buttons));
+					SET_STDCONT(Port1, STD_FOURSCORE);
+					SET_STDCONT(Port2, STD_FOURSCORE2);
 					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,STD_FOURSCORE,0);
 				}
-				else if (Port2.Type	== STD_FOURSCORE)
+				else if (Port2->Type == STD_FOURSCORE2)
 				{
-					StdPort_SetControllerType(&Port1,FSPort1.Type);
-					memcpy(Port1.Buttons,FSPort1.Buttons,sizeof(FSPort1.Buttons));
-					StdPort_SetControllerType(&Port2,Type);
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1.Type,0);
+					SET_STDCONT(Port1, FSPort1->Type);
+					memcpy(Port1_Buttons, FSPort1_Buttons, sizeof(FSPort1_Buttons));
+					SET_STDCONT(Port2, Type);
+					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1->Type,0);
 				}
-				else	StdPort_SetControllerType(&Port2,Type);
+				else	SET_STDCONT(Port2, Type);
 			}
 			break;
 		case IDC_CONT_SEXPPORT:
 			if (wmEvent == CBN_SELCHANGE)
 			{
-				int Type = (int)SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_GETCURSEL,0,0);
-				ExpPort_SetControllerType(&ExpPort,Type);
+				EXPCONT_TYPE Type = (EXPCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_GETCURSEL,0,0);
+				SET_EXPCONT(PortExp, Type);
 			}
 			break;
 		case IDC_CONT_CPORT1:
-			Port1.Config(&Port1,hDlg);
+			Port1->Config(hDlg);
 			break;
 		case IDC_CONT_CPORT2:
-			Port2.Config(&Port2,hDlg);
+			Port2->Config(hDlg);
 			break;
 		case IDC_CONT_CEXPPORT:
-			ExpPort.Config(&ExpPort,hDlg);
+			PortExp->Config(hDlg);
 			break;
 		};
 		break;
@@ -478,21 +497,21 @@ void	Init (void)
 	StdPort_SetMappings();
 	ExpPort_SetMappings();
 
-	ZeroMemory(Port1.Buttons,sizeof(Port1.Buttons));
-	ZeroMemory(Port2.Buttons,sizeof(Port2.Buttons));
-	ZeroMemory(FSPort1.Buttons,sizeof(FSPort1.Buttons));
-	ZeroMemory(FSPort2.Buttons,sizeof(FSPort2.Buttons));
-	ZeroMemory(FSPort3.Buttons,sizeof(FSPort3.Buttons));
-	ZeroMemory(FSPort4.Buttons,sizeof(FSPort4.Buttons));
-	ZeroMemory(ExpPort.Buttons,sizeof(ExpPort.Buttons));
+	ZeroMemory(Port1_Buttons,sizeof(Port1_Buttons));
+	ZeroMemory(Port2_Buttons,sizeof(Port2_Buttons));
+	ZeroMemory(FSPort1_Buttons,sizeof(FSPort1_Buttons));
+	ZeroMemory(FSPort2_Buttons,sizeof(FSPort2_Buttons));
+	ZeroMemory(FSPort3_Buttons,sizeof(FSPort3_Buttons));
+	ZeroMemory(FSPort4_Buttons,sizeof(FSPort4_Buttons));
+	ZeroMemory(PortExp_Buttons,sizeof(PortExp_Buttons));
 
-	StdPort_SetUnconnected(&Port1);
-	StdPort_SetUnconnected(&Port2);
-	StdPort_SetUnconnected(&FSPort1);
-	StdPort_SetUnconnected(&FSPort2);
-	StdPort_SetUnconnected(&FSPort3);
-	StdPort_SetUnconnected(&FSPort4);
-	ExpPort_SetUnconnected(&ExpPort);
+	Port1 = new StdPort_Unconnected(Port1_Buttons);
+	Port2 = new StdPort_Unconnected(Port2_Buttons);
+	FSPort1 = new StdPort_Unconnected(FSPort1_Buttons);
+	FSPort2 = new StdPort_Unconnected(FSPort2_Buttons);
+	FSPort3 = new StdPort_Unconnected(FSPort3_Buttons);
+	FSPort4 = new StdPort_Unconnected(FSPort4_Buttons);
+	PortExp = new ExpPort_Unconnected(PortExp_Buttons);
 	
 	if (FAILED(DirectInputCreateEx(hInst,DIRECTINPUT_VERSION,IID_IDirectInput7,(LPVOID *)&DirectInput,NULL)))
 	{
@@ -516,13 +535,13 @@ void	Release (void)
 {
 	int i, j;
 	UnAcquire();
-	Port1.Unload(&Port1);
-	Port2.Unload(&Port2);
-	FSPort1.Unload(&FSPort1);
-	FSPort2.Unload(&FSPort2);
-	FSPort3.Unload(&FSPort3);
-	FSPort4.Unload(&FSPort4);
-	ExpPort.Unload(&ExpPort);
+	delete Port1;	Port1 = NULL;
+	delete Port2;	Port2 = NULL;
+	delete FSPort1;	FSPort1 = NULL;
+	delete FSPort2;	FSPort2 = NULL;
+	delete FSPort3;	FSPort3 = NULL;
+	delete FSPort4;	FSPort4 = NULL;
+	delete PortExp;	PortExp = NULL;
 	for (i = 0; i < NumDevices; i++)
 	{
 		if (DIDevices[i])
@@ -559,53 +578,108 @@ void	Release (void)
 
 void	Write (unsigned char Val)
 {
-	Port1.Write(&Port1,Val & 0x1);
-	Port2.Write(&Port2,Val & 0x1);
-	ExpPort.Write(&ExpPort,Val);
+	Port1->Write(Val & 0x1);
+	Port2->Write(Val & 0x1);
+	PortExp->Write(Val);
 }
 
 int	Save (FILE *out)
 {
 	int clen = 0;
-	fwrite(&FSPort1.Type,4,1,out);	clen += 4;
-	fwrite(&FSPort2.Type,4,1,out);	clen += 4;
-	fwrite(&FSPort3.Type,4,1,out);	clen += 4;
-	fwrite(&FSPort4.Type,4,1,out);	clen += 4;
-	fwrite(&Port1.Type,4,1,out);	clen += 4;
-	fwrite(&Port2.Type,4,1,out);	clen += 4;
-	fwrite(&ExpPort.Type,4,1,out);	clen += 4;
-	fwrite(Port1.Data,Port1.DataLen,1,out);		clen += Port1.DataLen;
-	fwrite(Port2.Data,Port2.DataLen,1,out);		clen += Port2.DataLen;
-	fwrite(FSPort1.Data,FSPort1.DataLen,1,out);	clen += FSPort1.DataLen;
-	fwrite(FSPort2.Data,FSPort2.DataLen,1,out);	clen += FSPort2.DataLen;
-	fwrite(FSPort3.Data,FSPort3.DataLen,1,out);	clen += FSPort3.DataLen;
-	fwrite(FSPort4.Data,FSPort4.DataLen,1,out);	clen += FSPort4.DataLen;
-	fwrite(ExpPort.Data,ExpPort.DataLen,1,out);	clen += ExpPort.DataLen;
+	unsigned char type;
+	unsigned short len;
+
+	type = (unsigned char)Port1->Type;
+	fwrite(&type, 1, 1, out);		clen += 1;
+	len = (unsigned short)Port1->DataLen;
+	fwrite(&len, 2, 1, out);		clen += 2;
+	fwrite(Port1->Data, 1, len, out);	clen += len;
+
+	type = (unsigned char)Port2->Type;
+	fwrite(&type, 1, 1, out);		clen += 1;
+	len = (unsigned short)Port2->DataLen;
+	fwrite(&len, 2, 1, out);		clen += 2;
+	fwrite(Port2->Data, 1, len, out);	clen += len;
+
+	type = (unsigned char)PortExp->Type;
+	fwrite(&type, 1, 1, out);		clen += 1;
+	len = (unsigned short)PortExp->DataLen;
+	fwrite(&len, 2, 1, out);		clen += 2;
+	fwrite(PortExp->Data, 1, len, out);	clen += len;
+
+	type = (unsigned char)FSPort1->Type;
+	fwrite(&type, 1, 1, out);		clen += 1;
+	len = (unsigned short)FSPort1->DataLen;
+	fwrite(&len, 2, 1, out);		clen += 2;
+	fwrite(FSPort1->Data, 1, len, out);	clen += len;
+
+	type = (unsigned char)FSPort2->Type;
+	fwrite(&type, 1, 1, out);		clen += 1;
+	len = (unsigned short)FSPort2->DataLen;
+	fwrite(&len, 2, 1, out);		clen += 2;
+	fwrite(FSPort2->Data, 1, len, out);	clen += len;
+
+	type = (unsigned char)FSPort3->Type;
+	fwrite(&type, 1, 1, out);		clen += 1;
+	len = (unsigned short)FSPort3->DataLen;
+	fwrite(&len, 2, 1, out);		clen += 2;
+	fwrite(FSPort3->Data, 1, len, out);	clen += len;
+
+	type = (unsigned char)FSPort4->Type;
+	fwrite(&type, 1, 1, out);		clen += 1;
+	len = (unsigned short)FSPort4->DataLen;
+	fwrite(&len, 2, 1, out);		clen += 2;
+	fwrite(FSPort4->Data, 1, len, out);	clen += len;
 	return clen;
 }
 
 int	Load (FILE *in)
 {
 	int clen = 0;
-	int tpi;
+	unsigned char type;
+	unsigned short len, actLen, skipLen;
 	Movie::ControllerTypes[3] = 1;	// denotes that controller state has been loaded
 					// if we're playing a movie, this means we should
 					// SKIP the controller info in the movie block
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&FSPort1,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&FSPort2,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&FSPort3,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&FSPort4,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Port1,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	StdPort_SetControllerType(&Port2,tpi);	clen += 4;
-	fread(&tpi,4,1,in);	ExpPort_SetControllerType(&ExpPort,tpi);	clen += 4;
 
-	fread(Port1.Data,Port1.DataLen,1,in);		clen += Port1.DataLen;
-	fread(Port2.Data,Port2.DataLen,1,in);		clen += Port2.DataLen;
-	fread(FSPort1.Data,FSPort1.DataLen,1,in);	clen += FSPort1.DataLen;
-	fread(FSPort2.Data,FSPort2.DataLen,1,in);	clen += FSPort2.DataLen;
-	fread(FSPort3.Data,FSPort3.DataLen,1,in);	clen += FSPort3.DataLen;
-	fread(FSPort4.Data,FSPort4.DataLen,1,in);	clen += FSPort4.DataLen;
-	fread(ExpPort.Data,ExpPort.DataLen,1,in);	clen += ExpPort.DataLen;
+	fread(&type, 1, 1, in);			SET_STDCONT(Port1, (STDCONT_TYPE)type);		clen += 1;
+	fread(&len, 2, 1, in);									clen += 2;
+	actLen = min(Port1->DataLen, len);	skipLen = len - actLen;
+	fread(Port1->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+
+	fread(&type, 1, 1, in);									clen += 1;
+	if ((STDCONT_TYPE)type == STD_FOURSCORE)
+		SET_STDCONT(Port2, STD_FOURSCORE2);
+	else	SET_STDCONT(Port2, (STDCONT_TYPE)type);
+	fread(&len, 2, 1, in);									clen += 2;
+	actLen = min(Port2->DataLen, len);	skipLen = len - actLen;
+	fread(Port2->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+
+	fread(&type, 1, 1, in);			SET_EXPCONT(PortExp, (EXPCONT_TYPE)type);	clen += 1;
+	fread(&len, 2, 1, in);									clen += 2;
+	actLen = min(PortExp->DataLen, len);	skipLen = len - actLen;
+	fread(PortExp->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+
+	fread(&type, 1, 1, in);			SET_STDCONT(FSPort1, (STDCONT_TYPE)type);	clen += 1;
+	fread(&len, 2, 1, in);									clen += 2;
+	actLen = min(FSPort1->DataLen, len);	skipLen = len - actLen;
+	fread(FSPort1->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+
+	fread(&type, 1, 1, in);			SET_STDCONT(FSPort2, (STDCONT_TYPE)type);	clen += 1;
+	fread(&len, 2, 1, in);									clen += 2;
+	actLen = min(FSPort2->DataLen, len);	skipLen = len - actLen;
+	fread(FSPort2->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+
+	fread(&type, 1, 1, in);			SET_STDCONT(FSPort3, (STDCONT_TYPE)type);	clen += 1;
+	fread(&len, 2, 1, in);									clen += 2;
+	actLen = min(FSPort3->DataLen, len);	skipLen = len - actLen;
+	fread(FSPort3->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+
+	fread(&type, 1, 1, in);			SET_STDCONT(FSPort4, (STDCONT_TYPE)type);	clen += 1;
+	fread(&len, 2, 1, in);									clen += 2;
+	actLen = min(FSPort4->DataLen, len);	skipLen = len - actLen;
+	fread(FSPort4->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+
 	return clen;
 }
 
@@ -618,31 +692,31 @@ void	SetDeviceUsed (void)
 
 	for (i = 0; i < CONTROLLERS_MAXBUTTONS; i++)
 	{
-		if (Port1.Type == STD_FOURSCORE)
+		if (Port1->Type == STD_FOURSCORE)
 		{
-			if (i < FSPort1.NumButtons)
-				DeviceUsed[FSPort1.Buttons[i] >> 16] = TRUE;
-			if (i < FSPort2.NumButtons)
-				DeviceUsed[FSPort2.Buttons[i] >> 16] = TRUE;
-			if (i < FSPort3.NumButtons)
-				DeviceUsed[FSPort3.Buttons[i] >> 16] = TRUE;
-			if (i < FSPort4.NumButtons)
-				DeviceUsed[FSPort4.Buttons[i] >> 16] = TRUE;
+			if (i < FSPort1->NumButtons)
+				DeviceUsed[FSPort1->Buttons[i] >> 16] = TRUE;
+			if (i < FSPort2->NumButtons)
+				DeviceUsed[FSPort2->Buttons[i] >> 16] = TRUE;
+			if (i < FSPort3->NumButtons)
+				DeviceUsed[FSPort3->Buttons[i] >> 16] = TRUE;
+			if (i < FSPort4->NumButtons)
+				DeviceUsed[FSPort4->Buttons[i] >> 16] = TRUE;
 		}
 		else
 		{
-			if (i < Port1.NumButtons)
-				DeviceUsed[Port1.Buttons[i] >> 16] = TRUE;
-			if (i < Port2.NumButtons)
-				DeviceUsed[Port2.Buttons[i] >> 16] = TRUE;
+			if (i < Port1->NumButtons)
+				DeviceUsed[Port1->Buttons[i] >> 16] = TRUE;
+			if (i < Port2->NumButtons)
+				DeviceUsed[Port2->Buttons[i] >> 16] = TRUE;
 		}
-		if (i < ExpPort.NumButtons)
-			DeviceUsed[ExpPort.Buttons[i] >> 16] = TRUE;
+		if (i < PortExp->NumButtons)
+			DeviceUsed[PortExp->Buttons[i] >> 16] = TRUE;
 	}
-	if ((Port1.Type == STD_ARKANOIDPADDLE) || (Port2.Type == STD_ARKANOIDPADDLE) || (ExpPort.Type == EXP_ARKANOIDPADDLE))
+	if ((Port1->Type == STD_ARKANOIDPADDLE) || (Port2->Type == STD_ARKANOIDPADDLE) || (PortExp->Type == EXP_ARKANOIDPADDLE))
 		DeviceUsed[1] = TRUE;
 
-	if ((ExpPort.Type == EXP_FAMILYBASICKEYBOARD) || (ExpPort.Type == EXP_ALTKEYBOARD))
+	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_ALTKEYBOARD))
 		DeviceUsed[0] = TRUE;
 }
 
@@ -652,7 +726,7 @@ void	Acquire (void)
 	for (i = 0; i < NumDevices; i++)
 		if (DIDevices[i])
 			IDirectInputDevice7_Acquire(DIDevices[i]);
-	if ((ExpPort.Type == EXP_FAMILYBASICKEYBOARD) || (ExpPort.Type == EXP_ALTKEYBOARD))
+	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_ALTKEYBOARD))
 		MaskKeyboard = 1;
 }
 void	UnAcquire (void)
@@ -709,9 +783,9 @@ void	UpdateInput (void)
 		if ((MI) && (MI->Config))
 			Cmd = MI->Config(CFG_QUERY,0);
 	}
-	Port1.Frame(&Port1,Movie::Mode);
-	Port2.Frame(&Port2,Movie::Mode);
-	ExpPort.Frame(&ExpPort,Movie::Mode);
+	Port1->Frame(Movie::Mode);
+	Port2->Frame(Movie::Mode);
+	PortExp->Frame(Movie::Mode);
 	if ((Cmd) && (MI) && (MI->Config))
 		MI->Config(CFG_CMD,Cmd);
 	if (Movie::Mode & MOV_RECORD)

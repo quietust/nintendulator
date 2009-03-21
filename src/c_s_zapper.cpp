@@ -16,40 +16,46 @@
 
 namespace Controllers
 {
-#define	PosX	Data[0]
-#define	PosY	Data[1]
-#define	Button	Data[2]
-
-static	void	Frame (struct tStdPort *Cont, unsigned char mode)
+#include <pshpack1.h>
+struct StdPort_Zapper_State
 {
-	static POINT pos;
+	unsigned char PosX;
+	unsigned char PosY;
+	unsigned char Button;
+};
+#include <poppack.h>
+#define State ((StdPort_Zapper_State *)Data)
+
+void	StdPort_Zapper::Frame (unsigned char mode)
+{
+	POINT pos;
 	if (mode & MOV_PLAY)
 	{
-		Cont->PosX = Cont->MovData[0];
-		Cont->PosY = Cont->MovData[1];
-		Cont->Button = Cont->MovData[2];
-		GFX::SetCursorPos(Cont->PosX, Cont->PosY);
+		State->PosX = MovData[0];
+		State->PosY = MovData[1];
+		State->Button = MovData[2];
+		GFX::SetCursorPos(State->PosX, State->PosY);
 	}
 	else
 	{
 		GFX::GetCursorPos(&pos);
-		Cont->PosX = pos.x;
-		Cont->PosY = pos.y;
-		if ((Cont->PosX < 0) || (Cont->PosX > 255) || (Cont->PosY < 0) || (Cont->PosY > 239))
-			Cont->PosX = Cont->PosY = 255;	// if it's off-screen, push it to the bottom
-		Cont->Button = IsPressed(Cont->Buttons[0]);
+		State->PosX = pos.x;
+		State->PosY = pos.y;
+		if ((State->PosX < 0) || (State->PosX > 255) || (State->PosY < 0) || (State->PosY > 239))
+			State->PosX = State->PosY = 255;	// if it's off-screen, push it to the bottom
+		State->Button = IsPressed(Buttons[0]);
 	}
 	if (mode & MOV_RECORD)
 	{
-		Cont->MovData[0] = (unsigned char)Cont->PosX;
-		Cont->MovData[1] = (unsigned char)Cont->PosY;
-		Cont->MovData[2] = (unsigned char)Cont->Button;
+		MovData[0] = State->PosX;
+		MovData[1] = State->PosY;
+		MovData[2] = State->Button;
 	}
 }
 
-static	unsigned char	Read (struct tStdPort *Cont)
+unsigned char	StdPort_Zapper::Read (void)
 {
-	int x = Cont->PosX, y = Cont->PosY, z = Cont->Button;
+	int x = State->PosX, y = State->PosY, z = State->Button;
 	int WhiteCount = 0;
 	unsigned char Bits = 0x00;
 	int X, Y;
@@ -83,47 +89,45 @@ static	unsigned char	Read (struct tStdPort *Cont)
 		Bits |= 0x08;
 	return Bits;
 }
-static	void	Write (struct tStdPort *Cont, unsigned char Val)
+void	StdPort_Zapper::Write (unsigned char Val)
 {
 }
 static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
-	static struct tStdPort *Cont = NULL;
+	StdPort *Cont;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct tStdPort *)lParam;
-	ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+	{
+		SetWindowLongPtr(hDlg, GWL_USERDATA, lParam);
+		Cont = (StdPort *)lParam;
+	}
+	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
+	ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont ? Cont->Buttons : NULL,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct tStdPort *Cont, HWND hWnd)
+void	StdPort_Zapper::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_ZAPPER,hWnd,ConfigProc,(LPARAM)Cont);
+	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_ZAPPER,hWnd,ConfigProc,(LPARAM)this);
 }
-static	void	Unload (struct tStdPort *Cont)
+StdPort_Zapper::~StdPort_Zapper (void)
 {
-	free(Cont->Data);
-	free(Cont->MovData);
+	free(Data);
+	free(MovData);
 }
-void	StdPort_SetZapper (struct tStdPort *Cont)
+void	StdPort_Zapper::Init (int *buttons)
 {
-	Cont->Read = Read;
-	Cont->Write = Write;
-	Cont->Config = Config;
-	Cont->Unload = Unload;
-	Cont->Frame = Frame;
-	Cont->NumButtons = 1;
-	Cont->DataLen = 3;
-	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
-	Cont->MovLen = 3;
-	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
-	ZeroMemory(Cont->MovData,Cont->MovLen);
-	Cont->PosX = 0;
-	Cont->PosY = 0;
-	Cont->Button = 0;
-	GFX::SetFrameskip(-1);
+	Type = STD_ZAPPER;
+	NumButtons = 1;
+	Buttons = buttons;
+	DataLen = sizeof(*State);
+	Data = malloc(DataLen);
+	MovLen = 3;
+	MovData = (unsigned char *)malloc(MovLen);
+	ZeroMemory(MovData, MovLen);
+	State->PosX = 0;
+	State->PosY = 0;
+	State->Button = 0;
+	GFX::SetFrameskip(-2);
 }
-#undef	Button
-#undef	PosY
-#undef	PosX
 } // namespace Controllers

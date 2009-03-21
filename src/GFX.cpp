@@ -311,11 +311,12 @@ void	DrawScreen (void)
 
 void	SetFrameskip (int skip)
 {
-	if (skip != -1)
+	if (skip >= 0)
 		FSkip = skip;
 
-	if ((Controllers::Port1.Type == Controllers::STD_ZAPPER) || (Controllers::Port1.Type == Controllers::STD_VSZAPPER) ||
-		(Controllers::Port2.Type == Controllers::STD_ZAPPER) || (Controllers::Port2.Type == Controllers::STD_VSZAPPER))
+	if ((skip == -2) ||
+		(Controllers::Port1->Type == Controllers::STD_ZAPPER) || (Controllers::Port1->Type == Controllers::STD_VSZAPPER) ||
+		(Controllers::Port2->Type == Controllers::STD_ZAPPER) || (Controllers::Port2->Type == Controllers::STD_VSZAPPER))
 	{	// if Zapper, force it to zero frameskip, otherwise it won't work
 		FSkip = 0;
 		aFSkip = 0;

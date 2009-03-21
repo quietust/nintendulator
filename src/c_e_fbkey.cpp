@@ -13,10 +13,16 @@
 
 namespace Controllers
 {
-#define	Out	Data[0]
-#define	Scan	Data[1]
+#include <pshpack1.h>
+struct ExpPort_FamilyBasicKeyboard_State
+{
+	unsigned char Out;
+	unsigned char Scan;
+};
+#include <poppack.h>
+#define State ((ExpPort_FamilyBasicKeyboard_State *)Data)
 
-static	void	Frame (struct tExpPort *Cont, unsigned char mode)
+void	ExpPort_FamilyBasicKeyboard::Frame (unsigned char mode)
 {
 	if (mode & MOV_RECORD)
 	{
@@ -24,16 +30,16 @@ static	void	Frame (struct tExpPort *Cont, unsigned char mode)
 		Movie::Stop();
 	}
 }
-static	unsigned char	Read1 (struct tExpPort *Cont)
+unsigned char	ExpPort_FamilyBasicKeyboard::Read1 (void)
 {
 	return 0;	/* tape, not yet implemented */
 }
-static	unsigned char	Read2 (struct tExpPort *Cont)
+unsigned char	ExpPort_FamilyBasicKeyboard::Read2 (void)
 {
 	unsigned char result = 0;
-	if (Cont->Out == 0)
+	if (State->Out == 0)
 	{
-		switch (Cont->Scan)
+		switch (State->Scan)
 		{
 		case 0:	if (KeyState[DIK_F8] & 0x80)		result |= 0x02;
 			if (KeyState[DIK_RETURN] & 0x80)	result |= 0x04;
@@ -85,7 +91,7 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 	}
 	else
 	{
-		switch (Cont->Scan)
+		switch (State->Scan)
 		{
 		case 0:	if (KeyState[DIK_CAPITAL] & 0x80)	result |= 0x02;	/* KANA */
 			if (KeyState[DIK_RSHIFT] & 0x80)	result |= 0x04;
@@ -136,21 +142,21 @@ static	unsigned char	Read2 (struct tExpPort *Cont)
 	}
 	return result ^ 0x1E;
 }
-static	void	Write (struct tExpPort *Cont, unsigned char Val)
+void	ExpPort_FamilyBasicKeyboard::Write (unsigned char Val)
 {
 	BOOL ResetKB = Val & 1;
 	BOOL WhichScan = Val & 2;
 	BOOL SelectKey = Val & 4;
 	if (SelectKey)
 	{
-		if ((Cont->Out) && (!WhichScan))
+		if ((State->Out) && (!WhichScan))
 		{
-			Cont->Scan++;
-			Cont->Scan %= 10;
+			State->Scan++;
+			State->Scan %= 10;
 		}
-		Cont->Out = WhichScan;
+		State->Out = WhichScan;
 		if (ResetKB)
-			Cont->Scan = 0;
+			State->Scan = 0;
 	}
 	else
 	{
@@ -172,7 +178,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	return FALSE;
 }
 
-static	void	Config (struct tExpPort *Cont, HWND hWnd)
+void	ExpPort_FamilyBasicKeyboard::Config (HWND hWnd)
 {
 	if (!ConfigWindow)
 	{
@@ -182,33 +188,27 @@ static	void	Config (struct tExpPort *Cont, HWND hWnd)
 	}
 }
 
-static	void	Unload (struct tExpPort *Cont)
+ExpPort_FamilyBasicKeyboard::~ExpPort_FamilyBasicKeyboard (void)
 {
-	free(Cont->Data);
-	free(Cont->MovData);
+	free(Data);
+	free(MovData);
 	if (ConfigWindow)
 	{
 		DestroyWindow(ConfigWindow);
 		ConfigWindow = NULL;
 	}
 }
-void	ExpPort_SetFamilyBasicKeyboard (struct tExpPort *Cont)
+void	ExpPort_FamilyBasicKeyboard::Init (int *buttons)
 {
-	Cont->Read1 = Read1;
-	Cont->Read2 = Read2;
-	Cont->Write = Write;
-	Cont->Config = Config;
-	Cont->Unload = Unload;
-	Cont->Frame = Frame;
-	Cont->NumButtons = 0;
-	Cont->DataLen = 2;
-	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
-	Cont->MovLen = 0;
-	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
-	ZeroMemory(Cont->MovData,Cont->MovLen);
-	Cont->Out = 0;
-	Cont->Scan = 0;
+	Type = EXP_FAMILYBASICKEYBOARD;
+	NumButtons = 0;
+	Buttons = buttons;
+	DataLen = sizeof(*State);
+	Data = malloc(DataLen);
+	MovLen = 0;
+	MovData = (unsigned char *)malloc(MovLen);
+	ZeroMemory(MovData, MovLen);
+	State->Out = 0;
+	State->Scan = 0;
 }
-#undef	Out
-#undef	Scan
 } // namespace Controllers

@@ -16,68 +16,74 @@
 
 namespace Controllers
 {
-#define	Bits	Data[0]
-#define	BitPtr	Data[1]
-#define	Strobe	Data[2]
-#define	PosX	Data[3]
-#define	PosY	Data[4]
-#define	Button	Data[5]
-
-static	void	Frame (struct tStdPort *Cont, unsigned char mode)
+#include <pshpack1.h>
+struct StdPort_VSZapper_State
 {
-	static POINT pos;
+	unsigned char Bits;
+	unsigned char BitPtr;
+	unsigned char Strobe;
+	unsigned char PosX;
+	unsigned char PosY;
+	unsigned char Button;
+};
+#include <poppack.h>
+#define State ((StdPort_VSZapper_State *)Data)
+
+void	StdPort_VSZapper::Frame (unsigned char mode)
+{
+	POINT pos;
 	if (mode & MOV_PLAY)
 	{
-		Cont->PosX = Cont->MovData[0];
-		Cont->PosY = Cont->MovData[1];
-		Cont->Button = Cont->MovData[2];
-		GFX::SetCursorPos(Cont->PosX, Cont->PosY);
+		State->PosX = MovData[0];
+		State->PosY = MovData[1];
+		State->Button = MovData[2];
+		GFX::SetCursorPos(State->PosX, State->PosY);
 	}
 	else
 	{
 		GFX::GetCursorPos(&pos);
-		Cont->PosX = pos.x;
-		Cont->PosY = pos.y;
-		if ((Cont->PosX < 0) || (Cont->PosX > 255) || (Cont->PosY < 0) || (Cont->PosY > 239))
-			Cont->PosX = Cont->PosY = 255;	// if it's off-screen, push it to the bottom
-		Cont->Button = IsPressed(Cont->Buttons[0]);
+		State->PosX = pos.x;
+		State->PosY = pos.y;
+		if ((State->PosX < 0) || (State->PosX > 255) || (State->PosY < 0) || (State->PosY > 239))
+			State->PosX = State->PosY = 255;	// if it's off-screen, push it to the bottom
+		State->Button = IsPressed(Buttons[0]);
 	}
 	if (mode & MOV_RECORD)
 	{
-		Cont->MovData[0] = (unsigned char)Cont->PosX;
-		Cont->MovData[1] = (unsigned char)Cont->PosY;
-		Cont->MovData[2] = (unsigned char)Cont->Button;
+		MovData[0] = State->PosX;
+		MovData[1] = State->PosY;
+		MovData[2] = State->Button;
 	}
 }
 
-static	unsigned char	Read (struct tStdPort *Cont)
+unsigned char	StdPort_VSZapper::Read (void)
 {
 	unsigned char result;
-	if (Cont->Strobe)
+	if (State->Strobe)
 	{
-		Cont->BitPtr = 0;
-		result = (unsigned char)(Cont->Bits & 1);
+		State->BitPtr = 0;
+		result = (unsigned char)(State->Bits & 1);
 	}
 	else
 	{
-		if (Cont->BitPtr < 8)
-			result = (unsigned char)(Cont->Bits >> Cont->BitPtr++) & 1;
+		if (State->BitPtr < 8)
+			result = (unsigned char)(State->Bits >> State->BitPtr++) & 1;
 		else	result = 0;
 	}
 	return result;
 }
-static	void	Write (struct tStdPort *Cont, unsigned char Val)
+void	StdPort_VSZapper::Write (unsigned char Val)
 {
-	int x = Cont->PosX, y = Cont->PosY;
+	int x = State->PosX, y = State->PosY;
 
-	Cont->Strobe = Val & 1;
-	if (!Cont->Strobe)
+	State->Strobe = Val & 1;
+	if (!State->Strobe)
 		return;
 		
-	Cont->Bits = 0x10;
-	Cont->BitPtr = 0;
-	if (Cont->Button)
-		Cont->Bits |= 0x80;
+	State->Bits = 0x10;
+	State->BitPtr = 0;
+	if (State->Button)
+		State->Bits |= 0x80;
 
 	if ((x < 0) || (x >= 256) || (y < 0) || (y >= 240))
 		return;
@@ -105,53 +111,48 @@ static	void	Write (struct tStdPort *Cont, unsigned char Val)
 			}
 		}
 		if (WhiteCount >= 64)
-			Cont->Bits |= 0x40;
+			State->Bits |= 0x40;
 	}
 }
 static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
-	static struct tStdPort *Cont = NULL;
+	StdPort *Cont;
 	if (uMsg == WM_INITDIALOG)
-		Cont = (struct tStdPort *)lParam;
-	ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont->Buttons,uMsg,wParam,lParam);
+	{
+		SetWindowLongPtr(hDlg, GWL_USERDATA, lParam);
+		Cont = (StdPort *)lParam;
+	}
+	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
+	ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont ? Cont->Buttons : NULL,uMsg,wParam,lParam);
 	return FALSE;
 }
-static	void	Config (struct tStdPort *Cont, HWND hWnd)
+void	StdPort_VSZapper::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_VSZAPPER,hWnd,ConfigProc,(LPARAM)Cont);
+	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_VSZAPPER,hWnd,ConfigProc,(LPARAM)this);
 }
-static	void	Unload (struct tStdPort *Cont)
+StdPort_VSZapper::~StdPort_VSZapper (void)
 {
-	free(Cont->Data);
-	free(Cont->MovData);
+	free(Data);
+	free(MovData);
 }
-void	StdPort_SetVSZapper (struct tStdPort *Cont)
+void	StdPort_VSZapper::Init (int *buttons)
 {
-	Cont->Read = Read;
-	Cont->Write = Write;
-	Cont->Config = Config;
-	Cont->Unload = Unload;
-	Cont->Frame = Frame;
-	Cont->NumButtons = 1;
-	Cont->DataLen = 6;
-	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
-	Cont->MovLen = 3;
-	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
-	ZeroMemory(Cont->MovData,Cont->MovLen);
-	Cont->PosX = 0;
-	Cont->PosY = 0;
-	Cont->Button = 0;
-	Cont->Bits = 0x10;
-	Cont->BitPtr = 0;
-	Cont->Strobe = 0;
-	GFX::SetFrameskip(-1);
+	Type = STD_VSZAPPER;
+	NumButtons = 1;
+	Buttons = buttons;
+	DataLen = sizeof(*State);
+	Data = malloc(DataLen);
+	MovLen = 3;
+	MovData = (unsigned char *)malloc(MovLen);
+	ZeroMemory(MovData, MovLen);
+	State->PosX = 0;
+	State->PosY = 0;
+	State->Button = 0;
+	State->Bits = 0x10;
+	State->BitPtr = 0;
+	State->Strobe = 0;
+	GFX::SetFrameskip(-2);
 }
-#undef	Button
-#undef	PosY
-#undef	PosX
-#undef	Strobe
-#undef	BitPtr
-#undef	Bits
 } // namespace Controllers

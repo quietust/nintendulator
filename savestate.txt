@@ -1,5 +1,5 @@
 Nintendulator Save State Format
- Updated:  January 11, 2006
+ Updated:  March 20, 2009
 ---------------------------------------
 
 For simplicity, savestates should only be saved during VBLANK; otherwise,
@@ -22,7 +22,7 @@ Data types:
 -- Main File Header:
 
 	Identification	- <char[4] = "NSS",0x1A>
-	Version string	- <char[4] = "0960">
+	Version string	- <char[4] = "0970">
 	Filesize	- <uint32 = filesize, not including this header>
 	Type		- <char[4] = "NSAV" for normal savestate, "NREC"
 			   for movie savestate, "NMOV" for finished movie>
@@ -145,25 +145,37 @@ including the header).
 
 	uint8		APU-related IRQs (PCM and FRAME, as-is)
 
----- Section "CTRL" - Controller Data - Optional
+---- Section "CONT" - Controller Data - Optional
 
         Type:		Description:
 
-	uint32		Four-Score port 1 controller type
-	uint32		Four-Score port 2 controller type
-	uint32		Four-Score port 3 controller type
-	uint32		Four-Score port 4 controller type
-	uint32		Controller port 1 controller type
-	uint32		Controller port 2 controller type
-	uint32		Expansion port controller type
+	uint8		Controller port 1 controller type
+	uint16		Controller port 1 state data length
+	uint8[...]	Controller port 1 state data
 
-	uint8[...]	Four-Score port 1 state data (length determined by type)
-	uint8[...]	Four-Score port 2 state data (length determined by type)
-	uint8[...]	Four-Score port 3 state data (length determined by type)
-	uint8[...]	Four-Score port 4 state data (length determined by type)
-	uint8[...]	Controller port 1 state data (length determined by type)
-	uint8[...]	Controller port 2 state data (length determined by type)
-	uint8[...]	Expansion port state data (length determined by type)
+	uint8		Controller port 2 controller type (ignored if Port 1 type is STD_FOURSCORE)
+	uint16		Controller port 2 state data length
+	uint8[...]	Controller port 2 state data
+
+	uint8		Expansion port controller type
+	uint16		Expansion port state data length
+	uint8[...]	Expansion port state data
+
+	uint8		Four-Score port 1 controller type
+	uint16		Four-Score port 1 state data length
+	uint8[...]	Four-Score port 1 state data
+
+	uint8		Four-Score port 2 controller type
+	uint16		Four-Score port 2 state data length
+	uint8[...]	Four-Score port 2 state data
+
+	uint8		Four-Score port 3 controller type
+	uint16		Four-Score port 3 state data length
+	uint8[...]	Four-Score port 3 state data
+
+	uint8		Four-Score port 4 controller type
+	uint16		Four-Score port 4 state data length
+	uint8[...]	Four-Score port 4 state data
 
 ---- Section "NPRA" - NES PRG RAM State - Optional
 

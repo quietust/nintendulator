@@ -10,35 +10,34 @@
 
 namespace Controllers
 {
-static	void	Frame (struct tStdPort *Cont, unsigned char mode)
+void	StdPort_Unconnected::Frame (unsigned char mode)
 {
 }
-static	unsigned char	Read (struct tStdPort *Cont)
+unsigned char	StdPort_Unconnected::Read (void)
 {
 	return 0;
 }
-static	void	Write (struct tStdPort *Cont, unsigned char Val)
+void	StdPort_Unconnected::Write (unsigned char Val)
 {
 }
-static	void	Config (struct tStdPort *Cont, HWND hWnd)
+void	StdPort_Unconnected::Config (HWND hWnd)
 {
 	MessageBox(hWnd,_T("No configuration necessary!"),_T("Nintendulator"),MB_OK);
 }
-static	void	Unload (struct tStdPort *Cont)
+StdPort_Unconnected::~StdPort_Unconnected (void)
 {
+	free(Data);
+	free(MovData);
 }
-void	StdPort_SetUnconnected (struct tStdPort *Cont)
+void	StdPort_Unconnected::Init (int *buttons)
 {
-	Cont->Read = Read;
-	Cont->Write = Write;
-	Cont->Config = Config;
-	Cont->Unload = Unload;
-	Cont->Frame = Frame;
-	Cont->NumButtons = 0;
-	Cont->DataLen = 0;
-	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
-	Cont->MovLen = 0;
-	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
-	ZeroMemory(Cont->MovData,Cont->MovLen);
+	Type = STD_UNCONNECTED;
+	NumButtons = 0;
+	Buttons = buttons;
+	DataLen = 0;
+	Data = malloc(DataLen);
+	MovLen = 0;
+	MovData = (unsigned char *)malloc(MovLen);
+	ZeroMemory(MovData,MovLen);
 }
 } // namespace Controllers

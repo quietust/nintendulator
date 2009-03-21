@@ -10,42 +10,38 @@
 
 namespace Controllers
 {
-static	void	Frame (struct tExpPort *Cont, unsigned char mode)
+void	ExpPort_Unconnected::Frame (unsigned char mode)
 {
 }
-static	unsigned char	Read1 (struct tExpPort *Cont)
-{
-	return 0;
-}
-static	unsigned char	Read2 (struct tExpPort *Cont)
+unsigned char	ExpPort_Unconnected::Read1 (void)
 {
 	return 0;
 }
-static	void	Write (struct tExpPort *Cont, unsigned char Val)
+unsigned char	ExpPort_Unconnected::Read2 (void)
+{
+	return 0;
+}
+void	ExpPort_Unconnected::Write (unsigned char Val)
 {
 }
-static	void	Config (struct tExpPort *Cont, HWND hWnd)
+void	ExpPort_Unconnected::Config (HWND hWnd)
 {
 	MessageBox(hWnd,_T("No configuration necessary!"),_T("Nintendulator"),MB_OK);
 }
-static	void	Unload (struct tExpPort *Cont)
+ExpPort_Unconnected::~ExpPort_Unconnected (void)
 {
-	free(Cont->Data);
-	free(Cont->MovData);
+	free(Data);
+	free(MovData);
 }
-void	ExpPort_SetUnconnected (struct tExpPort *Cont)
+void	ExpPort_Unconnected::Init (int *buttons)
 {
-	Cont->Read1 = Read1;
-	Cont->Read2 = Read2;
-	Cont->Write = Write;
-	Cont->Config = Config;
-	Cont->Unload = Unload;
-	Cont->Frame = Frame;
-	Cont->NumButtons = 0;
-	Cont->DataLen = 0;
-	Cont->Data = (unsigned long *)malloc(Cont->DataLen * sizeof(Cont->Data[0]));
-	Cont->MovLen = 0;
-	Cont->MovData = (unsigned char *)malloc(Cont->MovLen * sizeof(Cont->MovData[0]));
-	ZeroMemory(Cont->MovData,Cont->MovLen);
+	Type = EXP_UNCONNECTED;
+	NumButtons = 0;
+	Buttons = buttons;
+	DataLen = 0;
+	Data = malloc(DataLen);
+	MovLen = 0;
+	MovData = (unsigned char *)malloc(MovLen);
+	ZeroMemory(MovData, MovLen);
 }
 } // namespace Controllers

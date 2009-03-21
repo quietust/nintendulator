@@ -296,19 +296,19 @@ int	MAPINT	Read4k (int Bank, int Addr)
 {
 	switch (Addr)
 	{
-	case 0x015:	return APU::Read4015();						break;
+	case 0x015:	return APU::Read4015();			break;
 #ifndef	NSFPLAYER
 	case 0x016:	return (LastRead & 0xC0) |
-			(Controllers::Port1.Read(&Controllers::Port1) & 0x19) |
-			(Controllers::ExpPort.Read1(&Controllers::ExpPort) & 0x1F);	break;
+			(Controllers::Port1->Read() & 0x19) |
+			(Controllers::PortExp->Read1() & 0x1F);	break;
 	case 0x017:	return (LastRead & 0xC0) |
-			(Controllers::Port2.Read(&Controllers::Port2) & 0x19) |
-			(Controllers::ExpPort.Read2(&Controllers::ExpPort) & 0x1F);	break;
+			(Controllers::Port2->Read() & 0x19) |
+			(Controllers::PortExp->Read2() & 0x1F);	break;
 #else	/* NSFPLAYER */
 	case 0x016:
-	case 0x017:	return (LastRead & 0xC0);					break;
+	case 0x017:	return (LastRead & 0xC0);		break;
 #endif	/* !NSFPLAYER */
-	default:	return LastRead;						break;
+	default:	return LastRead;			break;
 	}
 }
 
