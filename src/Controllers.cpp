@@ -384,15 +384,15 @@ static	BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pv
 {
 	HRESULT hr;
 	int DevNum = NumDevices;
-	if (SUCCEEDED(IDirectInput7_CreateDeviceEx(DirectInput,lpddi->guidInstance,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[DevNum],NULL)))
+	if (SUCCEEDED(DirectInput->CreateDeviceEx(lpddi->guidInstance,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[DevNum],NULL)))
 	{
 		DIDEVCAPS caps;
-		if (FAILED(hr = IDirectInputDevice7_SetDataFormat(DIDevices[DevNum],&c_dfDIJoystick2)))
+		if (FAILED(hr = DIDevices[DevNum]->SetDataFormat(&c_dfDIJoystick2)))
 			goto end;
-		if (FAILED(hr = IDirectInputDevice7_SetCooperativeLevel(DIDevices[DevNum],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+		if (FAILED(hr = DIDevices[DevNum]->SetCooperativeLevel(hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 			goto end;
 		caps.dwSize = sizeof(DIDEVCAPS);
-		if (FAILED(hr = IDirectInputDevice7_GetCapabilities(DIDevices[DevNum],&caps)))
+		if (FAILED(hr = DIDevices[DevNum]->GetCapabilities(&caps)))
 			goto end;
 
 		NumButtons[DevNum] = caps.dwButtons;
@@ -400,14 +400,14 @@ static	BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pv
 		POVFlags[DevNum] = 0;
 		DeviceName[DevNum] = _tcsdup(lpddi->tszProductName);
 
-		IDirectInputDevice7_EnumObjects(DIDevices[DevNum],EnumJoystickObjectsCallback,NULL,DIDFT_ALL);
+		DIDevices[DevNum]->EnumObjects(EnumJoystickObjectsCallback,NULL,DIDFT_ALL);
 		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), lpddi->tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 		NumDevices++;
 	}
 	return DIENUM_CONTINUE;
 
 end:
-	IDirectInputDevice7_Release(DIDevices[DevNum]);
+	DIDevices[DevNum]->Release();
 	DIDevices[DevNum] = NULL;
 	return hr;
 }
@@ -416,32 +416,32 @@ static	BOOL	InitKeyboard (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(IDirectInput7_CreateDeviceEx(DirectInput,GUID_SysKeyboard,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[0],NULL)))
+	if (FAILED(DirectInput->CreateDeviceEx(GUID_SysKeyboard,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[0],NULL)))
 		return FALSE;
-	if (FAILED(IDirectInputDevice7_SetDataFormat(DIDevices[0],&c_dfDIKeyboard)))
+	if (FAILED(DIDevices[0]->SetDataFormat(&c_dfDIKeyboard)))
 		goto end;
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(DIDevices[0],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(DIDevices[0]->SetCooperativeLevel(hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 		goto end;
 
 	caps.dwSize = sizeof(DIDEVCAPS);
-	if (FAILED(IDirectInputDevice7_GetCapabilities(DIDevices[0],&caps)))
+	if (FAILED(DIDevices[0]->GetCapabilities(&caps)))
 		goto end;
 
 	inst.dwSize = sizeof(DIDEVICEINSTANCE);
-	if (FAILED(IDirectInputDevice7_GetDeviceInfo(DIDevices[0],&inst)))
+	if (FAILED(DIDevices[0]->GetDeviceInfo(&inst)))
 		goto end;
 
-	NumButtons[0] = 256;// normally, I would use caps.dwButtons
+	NumButtons[0] = 256;	// normally, I would use caps.dwButtons
 	AxisFlags[0] = 0;	// no axes
 	POVFlags[0] = 0;	// no POV hats
 	DeviceName[0] = _tcsdup(inst.tszProductName);
 
-	IDirectInputDevice7_EnumObjects(DIDevices[0],EnumKeyboardObjectsCallback,NULL,DIDFT_ALL);
+	DIDevices[0]->EnumObjects(EnumKeyboardObjectsCallback,NULL,DIDFT_ALL);
 	EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 	return TRUE;
 
 end:
-	IDirectInputDevice7_Release(DIDevices[0]);
+	DIDevices[0]->Release();
 	DIDevices[0] = NULL;
 	return FALSE;
 }
@@ -450,18 +450,18 @@ static	BOOL	InitMouse (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(IDirectInput7_CreateDeviceEx(DirectInput,GUID_SysMouse,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[1],NULL)))
+	if (FAILED(DirectInput->CreateDeviceEx(GUID_SysMouse,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[1],NULL)))
 		return FALSE;
-	if (FAILED(IDirectInputDevice7_SetDataFormat(DIDevices[1],&c_dfDIMouse2)))
+	if (FAILED(DIDevices[1]->SetDataFormat(&c_dfDIMouse2)))
 		goto end;
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(DIDevices[1],hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(DIDevices[1]->SetCooperativeLevel(hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 		goto end;
 	caps.dwSize = sizeof(DIDEVCAPS);
-	if (FAILED(IDirectInputDevice7_GetCapabilities(DIDevices[1],&caps)))
+	if (FAILED(DIDevices[1]->GetCapabilities(&caps)))
 		goto end;
 
 	inst.dwSize = sizeof(DIDEVICEINSTANCE);
-	if (FAILED(IDirectInputDevice7_GetDeviceInfo(DIDevices[1],&inst)))
+	if (FAILED(DIDevices[1]->GetDeviceInfo(&inst)))
 		goto end;
 
 	NumButtons[1] = caps.dwButtons;
@@ -469,12 +469,12 @@ static	BOOL	InitMouse (void)
 	POVFlags[1] = 0;
 	DeviceName[1] = _tcsdup(inst.tszProductName);
 
-	IDirectInputDevice7_EnumObjects(DIDevices[1],EnumMouseObjectsCallback,NULL,DIDFT_ALL);
+	DIDevices[1]->EnumObjects(EnumMouseObjectsCallback,NULL,DIDFT_ALL);
 	EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 	return TRUE;
 
 end:
-	IDirectInputDevice7_Release(DIDevices[1]);
+	DIDevices[1]->Release();
 	DIDevices[1] = NULL;
 	return FALSE;
 }
@@ -525,7 +525,7 @@ void	Init (void)
 		MessageBox(hMainWnd,_T("Failed to initialize mouse!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 
 	NumDevices = 2;	// joysticks start at slot 2
-	IDirectInput7_EnumDevices(DirectInput,DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
+	DirectInput->EnumDevices(DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
 
 	Movie::Mode = 0;
 	Acquire();
@@ -546,8 +546,9 @@ void	Release (void)
 	{
 		if (DIDevices[i])
 		{
-			IDirectInputDevice7_Unacquire(DIDevices[i]);
-			IDirectInputDevice7_Release(DIDevices[i]);
+			DIDevices[i]->Unacquire();
+			DIDevices[i]->Release();
+			DIDevices[i] = NULL;
 		}
 		free(DeviceName[i]);
 		DeviceName[i] = NULL;
@@ -573,7 +574,8 @@ void	Release (void)
 		KeyNames[j] = NULL;
 	}
 
-	IDirectInput7_Release(DirectInput);
+	DirectInput->Release();
+	DirectInput = NULL;
 }
 
 void	Write (unsigned char Val)
@@ -725,7 +727,7 @@ void	Acquire (void)
 	int i;
 	for (i = 0; i < NumDevices; i++)
 		if (DIDevices[i])
-			IDirectInputDevice7_Acquire(DIDevices[i]);
+			DIDevices[i]->Acquire();
 	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_ALTKEYBOARD))
 		MaskKeyboard = 1;
 }
@@ -734,7 +736,7 @@ void	UnAcquire (void)
 	int i;
 	for (i = 0; i < NumDevices; i++)
 		if (DIDevices[i])
-			IDirectInputDevice7_Unacquire(DIDevices[i]);
+			DIDevices[i]->Unacquire();
 	MaskKeyboard = 0;
 }
 
@@ -745,33 +747,33 @@ void	UpdateInput (void)
 	unsigned char Cmd = 0;
 	if (DeviceUsed[0])
 	{
-		hr = IDirectInputDevice7_GetDeviceState(DIDevices[0],256,KeyState);
+		hr = DIDevices[0]->GetDeviceState(256,KeyState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
-			IDirectInputDevice7_Acquire(DIDevices[0]);
+			DIDevices[0]->Acquire();
 			ZeroMemory(KeyState,sizeof(KeyState));
 		}
 	}
 	if (DeviceUsed[1])
 	{
-		hr = IDirectInputDevice7_GetDeviceState(DIDevices[1],sizeof(DIMOUSESTATE2),&MouseState);
+		hr = DIDevices[1]->GetDeviceState(sizeof(DIMOUSESTATE2),&MouseState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
-			IDirectInputDevice7_Acquire(DIDevices[1]);
+			DIDevices[1]->Acquire();
 			ZeroMemory(&MouseState,sizeof(MouseState));
 		}
 	}
 	for (i = 2; i < NumDevices; i++)
 		if (DeviceUsed[i])
 		{
-			hr = IDirectInputDevice7_Poll(DIDevices[i]);
+			hr = DIDevices[i]->Poll();
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 			{
-				IDirectInputDevice7_Acquire(DIDevices[i]);
+				DIDevices[i]->Acquire();
 				ZeroMemory(&JoyState[i],sizeof(DIJOYSTATE2));
 				continue;
 			}
-			hr = IDirectInputDevice7_GetDeviceState(DIDevices[i],sizeof(DIJOYSTATE2),&JoyState[i]);
+			hr = DIDevices[i]->GetDeviceState(sizeof(DIJOYSTATE2),&JoyState[i]);
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 				ZeroMemory(&JoyState[i],sizeof(DIJOYSTATE2));
 		}
@@ -819,23 +821,23 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 		LastPOV = 0xF0;
 	}
 
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(dev,hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(dev->SetCooperativeLevel(hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
 		MessageBox(hMainWnd,_T("Unable to modify device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
-	IDirectInputDevice7_Acquire(dev);
+	dev->Acquire();
 	while (Key == -1)
 	{
 		if (DevNum == 0)
-			hr = IDirectInputDevice7_GetDeviceState(dev,256,KeyState);
+			hr = dev->GetDeviceState(256,KeyState);
 		else if (DevNum == 1)
-			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIMOUSESTATE2),&MouseState);
+			hr = dev->GetDeviceState(sizeof(DIMOUSESTATE2),&MouseState);
 		else
 		{
-			hr = IDirectInputDevice7_Poll(dev);
-			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIJOYSTATE2),&JoyState[DevNum]);
+			hr = dev->Poll();
+			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2),&JoyState[DevNum]);
 		}
 		for (i = 0; i < NumButtons[DevNum]; i++)
 		{
@@ -869,13 +871,13 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 	{
 waitrelease:
 		if (DevNum == 0)
-			hr = IDirectInputDevice7_GetDeviceState(dev,256,KeyState);
+			hr = dev->GetDeviceState(256,KeyState);
 		else if (DevNum == 1)
-			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIMOUSESTATE2),&MouseState);
+			hr = dev->GetDeviceState(sizeof(DIMOUSESTATE2),&MouseState);
 		else
 		{
-			hr = IDirectInputDevice7_Poll(dev);
-			hr = IDirectInputDevice7_GetDeviceState(dev,sizeof(DIJOYSTATE2),&JoyState[DevNum]);
+			hr = dev->Poll();
+			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2),&JoyState[DevNum]);
 		}
 		// don't need to reset FirstAxis/LastAxis or FirstPOV/LastPOV, since they were set in the previous loop
 		for (i = 0; i < NumButtons[DevNum]; i++)
@@ -888,8 +890,8 @@ waitrelease:
 			if (IsPressed((DevNum << 16) | i))
 				goto waitrelease;
 	}
-	IDirectInputDevice7_Unacquire(dev);
-	if (FAILED(IDirectInputDevice7_SetCooperativeLevel(dev,hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	dev->Unacquire();
+	if (FAILED(dev->SetCooperativeLevel(hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
 		MessageBox(hMainWnd,_T("Unable to restore device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 		return Key;

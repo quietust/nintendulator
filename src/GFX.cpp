@@ -121,13 +121,13 @@ void	Create (void)
 		SetWindowLong(hMainWnd,GWL_STYLE,WS_POPUP);
 		SetMenu(hMainWnd,NULL);
 		ShowWindow(hMainWnd,SW_MAXIMIZE);
-		if (FAILED(IDirectDraw7_SetCooperativeLevel(DirectDraw, hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
+		if (FAILED(DirectDraw->SetCooperativeLevel( hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
-		if (FAILED(IDirectDraw7_SetDisplayMode(DirectDraw, 640, 480, 32, 0, 0)))
+		if (FAILED(DirectDraw->SetDisplayMode(640, 480, 32, 0, 0)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to set display mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
@@ -136,7 +136,7 @@ void	Create (void)
 	}
 	else
 	{
-		if (FAILED(IDirectDraw7_SetCooperativeLevel(DirectDraw,hMainWnd,DDSCL_NORMAL)))
+		if (FAILED(DirectDraw->SetCooperativeLevel(hMainWnd,DDSCL_NORMAL)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to set DirectDraw cooperative level"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
@@ -153,7 +153,7 @@ void	Create (void)
 		SurfDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
 		SurfDesc.dwBackBufferCount = 1;
 
-		if (FAILED(IDirectDraw7_CreateSurface(DirectDraw,&SurfDesc,&PrimarySurf,NULL)))
+		if (FAILED(DirectDraw->CreateSurface(&SurfDesc,&PrimarySurf,NULL)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
@@ -161,7 +161,7 @@ void	Create (void)
 		}
 
 		SurfDesc.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
-		if (FAILED(IDirectDrawSurface7_GetAttachedSurface(PrimarySurf,&SurfDesc.ddsCaps,&SecondarySurf)))
+		if (FAILED(PrimarySurf->GetAttachedSurface(&SurfDesc.ddsCaps,&SecondarySurf)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to get secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
@@ -173,7 +173,7 @@ void	Create (void)
 		SurfDesc.dwFlags = DDSD_CAPS;
 		SurfDesc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 
-		if (FAILED(IDirectDraw7_CreateSurface(DirectDraw,&SurfDesc,&PrimarySurf,NULL)))
+		if (FAILED(DirectDraw->CreateSurface(&SurfDesc,&PrimarySurf,NULL)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to create primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
@@ -193,7 +193,7 @@ void	Create (void)
 		SurfDesc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
 		SurfDesc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
 
-		if (FAILED(IDirectDraw7_CreateSurface(DirectDraw,&SurfDesc,&SecondarySurf,NULL)))
+		if (FAILED(DirectDraw->CreateSurface(&SurfDesc,&SecondarySurf,NULL)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to create secondary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
@@ -203,21 +203,21 @@ void	Create (void)
 
 	if (!Fullscreen)
 	{
-		if (FAILED(IDirectDraw7_CreateClipper(DirectDraw,0,&Clipper,NULL)))
+		if (FAILED(DirectDraw->CreateClipper(0,&Clipper,NULL)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to create clipper"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
-		if (FAILED(IDirectDrawClipper_SetHWnd(Clipper,0,hMainWnd)))
+		if (FAILED(Clipper->SetHWnd(0,hMainWnd)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to set clipper window"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
 			return;
 		}
 
-		if (FAILED(IDirectDrawSurface7_SetClipper(PrimarySurf,Clipper)))
+		if (FAILED(PrimarySurf->SetClipper(Clipper)))
 		{
 			Release();
 			MessageBox(hMainWnd,_T("Failed to assign clipper to primary surface"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
@@ -228,7 +228,7 @@ void	Create (void)
 	ZeroMemory(&SurfDesc,sizeof(SurfDesc));
 	SurfDesc.dwSize = sizeof(SurfDesc);
 
-	if (FAILED(IDirectDrawSurface7_GetSurfaceDesc(SecondarySurf,&SurfDesc)))
+	if (FAILED(SecondarySurf->GetSurfaceDesc(&SurfDesc)))
 	{
 		Release();
 		MessageBox(hMainWnd,_T("Failed to retrieve surface description"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
@@ -257,10 +257,26 @@ void	Create (void)
 
 void	Release (void)
 {
-	if (Clipper)	IDirectDrawClipper_Release(Clipper);	Clipper = NULL;
-	if (SecondarySurf)	IDirectDrawSurface7_Release(SecondarySurf);	SecondarySurf = NULL;
-	if (PrimarySurf)	IDirectDrawSurface7_Release(PrimarySurf);	PrimarySurf = NULL;
-	if (DirectDraw)	IDirectDraw7_Release(DirectDraw);		DirectDraw = NULL;
+	if (Clipper)
+	{
+		Clipper->Release();
+		Clipper = NULL;
+	}
+	if (SecondarySurf)
+	{
+		SecondarySurf->Release();
+		SecondarySurf = NULL;
+	}
+	if (PrimarySurf)
+	{
+		PrimarySurf->Release();
+		PrimarySurf = NULL;
+	}
+	if (DirectDraw)
+	{
+		DirectDraw->Release();
+		DirectDraw = NULL;
+	}
 	if (Fullscreen)
 	{
 		SetWindowLong(hMainWnd,GWL_STYLE,WS_OVERLAPPEDWINDOW);
@@ -498,13 +514,13 @@ void	Update (void)
 {
 	if (!DirectDraw)
 		return;
-	Try(IDirectDrawSurface7_Lock(SecondarySurf,NULL,&SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),_T("Failed to lock secondary surface"))
+	Try(SecondarySurf->Lock(NULL,&SurfDesc,DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY,NULL),_T("Failed to lock secondary surface"))
 
 	if (Fullscreen || Scanlines)
 		Draw2x();
 	else	Draw1x();
 
-	Try(IDirectDrawSurface7_Unlock(SecondarySurf,NULL),_T("Failed to unlock secondary surface"))
+	Try(SecondarySurf->Unlock(NULL),_T("Failed to unlock secondary surface"))
 	Repaint();
 }
 
@@ -514,7 +530,7 @@ void	Repaint (void)
 		return;
 
 	if (Fullscreen)
-		Try(IDirectDrawSurface7_Flip(PrimarySurf, NULL, DDFLIP_WAIT),_T("Failed to flip to primary surface"))
+		Try(PrimarySurf->Flip(NULL, DDFLIP_WAIT),_T("Failed to flip to primary surface"))
 	else
 	{
 		RECT rect;
@@ -527,7 +543,7 @@ void	Repaint (void)
 		rect.right += pt.x;
 		rect.top += pt.y;
 		rect.bottom += pt.y;
-		Try(IDirectDrawSurface7_Blt(PrimarySurf,&rect,SecondarySurf,NULL,DDBLT_WAIT,NULL),_T("Failed to blit to primary surface"))
+		Try(PrimarySurf->Blt(&rect,SecondarySurf,NULL,DDBLT_WAIT,NULL),_T("Failed to blit to primary surface"))
 	}
 }
 

@@ -922,14 +922,13 @@ void	Create (void)
 		SetFPSVars(60);
 
 #ifndef	NSFPLAYER
-	if (FAILED(DirectSoundCreate(NULL,&DirectSound,NULL)))
+	if (FAILED(DirectSoundCreate(&DSDEVID_DefaultPlayback,&DirectSound,NULL)))
 	{
 		Release();
 		MessageBox(hMainWnd,_T("Failed to create DirectSound interface!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
-
-	if (FAILED(IDirectSound_SetCooperativeLevel(DirectSound,hMainWnd,DSSCL_PRIORITY)))
+	if (FAILED(DirectSound->SetCooperativeLevel(hMainWnd,DSSCL_PRIORITY)))
 	{
 		Release();
 		MessageBox(hMainWnd,_T("Failed to set cooperative level!"),_T("Nintendulator"),MB_OK);
@@ -941,7 +940,7 @@ void	Create (void)
 	DSBD.dwFlags = DSBCAPS_PRIMARYBUFFER;
 	DSBD.dwBufferBytes = 0;
 	DSBD.lpwfxFormat = NULL;
-	if (FAILED(IDirectSound_CreateSoundBuffer(DirectSound,&DSBD,&PrimaryBuffer,NULL)))
+	if (FAILED(DirectSound->CreateSoundBuffer(&DSBD,&PrimaryBuffer,NULL)))
 	{
 		Release();
 		MessageBox(hMainWnd,_T("Failed to create primary buffer!"),_T("Nintendulator"),MB_OK);
@@ -955,13 +954,13 @@ void	Create (void)
 	WFX.wBitsPerSample = BITS;
 	WFX.nBlockAlign = WFX.wBitsPerSample / 8 * WFX.nChannels;
 	WFX.nAvgBytesPerSec = WFX.nSamplesPerSec * WFX.nBlockAlign;
-	if (FAILED(IDirectSoundBuffer_SetFormat(PrimaryBuffer,&WFX)))
+	if (FAILED(PrimaryBuffer->SetFormat(&WFX)))
 	{
 		Release();
 		MessageBox(hMainWnd,_T("Failed to set output format!"),_T("Nintendulator"),MB_OK);
 		return;
 	}
-	if (FAILED(IDirectSoundBuffer_Play(PrimaryBuffer,0,0,DSBPLAY_LOOPING)))
+	if (FAILED(PrimaryBuffer->Play(0,0,DSBPLAY_LOOPING)))
 	{
 		Release();
 		MessageBox(hMainWnd,_T("Failed to start playing primary buffer!"),_T("Nintendulator"),MB_OK);
@@ -972,7 +971,7 @@ void	Create (void)
 	DSBD.dwBufferBytes = LockSize * FRAMEBUF;
 	DSBD.lpwfxFormat = &WFX;
 
-	if (FAILED(IDirectSound_CreateSoundBuffer(DirectSound,&DSBD,&Buffer,NULL)))
+	if (FAILED(DirectSound->CreateSoundBuffer(&DSBD,&Buffer,NULL)))
 	{
 		Release();
 		MessageBox(hMainWnd,_T("Failed to create secondary buffer!"),_T("Nintendulator"),MB_OK);
@@ -988,14 +987,20 @@ void	Release (void)
 	if (Buffer)
 	{
 		SoundOFF();
-		IDirectSoundBuffer_Release(Buffer);
-	}								Buffer = NULL;
+		Buffer->Release();
+		Buffer = NULL;
+	}
 	if (PrimaryBuffer)
 	{
-		IDirectSoundBuffer_Stop(PrimaryBuffer);
-		IDirectSoundBuffer_Release(PrimaryBuffer);
-	}								PrimaryBuffer = NULL;
-	if (DirectSound)	IDirectSound_Release(DirectSound);	DirectSound = NULL;
+		PrimaryBuffer->Stop();
+		PrimaryBuffer->Release();
+		PrimaryBuffer = NULL;
+	}
+	if (DirectSound)
+	{
+		DirectSound->Release();
+		DirectSound = NULL;
+	}
 #endif	/* !NSFPLAYER */
 }
 
@@ -1020,7 +1025,7 @@ void	SoundOFF (void)
 {
 	isEnabled = FALSE;
 	if (Buffer)
-		IDirectSoundBuffer_Stop(Buffer);
+		Buffer->Stop();
 }
 
 void	SoundON (void)
@@ -1034,11 +1039,11 @@ void	SoundON (void)
 		if (!Buffer)
 			return;
 	}
-	Try(IDirectSoundBuffer_Lock(Buffer,0,0,&bufPtr,&bufBytes,NULL,0,DSBLOCK_ENTIREBUFFER),_T("Error locking sound buffer (Clear)"))
+	Try(Buffer->Lock(0,0,&bufPtr,&bufBytes,NULL,0,DSBLOCK_ENTIREBUFFER),_T("Error locking sound buffer (Clear)"))
 	ZeroMemory(bufPtr,bufBytes);
-	Try(IDirectSoundBuffer_Unlock(Buffer,bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer (Clear)"))
+	Try(Buffer->Unlock(bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer (Clear)"))
 	isEnabled = TRUE;
-	Try(IDirectSoundBuffer_Play(Buffer,0,0,DSBPLAY_LOOPING),_T("Unable to start playing buffer"))
+	Try(Buffer->Play(0,0,DSBPLAY_LOOPING),_T("Unable to start playing buffer"))
 	next_pos = 0;
 }
 
@@ -1229,7 +1234,7 @@ void	Run (void)
 			Sleep(1);
 			if (!isEnabled)
 				break;
-			Try(IDirectSoundBuffer_GetCurrentPosition(Buffer,&rpos,&wpos),_T("Error getting audio position"))
+			Try(Buffer->GetCurrentPosition(&rpos,&wpos),_T("Error getting audio position"))
 			rpos /= LockSize;
 			wpos /= LockSize;
 			if (wpos < rpos)
@@ -1237,9 +1242,9 @@ void	Run (void)
 		} while ((rpos <= next_pos) && (next_pos <= wpos));
 		if (isEnabled)
 		{
-			Try(IDirectSoundBuffer_Lock(Buffer,next_pos * LockSize,LockSize,&bufPtr,&bufBytes,NULL,0,0),_T("Error locking sound buffer"))
+			Try(Buffer->Lock(next_pos * LockSize,LockSize,&bufPtr,&bufBytes,NULL,0,0),_T("Error locking sound buffer"))
 			memcpy(bufPtr,buffer,bufBytes);
-			Try(IDirectSoundBuffer_Unlock(Buffer,bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer"))
+			Try(Buffer->Unlock(bufPtr,bufBytes,NULL,0),_T("Error unlocking sound buffer"))
 			next_pos = (next_pos + 1) % FRAMEBUF;
 		}
 	}
