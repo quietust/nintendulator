@@ -118,7 +118,7 @@ void	Create (void)
 	{
 		if (dbgVisible)
 			ShowWindow(hDebug,SW_MINIMIZE);
-		SetWindowLong(hMainWnd,GWL_STYLE,WS_POPUP);
+		SetWindowLongPtr(hMainWnd,GWL_STYLE,WS_POPUP);
 		SetMenu(hMainWnd,NULL);
 		ShowWindow(hMainWnd,SW_MAXIMIZE);
 		if (FAILED(DirectDraw->SetCooperativeLevel( hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
@@ -279,7 +279,7 @@ void	Release (void)
 	}
 	if (Fullscreen)
 	{
-		SetWindowLong(hMainWnd,GWL_STYLE,WS_OVERLAPPEDWINDOW);
+		SetWindowLongPtr(hMainWnd,GWL_STYLE,WS_OVERLAPPEDWINDOW);
 		SetMenu(hMainWnd,hMenu);
 		ShowWindow(hMainWnd,SW_RESTORE);
 		if (dbgVisible)
