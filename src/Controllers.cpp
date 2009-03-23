@@ -525,7 +525,7 @@ void	Init (void)
 		MessageBox(hMainWnd,_T("Failed to initialize mouse!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
 
 	NumDevices = 2;	// joysticks start at slot 2
-	DirectInput->EnumDevices(DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ATTACHEDONLY);
+	DirectInput->EnumDevices(DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ALLDEVICES);
 
 	Movie::Mode = 0;
 	Acquire();
