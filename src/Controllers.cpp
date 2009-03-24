@@ -649,10 +649,17 @@ int	Load (FILE *in)
 	actLen = min(Port1->DataLen, len);	skipLen = len - actLen;
 	fread(Port1->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
 
-	fread(&type, 1, 1, in);									clen += 1;
+
 	if ((STDCONT_TYPE)type == STD_FOURSCORE)
+	{
+		fseek(in, 1, SEEK_CUR);								clen += 1;
 		SET_STDCONT(Port2, STD_FOURSCORE2);
-	else	SET_STDCONT(Port2, (STDCONT_TYPE)type);
+	}
+	else
+	{
+		fread(&type, 1, 1, in);								clen += 1;
+		SET_STDCONT(Port2, (STDCONT_TYPE)type);
+	}
 	fread(&len, 2, 1, in);									clen += 2;
 	actLen = min(Port2->DataLen, len);	skipLen = len - actLen;
 	fread(Port2->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
