@@ -2117,20 +2117,16 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		NTabChanged = PalChanged = PatChanged = SprChanged = DetChanged = TRUE;
 
 		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_NAMETABLE);
-		SetWindowLongPtr(dlgItem, GWL_USERDATA, GetWindowLongPtr(dlgItem, GWL_WNDPROC));
-		SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Nametable);
+		SetWindowLongPtr(dlgItem, GWL_USERDATA, SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Nametable));
 
 		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_PATTERN);
-		SetWindowLongPtr(dlgItem, GWL_USERDATA, GetWindowLongPtr(dlgItem, GWL_WNDPROC));
-		SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Pattern);
+		SetWindowLongPtr(dlgItem, GWL_USERDATA, SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Pattern));
 
 		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_PALETTE);
-		SetWindowLongPtr(dlgItem, GWL_USERDATA, GetWindowLongPtr(dlgItem, GWL_WNDPROC));
-		SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Palette);
+		SetWindowLongPtr(dlgItem, GWL_USERDATA, SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Palette));
 
 		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_SPRITE);
-		SetWindowLongPtr(dlgItem, GWL_USERDATA, GetWindowLongPtr(dlgItem, GWL_WNDPROC));
-		SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Sprite);
+		SetWindowLongPtr(dlgItem, GWL_USERDATA, SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Sprite));
 		return FALSE;
 	case WM_DRAWITEM:
 		lpDrawItem = (LPDRAWITEMSTRUCT)lParam;
