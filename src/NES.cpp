@@ -92,21 +92,24 @@ void	OpenFile (TCHAR *filename)
 {
 	size_t len = _tcslen(filename);
 	const TCHAR *LoadRet = NULL;
+	FILE *data;
 	if (ROMLoaded)
 		CloseFile();
 
 	EI.DbgOut(_T("Loading file '%s'..."),filename);
+	data = _tfopen(filename, _T("rb"));
 	if (!_tcsicmp(filename + len - 4, _T(".NES")))
-		LoadRet = OpenFileiNES(filename);
+		LoadRet = OpenFileiNES(data);
 	else if (!_tcsicmp(filename + len - 4, _T(".NSF")))
-		LoadRet = OpenFileNSF(filename);
+		LoadRet = OpenFileNSF(data);
 	else if (!_tcsicmp(filename + len - 4, _T(".UNF")))
-		LoadRet = OpenFileUNIF(filename);
+		LoadRet = OpenFileUNIF(data);
 	else if (!_tcsicmp(filename + len - 5, _T(".UNIF")))
-		LoadRet = OpenFileUNIF(filename);
+		LoadRet = OpenFileUNIF(data);
 	else if (!_tcsicmp(filename + len - 4, _T(".FDS")))
-		LoadRet = OpenFileFDS(filename);
+		LoadRet = OpenFileFDS(data);
 	else	LoadRet = _T("File type not recognized!");
+	fclose(data);
 
 	if (LoadRet)
 	{
@@ -114,6 +117,8 @@ void	OpenFile (TCHAR *filename)
 		CloseFile();
 		return;
 	}
+	// if the ROM loaded without errors, drop the filename into ROMInfo
+	RI.Filename = _tcsdup(filename);
 	ROMLoaded = TRUE;
 	EI.DbgOut(_T("Loaded successfully!"));
 	States::SetFilename(filename);
@@ -333,30 +338,19 @@ void	CloseFile (void)
 		(((a) <<  8) & 0x00FF0000) | \
 		(((a) << 24) & 0xFF000000))
 
-const TCHAR *	OpenFileiNES (TCHAR *filename)
+const TCHAR *	OpenFileiNES (FILE *in)
 {
 	int i;
-	FILE *in;
 	unsigned char Header[16];
 	unsigned long tmp;
 	BOOL p2Found;
 
-	in = _tfopen(filename,_T("rb"));
-	if (in == NULL)
-		return _T("File not found!");
 	fread(Header,1,16,in);
 	if (*(unsigned long *)Header != MKID('NES\x1A'))
-	{
-		fclose(in);
 		return _T("iNES header signature not found!");
-	}
-	RI.Filename = _tcsdup(filename);
 	RI.ROMType = ROM_INES;
 	if ((Header[7] & 0x0C) == 0x04)
-	{
-		fclose(in);
 		return _T("Header is corrupted by \"DiskDude!\" - please repair it and try again.");
-	}
 
 	if ((Header[7] & 0x0C) == 0x08)
 	{
@@ -382,15 +376,11 @@ const TCHAR *	OpenFileiNES (TCHAR *filename)
 	RI.INES_Version = 1;	// iNES 2 information is not yet parsed
 
 	if (RI.INES_Flags & 0x04)
-	{
-		fclose(in);
 		return _T("Trained ROMs are unsupported!");
-	}
 
 	fread(PRG_ROM,1,RI.INES_PRGSize * 0x4000,in);
 	fread(CHR_ROM,1,RI.INES_CHRSize * 0x2000,in);
 
-	fclose(in);
 
 	PRGMask = ((RI.INES_PRGSize << 2) - 1) & MAX_PRGROM_MASK;
 	CHRMask = ((RI.INES_CHRSize << 3) - 1) & MAX_CHRROM_MASK;
@@ -422,7 +412,7 @@ const TCHAR *	OpenFileiNES (TCHAR *filename)
 	return NULL;
 }
 
-const TCHAR *	OpenFileUNIF (TCHAR *filename)
+const TCHAR *	OpenFileUNIF (FILE *in)
 {
 	unsigned long Signature, BlockLen;
 	unsigned char *tPRG[0x10], *tCHR[0x10];
@@ -433,20 +423,12 @@ const TCHAR *	OpenFileUNIF (TCHAR *filename)
 	BOOL p2Found;
 	DWORD p2;
 
-	FILE *in = _tfopen(filename,_T("rb"));
-	if (!in)
-		return _T("File not found!");
-
 	fread(&Signature,4,1,in);
 	if (Signature != MKID('UNIF'))
-	{
-		fclose(in);
 		return _T("UNIF header signature not found!");
-	}
 
 	fseek(in,28,SEEK_CUR);	/* skip "expansion area" */
 
-	RI.Filename = _tcsdup(filename);
 	RI.ROMType = ROM_UNIF;
 
 	for (i = 0; i < 0x10; i++)
@@ -548,8 +530,6 @@ const TCHAR *	OpenFileUNIF (TCHAR *filename)
 		}
 	}
 
-	fclose(in);
-
 	PRGsize = (unsigned int)(PRGPoint - PRG_ROM[0]);
 	PRGMask = ((PRGsize / 0x1000) - 1) & MAX_PRGROM_MASK;
 	CHRsize = (unsigned int)(CHRPoint - CHR_ROM[0]);
@@ -589,31 +569,21 @@ const TCHAR *	OpenFileUNIF (TCHAR *filename)
 	return NULL;
 }
 
-const TCHAR *	OpenFileFDS (TCHAR *filename)
+const TCHAR *	OpenFileFDS (FILE *in)
 {
-	FILE *in;
 	unsigned long Header;
 	unsigned char numSides;
 	int i;
 
-	in = _tfopen(filename,_T("rb"));
-	if (in == NULL)
-		return _T("File not found!");
-
 	fread(&Header,4,1,in);
 	if (Header != MKID('FDS\x1a'))
-	{
-		fclose(in);
 		return _T("FDS header signature not found!");
-	}
 	fread(&numSides,1,1,in);
 	fseek(in,11,SEEK_CUR);
-	RI.Filename = _tcsdup(filename);
 	RI.ROMType = ROM_FDS;
 
 	for (i = 0; i < numSides; i++)
 		fread(PRG_ROM[i << 4],1,65500,in);
-	fclose(in);
 
 	memcpy(PRG_ROM[0x400],PRG_ROM[0x000],numSides << 16);
 
@@ -630,32 +600,20 @@ const TCHAR *	OpenFileFDS (TCHAR *filename)
 	return NULL;
 }
 
-const TCHAR *	OpenFileNSF (TCHAR *filename)
+const TCHAR *	OpenFileNSF (FILE *in)
 {
-	FILE *in;
 	unsigned char Header[128];	/* Header Bytes */
 	int ROMlen;
-
-	in = _tfopen(filename,_T("rb"));
-	if (in == NULL)
-		return _T("File not found!");
 
 	fseek(in,0,SEEK_END);
 	ROMlen = ftell(in) - 128;
 	fseek(in,0,SEEK_SET);
 	fread(Header,1,128,in);
 	if (memcmp(Header,"NESM\x1a",5))
-	{
-		fclose(in);
 		return _T("NSF header signature not found!");
-	}
 	if (Header[5] != 1)
-	{
-		fclose(in);
 		return _T("This NSF version is not supported!");
-	}
 
-	RI.Filename = _tcsdup(filename);
 	RI.ROMType = ROM_NSF;
 	RI.NSF_DataSize = ROMlen;
 	RI.NSF_NumSongs = Header[0x06];
@@ -680,7 +638,6 @@ const TCHAR *	OpenFileNSF (TCHAR *filename)
 		memcpy(RI.NSF_InitBanks,"\x00\x01\x02\x03\x04\x05\x06\x07",8);
 		fread(&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF),1,ROMlen,in);
 	}
-	fclose(in);
 
 	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
 	{
@@ -701,119 +658,6 @@ const TCHAR *	OpenFileNSF (TCHAR *filename)
 	EI.DbgOut(_T("Data length: %iKB"),RI.NSF_DataSize >> 10);
 	return NULL;
 }
-/*
-const char *	OpenFileNFRF (char *filename)
-{
-	unsigned long BlockSig, tp, i;
-	int BlockHeader;
-	char *BoardName;
-	unsigned char *tbuf, *PRGPoint = PRG_ROM[0], *CHRPoint = CHR_ROM[0];
-	BOOL p2Found = FALSE;
-	int p2;
-	FILE *in = fopen(filename,"rb");
-	if (in == NULL)
-		return "File not found!";
-
-	fread(&BlockSig,1,4,in);
-	if (BlockSig != MKID('NFRF'))
-	{
-		fclose(in);
-		return "Header signature not found!";
-	}
-	fseek(in,4,SEEK_CUR);
-	EI.Flags = 0;
-	while (!feof(in))
-	{
-		fread(&BlockSig,1,4,in);
-		fread(&BlockHeader,1,4,in);
-		if (feof(in))
-			break;
-		switch (BlockSig)
-		{
-		case MKID('BORD'):
-			BoardName = (char *)malloc(BlockHeader);
-			fread(BoardName,1,BlockHeader,in);
-			break;
-		case MKID('TVCI'):
-			fread(&tp,1,4,in);
-			if (BlockHeader-4)
-				fseek(in,BlockHeader-4,SEEK_CUR);
-			if (tp == 0) SetCPUMode(0);
-			if (tp == 1) SetCPUMode(1);	
-			break;
-		case MKID('BATT'):
-			EI.Flags |= 0x02;
-			break;
-		case MKID('MIRR'):
-			fread(&tp,1,4,in);
-			if (BlockHeader-4)
-				fseek(in,BlockHeader-4,SEEK_CUR);
-			if (tp == 3)
-				tp = 5;
-			EI.Flags |= (tp & 0x0F) << 8;
-			break;
-		case MKID('PRGM'):
-			fread(&tp,1,4,in);
-			fseek(in,4,SEEK_CUR);
-			BlockHeader -= 8;
-			if (BlockHeader < 0)
-			{
-				fclose(in);
-				return "Invalid NRFF - PRGM block corrupt!";
-			}
-			if (BlockHeader)
-			{
-				tbuf = (unsigned char *)malloc(BlockHeader);
-				fread(tbuf, 1, BlockHeader, in);
-				for (i = 0; i < tp; i += BlockHeader)
-					memcpy(PRGPoint+i,tbuf,BlockHeader);
-			}
-			else	memset(PRGPoint,0,tp);	// open bus
-			PRGPoint += tp;
-			break;
-		case MKID('CHAR'):
-			fread(&tp,1,4,in);
-			fseek(in,4,SEEK_CUR);
-			BlockHeader -= 8;
-			if (BlockHeader < 0)
-			{
-				fclose(in);
-				return "Invalid NRFF - CHAR block corrupt!";
-			}
-			if (BlockHeader)
-			{
-				tbuf = (unsigned char *)malloc(BlockHeader);
-				fread(tbuf, 1, BlockHeader, in);
-				for (i = 0; i < tp; i += BlockHeader)
-					memcpy(CHRPoint+i,tbuf,BlockHeader);
-			}
-			else	memset(CHRPoint,0,tp);	// open bus
-			CHRPoint += tp;
-			break;
-		default:
-			fseek(in,BlockHeader,SEEK_CUR);
-			break;
-		}
-	}
-	fclose(in);
-	EI.PRG_ROM_Size = (int)(PRGPoint - PRG_ROM[0]);
-	EI.CHR_ROM_Size = (int)(CHRPoint - CHR_ROM[0]);
-	PRGMask = ((EI.PRG_ROM_Size >> 12) - 1) & MAX_PRGROM_MASK;
-	CHRMask = ((EI.CHR_ROM_Size >> 10) - 1) & MAX_CHRROM_MASK;
-	for (p2 = 1; p2 < 0x10000000; p2 <<= 1)
-		if (p2 == EI.PRG_ROM_Size) p2Found = FALSE;
-	if (!p2Found) PRGMask = 0xFFFFFFFF;
-	if (!MapperInterface::LoadByBoard(BoardName))
-	{
-		static char err[256];
-		sprintf(err,"Boardset \"%s\" not supported!",RI.NRFF_BoardName);
-		return err;
-	}
-	GFX::ShowText("NFRF image loaded (%s, %i PRG/%i CHR)",BoardName,EI.PRG_ROM_Size >> 10,EI.CHR_ROM_Size >> 10);
-	free(BoardName);
-	return NULL;
-}
-*/
 void	SetCPUMode (int NewMode)
 {
 	if (NewMode == 0)

@@ -39,10 +39,10 @@ int	FDSSave (FILE *);
 int	FDSLoad (FILE *);
 void	SaveSRAM (void);
 void	LoadSRAM (void);
-const TCHAR *	OpenFileiNES (TCHAR *);
-const TCHAR *	OpenFileUNIF (TCHAR *);
-const TCHAR *	OpenFileFDS (TCHAR *);
-const TCHAR *	OpenFileNSF (TCHAR *);
+const TCHAR *	OpenFileiNES (FILE *);
+const TCHAR *	OpenFileUNIF (FILE *);
+const TCHAR *	OpenFileFDS (FILE *);
+const TCHAR *	OpenFileNSF (FILE *);
 void	SetCPUMode (int);
 void	Reset (RESET_TYPE);
 
