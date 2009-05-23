@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -22,7 +22,7 @@ void	StdPort_Unconnected::Write (unsigned char Val)
 }
 void	StdPort_Unconnected::Config (HWND hWnd)
 {
-	MessageBox(hWnd,_T("No configuration necessary!"),_T("Nintendulator"),MB_OK);
+	MessageBox(hWnd, _T("No configuration necessary!"), _T("Nintendulator"), MB_OK);
 }
 StdPort_Unconnected::~StdPort_Unconnected (void)
 {
@@ -38,6 +38,6 @@ StdPort_Unconnected::StdPort_Unconnected (int *buttons)
 	Data = malloc(DataLen);
 	MovLen = 0;
 	MovData = (unsigned char *)malloc(MovLen);
-	ZeroMemory(MovData,MovLen);
+	ZeroMemory(MovData, MovLen);
 }
 } // namespace Controllers

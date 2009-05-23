@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -35,14 +35,14 @@ void	FindBlock (void)
 	int len;
 
 	rewind(Data);
-	fseek(Data,16,SEEK_SET);
-	fread(buf,4,1,Data);
-	fread(&len,4,1,Data);
-	while (memcmp(buf,"NMOV",4))
-	{	/* find the NMOV block in the movie */
-		fseek(Data,len,SEEK_CUR);
-		fread(buf,4,1,Data);
-		fread(&len,4,1,Data);
+	fseek(Data, 16, SEEK_SET);
+	fread(buf, 4, 1, Data);
+	fread(&len, 4, 1, Data);
+	while (memcmp(buf, "NMOV", 4))
+	{	// find the NMOV block in the movie
+		fseek(Data, len, SEEK_CUR);
+		fread(buf, 4, 1, Data);
+		fread(&len, 4, 1, Data);
 	}
 	if (feof(Data))
 		EI.DbgOut(_T("ERROR - Failed to locate movie data block!"));
@@ -51,7 +51,7 @@ void	FindBlock (void)
 void	ShowFrame (void)
 {
 	if (Mode)
-		EI.StatusOut(_T("Frame %i"),Pos / FrameLen);
+		EI.StatusOut(_T("Frame %i"), Pos / FrameLen);
 }
 
 INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -76,7 +76,7 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 		switch (wmId)
 		{
 		case IDC_MOVIE_PLAY_BROWSE:
-			ZeroMemory(&ofn,sizeof(ofn));
+			ZeroMemory(&ofn, sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = hDlg;
 			ofn.hInstance = hInst;
@@ -97,7 +97,7 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			if (!GetOpenFileName(&ofn))
 				break;
 
-			_tcscpy(Path_NMV,filename);
+			_tcscpy(Path_NMV, filename);
 			Path_NMV[ofn.nFileOffset-1] = 0;
 
 			Data = _tfopen(filename, _T("rb"));
@@ -203,7 +203,7 @@ void	Play (void)
 
 	if (Mode)
 	{
-		MessageBox(hMainWnd,_T("A movie is already open!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd, _T("A movie is already open!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
 
@@ -366,11 +366,11 @@ void	Play (void)
 	EnableMenuItem(hMenu, ID_GAME, MF_GRAYED);
 	EnableMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_GRAYED);
 	if (Controllers::Port1->MovLen)
-		memset(Controllers::Port1->MovData, 0, Controllers::Port1->MovLen);
+		ZeroMemory(Controllers::Port1->MovData, Controllers::Port1->MovLen);
 	if (Controllers::Port2->MovLen)
-		memset(Controllers::Port2->MovData, 0, Controllers::Port2->MovLen);
+		ZeroMemory(Controllers::Port2->MovData, Controllers::Port2->MovLen);
 	if (Controllers::PortExp->MovLen)
-		memset(Controllers::PortExp->MovData, 0, Controllers::PortExp->MovLen);
+		ZeroMemory(Controllers::PortExp->MovData, Controllers::PortExp->MovLen);
 }
 
 INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -609,7 +609,7 @@ static	void	EndMovie (void)
 {
 	if (!Mode)
 	{
-		MessageBox(hMainWnd,_T("No movie is currently active!"),_T("Nintendulator"),MB_OK);
+		MessageBox(hMainWnd, _T("No movie is currently active!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
 	if (Mode & MOV_RECORD)
@@ -618,33 +618,33 @@ static	void	EndMovie (void)
 		int mlen;
 		char tps[4];
 
-		fseek(Data,8,SEEK_SET);		len -= 16;
-		fwrite(&len,4,1,Data);		// 1: set the file length
-		fseek(Data,16,SEEK_SET);
-		fread(tps,4,1,Data);
-		fread(&mlen,4,1,Data);		len -= 8;
-		while (memcmp(tps,"NMOV",4))
-		{	/* find the NMOV block in the movie */
-			fseek(Data,mlen,SEEK_CUR);len -= mlen;
-			fread(tps,4,1,Data);
-			fread(&mlen,4,1,Data);	len -= 8;
+		fseek(Data, 8, SEEK_SET);		len -= 16;
+		fwrite(&len, 4, 1, Data);		// 1: set the file length
+		fseek(Data, 16, SEEK_SET);
+		fread(tps, 4, 1, Data);
+		fread(&mlen, 4, 1, Data);		len -= 8;
+		while (memcmp(tps, "NMOV", 4))
+		{	// find the NMOV block in the movie
+			fseek(Data, mlen, SEEK_CUR);	len -= mlen;
+			fread(tps, 4, 1, Data);
+			fread(&mlen, 4, 1, Data);	len -= 8;
 		}
-		fseek(Data,-4,SEEK_CUR);
-		fwrite(&len,4,1,Data);		// 2: set the NMOV block length
-		fseek(Data,4,SEEK_CUR);		len -= 4;	// skip controller data
-		fwrite(&ReRecords,4,1,Data);len -= 4;	// write the final re-record count
-		fseek(Data,ftell(Data),SEEK_SET);
-		fread(&mlen,4,1,Data);		len -= 4;	// read description len
+		fseek(Data, -4, SEEK_CUR);
+		fwrite(&len, 4, 1, Data);		// 2: set the NMOV block length
+		fseek(Data, 4, SEEK_CUR);		len -= 4;	// skip controller data
+		fwrite(&ReRecords, 4, 1, Data);		len -= 4;	// write the final re-record count
+		fseek(Data, ftell(Data), SEEK_SET);
+		fread(&mlen, 4, 1, Data);		len -= 4;	// read description len
 		if (mlen)
 		{
-			fseek(Data,mlen,SEEK_CUR);len -= mlen;	// skip the description
+			fseek(Data, mlen, SEEK_CUR);	len -= mlen;	// skip the description
 		}
-		fread(tps,4,1,Data);		len -= 4;	// read movie data len
-		fseek(Data,-4,SEEK_CUR);		// rewind
+		fread(tps, 4, 1, Data);		len -= 4;	// read movie data len
+		fseek(Data, -4, SEEK_CUR);		// rewind
 		if (len != Pos)
 			EI.DbgOut(_T("Error - movie length mismatch!"));
-		fwrite(&len,4,1,Data);		// 3: terminate the movie data
-		// fseek(Data,len,SEEK_CUR);
+		fwrite(&len, 4, 1, Data);		// 3: terminate the movie data
+		// fseek(Data, len, SEEK_CUR);
 		// TODO - truncate the file to this point
 	}
 	fclose(Data);
@@ -660,34 +660,34 @@ static	void	EndMovie (void)
 	if (ControllerTypes[0] == Controllers::STD_FOURSCORE)
 	{
 		if (ControllerTypes[1] & 0x01)
-			SET_STDCONT(Controllers::FSPort1,Controllers::STD_STDCONTROLLER);
-		else	SET_STDCONT(Controllers::FSPort1,Controllers::STD_UNCONNECTED);
+			SET_STDCONT(Controllers::FSPort1, Controllers::STD_STDCONTROLLER);
+		else	SET_STDCONT(Controllers::FSPort1, Controllers::STD_UNCONNECTED);
 		if (ControllerTypes[1] & 0x02)
-			SET_STDCONT(Controllers::FSPort2,Controllers::STD_STDCONTROLLER);
-		else	SET_STDCONT(Controllers::FSPort2,Controllers::STD_UNCONNECTED);
+			SET_STDCONT(Controllers::FSPort2, Controllers::STD_STDCONTROLLER);
+		else	SET_STDCONT(Controllers::FSPort2, Controllers::STD_UNCONNECTED);
 		if (ControllerTypes[1] & 0x04)
-			SET_STDCONT(Controllers::FSPort3,Controllers::STD_STDCONTROLLER);
-		else	SET_STDCONT(Controllers::FSPort3,Controllers::STD_UNCONNECTED);
+			SET_STDCONT(Controllers::FSPort3, Controllers::STD_STDCONTROLLER);
+		else	SET_STDCONT(Controllers::FSPort3, Controllers::STD_UNCONNECTED);
 		if (ControllerTypes[1] & 0x08)
-			SET_STDCONT(Controllers::FSPort4,Controllers::STD_STDCONTROLLER);
-		else	SET_STDCONT(Controllers::FSPort4,Controllers::STD_UNCONNECTED);
-		SET_STDCONT(Controllers::Port1,Controllers::STD_FOURSCORE);
-		SET_STDCONT(Controllers::Port2,Controllers::STD_FOURSCORE);
+			SET_STDCONT(Controllers::FSPort4, Controllers::STD_STDCONTROLLER);
+		else	SET_STDCONT(Controllers::FSPort4, Controllers::STD_UNCONNECTED);
+		SET_STDCONT(Controllers::Port1, Controllers::STD_FOURSCORE);
+		SET_STDCONT(Controllers::Port2, Controllers::STD_FOURSCORE);
 	}
 	else
 	{
-		SET_STDCONT(Controllers::Port1,(Controllers::STDCONT_TYPE)ControllerTypes[0]);
-		SET_STDCONT(Controllers::Port2,(Controllers::STDCONT_TYPE)ControllerTypes[1]);
+		SET_STDCONT(Controllers::Port1, (Controllers::STDCONT_TYPE)ControllerTypes[0]);
+		SET_STDCONT(Controllers::Port2, (Controllers::STDCONT_TYPE)ControllerTypes[1]);
 	}
-	SET_EXPCONT(Controllers::PortExp,(Controllers::EXPCONT_TYPE)ControllerTypes[2]);
+	SET_EXPCONT(Controllers::PortExp, (Controllers::EXPCONT_TYPE)ControllerTypes[2]);
 	if ((MI) && (MI->Config))
-		EnableMenuItem(hMenu,ID_GAME,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_MISC_PLAYMOVIE,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_MISC_RECORDMOVIE,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_MISC_STOPMOVIE,MF_GRAYED);
-	EnableMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_PPU_MODE_NTSC,MF_ENABLED);
-	EnableMenuItem(hMenu,ID_PPU_MODE_PAL,MF_ENABLED);
+		EnableMenuItem(hMenu, ID_GAME, MF_ENABLED);
+	EnableMenuItem(hMenu, ID_MISC_PLAYMOVIE, MF_ENABLED);
+	EnableMenuItem(hMenu, ID_MISC_RECORDMOVIE, MF_ENABLED);
+	EnableMenuItem(hMenu, ID_MISC_STOPMOVIE, MF_GRAYED);
+	EnableMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_ENABLED);
+	EnableMenuItem(hMenu, ID_PPU_MODE_NTSC, MF_ENABLED);
+	EnableMenuItem(hMenu, ID_PPU_MODE_PAL, MF_ENABLED);
 }
 
 void	Stop (void)
@@ -710,14 +710,17 @@ unsigned char	LoadInput (void)
 		EndMovie();
 	}
 	if (Controllers::Port1->MovLen)
-		fread(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,Data);		Pos += Controllers::Port1->MovLen;
+		fread(Controllers::Port1->MovData, 1, Controllers::Port1->MovLen, Data);
+	Pos += Controllers::Port1->MovLen;
 	if (Controllers::Port2->MovLen)
-		fread(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,Data);		Pos += Controllers::Port2->MovLen;
+		fread(Controllers::Port2->MovData, 1, Controllers::Port2->MovLen, Data);
+	Pos += Controllers::Port2->MovLen;
 	if (Controllers::PortExp->MovLen)
-		fread(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,Data);	Pos += Controllers::PortExp->MovLen;
+		fread(Controllers::PortExp->MovData, 1, Controllers::PortExp->MovLen, Data);
+	Pos += Controllers::PortExp->MovLen;
 	if (NES::HasMenu)
 	{
-		fread(&Cmd,1,1,Data);
+		fread(&Cmd, 1, 1, Data);
 		Pos++;
 	}
 	return Cmd;
@@ -727,14 +730,17 @@ void	SaveInput (unsigned char Cmd)
 {
 	int len = 0;
 	if (Controllers::Port1->MovLen)
-		fwrite(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,Data);	len += Controllers::Port1->MovLen;
+		fwrite(Controllers::Port1->MovData, 1, Controllers::Port1->MovLen, Data);
+	len += Controllers::Port1->MovLen;
 	if (Controllers::Port2->MovLen)
-		fwrite(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,Data);	len += Controllers::Port2->MovLen;
+		fwrite(Controllers::Port2->MovData, 1, Controllers::Port2->MovLen, Data);
+	len += Controllers::Port2->MovLen;
 	if (Controllers::PortExp->MovLen)
-		fwrite(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,Data);	len += Controllers::PortExp->MovLen;
+		fwrite(Controllers::PortExp->MovData, 1, Controllers::PortExp->MovLen, Data);
+	len += Controllers::PortExp->MovLen;
 	if (NES::HasMenu)
 	{
-		fwrite(&Cmd,1,1,Data);
+		fwrite(&Cmd, 1, 1, Data);
 		len++;
 	}
 	Pos += len;
@@ -752,34 +758,33 @@ int	Save (FILE *out)
 	offset = ftell(Data);	// save old offset in movie file
 
 	FindBlock();
+ 
+	fread(&tpc, 1, 1, Data);	writeByte(tpc);
+	fread(&tpc, 1, 1, Data);	writeByte(tpc);
+	fread(&tpc, 1, 1, Data);	writeByte(tpc);
+	fread(&tpc, 1, 1, Data);	writeByte(tpc);
+	fread(&tpl, 4, 1, Data);	writeLong(ReRecords);	// ignore rerecord count stored in movie
 
-	fread(&tpc,1,1,Data);	fwrite(&tpc,1,1,out);	clen++;
-	fread(&tpc,1,1,Data);	fwrite(&tpc,1,1,out);	clen++;
-	fread(&tpc,1,1,Data);	fwrite(&tpc,1,1,out);	clen++;
-	fread(&tpc,1,1,Data);	fwrite(&tpc,1,1,out);	clen++;
-	fread(&tpl,4,1,Data);	fwrite(&ReRecords,4,1,out);	clen += 4;	// ignore rerecord count stored in movie
-
-	fread(&tpl,4,1,Data);	fwrite(&tpl,4,1,out);	clen += 4;
-	tpi = tpl;						clen += tpi;
+	fread(&tpl, 4, 1, Data);	writeLong(tpl);
+	tpi = tpl;
 	while (tpi > 0)
 	{
-		fread(&tpc,1,1,Data);
-		fwrite(&tpc,1,1,out);
+		fread(&tpc, 1, 1, Data);
+		writeByte(tpc);
 		tpi--;
 	}
 
-	fread(&tpl,4,1,Data);				clen += 4;	// the MLEN field, which is NOT yet accurate
-	fwrite(&Pos,4,1,out);
+	fread(&tpl, 4, 1, Data);	writeLong(Pos);		// the MLEN field, which is NOT yet accurate
 	
-	tpi = Pos;					clen += tpi;
+	tpi = Pos;
 	while (tpi > 0)
 	{
-		fread(&tpc,1,1,Data);
-		fwrite(&tpc,1,1,out);
+		fread(&tpc, 1, 1, Data);
+		writeByte(tpc);
 		tpi--;
 	}
 	rewind(Data);
-	fseek(Data,offset,SEEK_SET);		// seek the movie to where it left off
+	fseek(Data, offset, SEEK_SET);		// seek the movie to where it left off
 
 	return clen;
 }
@@ -797,46 +802,46 @@ int	Load (FILE *in)
 	{	// zoom to the correct position and update the necessary fields along the way
 		FindBlock();
 		fseek(Data,0,SEEK_CUR);
-		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Data);	clen += 4;	// CTRL0, CTRL1, CTEXT, EXTR
-		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Data);	clen += 4;	// RREC
+		readLong(tpl);	fwrite(&tpl, 4, 1, Data);	// CTRL0, CTRL1, CTEXT, EXTR
+		readLong(tpl);	fwrite(&tpl, 4, 1, Data);	// RREC
 		if (ReRecords < (int)tpl)
 			ReRecords = tpl;
 		ReRecords++;
-		fread(&tpl,4,1,in);	fwrite(&tpl,4,1,Data);	clen += 4;	// ILEN
-		tpi = tpl;						clen += tpi;	// INFO
+		readLong(tpl);	fwrite(&tpl, 4, 1, Data);	// ILEN
+		tpi = tpl;					// INFO
 		while (tpi > 0)
 		{
-			fread(&tpc,1,1,in);
-			fwrite(&tpc,1,1,Data);
+			readLong(tpc);
+			fwrite(&tpc, 1, 1, Data);
 			tpi--;
 		}
-		fread(&Pos,4,1,in);	fwrite(&Pos,4,1,Data);	clen += 4;	// MLEN
-		tpi = Pos;					clen += tpi;	// MDAT
+		readLong(Pos);	fwrite(&Pos, 4, 1, Data);	// MLEN
+		tpi = Pos;					// MDAT
 		Cmd = 0;
 		while (tpi > 0)
 		{
 			if (Controllers::Port1->MovLen)
 			{
-				fread(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,in);
+				readArray(Controllers::Port1->MovData, Controllers::Port1->MovLen);
 				fwrite(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,Data);
 				tpi -= Controllers::Port1->MovLen;
 			}
 			if (Controllers::Port2->MovLen)
 			{
-				fread(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,in);
-				fwrite(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,Data);
+				readArray(Controllers::Port2->MovData, Controllers::Port2->MovLen);
+				fwrite(Controllers::Port2->MovData, 1, Controllers::Port2->MovLen, Data);
 				tpi -= Controllers::Port2->MovLen;
 			}
 			if (Controllers::PortExp->MovLen)
 			{
-				fread(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,in);
-				fwrite(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,Data);
+				readArray(Controllers::PortExp->MovData, Controllers::PortExp->MovLen);
+				fwrite(Controllers::PortExp->MovData, 1, Controllers::PortExp->MovLen, Data);
 				tpi -= Controllers::PortExp->MovLen;
 			}
 			if (NES::HasMenu)
 			{
-				fread(&Cmd,1,1,in);
-				fwrite(&Cmd,1,1,Data);
+				readByte(Cmd);
+				fwrite(&Cmd, 1, 1, Data);
 				tpi--;
 			}
 		}
@@ -849,33 +854,34 @@ int	Load (FILE *in)
 	else if (Mode & MOV_PLAY)
 	{	// zoom the movie file to the current playback position
 		FindBlock();
-		fread(&tpl,4,1,in);	fread(&tpl,4,1,Data);		clen += 4;	// CTRL0, CTRL1, CTEXT, EXTR
-		fread(&tpl,4,1,in);	fread(&tpl,4,1,Data);		clen += 4;	// RREC
-		fread(&tpl,4,1,in);	fread(&tpi,4,1,Data);		clen += 4;	// ILEN
-		fseek(in,tpl,SEEK_CUR);	fseek(Data,tpi,SEEK_CUR);	clen += tpl;	// INFO
-		fread(&Pos,4,1,in);	fread(&Len,4,1,Data);		clen += 4;	// MLEN
-		tpi = Pos;	fseek(Data,tpi,SEEK_CUR);		clen += tpi;	// MDAT
+		readLong(tpl);	fread(&tpl, 4, 1, Data);	// CTRL0, CTRL1, CTEXT, EXTR
+		readLong(tpl);	fread(&tpl, 4, 1, Data);	// RREC
+		readLong(tpl);	fread(&tpi, 4, 1, Data);	// ILEN
+		fseek(in, tpl, SEEK_CUR);
+		fseek(Data, tpi, SEEK_CUR);	clen += tpl;	// INFO
+		readLong(Pos);	fread(&Len, 4, 1, Data);	// MLEN
+		tpi = Pos;	fseek(Data, tpi, SEEK_CUR);	// MDAT
 		Cmd = 0;
 		while (tpi > 0)
 		{
 			if (Controllers::Port1->MovLen)
 			{
-				fread(Controllers::Port1->MovData,1,Controllers::Port1->MovLen,in);
+				readArray(Controllers::Port1->MovData, Controllers::Port1->MovLen);
 				tpi -= Controllers::Port1->MovLen;
 			}
 			if (Controllers::Port2->MovLen)
 			{
-				fread(Controllers::Port2->MovData,1,Controllers::Port2->MovLen,in);
+				readArray(Controllers::Port2->MovData, Controllers::Port2->MovLen);
 				tpi -= Controllers::Port2->MovLen;
 			}
 			if (Controllers::PortExp->MovLen)
 			{
-				fread(Controllers::PortExp->MovData,1,Controllers::PortExp->MovLen,in);
+				readArray(Controllers::PortExp->MovData, Controllers::PortExp->MovLen);
 				tpi -= Controllers::PortExp->MovLen;
 			}
 			if (NES::HasMenu)
 			{
-				fread(&Cmd,1,1,in);
+				readByte(Cmd);
 				tpi--;
 			}
 		}
@@ -887,11 +893,11 @@ int	Load (FILE *in)
 	}
 	else
 	{
-		fseek(in,8,SEEK_CUR);	clen += 8;
-		fread(&tpl,4,1,in);	clen += 4;
-		fseek(in,tpl,SEEK_CUR);	clen += tpl;
-		fread(&tpl,4,1,in);	clen += 4;
-		fseek(in,tpl,SEEK_CUR);	clen += tpl;
+		fseek(in, 8, SEEK_CUR);		clen += 8;
+		readLong(tpl);
+		fseek(in, tpl, SEEK_CUR);	clen += tpl;
+		readLong(tpl);
+		fseek(in, tpl, SEEK_CUR);	clen += tpl;
 	}
 	return clen;
 }

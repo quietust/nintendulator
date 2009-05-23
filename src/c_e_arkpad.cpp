@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -92,12 +92,12 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		Cont = (ExpPort *)lParam;
 	}
 	else	Cont = (ExpPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
-	ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont ? Cont->Buttons : NULL,uMsg,wParam,lParam);
+	ParseConfigMessages(hDlg, 1, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
 	return FALSE;
 }
 void	ExpPort_ArkanoidPaddle::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE,hWnd,ConfigProc,(LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE, hWnd, ConfigProc, (LPARAM)this);
 }
 ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 {

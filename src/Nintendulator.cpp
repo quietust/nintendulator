@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * Based on NinthStar, a portable Win32 NES Emulator written in C++
@@ -76,11 +76,11 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	MSG msg;
 
 	// Initialize global strings
-	LoadString(hInstance,IDS_APP_TITLE,szTitle,MAX_LOADSTRING);
-	LoadString(hInstance,IDS_NINTENDULATOR,szWindowClass,MAX_LOADSTRING);
+	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+	LoadString(hInstance, IDS_NINTENDULATOR, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
-	GetModuleFileName(NULL,ProgPath,MAX_PATH);
+	GetModuleFileName(NULL, ProgPath, MAX_PATH);
 	for (i = _tcslen(ProgPath); (i > 0) && (ProgPath[i] != _T('\\')); i--)
 		ProgPath[i] = 0;
 
@@ -96,10 +96,10 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 		CreateDirectory(DataPath, NULL);
 
 	// Perform application initialization:
-	if (!InitInstance (hInstance,nCmdShow)) 
+	if (!InitInstance (hInstance, nCmdShow)) 
 		return FALSE;
 
-	hAccelTable = LoadAccelerators(hInstance,(LPCTSTR)IDC_NINTENDULATOR);
+	hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_NINTENDULATOR);
 
 	timeBeginPeriod(1);
 
@@ -115,24 +115,24 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 		{
 			cmdline++;
 			// yes, it IS possible for the second quote to not exist!
-			if (_tcschr(cmdline,'"'))
-				*_tcschr(cmdline,'"') = 0;
+			if (_tcschr(cmdline, '"'))
+				*_tcschr(cmdline, '"') = 0;
 		}
 		// otherwise just kill everything past the first space
-		else if (_tcschr(cmdline,' '))
-			*_tcschr(cmdline,' ') = 0;
+		else if (_tcschr(cmdline, ' '))
+			*_tcschr(cmdline, ' ') = 0;
 
 		NES::OpenFile(cmdline);
 		free(bkptr);	// free up the memory from its original pointer
 	}
 
 	// Main message loop:
-	while (GetMessage(&msg,NULL,0,0))
+	while (GetMessage(&msg, NULL, 0, 0))
 	{
 		HWND focus = GetForegroundWindow();
 		if ((focus != hMainWnd) && IsDialogMessage(focus, &msg))
 			continue;
-		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg)) 
+		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) 
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -167,12 +167,12 @@ ATOM	MyRegisterClass (HINSTANCE hInstance)
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
-	wcex.hIcon		= LoadIcon(hInstance,(LPCTSTR)IDI_NINTENDULATOR);
-	wcex.hCursor		= LoadCursor(NULL,IDC_ARROW);
+	wcex.hIcon		= LoadIcon(hInstance, (LPCTSTR)IDI_NINTENDULATOR);
+	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
 	wcex.lpszMenuName	= (LPCTSTR)IDC_NINTENDULATOR;
 	wcex.lpszClassName	= szWindowClass;
-	wcex.hIconSm		= LoadIcon(wcex.hInstance,(LPCTSTR)IDI_SMALL);
+	wcex.hIconSm		= LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
 
 	return RegisterClassEx(&wcex);
 }
@@ -191,15 +191,15 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 {
 	GFX::DirectDraw = NULL;	// gotta do this so we don't paint from nothing
 	hInst = hInstance;
-	hMenu = LoadMenu(hInst,(LPCTSTR)IDR_NINTENDULATOR);
-	hMainWnd = CreateWindow(szWindowClass,szTitle,WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,0,0,NULL,hMenu,hInstance,NULL);
+	hMenu = LoadMenu(hInst, (LPCTSTR)IDR_NINTENDULATOR);
+	hMainWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, NULL, hMenu, hInstance, NULL);
 	if (!hMainWnd)
 		return FALSE;
-	ShowWindow(hMainWnd,nCmdShow);
-	DragAcceptFiles(hMainWnd,TRUE);
+	ShowWindow(hMainWnd, nCmdShow);
+	DragAcceptFiles(hMainWnd, TRUE);
 
-	hDebug = CreateDialog(hInst,(LPCTSTR)IDD_DEBUG,hMainWnd,DebugWnd);
-	SetWindowPos(hDebug,hMainWnd,0,0,0,0,SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOSIZE);
+	hDebug = CreateDialog(hInst, (LPCTSTR)IDD_DEBUG, hMainWnd, DebugWnd);
+	SetWindowPos(hDebug, hMainWnd, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOSIZE);
 
 	NES::Init();
 	return TRUE;
@@ -233,11 +233,11 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch (wmId)
 		{
 		case ID_FILE_EXIT:
-			SendMessage(hWnd,WM_CLOSE,0,0);
+			SendMessage(hWnd, WM_CLOSE, 0, 0);
 			break;
 		case ID_FILE_OPEN:
 			FileName[0] = 0;
-			ZeroMemory(&ofn,sizeof(ofn));
+			ZeroMemory(&ofn, sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = hMainWnd;
 			ofn.hInstance = hInst;
@@ -267,7 +267,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lpTemplateName = NULL;
 			if (GetOpenFileName(&ofn))
 			{
-				_tcscpy(Path_ROM,FileName);
+				_tcscpy(Path_ROM, FileName);
 				Path_ROM[ofn.nFileOffset-1] = 0;
 				NES::Stop();
 				NES::OpenFile(FileName);
@@ -279,7 +279,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_FILE_HEADER:
 			FileName[0] = 0;
-			ZeroMemory(&ofn,sizeof(ofn));
+			ZeroMemory(&ofn, sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = hMainWnd;
 			ofn.hInstance = hInst;
@@ -299,13 +299,13 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lpTemplateName = NULL;
 
 			if (GetOpenFileName(&ofn))
-				DialogBoxParam(hInst,(LPCTSTR)IDD_INESHEADER,hWnd,InesHeader,(LPARAM)FileName);
+				DialogBoxParam(hInst, (LPCTSTR)IDD_INESHEADER, hWnd, InesHeader, (LPARAM)FileName);
 			break;
 		case ID_FILE_AUTORUN:
 			NES::AutoRun = !NES::AutoRun;
 			if (NES::AutoRun)
-				CheckMenuItem(hMenu,ID_FILE_AUTORUN,MF_CHECKED);
-			else	CheckMenuItem(hMenu,ID_FILE_AUTORUN,MF_UNCHECKED);
+				CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_CHECKED);
+			else	CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_UNCHECKED);
 			break;
 
 		case ID_CPU_RUN:
@@ -339,7 +339,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			while (PPU::SLnum != 240)
 			{
 				if (NES::FrameStep && !NES::GotStep)
-					MessageBox(hMainWnd,_T("Impossible: savestate is advancing to scanline 240 in framestep mode!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+					MessageBox(hMainWnd, _T("Impossible: savestate is advancing to scanline 240 in framestep mode!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 				do
 				{
 #ifdef	ENABLE_DEBUGGER
@@ -375,14 +375,14 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_CPU_GAMEGENIE:
 			NES::GameGenie = !NES::GameGenie;
 			if (NES::GameGenie)
-				CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
-			else	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
+				CheckMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_CHECKED);
+			else	CheckMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_UNCHECKED);
 			break;
 		case ID_CPU_FRAMESTEP_ENABLED:
 			NES::FrameStep = !NES::FrameStep;
 			if (NES::FrameStep)
-				CheckMenuItem(hMenu,ID_CPU_FRAMESTEP_ENABLED,MF_CHECKED);
-			else	CheckMenuItem(hMenu,ID_CPU_FRAMESTEP_ENABLED,MF_UNCHECKED);
+				CheckMenuItem(hMenu, ID_CPU_FRAMESTEP_ENABLED, MF_CHECKED);
+			else	CheckMenuItem(hMenu, ID_CPU_FRAMESTEP_ENABLED, MF_UNCHECKED);
 			break;
 		case ID_CPU_FRAMESTEP_STEP:
 			NES::GotStep = TRUE;
@@ -424,33 +424,33 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_PPU_SIZE_1X:
 			SizeMult = 1;
 			NES::UpdateInterface();
-			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_1X,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SIZE_1X, ID_PPU_SIZE_4X, ID_PPU_SIZE_1X, MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_2X:
 			SizeMult = 2;
 			NES::UpdateInterface();
-			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_2X,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SIZE_1X, ID_PPU_SIZE_4X, ID_PPU_SIZE_2X, MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_3X:
 			SizeMult = 3;
 			NES::UpdateInterface();
-			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_3X,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SIZE_1X, ID_PPU_SIZE_4X, ID_PPU_SIZE_3X, MF_BYCOMMAND);
 			break;
 		case ID_PPU_SIZE_4X:
 			SizeMult = 4;
 			NES::UpdateInterface();
-			CheckMenuRadioItem(hMenu,ID_PPU_SIZE_1X,ID_PPU_SIZE_4X,ID_PPU_SIZE_4X,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SIZE_1X, ID_PPU_SIZE_4X, ID_PPU_SIZE_4X, MF_BYCOMMAND);
 			break;
 		case ID_PPU_MODE_NTSC:
 			NES::Stop();
 			NES::SetCPUMode(0);
-			CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_NTSC,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_PAL, ID_PPU_MODE_NTSC, MF_BYCOMMAND);
 			if (running)	NES::Start(FALSE);
 			break;
 		case ID_PPU_MODE_PAL:
 			NES::Stop();
 			NES::SetCPUMode(1);
-			CheckMenuRadioItem(hMenu,ID_PPU_MODE_NTSC,ID_PPU_MODE_PAL,ID_PPU_MODE_PAL,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_PAL, ID_PPU_MODE_PAL, MF_BYCOMMAND);
 			if (running)	NES::Start(FALSE);
 			break;
 		case ID_PPU_PALETTE:
@@ -459,32 +459,32 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_PPU_SLOWDOWN_ENABLED:
 			GFX::SlowDown = !GFX::SlowDown;
 			if (GFX::SlowDown)
-				CheckMenuItem(hMenu,ID_PPU_SLOWDOWN_ENABLED,MF_CHECKED);
-			else	CheckMenuItem(hMenu,ID_PPU_SLOWDOWN_ENABLED,MF_UNCHECKED);
+				CheckMenuItem(hMenu, ID_PPU_SLOWDOWN_ENABLED, MF_CHECKED);
+			else	CheckMenuItem(hMenu, ID_PPU_SLOWDOWN_ENABLED, MF_UNCHECKED);
 			break;
 		case ID_PPU_SLOWDOWN_2:
 			GFX::SlowRate = 2;
-			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_2,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SLOWDOWN_2, ID_PPU_SLOWDOWN_20, ID_PPU_SLOWDOWN_2, MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_3:
 			GFX::SlowRate = 3;
-			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_3,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SLOWDOWN_2, ID_PPU_SLOWDOWN_20, ID_PPU_SLOWDOWN_3, MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_4:
 			GFX::SlowRate = 4;
-			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_4,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SLOWDOWN_2, ID_PPU_SLOWDOWN_20, ID_PPU_SLOWDOWN_4, MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_5:
 			GFX::SlowRate = 5;
-			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_5,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SLOWDOWN_2, ID_PPU_SLOWDOWN_20, ID_PPU_SLOWDOWN_5, MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_10:
 			GFX::SlowRate = 10;
-			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_10,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SLOWDOWN_2, ID_PPU_SLOWDOWN_20, ID_PPU_SLOWDOWN_10, MF_BYCOMMAND);
 			break;
 		case ID_PPU_SLOWDOWN_20:
 			GFX::SlowRate = 20;
-			CheckMenuRadioItem(hMenu,ID_PPU_SLOWDOWN_2,ID_PPU_SLOWDOWN_20,ID_PPU_SLOWDOWN_20,MF_BYCOMMAND);
+			CheckMenuRadioItem(hMenu, ID_PPU_SLOWDOWN_2, ID_PPU_SLOWDOWN_20, ID_PPU_SLOWDOWN_20, MF_BYCOMMAND);
 			break;
 		case ID_PPU_FULLSCREEN:
 			NES::Stop();
@@ -502,8 +502,8 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (running)
 				NES::Start(FALSE);
 			if (GFX::Scanlines)
-				CheckMenuItem(hMenu,ID_PPU_SCANLINES,MF_CHECKED);
-			else	CheckMenuItem(hMenu,ID_PPU_SCANLINES,MF_UNCHECKED);
+				CheckMenuItem(hMenu, ID_PPU_SCANLINES, MF_CHECKED);
+			else	CheckMenuItem(hMenu, ID_PPU_SCANLINES, MF_UNCHECKED);
 			break;
 		case ID_SOUND_ENABLED:
 			NES::SoundEnabled = !NES::SoundEnabled;
@@ -511,13 +511,13 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				if (running)
 					APU::SoundON();
-				CheckMenuItem(hMenu,ID_SOUND_ENABLED,MF_CHECKED);
+				CheckMenuItem(hMenu, ID_SOUND_ENABLED, MF_CHECKED);
 			}
 			else
 			{
 				if (running)
 					APU::SoundOFF();
-				CheckMenuItem(hMenu,ID_SOUND_ENABLED,MF_UNCHECKED);
+				CheckMenuItem(hMenu, ID_SOUND_ENABLED, MF_UNCHECKED);
 			}
 			break;
 		case ID_INPUT_SETUP:
@@ -555,23 +555,23 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Movie::Stop();
 			break;
 		case ID_HELP_ABOUT:
-			DialogBox(hInst,(LPCTSTR)IDD_ABOUTBOX,hWnd,(DLGPROC)About);
+			DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
 			break;
-		default:return DefWindowProc(hWnd,message,wParam,lParam);
+		default:return DefWindowProc(hWnd, message, wParam, lParam);
 			break;
 		}
 		break;
 	case WM_DROPFILES:
-		DragQueryFile((HDROP)wParam,0,FileName,MAX_PATH);
+		DragQueryFile((HDROP)wParam, 0, FileName, MAX_PATH);
 		DragFinish((HDROP)wParam);
 		NES::Stop();
 		NES::OpenFile(FileName);
 		break;
 	case WM_PAINT:
-		hdc = BeginPaint(hWnd,&ps);
+		hdc = BeginPaint(hWnd, &ps);
 		if (!NES::Running)
 			GFX::Repaint();
-		EndPaint(hWnd,&ps);
+		EndPaint(hWnd, &ps);
 		break;
 	case WM_CLOSE:
 		NES::Stop();
@@ -586,7 +586,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return 0;
 		// else fall through
 	default:
-		return DefWindowProc(hWnd,message,wParam,lParam);
+		return DefWindowProc(hWnd, message, wParam, lParam);
 		break;
 	}
 	return 0;
@@ -601,7 +601,7 @@ INT_PTR CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL) 
 		{
-			EndDialog(hDlg,LOWORD(wParam));
+			EndDialog(hDlg, LOWORD(wParam));
 			return TRUE;
 		}
 		break;
@@ -617,7 +617,7 @@ INT_PTR CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	{
 	case WM_INITDIALOG:
 		dbgVisible = TRUE;
-		SendDlgItemMessage(hDlg,IDC_DEBUGTEXT,EM_SETLIMITTEXT,0,0);
+		SendDlgItemMessage(hDlg, IDC_DEBUGTEXT, EM_SETLIMITTEXT, 0, 0);
 		DebugLen = 8192;
 		DebugText = (TCHAR *)malloc(DebugLen * sizeof(TCHAR));
 		return FALSE;
@@ -625,40 +625,40 @@ INT_PTR CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 		if (LOWORD(wParam) == IDCANCEL)
 		{
 			dbgVisible = FALSE;
-			ShowWindow(hDlg,SW_HIDE);
+			ShowWindow(hDlg, SW_HIDE);
 			return FALSE;
 		}
 		break;
 	case WM_SIZE:
-		MoveWindow(GetDlgItem(hDlg,IDC_DEBUGTEXT),0,0,LOWORD(lParam),HIWORD(lParam),TRUE);
+		MoveWindow(GetDlgItem(hDlg, IDC_DEBUGTEXT), 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
 		break;
 	}
 	return FALSE;
 }
 void	AddDebug (TCHAR *txt)
 {
-	int i = (int)_tcslen(txt), j = GetWindowTextLength(GetDlgItem(hDebug,IDC_DEBUGTEXT));
+	int i = (int)_tcslen(txt), j = GetWindowTextLength(GetDlgItem(hDebug, IDC_DEBUGTEXT));
 	if (!dbgVisible)
 		return;
 	if (i + j + 2 > DebugLen)
 	{
 		while (i + j + 2 > DebugLen)
 			DebugLen += 8192;
-		DebugText = (TCHAR *)realloc(DebugText,DebugLen * sizeof(TCHAR));
+		DebugText = (TCHAR *)realloc(DebugText, DebugLen * sizeof(TCHAR));
 	}
-	GetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText,DebugLen);
-	_tcscat(DebugText,txt);
-	_tcscat(DebugText,_T("\r\n"));
-	SetDlgItemText(hDebug,IDC_DEBUGTEXT,DebugText);
-	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SETSEL,i+j+2,-1);	/* select last char, move caret to end */
-	SendDlgItemMessage(hDebug,IDC_DEBUGTEXT,EM_SCROLLCARET,0,0);	/* scroll caret onto screen */
+	GetDlgItemText(hDebug, IDC_DEBUGTEXT, DebugText, DebugLen);
+	_tcscat(DebugText, txt);
+	_tcscat(DebugText, _T("\r\n"));
+	SetDlgItemText(hDebug, IDC_DEBUGTEXT, DebugText);
+	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SETSEL, i+j+2, -1);	// select last char, move caret to end
+	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SCROLLCARET, 0, 0);	// scroll caret onto screen
 }
 void	ShowDebug (void)
 {
 	if (dbgVisible)
 		return;
 	dbgVisible = TRUE;
-	ShowWindow(hDebug,SW_SHOW);
+	ShowWindow(hDebug, SW_SHOW);
 }
 
 INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -672,32 +672,32 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 	{
 	case WM_INITDIALOG:
 		filename = (TCHAR *)lParam;
-		rom = _tfopen(filename,_T("rb"));
+		rom = _tfopen(filename, _T("rb"));
 		if (!rom)
 		{
-			MessageBox(hMainWnd,_T("Unable to open ROM!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-			EndDialog(hDlg,0);
+			MessageBox(hMainWnd, _T("Unable to open ROM!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+			EndDialog(hDlg, 0);
 		}
-		fread(header,16,1,rom);
+		fread(header, 16, 1, rom);
 		fclose(rom);
-		if (memcmp(header,"NES\x1A",4))
+		if (memcmp(header, "NES\x1A", 4))
 		{
-			MessageBox(hMainWnd,_T("Selected file is not an iNES ROM image!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-			EndDialog(hDlg,0);
+			MessageBox(hMainWnd, _T("Selected file is not an iNES ROM image!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+			EndDialog(hDlg, 0);
 		}
 		if ((header[7] & 0x0C) == 0x08)
 		{
-			MessageBox(hMainWnd,_T("Selected ROM contains iNES 2.0 information, which is not yet supported. Please use a stand-alone editor."),_T("Nintendulator"),MB_OK | MB_ICONERROR);
-			EndDialog(hDlg,0);
+			MessageBox(hMainWnd, _T("Selected ROM contains iNES 2.0 information,  which is not yet supported. Please use a stand-alone editor."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+			EndDialog(hDlg, 0);
 		}
 		if ((header[7] & 0x0C) == 0x04)
 		{
-			MessageBox(hMainWnd,_T("Selected ROM appears to have been corrupted by \"DiskDude!\" - cleaning..."),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
+			MessageBox(hMainWnd, _T("Selected ROM appears to have been corrupted by \"DiskDude!\" - cleaning..."), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 			for (i = 7; i < 16; i++)
 				header[i] = 0;
 		}
 		else if (((header[8] || header[9] || header[10] || header[11] || header[12] || header[13] || header[14] || header[15])) && 
-			(MessageBox(hDlg,_T("Unrecognized data has been detected in the reserved region of this ROM's header! Do you wish to clean it?"),_T("Nintendulator"),MB_YESNO | MB_ICONQUESTION) == IDYES))
+			(MessageBox(hDlg, _T("Unrecognized data has been detected in the reserved region of this ROM's header! Do you wish to clean it?"), _T("Nintendulator"), MB_YESNO | MB_ICONQUESTION) == IDYES))
 		{
 			for (i = 7; i < 16; i++)
 				header[i] = 0;
@@ -706,38 +706,38 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		i = (int)_tcslen(filename)-1;
 		while ((i >= 0) && (filename[i] != _T('\\')))
 			i--;
-		_tcscpy(name,filename+i+1);
+		_tcscpy(name, filename+i+1);
 		name[_tcslen(name)-4] = 0;
-		SetDlgItemText(hDlg,IDC_INES_NAME,name);
-		SetDlgItemInt(hDlg,IDC_INES_PRG,header[4],FALSE);
-		SetDlgItemInt(hDlg,IDC_INES_CHR,header[5],FALSE);
-		SetDlgItemInt(hDlg,IDC_INES_MAP,((header[6] >> 4) & 0xF) | (header[7] & 0xF0),FALSE);
-		CheckDlgButton(hDlg,IDC_INES_BATT,(header[6] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hDlg,IDC_INES_TRAIN,(header[6] & 0x04) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hDlg,IDC_INES_4SCR,(header[6] & 0x08) ? BST_CHECKED : BST_UNCHECKED);
+		SetDlgItemText(hDlg, IDC_INES_NAME, name);
+		SetDlgItemInt(hDlg, IDC_INES_PRG, header[4], FALSE);
+		SetDlgItemInt(hDlg, IDC_INES_CHR, header[5], FALSE);
+		SetDlgItemInt(hDlg, IDC_INES_MAP, ((header[6] >> 4) & 0xF) | (header[7] & 0xF0), FALSE);
+		CheckDlgButton(hDlg, IDC_INES_BATT, (header[6] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg, IDC_INES_TRAIN, (header[6] & 0x04) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg, IDC_INES_4SCR, (header[6] & 0x08) ? BST_CHECKED : BST_UNCHECKED);
 		if (header[6] & 0x01)
-			CheckRadioButton(hDlg,IDC_INES_HORIZ,IDC_INES_VERT,IDC_INES_VERT);
-		else	CheckRadioButton(hDlg,IDC_INES_HORIZ,IDC_INES_VERT,IDC_INES_HORIZ);
-		CheckDlgButton(hDlg,IDC_INES_VS,(header[7] & 0x01) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hDlg,IDC_INES_PC10,(header[7] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
-		if (IsDlgButtonChecked(hDlg,IDC_INES_4SCR))
+			CheckRadioButton(hDlg, IDC_INES_HORIZ, IDC_INES_VERT, IDC_INES_VERT);
+		else	CheckRadioButton(hDlg, IDC_INES_HORIZ, IDC_INES_VERT, IDC_INES_HORIZ);
+		CheckDlgButton(hDlg, IDC_INES_VS, (header[7] & 0x01) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg, IDC_INES_PC10, (header[7] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
+		if (IsDlgButtonChecked(hDlg, IDC_INES_4SCR))
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_INES_HORIZ),FALSE);
-			EnableWindow(GetDlgItem(hDlg,IDC_INES_VERT),FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), FALSE);
 		}
 		else
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_INES_HORIZ),TRUE);
-			EnableWindow(GetDlgItem(hDlg,IDC_INES_VERT),TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), TRUE);
 		}
-		if (IsDlgButtonChecked(hDlg,IDC_INES_VS))
-			EnableWindow(GetDlgItem(hDlg,IDC_INES_PC10),FALSE);
-		else if (IsDlgButtonChecked(hDlg,IDC_INES_PC10))
-			EnableWindow(GetDlgItem(hDlg,IDC_INES_VS),FALSE);
+		if (IsDlgButtonChecked(hDlg, IDC_INES_VS))
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), FALSE);
+		else if (IsDlgButtonChecked(hDlg, IDC_INES_PC10))
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), FALSE);
 		else
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_INES_VS),TRUE);
-			EnableWindow(GetDlgItem(hDlg,IDC_INES_PC10),TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), TRUE);
 		}
 		return TRUE;
 		break;
@@ -745,94 +745,94 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		switch (LOWORD(wParam))
 		{
 		case IDC_INES_PRG:
-			i = GetDlgItemInt(hDlg,IDC_INES_PRG,NULL,FALSE);
+			i = GetDlgItemInt(hDlg, IDC_INES_PRG, NULL, FALSE);
 			if ((i < 0) || (i > 255))
-				SetDlgItemInt(hDlg,IDC_INES_PRG,i = 0,FALSE);
+				SetDlgItemInt(hDlg, IDC_INES_PRG, i = 0, FALSE);
 			header[4] = (char)(i & 0xFF);
 			break;
 		case IDC_INES_CHR:
-			i = GetDlgItemInt(hDlg,IDC_INES_CHR,NULL,FALSE);
+			i = GetDlgItemInt(hDlg, IDC_INES_CHR, NULL, FALSE);
 			if ((i < 0) || (i > 255))
-				SetDlgItemInt(hDlg,IDC_INES_CHR,i = 0,FALSE);
+				SetDlgItemInt(hDlg, IDC_INES_CHR, i = 0, FALSE);
 			header[5] = (char)(i & 0xFF);
 			break;
 		case IDC_INES_MAP:
-			i = GetDlgItemInt(hDlg,IDC_INES_MAP,NULL,FALSE);
+			i = GetDlgItemInt(hDlg, IDC_INES_MAP, NULL, FALSE);
 			if ((i < 0) || (i > 255))
-				SetDlgItemInt(hDlg,IDC_INES_MAP,i = 0,FALSE);
+				SetDlgItemInt(hDlg, IDC_INES_MAP, i = 0, FALSE);
 			header[6] = (char)((header[6] & 0x0F) | ((i & 0x0F) << 4));
 			header[7] = (char)((header[7] & 0x0F) | (i & 0xF0));
 			break;
 		case IDC_INES_BATT:
-			if (IsDlgButtonChecked(hDlg,IDC_INES_BATT))
+			if (IsDlgButtonChecked(hDlg, IDC_INES_BATT))
 				header[6] |= 0x02;
 			else	header[6] &= ~0x02;
 			break;
 		case IDC_INES_TRAIN:
-			if (IsDlgButtonChecked(hDlg,IDC_INES_TRAIN))
+			if (IsDlgButtonChecked(hDlg, IDC_INES_TRAIN))
 			{
-				MessageBox(hDlg,_T("Trained ROMs are not supported in Nintendulator!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
+				MessageBox(hDlg, _T("Trained ROMs are not supported in Nintendulator!"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 				header[6] |= 0x04;
 			}
 			else	header[6] &= ~0x04;
 			break;
 		case IDC_INES_4SCR:
-			if (IsDlgButtonChecked(hDlg,IDC_INES_4SCR))
+			if (IsDlgButtonChecked(hDlg, IDC_INES_4SCR))
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INES_HORIZ),FALSE);
-				EnableWindow(GetDlgItem(hDlg,IDC_INES_VERT),FALSE);
+				EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), FALSE);
+				EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), FALSE);
 				header[6] |= 0x08;
 			}
 			else
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INES_HORIZ),TRUE);
-				EnableWindow(GetDlgItem(hDlg,IDC_INES_VERT),TRUE);
+				EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), TRUE);
+				EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), TRUE);
 				header[6] &= ~0x08;
 			}
 			break;
 		case IDC_INES_HORIZ:
-			if (IsDlgButtonChecked(hDlg,IDC_INES_HORIZ))
+			if (IsDlgButtonChecked(hDlg, IDC_INES_HORIZ))
 				header[6] &= ~0x01;
 			break;
 		case IDC_INES_VERT:
-			if (IsDlgButtonChecked(hDlg,IDC_INES_VERT))
+			if (IsDlgButtonChecked(hDlg, IDC_INES_VERT))
 				header[6] |= 0x01;
 			break;
 		case IDC_INES_VS:
-			if (IsDlgButtonChecked(hDlg,IDC_INES_VS))
+			if (IsDlgButtonChecked(hDlg, IDC_INES_VS))
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INES_PC10),FALSE);
+				EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), FALSE);
 				header[7] |= 0x01;
 			}
 			else
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INES_PC10),TRUE);
+				EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), TRUE);
 				header[7] &= ~0x01;
 			}
 			break;
 		case IDC_INES_PC10:
-			if (IsDlgButtonChecked(hDlg,IDC_INES_PC10))
+			if (IsDlgButtonChecked(hDlg, IDC_INES_PC10))
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INES_VS),FALSE);
+				EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), FALSE);
 				header[7] |= 0x02;
 			}
 			else
 			{
-				EnableWindow(GetDlgItem(hDlg,IDC_INES_VS),TRUE);
+				EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), TRUE);
 				header[7] &= ~0x02;
 			}
 			break;
 		case IDOK:
-			rom = _tfopen(filename,_T("r+b"));
+			rom = _tfopen(filename, _T("r+b"));
 			if (rom)
 			{
-				fwrite(header,16,1,rom);
+				fwrite(header, 16, 1, rom);
 				fclose(rom);
 			}
-			else	MessageBox(hMainWnd,_T("Failed to open ROM!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+			else	MessageBox(hMainWnd, _T("Failed to open ROM!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			// fall through
 		case IDCANCEL:
-			EndDialog(hDlg,0);
+			EndDialog(hDlg, 0);
 			break;
 		}
 	}
@@ -842,10 +842,10 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 BOOL	ProcessMessages (void)
 {
 	MSG msg;
-	BOOL gotMessage = PeekMessage(&msg,NULL,0,0,PM_NOREMOVE);
-	while (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
+	BOOL gotMessage = PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
-		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd,hAccelTable,&msg))
+		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -857,30 +857,30 @@ BOOL	ProcessMessages (void)
 void	SetWindowClientArea (HWND hWnd, int w, int h)
 {
 	RECT client;
-	SetWindowPos(hWnd,hWnd,0,0,w,h,SWP_NOMOVE | SWP_NOZORDER);
-	GetClientRect(hWnd,&client);
-	SetWindowPos(hWnd,hWnd,0,0,2 * w - client.right,2 * h - client.bottom,SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(hWnd, hWnd, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	GetClientRect(hWnd, &client);
+	SetWindowPos(hWnd, hWnd, 0, 0, 2 * w - client.right, 2 * h - client.bottom, SWP_NOMOVE | SWP_NOZORDER);
 }
 
 void	UpdateTitlebar (void)
 {
 	TCHAR titlebar[256];
 	if (NES::Running)
-		_stprintf(titlebar,_T("Nintendulator - %i FPS (%i %sFSkip)"),GFX::FPSnum,GFX::FSkip,GFX::aFSkip?_T("Auto"):_T(""));
-	else	_tcscpy(titlebar,_T("Nintendulator - Stopped"));
+		_stprintf(titlebar, _T("Nintendulator - %i FPS (%i %sFSkip)"), GFX::FPSnum, GFX::FSkip, GFX::aFSkip?_T("Auto"):_T(""));
+	else	_tcscpy(titlebar, _T("Nintendulator - Stopped"));
 	if (TitlebarDelay > 0)
 	{
 		TitlebarDelay--;
-		_tcscat(titlebar,_T(" - "));
-		_tcscat(titlebar,TitlebarBuffer);
+		_tcscat(titlebar, _T(" - "));
+		_tcscat(titlebar, TitlebarBuffer);
 	}
-	SetWindowText(hMainWnd,titlebar);
+	SetWindowText(hMainWnd, titlebar);
 }
 void	__cdecl	PrintTitlebar (TCHAR *Text, ...)
 {
 	va_list marker;
-	va_start(marker,Text);
-	_vstprintf(TitlebarBuffer,Text,marker);
+	va_start(marker, Text);
+	_vstprintf(TitlebarBuffer, Text, marker);
 	va_end(marker);
 	TitlebarDelay = 15;
 	UpdateTitlebar();

@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * Based on NinthStar, a portable Win32 NES Emulator written in C++
@@ -54,5 +54,16 @@ extern	void		UpdateTitlebar (void);
 extern	void	__cdecl	PrintTitlebar (TCHAR *Text, ...);
 extern	void		AddDebug (TCHAR *txt);
 
+// Shortcut macros for use in savestate code
+#define	writeByte(val) { register unsigned char _val = val; fwrite(&_val, 1, 1, out); clen++; }
+#define	writeWord(val) { register unsigned short _val = val; fwrite(&_val, 2, 1, out); clen += 2; }
+#define	writeLong(val) { register unsigned long _val = val; fwrite(&_val, 4, 1, out); clen += 4; }
+#define	writeArray(val,len) { register int _len = len; fwrite(val, 1, _len, out); clen += _len; }
+
+#define	readByte(val) { register unsigned char _val; fread(&_val, 1, 1, in); val = _val; clen++; }
+#define	readWord(val) { register unsigned short _val; fread(&_val, 2, 1, in); val = _val; clen += 2; }
+#define	readLong(val) { register unsigned long _val; fread(&_val, 4, 1, in); val = _val; clen += 4; }
+#define	readArray(val,len) { register int _len = len; fread(val, 1, _len, in); clen += _len; }
+#define	readArraySkip(val,inlen,outlen) { register int readLen = min(inlen, outlen); fread(val, 1, readLen, in); if (inlen > readLen) fseek(in, inlen - readLen, SEEK_CUR); if (outlen > readLen) ZeroMemory((unsigned char *)val + readLen, outlen - readLen); clen += inlen; }
 
 #endif	/* !NINTENDULATOR_H */

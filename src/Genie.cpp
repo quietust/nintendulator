@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -342,23 +342,21 @@ void	Init (void)
 int	Save (FILE *out)
 {
 	int clen = 0;
-	unsigned char val;
-	unsigned short addr;
-		//Data
-	val = (unsigned char)NES::GameGenie;			fwrite(&val,1,1,out);	clen++;
-	val = CodeStat;						fwrite(&val,1,1,out);	clen++;
 
-	addr = (unsigned short)((Code1B << 12) | Code1A);	fwrite(&addr,2,1,out);	clen += 2;
-	val = (unsigned char)Code1O;				fwrite(&val,1,1,out);	clen++;
-	val = (unsigned char)Code1V;				fwrite(&val,1,1,out);	clen++;
+	writeByte(NES::GameGenie);
+	writeByte(CodeStat);
 
-	addr = (unsigned short)((Code2B << 12) | Code2A);	fwrite(&addr,2,1,out);	clen += 2;
-	val = (unsigned char)Code2O;				fwrite(&val,1,1,out);	clen++;
-	val = (unsigned char)Code2V;				fwrite(&val,1,1,out);	clen++;
+	writeWord((Code1B << 12) | Code1A);
+	writeByte(Code1O);
+	writeByte(Code1V);
 
-	addr = (unsigned short)((Code3B << 12) | Code3A);	fwrite(&addr,2,1,out);	clen += 2;
-	val = (unsigned char)Code3O;				fwrite(&val,1,1,out);	clen++;
-	val = (unsigned char)Code3V;				fwrite(&val,1,1,out);	clen++;
+	writeWord((Code2B << 12) | Code2A);
+	writeByte(Code2O);
+	writeByte(Code2V);
+
+	writeWord((Code3B << 12) | Code3A);
+	writeByte(Code3O);
+	writeByte(Code3V);
 
 	return clen;
 }
@@ -366,22 +364,28 @@ int	Save (FILE *out)
 int	Load (FILE *in)
 {
 	int clen = 0;
-	unsigned char val;
 	unsigned short addr;
-	fread(&val,1,1,in);	clen++;		NES::GameGenie = val;
-	fread(&val,1,1,in);	clen++;		CodeStat = val;
 
-	fread(&addr,2,1,in);	clen += 2;	Code1A = addr & 0xFFF; Code1B = addr >> 12;
-	fread(&val,1,1,in);	clen++;		Code1O = val;
-	fread(&val,1,1,in);	clen++;		Code1V = val;
+	readByte(NES::GameGenie);
+	readByte(CodeStat);
 
-	fread(&addr,2,1,in);	clen += 2;	Code2A = addr & 0xFFF; Code2B = addr >> 12;
-	fread(&val,1,1,in);	clen++;		Code2O = val;
-	fread(&val,1,1,in);	clen++;		Code2V = val;
+	readWord(addr);
+	Code1A = addr & 0xFFF;
+	Code1B = addr >> 12;
+	readByte(Code1O);
+	readByte(Code1V);
 
-	fread(&addr,2,1,in);	clen += 2;	Code3A = addr & 0xFFF; Code3B = addr >> 12;
-	fread(&val,1,1,in);	clen++;		Code3O = val;
-	fread(&val,1,1,in);	clen++;		Code3V = val;
+	readWord(addr);
+	Code3A = addr & 0xFFF;
+	Code3B = addr >> 12;
+	readByte(Code2O);
+	readByte(Code2V);
+
+	readWord(addr);
+	Code3A = addr & 0xFFF;
+	Code3B = addr >> 12;
+	readByte(Code3O);
+	readByte(Code3V);
 
 	if (CodeStat & 0x10)
 	{
@@ -403,8 +407,8 @@ int	Load (FILE *in)
 	}
 
 	if (NES::GameGenie)
-		CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_CHECKED);
-	else	CheckMenuItem(hMenu,ID_CPU_GAMEGENIE,MF_UNCHECKED);
+		CheckMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_CHECKED);
+	else	CheckMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_UNCHECKED);
 
 	Init();		// reset the I/O handlers
 	if ((MI) && (MI->Reset))

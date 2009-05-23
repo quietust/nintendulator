@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -50,7 +50,7 @@ extern	unsigned char RAM[0x800];
 #define PCH rPC.Segment[1]
 
 unsigned char	__fastcall	MemGet (unsigned int);
-void	__fastcall	MemSet (unsigned int,unsigned char);
+void	__fastcall	MemSet (unsigned int, unsigned char);
 
 void	JoinFlags (void);
 void	SplitFlags (void);
@@ -63,12 +63,12 @@ int	Save (FILE *);
 int	Load (FILE *);
 #endif	/* !NSFPLAYER */
 void	ExecOp (void);
-int	MAPINT	ReadRAM (int,int);
-void	MAPINT	WriteRAM (int,int,int);
-int	MAPINT	Read4k (int,int);
-void	MAPINT	Write4k (int,int,int);
-int	MAPINT	ReadPRG (int,int);
-void	MAPINT	WritePRG (int,int,int);
+int	MAPINT	ReadRAM (int, int);
+void	MAPINT	WriteRAM (int, int, int);
+int	MAPINT	Read4k (int, int);
+void	MAPINT	Write4k (int, int, int);
+int	MAPINT	ReadPRG (int, int);
+void	MAPINT	WritePRG (int, int, int);
 
 } // namespace CPU
 #endif	/* !CPU_H */

@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -43,7 +43,7 @@ void	Config		(HWND);
 #endif	/* !NSFPLAYER */
 void	Run		(void);
 void	SetFPS		(int);
-void	WriteReg	(int,unsigned char);
+void	WriteReg	(int, unsigned char);
 unsigned char	Read4015	(void);
 
 } // namespace APU

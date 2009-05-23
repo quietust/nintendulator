@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * Based on NinthStar, a portable Win32 NES Emulator written in C++
@@ -60,11 +60,11 @@ DWORD WINAPI PlayThread(void *b);	// the decode thread procedure
 
 void config(HWND hwndParent)
 {
-	MessageBox(hwndParent,"No configuration is yet available","Configuration",MB_OK);
+	MessageBox(hwndParent, "No configuration is yet available", "Configuration", MB_OK);
 }
 void about(HWND hwndParent)
 {
-	MessageBox(hwndParent,"Nintendulator NSF Player, by Quietust","About Nintendulator NSF player",MB_OK);
+	MessageBox(hwndParent, "Nintendulator NSF Player, by Quietust", "About Nintendulator NSF player", MB_OK);
 }
 
 void	init (void)
@@ -121,19 +121,19 @@ int play(char *fn)
 	unsigned char Header[128];	// NSF header bytes
 	DWORD numBytesRead;	// so ReadFile() won't crash under Windows 9x
 
-	input_file = CreateFile(fn,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
-		OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	input_file = CreateFile(fn, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if (input_file == INVALID_HANDLE_VALUE) // error opening file
 		return 1;
 
-	file_length = GetFileSize(input_file,NULL) - 128;
+	file_length = GetFileSize(input_file, NULL) - 128;
 
-	strcpy(lastfn,fn);
+	strcpy(lastfn, fn);
 	paused=0;
 	decode_pos_ms=0;
 
-	maxlatency = mod.outMod->Open(SAMPLERATE,NCH,BPS, -1,-1);
+	maxlatency = mod.outMod->Open(SAMPLERATE, NCH, BPS, -1, -1);
 	if (maxlatency < 0) // error opening device
 	{
 		CloseHandle(input_file);
@@ -142,16 +142,16 @@ int play(char *fn)
 	}
 	// dividing by 1000 for the first parameter of setinfo makes it
 	// display 'H'... for hundred.. i.e. 14H Kbps.
-	mod.SetInfo((SAMPLERATE*BPS*NCH)/1000,SAMPLERATE/1000,NCH,1);
+	mod.SetInfo((SAMPLERATE*BPS*NCH)/1000, SAMPLERATE/1000, NCH, 1);
 
 	// initialize vis stuff
-	mod.SAVSAInit(maxlatency,SAMPLERATE);
-	mod.VSASetInfo(SAMPLERATE,NCH);
+	mod.SAVSAInit(maxlatency, SAMPLERATE);
+	mod.VSASetInfo(SAMPLERATE, NCH);
 
 	mod.outMod->SetVolume(-666); // set the output plug-ins default volume
 
-	ReadFile(input_file,Header,128,&numBytesRead,NULL);
-	if (memcmp(Header,"NESM\x1a\x01",6))
+	ReadFile(input_file, Header, 128, &numBytesRead, NULL);
+	if (memcmp(Header, "NESM\x1a\x01", 6))
 		return 1;
 
 	RI.Filename = lastfn;
@@ -162,22 +162,22 @@ int play(char *fn)
 	RI.NSF_NTSCPAL = Header[0x7A];
 	RI.NSF_NTSCSpeed = Header[0x6E] | (Header[0x6F] << 8);
 	RI.NSF_PALSpeed = Header[0x78] | (Header[0x79] << 8);
-	memcpy(RI.NSF_InitBanks,&Header[0x70],8);
+	memcpy(RI.NSF_InitBanks, &Header[0x70], 8);
 	RI.NSF_InitSong = Header[0x07];
 	RI.NSF_InitAddr = Header[0x0A] | (Header[0x0B] << 8);
 	RI.NSF_PlayAddr = Header[0x0C] | (Header[0x0D] << 8);
 	RI.NSF_Title = (char *)malloc(32);
 	RI.NSF_Artist = (char *)malloc(32);
 	RI.NSF_Copyright = (char *)malloc(32);
-	memcpy(RI.NSF_Title,&Header[0x0E],32);
-	memcpy(RI.NSF_Artist,&Header[0x2E],32);
-	memcpy(RI.NSF_Copyright,&Header[0x4E],32);
-	if (memcmp(RI.NSF_InitBanks,"\0\0\0\0\0\0\0\0",8))
-		ReadFile(input_file,&NES::PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF),file_length,&numBytesRead,NULL);
+	memcpy(RI.NSF_Title, &Header[0x0E], 32);
+	memcpy(RI.NSF_Artist, &Header[0x2E], 32);
+	memcpy(RI.NSF_Copyright, &Header[0x4E], 32);
+	if (memcmp(RI.NSF_InitBanks, "\0\0\0\0\0\0\0\0", 8))
+		ReadFile(input_file, &NES::PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF), file_length, &numBytesRead, NULL);
 	else
 	{
-		memcpy(RI.NSF_InitBanks,"\x00\x01\x02\x03\x04\x05\x06\x07",8);
-		ReadFile(input_file,&NES::PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF),file_length,&numBytesRead,NULL);
+		memcpy(RI.NSF_InitBanks, "\x00\x01\x02\x03\x04\x05\x06\x07", 8);
+		ReadFile(input_file, &NES::PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF), file_length, &numBytesRead, NULL);
 	}
 
 	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
@@ -198,7 +198,7 @@ int play(char *fn)
 	NES::Reset();	// NSF loaded successfully, reset the NES
 			// and start it running
 	killPlayThread = FALSE;
-	thread_handle = (HANDLE) CreateThread(NULL,0,(LPTHREAD_START_ROUTINE) PlayThread,NULL,0,(LPDWORD)&thread_id);
+	thread_handle = (HANDLE) CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) PlayThread, NULL, 0, (LPDWORD)&thread_id);
 	return 0;
 }
 
@@ -212,10 +212,10 @@ void stop() {
 	if (thread_handle != INVALID_HANDLE_VALUE)
 	{
 		killPlayThread = TRUE;
-		if (WaitForSingleObject(thread_handle,INFINITE) == WAIT_TIMEOUT)
+		if (WaitForSingleObject(thread_handle, INFINITE) == WAIT_TIMEOUT)
 		{
-			MessageBox(mod.hMainWindow,"error asking thread to die!\n","error killing decode thread",0);
-			TerminateThread(thread_handle,0);
+			MessageBox(mod.hMainWindow, "error asking thread to die!\n", "error killing decode thread", 0);
+			TerminateThread(thread_handle, 0);
 		}
 		CloseHandle(thread_handle);
 		thread_handle = INVALID_HANDLE_VALUE;
@@ -254,7 +254,7 @@ void setpan(int pan) { mod.outMod->SetPan(pan); }
 int infoDlg(char *fn, HWND hwnd)
 {
 	if (RI.ROMType)
-		MI->Config(CFG_WINDOW,TRUE);
+		MI->Config(CFG_WINDOW, TRUE);
 	return 0;
 }
 
@@ -267,7 +267,7 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
 		{
 			char *p=lastfn+strlen(lastfn);
 			while (*p != '\\' && p >= lastfn) p--;
-			strcpy(title,++p);
+			strcpy(title, ++p);
 		}
 	}
 	else // some other file
@@ -276,11 +276,11 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
 		{
 			HANDLE hFile;
 			*length_in_ms=-1000;
-			hFile = CreateFile(filename,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
-				OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+			hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
+				OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (hFile != INVALID_HANDLE_VALUE)
 			{
-				*length_in_ms = (GetFileSize(hFile,NULL)*10)/(SAMPLERATE/100*NCH*(BPS/8));
+				*length_in_ms = (GetFileSize(hFile, NULL)*10)/(SAMPLERATE/100*NCH*(BPS/8));
 			}
 			CloseHandle(hFile);
 		}
@@ -288,7 +288,7 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
 		{
 			char *p=filename+strlen(filename);
 			while (*p != '\\' && p >= filename) p--;
-			strcpy(title,++p);
+			strcpy(title, ++p);
 		}
 	}
 }
@@ -317,12 +317,12 @@ DWORD	WINAPI	PlayThread (void *param)
 				Sleep(10);
 
 			l=576*NCH*(BPS/8);
-			mod.SAAddPCMData((char *)sample_buffer,NCH,BPS,decode_pos_ms);
-			mod.VSAAddPCMData((char *)sample_buffer,NCH,BPS,decode_pos_ms);
+			mod.SAAddPCMData((char *)sample_buffer, NCH, BPS, decode_pos_ms);
+			mod.VSAAddPCMData((char *)sample_buffer, NCH, BPS, decode_pos_ms);
 			decode_pos_ms+=(576*1000)/SAMPLERATE;
 			if (mod.dsp_isactive())
-				l = mod.dsp_dosamples((short *)sample_buffer,l/NCH/(BPS/8),BPS,NCH,SAMPLERATE)*(NCH*(BPS/8));
-			mod.outMod->Write(sample_buffer,l);
+				l = mod.dsp_dosamples((short *)sample_buffer, l/NCH/(BPS/8), BPS, NCH, SAMPLERATE)*(NCH*(BPS/8));
+			mod.outMod->Write(sample_buffer, l);
 		}
 	}
 	ExitThread(0);
@@ -332,7 +332,7 @@ DWORD	WINAPI	PlayThread (void *param)
 In_Module mod = 
 {
 	IN_VER,
-	"Nintendulator NSF Player v0.960",
+	"Nintendulator NSF Player v0.965",
 	0,	// hMainWindow
 	0,	// hDllInstance
 	"NSF\0Nintendo Sound File (*.NSF)\0"

@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -121,7 +121,7 @@ unsigned char	__fastcall	MemGet (unsigned int Addr)
 			LastRead = (unsigned char)buf;
 		return LastRead;
 	}
-	buf = ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF,Addr & 0xFFF);
+	buf = ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF);
 	if (buf != -1)
 		LastRead = (unsigned char)buf;
 	return LastRead;
@@ -131,11 +131,11 @@ void	__fastcall	MemSet (unsigned int Addr, unsigned char Val)
 	RunCycle();
 	if (PCMCycles)
 		PCMCycles--;
-	WriteHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF,Addr & 0xFFF,Val);
+	WriteHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF, Val);
 }
 static	__forceinline void	Push (unsigned char Val)
 {
-	MemSet(0x100 | SP--,Val);
+	MemSet(0x100 | SP--, Val);
 }
 static	__forceinline unsigned char	Pull (void)
 {
@@ -214,7 +214,7 @@ void	GetHandlers (void)
 
 void	PowerOn (void)
 {
-	ZeroMemory(RAM,sizeof(RAM));
+	ZeroMemory(RAM, sizeof(RAM));
 	A = 0;
 	X = 0;
 	Y = 0;
@@ -248,36 +248,36 @@ int	Save (FILE *out)
 {
 	int clen = 0;
 		//Data
-	fwrite(&PCH,1,1,out);	clen++;		//	PCL	uint8		Program Counter, low byte
-	fwrite(&PCL,1,1,out);	clen++;		//	PCH	uint8		Program Counter, high byte
-	fwrite(&A,1,1,out);		clen++;		//	A	uint8		Accumulator
-	fwrite(&X,1,1,out);		clen++;		//	X	uint8		X register
-	fwrite(&Y,1,1,out);		clen++;		//	Y	uint8		Y register
-	fwrite(&SP,1,1,out);	clen++;		//	SP	uint8		Stack pointer
+	writeByte(PCH);		//	PCL	uint8		Program Counter, low byte
+	writeByte(PCL);		//	PCH	uint8		Program Counter, high byte
+	writeByte(A);		//	A	uint8		Accumulator
+	writeByte(X);		//	X	uint8		X register
+	writeByte(Y);		//	Y	uint8		Y register
+	writeByte(SP);		//	SP	uint8		Stack pointer
 	JoinFlags();
-	fwrite(&P,1,1,out);		clen++;		//	P	uint8		Processor status register
-	fwrite(&LastRead,1,1,out);	clen++;		//	BUS	uint8		Last contents of data bus
-	fwrite(&WantNMI,1,1,out);	clen++;		//	NMI	uint8		TRUE if falling edge detected on /NMI
-	fwrite(&WantIRQ,1,1,out);	clen++;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
-	fwrite(RAM,1,0x800,out);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
+	writeByte(P);		//	P	uint8		Processor status register
+	writeByte(LastRead);	//	BUS	uint8		Last contents of data bus
+	writeByte(WantNMI);	//	NMI	uint8		TRUE if falling edge detected on /NMI
+	writeByte(WantIRQ);	//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
+	writeArray(RAM, 0x800);	//	RAM	uint8[0x800]	2KB work RAM
 	return clen;
 }
 
 int	Load (FILE *in)
 {
 	int clen = 0;
-	fread(&PCH,1,1,in);		clen++;		//	PCL	uint8		Program Counter, low byte
-	fread(&PCL,1,1,in);		clen++;		//	PCH	uint8		Program Counter, high byte
-	fread(&A,1,1,in);		clen++;		//	A	uint8		Accumulator
-	fread(&X,1,1,in);		clen++;		//	X	uint8		X register
-	fread(&Y,1,1,in);		clen++;		//	Y	uint8		Y register
-	fread(&SP,1,1,in);		clen++;		//	SP	uint8		Stack pointer
-	fread(&P,1,1,in);		clen++;		//	P	uint8		Processor status register
+	readByte(PCH);		//	PCL	uint8		Program Counter, low byte
+	readByte(PCL);		//	PCH	uint8		Program Counter, high byte
+	readByte(A);		//	A	uint8		Accumulator
+	readByte(X);		//	X	uint8		X register
+	readByte(Y);		//	Y	uint8		Y register
+	readByte(SP);		//	SP	uint8		Stack pointer
+	readByte(P);		//	P	uint8		Processor status register
 	SplitFlags();
-	fread(&LastRead,1,1,in);	clen++;		//	BUS	uint8		Last contents of data bus
-	fread(&WantNMI,1,1,in);	clen++;		//	NMI	uint8		TRUE if falling edge detected on /NMI
-	fread(&WantIRQ,1,1,in);	clen++;		//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
-	fread(RAM,1,0x800,in);	clen += 0x800;	//	RAM	uint8[0x800]	2KB work RAM
+	readByte(LastRead);	//	BUS	uint8		Last contents of data bus
+	readByte(WantNMI);	//	NMI	uint8		TRUE if falling edge detected on /NMI
+	readByte(WantIRQ);	//	IRQ	uint8		Flags 1=FRAME, 2=DPCM, 4=EXTERNAL
+	readArray(RAM, 0x800);	//	RAM	uint8[0x800]	2KB work RAM
 	return clen;
 }
 #endif	/* !NSFPLAYER */
@@ -323,12 +323,12 @@ void	MAPINT	Write4k (int Bank, int Addr, int Val)
 	case 0x00C:case 0x00D:case 0x00E:case 0x00F:
 	case 0x010:case 0x011:case 0x012:case 0x013:
 	case 0x015:case 0x017:
-			APU::WriteReg(Addr,(unsigned char)Val);	break;
+			APU::WriteReg(Addr, (unsigned char)Val);	break;
 	case 0x014:	for (i = 0; i < 0x100; i++)
-				MemSet(0x2004,MemGet((Val << 8) | i));
+				MemSet(0x2004, MemGet((Val << 8) | i));
 			MemGet(PC);	break;
 #ifndef	NSFPLAYER
-	case 0x016:	Controllers::Write((unsigned char)Val);	break;
+	case 0x016:	Controllers::Write((unsigned char)Val);		break;
 #endif	/* !NSFPLAYER */
 	}
 }
@@ -539,7 +539,7 @@ static	__forceinline void	IN_AND (void)
 static	__forceinline void	IN_ASL (void)
 {
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		shl	TmpData,1
@@ -547,7 +547,7 @@ static	__forceinline void	IN_ASL (void)
 		setz	FZ
 		sets	FN
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IN_ASL_A (void)
 {
@@ -679,14 +679,14 @@ static	__forceinline void	IN_CPY (void)
 static	__forceinline void	IN_DEC (void)
 {
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		dec	TmpData
 		setz	FZ
 		sets	FN
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IN_DEX (void)
 {
@@ -720,14 +720,14 @@ static	__forceinline void	IN_EOR (void)
 static	__forceinline void	IN_INC (void)
 {
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		inc	TmpData
 		setz	FZ
 		sets	FN
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IN_INX (void)
 {
@@ -800,7 +800,7 @@ static	__forceinline void	IN_LDY (void)
 static	__forceinline void	IN_LSR (void)
 {
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		shr	TmpData,1
@@ -808,7 +808,7 @@ static	__forceinline void	IN_LSR (void)
 		mov	FN,0
 		setz	FZ
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IN_LSR_A (void)
 {
@@ -863,7 +863,7 @@ static	__forceinline void	IN_PLP (void)
 static	__forceinline void	IN_ROL (void)
 {
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		mov	al,FC
@@ -874,7 +874,7 @@ static	__forceinline void	IN_ROL (void)
 		setz	FZ
 		sets	FN
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IN_ROL_A (void)
 {
@@ -892,7 +892,7 @@ static	__forceinline void	IN_ROL_A (void)
 static	__forceinline void	IN_ROR (void)
 {
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		mov	al,FC
@@ -903,7 +903,7 @@ static	__forceinline void	IN_ROR (void)
 		test	TmpData,0xFF
 		setz	FZ
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IN_ROR_A (void)
 {
@@ -954,15 +954,15 @@ static	__forceinline void	IN_SED (void) {	__asm	mov FD,1	}
 static	__forceinline void	IN_SEI (void) {	__asm	mov FI,1	}
 static	__forceinline void	IN_STA (void)
 {
-	MemSet(CalcAddr,A);
+	MemSet(CalcAddr, A);
 }
 static	__forceinline void	IN_STX (void)
 {
-	MemSet(CalcAddr,X);
+	MemSet(CalcAddr, X);
 }
 static	__forceinline void	IN_STY (void)
 {
-	MemSet(CalcAddr,Y);
+	MemSet(CalcAddr, Y);
 }
 static	__forceinline void	IN_TAX (void)
 {
@@ -1026,12 +1026,12 @@ static	__forceinline void	IN_TYA (void)
 
 static	__forceinline void	IV_UNK (void)
 {
-	EI.DbgOut(_T("Invalid opcode $%02X (???) encountered at $%04X"),Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (???) encountered at $%04X"), Opcode, OpAddr);
 }
 
 static	__forceinline void	IV_HLT (void)
 {
-	EI.DbgOut(_T("Invalid opcode $%02X (HLT) encountered at $%04X; CPU locked"),Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (HLT) encountered at $%04X; CPU locked"), Opcode, OpAddr);
 #ifndef	NSFPLAYER
 	MessageBox(hMainWnd, _T("Bad opcode, CPU locked"), _T("Nintendulator"), MB_OK);
 	NES::DoStop = TRUE;
@@ -1039,18 +1039,18 @@ static	__forceinline void	IV_HLT (void)
 }
 static	__forceinline void	IV_NOP (void)
 {
-	EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"),Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"), Opcode, OpAddr);
 	MemGet(CalcAddr);
 }
 static	__forceinline void	IV_NOP2 (void)
 {
-	EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"),Opcode,OpAddr);
+	EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"), Opcode, OpAddr);
 }
 static	__forceinline void	IV_SLO (void)
-{	/* ASL + ORA */
-	EI.DbgOut(_T("Invalid opcode $%02X (SLO) encountered at $%04X"),Opcode,OpAddr);
+{	// ASL + ORA
+	EI.DbgOut(_T("Invalid opcode $%02X (SLO) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		shl	TmpData,1
@@ -1060,13 +1060,13 @@ static	__forceinline void	IV_SLO (void)
 		setz	FZ
 		sets	FN
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IV_RLA (void)
-{	/* ROL + AND */
-	EI.DbgOut(_T("Invalid opcode $%02X (RLA) encountered at $%04X"),Opcode,OpAddr);
+{	// ROL + AND
+	EI.DbgOut(_T("Invalid opcode $%02X (RLA) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		mov	al,FC
@@ -1078,13 +1078,13 @@ static	__forceinline void	IV_RLA (void)
 		setz	FZ
 		sets	FN
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IV_SRE (void)
-{	/* LSR + EOR */
-	EI.DbgOut(_T("Invalid opcode $%02X (SRE) encountered at $%04X"),Opcode,OpAddr);
+{	// LSR + EOR
+	EI.DbgOut(_T("Invalid opcode $%02X (SRE) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		shr	TmpData,1
@@ -1094,13 +1094,13 @@ static	__forceinline void	IV_SRE (void)
 		setz	FZ
 		sets	FN
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IV_RRA (void)
-{	/* ROR + ADC */
-	EI.DbgOut(_T("Invalid opcode $%02X (RRA) encountered at $%04X"),Opcode,OpAddr);
+{	// ROR + ADC
+	EI.DbgOut(_T("Invalid opcode $%02X (RRA) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		mov	al,FC
@@ -1113,16 +1113,16 @@ static	__forceinline void	IV_RRA (void)
 		sets	FN
 		seto	FV
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IV_SAX (void)
-{	/* STA + STX */
-	EI.DbgOut(_T("Invalid opcode $%02X (SAX) encountered at $%04X"),Opcode,OpAddr);
-	MemSet(CalcAddr,A & X);
+{	// STA + STX
+	EI.DbgOut(_T("Invalid opcode $%02X (SAX) encountered at $%04X"), Opcode, OpAddr);
+	MemSet(CalcAddr, A & X);
 }
 static	__forceinline void	IV_LAX (void)
-{	/* LDA + LDX */
-	EI.DbgOut(_T("Invalid opcode $%02X (LAX) encountered at $%04X"),Opcode,OpAddr);
+{	// LDA + LDX
+	EI.DbgOut(_T("Invalid opcode $%02X (LAX) encountered at $%04X"), Opcode, OpAddr);
 	X = A = MemGet(CalcAddr);
 	__asm
 	{
@@ -1132,10 +1132,10 @@ static	__forceinline void	IV_LAX (void)
 	}
 }
 static	__forceinline void	IV_DCP (void)
-{	/* DEC + CMP */
-	EI.DbgOut(_T("Invalid opcode $%02X (DCP) encountered at $%04X"),Opcode,OpAddr);
+{	// DEC + CMP
+	EI.DbgOut(_T("Invalid opcode $%02X (DCP) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		dec	TmpData
@@ -1145,13 +1145,13 @@ static	__forceinline void	IV_DCP (void)
 		setz	FZ
 		sets	FN
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IV_ISB (void)
-{	/* INC + SBC */
-	EI.DbgOut(_T("Invalid opcode $%02X (ISB) encountered at $%04X"),Opcode,OpAddr);
+{	// INC + SBC
+	EI.DbgOut(_T("Invalid opcode $%02X (ISB) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 	__asm
 	{
 		inc	TmpData
@@ -1164,11 +1164,11 @@ static	__forceinline void	IV_ISB (void)
 		sets	FN
 		seto	FV
 	}
-	MemSet(CalcAddr,TmpData);
+	MemSet(CalcAddr, TmpData);
 }
 static	__forceinline void	IV_SBC (void)
-{	/* NOP + SBC */
-	EI.DbgOut(_T("Invalid opcode $%02X (SBC) encountered at $%04X"),Opcode,OpAddr);
+{	// NOP + SBC
+	EI.DbgOut(_T("Invalid opcode $%02X (SBC) encountered at $%04X"), Opcode, OpAddr);
 	MemGet(CalcAddr);
 	__asm
 	{

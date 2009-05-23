@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -145,35 +145,35 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_RESETCONTENT,0,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_RESETCONTENT,0,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_RESETCONTENT,0,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_RESETCONTENT,0,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,FSPort1->Type,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,FSPort2->Type,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_SETCURSEL,FSPort3->Type,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_SETCURSEL,FSPort4->Type,0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_RESETCONTENT, 0, 0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_RESETCONTENT, 0, 0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT3, CB_RESETCONTENT, 0, 0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT4, CB_RESETCONTENT, 0, 0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT3, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT4, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[STD_UNCONNECTED]);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT3, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT4, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[STD_STDCONTROLLER]);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_SETCURSEL, FSPort1->Type, 0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_SETCURSEL, FSPort2->Type, 0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT3, CB_SETCURSEL, FSPort3->Type, 0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT4, CB_SETCURSEL, FSPort4->Type, 0);
 		if (Movie::Mode)
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),FALSE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT3),FALSE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT4),FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT1), FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT2), FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT3), FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT4), FALSE);
 		}
 		else
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),TRUE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),TRUE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT3),TRUE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT4),TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT1), TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT2), TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT3), TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT4), TRUE);
 		}
 		break;
 	case WM_COMMAND:
@@ -182,12 +182,12 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		switch (wmId)
 		{
 		case IDOK:
-			EndDialog(hDlg,1);
+			EndDialog(hDlg, 1);
 			break;
-		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort1,(STDCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
-		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort2,(STDCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
-		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort3,(STDCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SPORT3,CB_GETCURSEL,0,0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
-		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort4,(STDCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SPORT4,CB_GETCURSEL,0,0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
+		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort1, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
+		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort2, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
+		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort3, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT3, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
+		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort4, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT4, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
 		case IDC_CONT_CPORT1:	FSPort1->Config(hDlg);	break;
 		case IDC_CONT_CPORT2:	FSPort2->Config(hDlg);	break;
 		case IDC_CONT_CPORT3:	FSPort3->Config(hDlg);	break;
@@ -200,11 +200,11 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	StdPort_FourScore::Config (HWND hWnd)
 {
-	DialogBox(hInst,(LPCTSTR)IDD_STDPORT_FOURSCORE,hWnd,ConfigProc);
+	DialogBox(hInst, (LPCTSTR)IDD_STDPORT_FOURSCORE, hWnd, ConfigProc);
 }
 void	StdPort_FourScore2::Config (HWND hWnd)
 {
-	DialogBox(hInst,(LPCTSTR)IDD_STDPORT_FOURSCORE,hWnd,ConfigProc);
+	DialogBox(hInst, (LPCTSTR)IDD_STDPORT_FOURSCORE, hWnd, ConfigProc);
 }
 StdPort_FourScore::~StdPort_FourScore (void)
 {

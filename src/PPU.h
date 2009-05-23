@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -44,13 +44,13 @@ void	PowerOn (void);
 void	Reset (void);
 int	Save (FILE *);
 int	Load (FILE *);
-int	MAPINT	IntRead (int,int);
-void	MAPINT	IntWrite (int,int,int);
+int	MAPINT	IntRead (int, int);
+void	MAPINT	IntWrite (int, int, int);
 void	Run (void);
 void	GetGFXPtr (void);
 
-int	MAPINT	BusRead (int,int);
-void	MAPINT	BusWriteCHR (int,int,int);
-void	MAPINT	BusWriteNT (int,int,int);
+int	MAPINT	BusRead (int, int);
+void	MAPINT	BusWriteCHR (int, int, int);
+void	MAPINT	BusWriteNT (int, int, int);
 } // namespace PPU
 #endif	/* !PPU_H */

@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -125,12 +125,12 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		Cont = (StdPort *)lParam;
 	}
 	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
-	ParseConfigMessages(hDlg,1,dlgLists,dlgButtons,Cont ? Cont->Buttons : NULL,uMsg,wParam,lParam);
+	ParseConfigMessages(hDlg, 1, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
 	return FALSE;
 }
 void	StdPort_VSZapper::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_VSZAPPER,hWnd,ConfigProc,(LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_VSZAPPER, hWnd, ConfigProc, (LPARAM)this);
 }
 StdPort_VSZapper::~StdPort_VSZapper (void)
 {

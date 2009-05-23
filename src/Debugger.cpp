@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -48,25 +48,25 @@ struct tBreakpoint
 
 	int	Palette, Nametable;
 
-	HDC	PaletteDC;	/* Palette */
+	HDC	PaletteDC;	// Palette
 	HBITMAP	PaletteBMP;
 
-	HDC	PatternDC;	/* Pattern tables */
+	HDC	PatternDC;	// Pattern tables
 	HBITMAP	PatternBMP;
 
-	HDC	NameDC;		/* Nametable */
+	HDC	NameDC;		// Nametable
 	HBITMAP	NameBMP;
 
-	HDC	SpriteDC;	/* Sprites */
+	HDC	SpriteDC;	// Sprites
 	HBITMAP	SpriteBMP;
 
-	HDC	TileDC;		/* Preview Tile */
+	HDC	TileDC;		// Preview Tile
 	HBITMAP	TileBMP;
 
 	HWND	CPUWnd;
 	HWND	PPUWnd;
 
-	int	TraceOffset;	/* -1 to center on PC, otherwise center on TraceOffset */
+	int	TraceOffset;	// -1 to center on PC, otherwise center on TraceOffset
 	int	MemOffset;
 
 	FILE	*LogFile;
@@ -315,8 +315,8 @@ unsigned char DebugMemPPU (unsigned short Addr)
 	else	return 0xFF;
 }
 
-/* Decodes an instruction into plain text, suitable for displaying in the debugger or writing to a logfile
- * Returns the effective address for usage with breakpoints */
+// Decodes an instruction into plain text, suitable for displaying in the debugger or writing to a logfile
+// Returns the effective address for usage with breakpoints
 int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 {
 	unsigned char OpData[3] = {0, 0, 0};
@@ -392,7 +392,7 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 		Operand = Addr+2+(signed char)OpData[1];
 		break;
 	}
-	/* Use this for outputting to debug logfile */
+	// Use this for outputting to debug logfile
 	if (str1)
 	{
 		switch (TraceAddrMode[DebugMemCPU(Addr)])
@@ -415,7 +415,7 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 		default:	strcpy(str1, "                                             ");																			break;
 		}
 	}
-	/* Use this for outputting to the debugger's Trace pane */
+	// Use this for outputting to the debugger's Trace pane
 	if (str2)
 	{
 		switch (TraceAddrMode[DebugMemCPU(Addr)])
@@ -448,43 +448,42 @@ void	UpdateCPU (void)
 	unsigned short Addr;
 	SCROLLINFO sinfo;
 
-	/* if we chose "Step", stop emulation */
+	// if we chose "Step", stop emulation
 	if (Step)
 		NES::DoStop = TRUE;
-	/* check for breakpoints */
+	// check for breakpoints
 	{
 		int BreakAddr;
-		/* PC has execution breakpoint */
+		// PC has execution breakpoint
 		if (BPcache[CPU::PC] & DEBUG_BREAK_EXEC)
 			NES::DoStop = TRUE;
-		/* I/O break */
+		// I/O break
 		BreakAddr = DecodeInstruction((unsigned short)CPU::PC, NULL, NULL);
 		TpVal = DebugMemCPU((unsigned short)CPU::PC);
-		/* */
 		if (BreakAddr != -1)
 		{
-			/* read opcode, effective address has read breakpoint */
+			// read opcode, effective address has read breakpoint
 			if ((TraceIO[TpVal] & DEBUG_BREAK_READ) && (BPcache[BreakAddr] & DEBUG_BREAK_READ))
 				NES::DoStop = TRUE;
-			/* write opcode, effective address has write breakpoint */
+			// write opcode, effective address has write breakpoint
 			if ((TraceIO[TpVal] & DEBUG_BREAK_WRITE) && (BPcache[BreakAddr] & DEBUG_BREAK_WRITE))
 				NES::DoStop = TRUE;
 		}
-		/* opcode breakpoint */
+		// opcode breakpoint
 		if (BPcache[0x10000 | TpVal] & DEBUG_BREAK_OPCODE)
 			NES::DoStop = TRUE;
-		/* interrupt breakpoints */
+		// interrupt breakpoints
 		if ((CPU::GotInterrupt == INTERRUPT_NMI) && (BPcache[0x10100] & DEBUG_BREAK_NMI))
 			NES::DoStop = TRUE;
-/*		if ((CPU::GotInterrupt == INTERRUPT_RST) && (BPcache[0x10100] & DEBUG_BREAK_RST))
-			NES::DoStop = TRUE;*/
+//		if ((CPU::GotInterrupt == INTERRUPT_RST) && (BPcache[0x10100] & DEBUG_BREAK_RST))
+//			NES::DoStop = TRUE;
 		if ((CPU::GotInterrupt == INTERRUPT_IRQ) && (BPcache[0x10100] & DEBUG_BREAK_IRQ))
 			NES::DoStop = TRUE;
 		if ((CPU::GotInterrupt == INTERRUPT_BRK) && (BPcache[0x10100] & DEBUG_BREAK_BRK))
 			NES::DoStop = TRUE;
 
 	}
-	/* if emulation wasn't stopped, don't bother updating the dialog */
+	// if emulation wasn't stopped, don't bother updating the dialog
 	if (!NES::DoStop)
 		return;
 
@@ -563,7 +562,7 @@ void	UpdateCPU (void)
 		SetDlgItemText(CPUWnd, PPUPages[i], tps);
 	}
 
-	/* update trace window - turn off redraw */
+	// update trace window - turn off redraw
 	SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, WM_SETREDRAW, FALSE, 0);
 	SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_RESETCONTENT, 0, 0);
 
@@ -583,11 +582,11 @@ void	UpdateCPU (void)
 		SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_ADDSTRING, 0, (LPARAM)tps);
 		Addr = Addr + AddrBytes[TraceAddrMode[DebugMemCPU(Addr)]];
 	}
-	/* re-enable redraw just before we set the selection */
+	// re-enable redraw just before we set the selection
 	SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, WM_SETREDRAW, TRUE, 0);
 	SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_SETCURSEL, TpVal, 0);
 
-	/* update memory window - turn off redraw */
+	// update memory window - turn off redraw
 	SendDlgItemMessage(CPUWnd, IDC_DEBUG_MEM_LIST, WM_SETREDRAW, FALSE, 0);
 	SendDlgItemMessage(CPUWnd, IDC_DEBUG_MEM_LIST, LB_RESETCONTENT, 0, 0);
 
@@ -602,7 +601,7 @@ void	UpdateCPU (void)
 		SetScrollInfo(GetDlgItem(CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		for (i = 0; i < DEBUG_MEMLINES; i++)
 		{
-			/* past the end? */
+			// past the end?
 			if ((MemOffset + i) * 0x10 >= 0x10000)
 				break;
 			_stprintf(tps, _T("%04X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
@@ -637,7 +636,7 @@ void	UpdateCPU (void)
 		SetScrollInfo(GetDlgItem(CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		for (i = 0; i < DEBUG_MEMLINES; i++)
 		{
-			/* past the end? */
+			// past the end?
 			if ((MemOffset + i) * 0x10 >= 0x4000)
 				break;
 			_stprintf(tps, _T("%04X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
@@ -672,7 +671,7 @@ void	UpdateCPU (void)
 		SetScrollInfo(GetDlgItem(CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		for (i = 0; i < DEBUG_MEMLINES; i++)
 		{
-			/* past the end? */
+			// past the end?
 			if ((MemOffset + i) * 0x10 >= 0x100)
 				break;
 			_stprintf(tps, _T("%02X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
@@ -706,7 +705,7 @@ void	UpdateCPU (void)
 		SetScrollInfo(GetDlgItem(CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		for (i = 0; i < DEBUG_MEMLINES; i++)
 		{
-			/* past the end? */
+			// past the end?
 			if ((MemOffset + i) * 0x10 >= 0x20)
 				break;
 			_stprintf(tps, _T("%02X:\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X\t%02X"),
@@ -731,7 +730,7 @@ void	UpdateCPU (void)
 		}
 	}
 
-	/* re-enable redraw now that we're done drawing it */
+	// re-enable redraw now that we're done drawing it
 	SendDlgItemMessage(CPUWnd, IDC_DEBUG_MEM_LIST, WM_SETREDRAW, TRUE, 0);
 	inUpdate = FALSE;
 }
@@ -804,7 +803,7 @@ void	UpdatePPU (void)
 	if (PalChanged)
 	{
 		unsigned char color;
-		/* updating palette also invalidates pattern tables, nametable, and sprites */
+		// updating palette also invalidates pattern tables, nametable, and sprites
 		PatChanged = TRUE;
 		NTabChanged = TRUE;
 		SprChanged = TRUE;
@@ -837,7 +836,7 @@ void	UpdatePPU (void)
 		unsigned long PatternArray[D_PAT_W * D_PAT_H];
 		BITMAPINFO bmi;
 
-		/* updating pattern table also makes nametable and sprites dirty */
+		// updating pattern table also makes nametable and sprites dirty
 		NTabChanged = TRUE;
 		SprChanged = TRUE;
 		if (DetailType == DEBUG_DETAIL_PATTERN)

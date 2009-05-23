@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -154,10 +154,10 @@ void	SetDeviceUsed (void);
 void	Acquire (void);
 void	UnAcquire (void);
 void	UpdateInput (void);
-void	ConfigButton (int *,int,HWND,BOOL);
+void	ConfigButton (int *, int, HWND, BOOL);
 
 BOOL	IsPressed (int);
-void	ParseConfigMessages (HWND,int,int *,int *,int *,UINT,WPARAM,LPARAM);
+void	ParseConfigMessages (HWND, int, int *, int *, int *, UINT, WPARAM, LPARAM);
 
 } // namespace Controllers
 #endif	/* !CONTROLLERS_H */

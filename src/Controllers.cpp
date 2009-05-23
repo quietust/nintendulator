@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -69,7 +69,7 @@ void	StdPort_SetControllerType (StdPort *&Port, STDCONT_TYPE Type, int *buttons)
 	case STD_SNESCONTROLLER:	Port = new StdPort_SnesController(buttons);	break;
 	case STD_VSZAPPER:		Port = new StdPort_VSZapper(buttons);		break;
 	case STD_FOURSCORE2:		Port = new StdPort_FourScore2(buttons);		break;
-	default:MessageBox(hMainWnd,_T("Error: selected invalid controller type for standard port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
+	default:MessageBox(hMainWnd, _T("Error: selected invalid controller type for standard port!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);	break;
 	}
 }
 const TCHAR	*StdPort_Mappings[STD_MAX];
@@ -102,7 +102,7 @@ void    ExpPort_SetControllerType (ExpPort *&Port, EXPCONT_TYPE Type, int *butto
         case EXP_ALTKEYBOARD:		Port = new ExpPort_AltKeyboard(buttons);		break;
         case EXP_FAMTRAINER:		Port = new ExpPort_FamTrainer(buttons);			break;
         case EXP_TABLET:		Port = new ExpPort_Tablet(buttons);			break;
-        default:MessageBox(hMainWnd,_T("Error: selected invalid controller type for expansion port!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);	break;
+        default:MessageBox(hMainWnd, _T("Error: selected invalid controller type for expansion port!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);	break;
         }
 }
 const TCHAR	*ExpPort_Mappings[EXP_MAX];
@@ -126,36 +126,36 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_RESETCONTENT,0,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_RESETCONTENT,0,0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_RESETCONTENT, 0, 0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_RESETCONTENT, 0, 0);
 		for (i = 0; i < STD_MAX; i++)
 		{
-			SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[i]);
-			SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_ADDSTRING,0,(LPARAM)StdPort_Mappings[i]);
+			SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[i]);
+			SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_ADDSTRING, 0, (LPARAM)StdPort_Mappings[i]);
 		}
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1->Type,0);
-		SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2->Type,0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_SETCURSEL, Port1->Type, 0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_SETCURSEL, Port2->Type, 0);
 
-		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_RESETCONTENT,0,0);
+		SendDlgItemMessage(hDlg, IDC_CONT_SEXPPORT, CB_RESETCONTENT, 0, 0);
 		for (i = 0; i < EXP_MAX; i++)
-			SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_ADDSTRING,0,(LPARAM)ExpPort_Mappings[i]);
-		SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_SETCURSEL,PortExp->Type,0);
+			SendDlgItemMessage(hDlg, IDC_CONT_SEXPPORT, CB_ADDSTRING, 0, (LPARAM)ExpPort_Mappings[i]);
+		SendDlgItemMessage(hDlg, IDC_CONT_SEXPPORT, CB_SETCURSEL, PortExp->Type, 0);
 		if (Movie::Mode)
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),FALSE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),FALSE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SEXPPORT),FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT1), FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT2), FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SEXPPORT), FALSE);
 		}
 		else
 		{
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT1),TRUE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SPORT2),TRUE);
-			EnableWindow(GetDlgItem(hDlg,IDC_CONT_SEXPPORT),TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT1), TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT2), TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SEXPPORT), TRUE);
 		}
 
 		if (EnableOpposites)
-			CheckDlgButton(hDlg,IDC_CONT_UDLR,BST_CHECKED);
-		else	CheckDlgButton(hDlg,IDC_CONT_UDLR,BST_UNCHECKED);
+			CheckDlgButton(hDlg, IDC_CONT_UDLR, BST_CHECKED);
+		else	CheckDlgButton(hDlg, IDC_CONT_UDLR, BST_UNCHECKED);
 
 		return TRUE;
 		break;
@@ -165,21 +165,21 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 		switch (wmId)
 		{
 		case IDC_CONT_POV:
-			POVAxis = (IsDlgButtonChecked(hDlg,IDC_CONT_POV) == BST_CHECKED);
+			POVAxis = (IsDlgButtonChecked(hDlg, IDC_CONT_POV) == BST_CHECKED);
 			break;
 		case IDOK:
-			EnableOpposites = (IsDlgButtonChecked(hDlg,IDC_CONT_UDLR) == BST_CHECKED);
+			EnableOpposites = (IsDlgButtonChecked(hDlg, IDC_CONT_UDLR) == BST_CHECKED);
 			POVAxis = FALSE;
-			EndDialog(hDlg,1);
+			EndDialog(hDlg, 1);
 			break;
 		case IDC_CONT_SPORT1:
 			if (wmEvent == CBN_SELCHANGE)
 			{
-				STDCONT_TYPE Type = (STDCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_GETCURSEL,0,0);
+				STDCONT_TYPE Type = (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_GETCURSEL, 0, 0);
 				if (Type == STD_FOURSCORE2)
 				{
 					// undo selection - can NOT set port 1 to this!
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1->Type,0);
+					SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_SETCURSEL, Port1->Type, 0);
 				}
 				else if (Type == STD_FOURSCORE)
 				{
@@ -193,14 +193,14 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 					memcpy(FSPort2_Buttons, Port2_Buttons, sizeof(Port2_Buttons));
 					SET_STDCONT(Port1, STD_FOURSCORE);
 					SET_STDCONT(Port2, STD_FOURSCORE2);
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,STD_FOURSCORE2,0);
+					SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_SETCURSEL, STD_FOURSCORE2, 0);
 				}
 				else if (Port1->Type == STD_FOURSCORE)
 				{
 					SET_STDCONT(Port1, Type);
 					SET_STDCONT(Port2, FSPort2->Type);
 					memcpy(Port2_Buttons, FSPort2_Buttons, sizeof(FSPort2_Buttons));
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2->Type,0);
+					SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_SETCURSEL, Port2->Type, 0);
 				}
 				else	SET_STDCONT(Port1, Type);
 			}
@@ -208,11 +208,11 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 		case IDC_CONT_SPORT2:
 			if (wmEvent == CBN_SELCHANGE)
 			{
-				STDCONT_TYPE Type = (STDCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_GETCURSEL,0,0);
+				STDCONT_TYPE Type = (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_GETCURSEL, 0, 0);
 				if (Type == STD_FOURSCORE)
 				{
 					// undo selection - can NOT set port 1 to this!
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT2,CB_SETCURSEL,Port2->Type,0);
+					SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_SETCURSEL, Port2->Type, 0);
 				}
 				else if (Type == STD_FOURSCORE2)
 				{
@@ -226,14 +226,14 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 					memcpy(FSPort2_Buttons, Port2_Buttons, sizeof(Port2_Buttons));
 					SET_STDCONT(Port1, STD_FOURSCORE);
 					SET_STDCONT(Port2, STD_FOURSCORE2);
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,STD_FOURSCORE,0);
+					SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_SETCURSEL, STD_FOURSCORE, 0);
 				}
 				else if (Port2->Type == STD_FOURSCORE2)
 				{
 					SET_STDCONT(Port1, FSPort1->Type);
 					memcpy(Port1_Buttons, FSPort1_Buttons, sizeof(FSPort1_Buttons));
 					SET_STDCONT(Port2, Type);
-					SendDlgItemMessage(hDlg,IDC_CONT_SPORT1,CB_SETCURSEL,Port1->Type,0);
+					SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_SETCURSEL, Port1->Type, 0);
 				}
 				else	SET_STDCONT(Port2, Type);
 			}
@@ -241,7 +241,7 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 		case IDC_CONT_SEXPPORT:
 			if (wmEvent == CBN_SELCHANGE)
 			{
-				EXPCONT_TYPE Type = (EXPCONT_TYPE)SendDlgItemMessage(hDlg,IDC_CONT_SEXPPORT,CB_GETCURSEL,0,0);
+				EXPCONT_TYPE Type = (EXPCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SEXPPORT, CB_GETCURSEL, 0, 0);
 				SET_EXPCONT(PortExp, Type);
 			}
 			break;
@@ -263,7 +263,7 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 void	OpenConfig (void)
 {
 	UnAcquire();
-	DialogBox(hInst,(LPCTSTR)IDD_CONTROLLERS,hMainWnd,ControllerProc);
+	DialogBox(hInst, (LPCTSTR)IDD_CONTROLLERS, hMainWnd, ControllerProc);
 	SetDeviceUsed();
 	Acquire();
 }
@@ -271,7 +271,7 @@ void	OpenConfig (void)
 static	BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	int ItemNum = 0;
-	if (IsEqualGUID(lpddoi->guidType,GUID_Key))
+	if (IsEqualGUID(lpddoi->guidType, GUID_Key))
 	{
 		ItemNum = lpddoi->dwOfs;
 		if ((ItemNum >= 0) && (ItemNum < 256))
@@ -284,22 +284,22 @@ static	BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 static	BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	int ItemNum = 0;
-	if (IsEqualGUID(lpddoi->guidType,GUID_XAxis))
+	if (IsEqualGUID(lpddoi->guidType, GUID_XAxis))
 	{
 		AxisFlags[1] |= 0x01;
 		AxisNames[1][AXIS_X] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_YAxis))
+	if (IsEqualGUID(lpddoi->guidType, GUID_YAxis))
 	{
 		AxisFlags[1] |= 0x02;
 		AxisNames[1][AXIS_Y] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_ZAxis))
+	if (IsEqualGUID(lpddoi->guidType, GUID_ZAxis))
 	{
 		AxisFlags[1] |= 0x04;
 		AxisNames[1][AXIS_Z] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_Button))
+	if (IsEqualGUID(lpddoi->guidType, GUID_Button))
 	{
 		ItemNum = (lpddoi->dwOfs - ((BYTE *)&MouseState.rgbButtons - (BYTE *)&MouseState)) / sizeof(MouseState.rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 8))
@@ -314,37 +314,37 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 {
 	int DevNum = NumDevices;
 	int ItemNum = 0;
-	if (IsEqualGUID(lpddoi->guidType,GUID_XAxis))
+	if (IsEqualGUID(lpddoi->guidType, GUID_XAxis))
 	{
 		AxisFlags[DevNum] |= 0x01;
 		AxisNames[DevNum][AXIS_X] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_YAxis))
+	if (IsEqualGUID(lpddoi->guidType, GUID_YAxis))
 	{
 		AxisFlags[DevNum] |= 0x02;
 		AxisNames[DevNum][AXIS_Y] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_ZAxis))
+	if (IsEqualGUID(lpddoi->guidType, GUID_ZAxis))
 	{
 		AxisFlags[DevNum] |= 0x04;
 		AxisNames[DevNum][AXIS_Z] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_RxAxis))
+	if (IsEqualGUID(lpddoi->guidType, GUID_RxAxis))
 	{
 		AxisFlags[DevNum] |= 0x08;
 		AxisNames[DevNum][AXIS_RX] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_RyAxis))
+	if (IsEqualGUID(lpddoi->guidType, GUID_RyAxis))
 	{
 		AxisFlags[DevNum] |= 0x10;
 		AxisNames[DevNum][AXIS_RY] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_RzAxis))
+	if (IsEqualGUID(lpddoi->guidType, GUID_RzAxis))
 	{
 		AxisFlags[DevNum] |= 0x20;
 		AxisNames[DevNum][AXIS_RZ] = _tcsdup(lpddoi->tszName);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_Slider))
+	if (IsEqualGUID(lpddoi->guidType, GUID_Slider))
 	{
 		ItemNum = (lpddoi->dwOfs - ((BYTE *)&JoyState[0].rglSlider - (BYTE *)&JoyState[0])) / sizeof(JoyState[0].rglSlider[0]);
 		if (ItemNum == 0)
@@ -359,7 +359,7 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 		}
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid slider ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_POV))
+	if (IsEqualGUID(lpddoi->guidType, GUID_POV))
 	{
 		ItemNum = (lpddoi->dwOfs - ((BYTE *)&JoyState[0].rgdwPOV - (BYTE *)&JoyState[0])) / sizeof(JoyState[0].rgdwPOV[0]);
 		if ((ItemNum >= 0) && (ItemNum < 4))
@@ -369,7 +369,7 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 		}
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid POV hat ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
-	if (IsEqualGUID(lpddoi->guidType,GUID_Button))
+	if (IsEqualGUID(lpddoi->guidType, GUID_Button))
 	{
 		ItemNum = (lpddoi->dwOfs - ((BYTE *)&JoyState[0].rgbButtons - (BYTE *)&JoyState[0])) / sizeof(JoyState[0].rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 128))
@@ -384,12 +384,12 @@ static	BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pv
 {
 	HRESULT hr;
 	int DevNum = NumDevices;
-	if (SUCCEEDED(DirectInput->CreateDeviceEx(lpddi->guidInstance,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[DevNum],NULL)))
+	if (SUCCEEDED(DirectInput->CreateDeviceEx(lpddi->guidInstance, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[DevNum], NULL)))
 	{
 		DIDEVCAPS caps;
 		if (FAILED(hr = DIDevices[DevNum]->SetDataFormat(&c_dfDIJoystick2)))
 			goto end;
-		if (FAILED(hr = DIDevices[DevNum]->SetCooperativeLevel(hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+		if (FAILED(hr = DIDevices[DevNum]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 			goto end;
 		caps.dwSize = sizeof(DIDEVCAPS);
 		if (FAILED(hr = DIDevices[DevNum]->GetCapabilities(&caps)))
@@ -400,7 +400,7 @@ static	BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pv
 		POVFlags[DevNum] = 0;
 		DeviceName[DevNum] = _tcsdup(lpddi->tszProductName);
 
-		DIDevices[DevNum]->EnumObjects(EnumJoystickObjectsCallback,NULL,DIDFT_ALL);
+		DIDevices[DevNum]->EnumObjects(EnumJoystickObjectsCallback, NULL, DIDFT_ALL);
 		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), lpddi->tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 		NumDevices++;
 	}
@@ -416,11 +416,11 @@ static	BOOL	InitKeyboard (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(DirectInput->CreateDeviceEx(GUID_SysKeyboard,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[0],NULL)))
+	if (FAILED(DirectInput->CreateDeviceEx(GUID_SysKeyboard, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[0], NULL)))
 		return FALSE;
 	if (FAILED(DIDevices[0]->SetDataFormat(&c_dfDIKeyboard)))
 		goto end;
-	if (FAILED(DIDevices[0]->SetCooperativeLevel(hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(DIDevices[0]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 		goto end;
 
 	caps.dwSize = sizeof(DIDEVCAPS);
@@ -436,7 +436,7 @@ static	BOOL	InitKeyboard (void)
 	POVFlags[0] = 0;	// no POV hats
 	DeviceName[0] = _tcsdup(inst.tszProductName);
 
-	DIDevices[0]->EnumObjects(EnumKeyboardObjectsCallback,NULL,DIDFT_ALL);
+	DIDevices[0]->EnumObjects(EnumKeyboardObjectsCallback, NULL, DIDFT_ALL);
 	EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 	return TRUE;
 
@@ -450,11 +450,11 @@ static	BOOL	InitMouse (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(DirectInput->CreateDeviceEx(GUID_SysMouse,IID_IDirectInputDevice7,(LPVOID *)&DIDevices[1],NULL)))
+	if (FAILED(DirectInput->CreateDeviceEx(GUID_SysMouse, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[1], NULL)))
 		return FALSE;
 	if (FAILED(DIDevices[1]->SetDataFormat(&c_dfDIMouse2)))
 		goto end;
-	if (FAILED(DIDevices[1]->SetCooperativeLevel(hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(DIDevices[1]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 		goto end;
 	caps.dwSize = sizeof(DIDEVCAPS);
 	if (FAILED(DIDevices[1]->GetCapabilities(&caps)))
@@ -469,7 +469,7 @@ static	BOOL	InitMouse (void)
 	POVFlags[1] = 0;
 	DeviceName[1] = _tcsdup(inst.tszProductName);
 
-	DIDevices[1]->EnumObjects(EnumMouseObjectsCallback,NULL,DIDFT_ALL);
+	DIDevices[1]->EnumObjects(EnumMouseObjectsCallback, NULL, DIDFT_ALL);
 	EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 	return TRUE;
 
@@ -488,22 +488,22 @@ void	Init (void)
 		DeviceUsed[i] = FALSE;
 		DIDevices[i] = NULL;
 		DeviceName[i] = NULL;
-		memset(AxisNames[i],0,sizeof(AxisNames[i]));
-		memset(ButtonNames[i],0,sizeof(ButtonNames[i]));
-		memset(POVNames[i],0,sizeof(POVNames[i]));
+		ZeroMemory(AxisNames[i], sizeof(AxisNames[i]));
+		ZeroMemory(ButtonNames[i], sizeof(ButtonNames[i]));
+		ZeroMemory(POVNames[i], sizeof(POVNames[i]));
 	}
-	memset(KeyNames,0,sizeof(KeyNames));
+	ZeroMemory(KeyNames, sizeof(KeyNames));
 
 	StdPort_SetMappings();
 	ExpPort_SetMappings();
 
-	ZeroMemory(Port1_Buttons,sizeof(Port1_Buttons));
-	ZeroMemory(Port2_Buttons,sizeof(Port2_Buttons));
-	ZeroMemory(FSPort1_Buttons,sizeof(FSPort1_Buttons));
-	ZeroMemory(FSPort2_Buttons,sizeof(FSPort2_Buttons));
-	ZeroMemory(FSPort3_Buttons,sizeof(FSPort3_Buttons));
-	ZeroMemory(FSPort4_Buttons,sizeof(FSPort4_Buttons));
-	ZeroMemory(PortExp_Buttons,sizeof(PortExp_Buttons));
+	ZeroMemory(Port1_Buttons, sizeof(Port1_Buttons));
+	ZeroMemory(Port2_Buttons, sizeof(Port2_Buttons));
+	ZeroMemory(FSPort1_Buttons, sizeof(FSPort1_Buttons));
+	ZeroMemory(FSPort2_Buttons, sizeof(FSPort2_Buttons));
+	ZeroMemory(FSPort3_Buttons, sizeof(FSPort3_Buttons));
+	ZeroMemory(FSPort4_Buttons, sizeof(FSPort4_Buttons));
+	ZeroMemory(PortExp_Buttons, sizeof(PortExp_Buttons));
 
 	Port1 = new StdPort_Unconnected(Port1_Buttons);
 	Port2 = new StdPort_Unconnected(Port2_Buttons);
@@ -513,19 +513,19 @@ void	Init (void)
 	FSPort4 = new StdPort_Unconnected(FSPort4_Buttons);
 	PortExp = new ExpPort_Unconnected(PortExp_Buttons);
 	
-	if (FAILED(DirectInputCreateEx(hInst,DIRECTINPUT_VERSION,IID_IDirectInput7,(LPVOID *)&DirectInput,NULL)))
+	if (FAILED(DirectInputCreateEx(hInst, DIRECTINPUT_VERSION, IID_IDirectInput7, (LPVOID *)&DirectInput, NULL)))
 	{
-		MessageBox(hMainWnd,_T("Unable to initialize DirectInput!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd, _T("Unable to initialize DirectInput!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return;
 	}
 
 	if (!InitKeyboard())
-		MessageBox(hMainWnd,_T("Failed to initialize keyboard!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
+		MessageBox(hMainWnd, _T("Failed to initialize keyboard!"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 	if (!InitMouse())
-		MessageBox(hMainWnd,_T("Failed to initialize mouse!"),_T("Nintendulator"),MB_OK | MB_ICONWARNING);
+		MessageBox(hMainWnd, _T("Failed to initialize mouse!"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 
 	NumDevices = 2;	// joysticks start at slot 2
-	DirectInput->EnumDevices(DIDEVTYPE_JOYSTICK,EnumJoysticksCallback,NULL,DIEDFL_ALLDEVICES);
+	DirectInput->EnumDevices(DIDEVTYPE_JOYSTICK, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES);
 
 	Movie::Mode = 0;
 	Acquire();
@@ -591,47 +591,34 @@ int	Save (FILE *out)
 	unsigned char type;
 	unsigned short len;
 
-	type = (unsigned char)Port1->Type;
-	fwrite(&type, 1, 1, out);		clen += 1;
-	len = (unsigned short)Port1->DataLen;
-	fwrite(&len, 2, 1, out);		clen += 2;
-	fwrite(Port1->Data, 1, len, out);	clen += len;
+	type = (unsigned char)Port1->Type;	writeByte(type);
+	len = (unsigned short)Port1->DataLen;	writeWord(len);
+	writeArray(Port1->Data, len);
 
-	type = (unsigned char)Port2->Type;
-	fwrite(&type, 1, 1, out);		clen += 1;
-	len = (unsigned short)Port2->DataLen;
-	fwrite(&len, 2, 1, out);		clen += 2;
-	fwrite(Port2->Data, 1, len, out);	clen += len;
+	type = (unsigned char)Port2->Type;	writeByte(type);
+	len = (unsigned short)Port2->DataLen;	writeWord(len);
+	writeArray(Port2->Data, len);
 
-	type = (unsigned char)PortExp->Type;
-	fwrite(&type, 1, 1, out);		clen += 1;
-	len = (unsigned short)PortExp->DataLen;
-	fwrite(&len, 2, 1, out);		clen += 2;
-	fwrite(PortExp->Data, 1, len, out);	clen += len;
+	type = (unsigned char)PortExp->Type;	writeByte(type);
+	len = (unsigned short)PortExp->DataLen;	writeWord(len);
+	writeArray(PortExp->Data, len);
 
-	type = (unsigned char)FSPort1->Type;
-	fwrite(&type, 1, 1, out);		clen += 1;
-	len = (unsigned short)FSPort1->DataLen;
-	fwrite(&len, 2, 1, out);		clen += 2;
-	fwrite(FSPort1->Data, 1, len, out);	clen += len;
+	type = (unsigned char)FSPort1->Type;	writeByte(type);
+	len = (unsigned short)FSPort1->DataLen;	writeWord(len);
+	writeArray(FSPort1->Data, len);
 
-	type = (unsigned char)FSPort2->Type;
-	fwrite(&type, 1, 1, out);		clen += 1;
-	len = (unsigned short)FSPort2->DataLen;
-	fwrite(&len, 2, 1, out);		clen += 2;
-	fwrite(FSPort2->Data, 1, len, out);	clen += len;
+	type = (unsigned char)FSPort2->Type;	writeByte(type);
+	len = (unsigned short)FSPort2->DataLen;	writeWord(len);
+	writeArray(FSPort2->Data, len);
 
-	type = (unsigned char)FSPort3->Type;
-	fwrite(&type, 1, 1, out);		clen += 1;
-	len = (unsigned short)FSPort3->DataLen;
-	fwrite(&len, 2, 1, out);		clen += 2;
-	fwrite(FSPort3->Data, 1, len, out);	clen += len;
+	type = (unsigned char)FSPort3->Type;	writeByte(type);
+	len = (unsigned short)FSPort3->DataLen;	writeWord(len);
+	writeArray(FSPort3->Data, len);
 
-	type = (unsigned char)FSPort4->Type;
-	fwrite(&type, 1, 1, out);		clen += 1;
-	len = (unsigned short)FSPort4->DataLen;
-	fwrite(&len, 2, 1, out);		clen += 2;
-	fwrite(FSPort4->Data, 1, len, out);	clen += len;
+	type = (unsigned char)FSPort4->Type;	writeByte(type);
+	len = (unsigned short)FSPort4->DataLen;	writeWord(len);
+	writeArray(FSPort4->Data, len);
+
 	return clen;
 }
 
@@ -639,55 +626,53 @@ int	Load (FILE *in)
 {
 	int clen = 0;
 	unsigned char type;
-	unsigned short len, actLen, skipLen;
+	unsigned short len;
 	Movie::ControllerTypes[3] = 1;	// denotes that controller state has been loaded
 					// if we're playing a movie, this means we should
 					// SKIP the controller info in the movie block
 
-	fread(&type, 1, 1, in);			SET_STDCONT(Port1, (STDCONT_TYPE)type);		clen += 1;
-	fread(&len, 2, 1, in);									clen += 2;
-	actLen = min(Port1->DataLen, len);	skipLen = len - actLen;
-	fread(Port1->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
-
+	readByte(type);
+	readWord(len);
+	SET_STDCONT(Port1, (STDCONT_TYPE)type);
+	readArraySkip(Port1->Data, len, Port1->DataLen);
 
 	if ((STDCONT_TYPE)type == STD_FOURSCORE)
 	{
-		fseek(in, 1, SEEK_CUR);								clen += 1;
+		readByte(type);
 		SET_STDCONT(Port2, STD_FOURSCORE2);
 	}
 	else
 	{
-		fread(&type, 1, 1, in);								clen += 1;
+		readByte(type);
 		SET_STDCONT(Port2, (STDCONT_TYPE)type);
 	}
-	fread(&len, 2, 1, in);									clen += 2;
-	actLen = min(Port2->DataLen, len);	skipLen = len - actLen;
-	fread(Port2->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+	readWord(len);
+	readArraySkip(Port2->Data, len, Port2->DataLen);
 
-	fread(&type, 1, 1, in);			SET_EXPCONT(PortExp, (EXPCONT_TYPE)type);	clen += 1;
-	fread(&len, 2, 1, in);									clen += 2;
-	actLen = min(PortExp->DataLen, len);	skipLen = len - actLen;
-	fread(PortExp->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+	readByte(type);
+	SET_EXPCONT(PortExp, (EXPCONT_TYPE)type);
+	readWord(len);
+	readArraySkip(PortExp->Data, len, PortExp->DataLen);
 
-	fread(&type, 1, 1, in);			SET_STDCONT(FSPort1, (STDCONT_TYPE)type);	clen += 1;
-	fread(&len, 2, 1, in);									clen += 2;
-	actLen = min(FSPort1->DataLen, len);	skipLen = len - actLen;
-	fread(FSPort1->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+	readByte(type);
+	SET_STDCONT(FSPort1, (STDCONT_TYPE)type);
+	readWord(len);
+	readArraySkip(FSPort1->Data, len, FSPort1->DataLen);
 
-	fread(&type, 1, 1, in);			SET_STDCONT(FSPort2, (STDCONT_TYPE)type);	clen += 1;
-	fread(&len, 2, 1, in);									clen += 2;
-	actLen = min(FSPort2->DataLen, len);	skipLen = len - actLen;
-	fread(FSPort2->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+	readByte(type);
+	SET_STDCONT(FSPort2, (STDCONT_TYPE)type);
+	readWord(len);
+	readArraySkip(FSPort2->Data, len, FSPort2->DataLen);
 
-	fread(&type, 1, 1, in);			SET_STDCONT(FSPort3, (STDCONT_TYPE)type);	clen += 1;
-	fread(&len, 2, 1, in);									clen += 2;
-	actLen = min(FSPort3->DataLen, len);	skipLen = len - actLen;
-	fread(FSPort3->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+	readByte(type);
+	SET_STDCONT(FSPort3, (STDCONT_TYPE)type);
+	readWord(len);
+	readArraySkip(FSPort3->Data, len, FSPort3->DataLen);
 
-	fread(&type, 1, 1, in);			SET_STDCONT(FSPort4, (STDCONT_TYPE)type);	clen += 1;
-	fread(&len, 2, 1, in);									clen += 2;
-	actLen = min(FSPort4->DataLen, len);	skipLen = len - actLen;
-	fread(FSPort4->Data, 1, actLen, in);	fseek(in, skipLen, SEEK_CUR);			clen += len;
+	readByte(type);
+	SET_STDCONT(FSPort4, (STDCONT_TYPE)type);
+	readWord(len);
+	readArraySkip(FSPort4->Data, len, FSPort4->DataLen);
 
 	return clen;
 }
@@ -754,20 +739,20 @@ void	UpdateInput (void)
 	unsigned char Cmd = 0;
 	if (DeviceUsed[0])
 	{
-		hr = DIDevices[0]->GetDeviceState(256,KeyState);
+		hr = DIDevices[0]->GetDeviceState(256, KeyState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
 			DIDevices[0]->Acquire();
-			ZeroMemory(KeyState,sizeof(KeyState));
+			ZeroMemory(KeyState, sizeof(KeyState));
 		}
 	}
 	if (DeviceUsed[1])
 	{
-		hr = DIDevices[1]->GetDeviceState(sizeof(DIMOUSESTATE2),&MouseState);
+		hr = DIDevices[1]->GetDeviceState(sizeof(DIMOUSESTATE2), &MouseState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
 			DIDevices[1]->Acquire();
-			ZeroMemory(&MouseState,sizeof(MouseState));
+			ZeroMemory(&MouseState, sizeof(MouseState));
 		}
 	}
 	for (i = 2; i < NumDevices; i++)
@@ -777,12 +762,12 @@ void	UpdateInput (void)
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 			{
 				DIDevices[i]->Acquire();
-				ZeroMemory(&JoyState[i],sizeof(DIJOYSTATE2));
+				ZeroMemory(&JoyState[i], sizeof(DIJOYSTATE2));
 				continue;
 			}
-			hr = DIDevices[i]->GetDeviceState(sizeof(DIJOYSTATE2),&JoyState[i]);
+			hr = DIDevices[i]->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[i]);
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
-				ZeroMemory(&JoyState[i],sizeof(DIJOYSTATE2));
+				ZeroMemory(&JoyState[i], sizeof(DIJOYSTATE2));
 		}
 
 	if (Movie::Mode & MOV_PLAY)
@@ -790,13 +775,13 @@ void	UpdateInput (void)
 	else
 	{
 		if ((MI) && (MI->Config))
-			Cmd = MI->Config(CFG_QUERY,0);
+			Cmd = MI->Config(CFG_QUERY, 0);
 	}
 	Port1->Frame(Movie::Mode);
 	Port2->Frame(Movie::Mode);
 	PortExp->Frame(Movie::Mode);
 	if ((Cmd) && (MI) && (MI->Config))
-		MI->Config(CFG_CMD,Cmd);
+		MI->Config(CFG_CMD, Cmd);
 	if (Movie::Mode & MOV_RECORD)
 		Movie::SaveInput(Cmd);
 }
@@ -828,9 +813,9 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 		LastPOV = 0xF0;
 	}
 
-	if (FAILED(dev->SetCooperativeLevel(hWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(dev->SetCooperativeLevel(hWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(hMainWnd,_T("Unable to modify device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd, _T("Unable to modify device input cooperative level!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
@@ -838,13 +823,13 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 	while (Key == -1)
 	{
 		if (DevNum == 0)
-			hr = dev->GetDeviceState(256,KeyState);
+			hr = dev->GetDeviceState(256, KeyState);
 		else if (DevNum == 1)
-			hr = dev->GetDeviceState(sizeof(DIMOUSESTATE2),&MouseState);
+			hr = dev->GetDeviceState(sizeof(DIMOUSESTATE2), &MouseState);
 		else
 		{
 			hr = dev->Poll();
-			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2),&JoyState[DevNum]);
+			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[DevNum]);
 		}
 		for (i = 0; i < NumButtons[DevNum]; i++)
 		{
@@ -854,7 +839,7 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 				break;
 			}
 		}
-		if (Key != -1)	/* if we got a button, don't check for an axis */
+		if (Key != -1)	// if we got a button, don't check for an axis
 			break;
 		for (i = FirstAxis; i < LastAxis; i++)
 		{
@@ -864,7 +849,7 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 				break;
 			}
 		}
-		if (Key != -1)	/* if we got an axis, don't check for a POV hat */
+		if (Key != -1)	// if we got an axis, don't check for a POV hat
 			break;
 		for (i = FirstPOV; i < LastPOV; i++)
 		{
@@ -878,13 +863,13 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 	{
 waitrelease:
 		if (DevNum == 0)
-			hr = dev->GetDeviceState(256,KeyState);
+			hr = dev->GetDeviceState(256, KeyState);
 		else if (DevNum == 1)
-			hr = dev->GetDeviceState(sizeof(DIMOUSESTATE2),&MouseState);
+			hr = dev->GetDeviceState(sizeof(DIMOUSESTATE2), &MouseState);
 		else
 		{
 			hr = dev->Poll();
-			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2),&JoyState[DevNum]);
+			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[DevNum]);
 		}
 		// don't need to reset FirstAxis/LastAxis or FirstPOV/LastPOV, since they were set in the previous loop
 		for (i = 0; i < NumButtons[DevNum]; i++)
@@ -898,9 +883,9 @@ waitrelease:
 				goto waitrelease;
 	}
 	dev->Unacquire();
-	if (FAILED(dev->SetCooperativeLevel(hMainWnd,DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(dev->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
-		MessageBox(hMainWnd,_T("Unable to restore device input cooperative level!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd, _T("Unable to restore device input cooperative level!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return Key;
 	}
 	return Key;
@@ -913,7 +898,7 @@ TCHAR *	GetButtonLabel (int DevNum, int Button)
 	if (DevNum == 0)
 	{
 		if (KeyNames[Button])
-			_tcscpy(str,KeyNames[Button]);
+			_tcscpy(str, KeyNames[Button]);
 		return str;
 	}
 	else if (DevNum == 1)
@@ -928,7 +913,7 @@ TCHAR *	GetButtonLabel (int DevNum, int Button)
 		else
 		{
 			if (ButtonNames[1][Button])
-				_tcscpy(str,ButtonNames[1][Button]);
+				_tcscpy(str, ButtonNames[1][Button]);
 			return str;
 		}
 	}
@@ -938,7 +923,7 @@ TCHAR *	GetButtonLabel (int DevNum, int Button)
 		{
 			Button &= 0x0F;
 			if (AxisNames[DevNum][Button >> 1])
-				_stprintf(str,_T("%s %s"), AxisNames[DevNum][Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
+				_stprintf(str, _T("%s %s"), AxisNames[DevNum][Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
 			return str;
 		}
 		else if ((Button & 0xE0) == 0xC0)
@@ -946,7 +931,7 @@ TCHAR *	GetButtonLabel (int DevNum, int Button)
 			const TCHAR *POVs[8] = {_T("(N)"), _T("(NE)"), _T("(E)"), _T("(SE)"), _T("(S)"), _T("(SW)"), _T("(W)"), _T("(NW)") };
 			Button &= 0x1F;
 			if (POVNames[DevNum][Button >> 3])
-				_stprintf(str,_T("%s %s"), POVNames[DevNum][Button >> 3], POVs[Button & 0x7]);
+				_stprintf(str, _T("%s %s"), POVNames[DevNum][Button >> 3], POVs[Button & 0x7]);
 			return str;
 		}
 		else if ((Button & 0xE0) == 0xE0)
@@ -954,13 +939,13 @@ TCHAR *	GetButtonLabel (int DevNum, int Button)
 			const TCHAR *POVs[4] = {_T("Y (-)"), _T("X (+)"), _T("Y (+)"), _T("X (-)") };
 			Button &= 0xF;
 			if (POVNames[DevNum][Button >> 2])
-				_stprintf(str,_T("%s %s"), POVNames[DevNum][Button >> 2], POVs[Button & 0x3]);
+				_stprintf(str, _T("%s %s"), POVNames[DevNum][Button >> 2], POVs[Button & 0x3]);
 			return str;
 		}
 		else
 		{
 			if (ButtonNames[DevNum][Button])
-				_tcscpy(str,ButtonNames[DevNum][Button]);
+				_tcscpy(str, ButtonNames[DevNum][Button]);
 			return str;
 		}
 	}
@@ -969,18 +954,18 @@ TCHAR *	GetButtonLabel (int DevNum, int Button)
 void	ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 {
 	*Button &= 0xFFFF;
-	if (getKey)	/* this way, we can just re-label the button */
+	if (getKey)	// this way, we can just re-label the button
 	{
-		key = CreateDialog(hInst,(LPCTSTR)IDD_KEYCONFIG,hDlg,NULL);
-		ShowWindow(key,TRUE);	/* FIXME - center this window properly */
-		ProcessMessages();	/* let the "Press a key..." dialog display itself */
-		*Button = GetConfigButton(key,Device);
-		ProcessMessages();	/* flush all keypresses - don't want them going back to the parent dialog */
-		DestroyWindow(key);	/* close the little window */
+		key = CreateDialog(hInst, (LPCTSTR)IDD_KEYCONFIG, hDlg, NULL);
+		ShowWindow(key, TRUE);	// FIXME - center this window properly
+		ProcessMessages();	// let the "Press a key..." dialog display itself
+		*Button = GetConfigButton(key, Device);
+		ProcessMessages();	// flush all keypresses - don't want them going back to the parent dialog
+		DestroyWindow(key);	// close the little window
 		key = NULL;
 	}
-	SetWindowText(hDlg,(LPCTSTR)GetButtonLabel(Device,*Button));
-	*Button |= Device << 16;	/* add the device ID */
+	SetWindowText(hDlg, (LPCTSTR)GetButtonLabel(Device, *Button));
+	*Button |= Device << 16;	// add the device ID
 }
 
 BOOL	IsPressed (int Button)
@@ -990,7 +975,7 @@ BOOL	IsPressed (int Button)
 		return (KeyState[Button & 0xFF] & 0x80) ? TRUE : FALSE;
 	else if (DevNum == 1)
 	{
-		if (Button & 0x8)	/* axis selected */
+		if (Button & 0x8)	// axis selected
 		{
 			switch (Button & 0x7)
 			{
@@ -1008,7 +993,7 @@ BOOL	IsPressed (int Button)
 	else
 	{
 		if ((Button & 0xE0) == 0x80)
-		{	/* axis */
+		{	// axis
 			switch (Button & 0xF)
 			{
 			case 0x0:	return ((AxisFlags[DevNum] & (1 << AXIS_X)) && (JoyState[DevNum].lX < 0x4000)) ? TRUE : FALSE;	break;
@@ -1031,7 +1016,7 @@ BOOL	IsPressed (int Button)
 			}
 		}
 		else if ((Button & 0xE0) == 0xC0)
-		{	/* POV trigger (8-button mode) */
+		{	// POV trigger (8-button mode)
 			if (POVAxis)
 				return FALSE;
 			switch (Button & 0x1F)
@@ -1072,7 +1057,7 @@ BOOL	IsPressed (int Button)
 			}
 		}
 		else if ((Button & 0xE0) == 0xE0)
-		{	/* POV trigger (axis mode) */
+		{	// POV trigger (axis mode)
 			switch (Button & 0x0F)
 			{
 			case 0x0:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 29250) || (JoyState[DevNum].rgdwPOV[0] <  6750)) && (JoyState[DevNum].rgdwPOV[0] != -1)) ? TRUE : FALSE;	break;
@@ -1109,18 +1094,18 @@ void	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButt
 		for (i = 0; i < numItems; i++)
 		{
 			int j;
-			SendDlgItemMessage(hDlg,dlgDevices[i],CB_RESETCONTENT,0,0);		/* clear the listbox */
+			SendDlgItemMessage(hDlg, dlgDevices[i], CB_RESETCONTENT, 0, 0);		// clear the listbox
 			for (j = 0; j < NumDevices; j++)
-				SendDlgItemMessage(hDlg,dlgDevices[i],CB_ADDSTRING,0,(LPARAM)DeviceName[j]);	/* add each device */
-			SendDlgItemMessage(hDlg,dlgDevices[i],CB_SETCURSEL,Buttons[i] >> 16,0);	/* select the one we want */
-			ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),FALSE);	/* and label the corresponding button */
+				SendDlgItemMessage(hDlg, dlgDevices[i], CB_ADDSTRING, 0, (LPARAM)DeviceName[j]);	// add each device
+			SendDlgItemMessage(hDlg, dlgDevices[i], CB_SETCURSEL, Buttons[i] >> 16, 0);	// select the one we want
+			ConfigButton(&Buttons[i], Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), FALSE);	// and label the corresponding button
 		}
 	}
 	if (uMsg != WM_COMMAND)
 		return;
 	if (wmId == IDOK)
 	{
-		EndDialog(hDlg,1);
+		EndDialog(hDlg, 1);
 		return;
 	}
 	for (i = 0; i < numItems; i++)
@@ -1130,10 +1115,10 @@ void	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButt
 			if (wmEvent != CBN_SELCHANGE)
 				break;
 			Buttons[i] = 0;
-			ConfigButton(&Buttons[i],(int)SendMessage((HWND)lParam,CB_GETCURSEL,0,0),GetDlgItem(hDlg,dlgButtons[i]),FALSE);
+			ConfigButton(&Buttons[i], (int)SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0), GetDlgItem(hDlg, dlgButtons[i]), FALSE);
 		}
 		if (wmId == dlgButtons[i])
-			ConfigButton(&Buttons[i],Buttons[i] >> 16,GetDlgItem(hDlg,dlgButtons[i]),TRUE);
+			ConfigButton(&Buttons[i], Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), TRUE);
 	}
 }
 } // namespace Controllers

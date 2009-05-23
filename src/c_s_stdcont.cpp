@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -38,7 +38,7 @@ void	StdPort_StdController::Frame (unsigned char mode)
 				State->NewBits |= 1 << i;
 		}
 		if (!EnableOpposites)
-		{	/* prevent simultaneously pressing left+right or up+down */
+		{	// prevent simultaneously pressing left+right or up+down
 			if ((State->NewBits & 0xC0) == 0xC0)
 				State->NewBits &= 0x3F;
 			if ((State->NewBits & 0x30) == 0x30)
@@ -86,12 +86,12 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		Cont = (StdPort *)lParam;
 	}
 	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
-	ParseConfigMessages(hDlg,8,dlgLists,dlgButtons,Cont ? Cont->Buttons : NULL,uMsg,wParam,lParam);
+	ParseConfigMessages(hDlg, 8, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
 	return FALSE;
 }
 void	StdPort_StdController::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_STDCONTROLLER,hWnd,ConfigProc,(LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_STDCONTROLLER, hWnd, ConfigProc, (LPARAM)this);
 }
 StdPort_StdController::~StdPort_StdController (void)
 {
@@ -107,7 +107,7 @@ StdPort_StdController::StdPort_StdController (int *buttons)
 	Data = malloc(DataLen);
 	MovLen = 1;
 	MovData = (unsigned char *)malloc(MovLen);
-	ZeroMemory(MovData,MovLen);
+	ZeroMemory(MovData, MovLen);
 	State->Bits = 0;
 	State->BitPtr = 0;
 	State->Strobe = 0;

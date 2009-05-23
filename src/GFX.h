@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -43,7 +43,7 @@ void	LoadPalette (int);
 void	SetFrameskip (int);
 void	PaletteConfig (void);
 void	GetCursorPos (POINT *);
-void	SetCursorPos (int,int);
+void	SetCursorPos (int, int);
 BOOL	ZapperHit (int);
 
 } // namespace GFX

@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -26,13 +26,13 @@ void	ExpPort_FamilyBasicKeyboard::Frame (unsigned char mode)
 {
 	if (mode & MOV_RECORD)
 	{
-		MessageBox(hMainWnd,_T("Family Basic Keyboard does not support recording movies!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd, _T("Family Basic Keyboard does not support recording movies!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		Movie::Stop();
 	}
 }
 unsigned char	ExpPort_FamilyBasicKeyboard::Read1 (void)
 {
-	return 0;	/* tape, not yet implemented */
+	return 0;	// tape, not yet implemented
 }
 unsigned char	ExpPort_FamilyBasicKeyboard::Read2 (void)
 {
@@ -47,8 +47,8 @@ unsigned char	ExpPort_FamilyBasicKeyboard::Read2 (void)
 			if (KeyState[DIK_RBRACKET] & 0x80)	result |= 0x10;
 			break;
 		case 1:	if (KeyState[DIK_F7] & 0x80)		result |= 0x02;
-			if (KeyState[DIK_GRAVE] & 0x80)		result |= 0x04;	/* @ */
-			if (KeyState[DIK_APOSTROPHE] & 0x80)	result |= 0x08;	/* : */
+			if (KeyState[DIK_GRAVE] & 0x80)		result |= 0x04;	// @
+			if (KeyState[DIK_APOSTROPHE] & 0x80)	result |= 0x08;	// :
 			if (KeyState[DIK_SEMICOLON] & 0x80)	result |= 0x10;
 			break;
 		case 2:	if (KeyState[DIK_F6] & 0x80)	result |= 0x02;
@@ -82,7 +82,7 @@ unsigned char	ExpPort_FamilyBasicKeyboard::Read2 (void)
 			if ((KeyState[DIK_LCONTROL] & 0x80) || (KeyState[DIK_RCONTROL] & 0x80))
 								result |= 0x10;
 			break;
-		case 8:	if (KeyState[DIK_BACK] & 0x80)	result |= 0x02;	/* CLR */
+		case 8:	if (KeyState[DIK_BACK] & 0x80)	result |= 0x02;	// CLR
 			if (KeyState[DIK_UP] & 0x80)	result |= 0x04;
 			if (KeyState[DIK_RIGHT] & 0x80)	result |= 0x08;
 			if (KeyState[DIK_LEFT] & 0x80)	result |= 0x10;
@@ -93,15 +93,15 @@ unsigned char	ExpPort_FamilyBasicKeyboard::Read2 (void)
 	{
 		switch (State->Scan)
 		{
-		case 0:	if (KeyState[DIK_CAPITAL] & 0x80)	result |= 0x02;	/* KANA */
+		case 0:	if (KeyState[DIK_CAPITAL] & 0x80)	result |= 0x02;	// KANA
 			if (KeyState[DIK_RSHIFT] & 0x80)	result |= 0x04;
 			if (KeyState[DIK_BACKSLASH] & 0x80)	result |= 0x08;
-			if (KeyState[DIK_END] & 0x80)		result |= 0x10;	/* STOP */
+			if (KeyState[DIK_END] & 0x80)		result |= 0x10;	// STOP
 			break;
-		case 1:	if (KeyState[DIK_HOME] & 0x80)		result |= 0x02;	/* _ */
+		case 1:	if (KeyState[DIK_HOME] & 0x80)		result |= 0x02;	// _
 			if (KeyState[DIK_SLASH] & 0x80)		result |= 0x04;
 			if (KeyState[DIK_MINUS] & 0x80)		result |= 0x08;
-			if (KeyState[DIK_EQUALS] & 0x80)	result |= 0x10; /* ^ */
+			if (KeyState[DIK_EQUALS] & 0x80)	result |= 0x10; // ^
 			break;
 		case 2:	if (KeyState[DIK_PERIOD] & 0x80)	result |= 0x02;
 			if (KeyState[DIK_COMMA] & 0x80)		result |= 0x04;
@@ -129,7 +129,7 @@ unsigned char	ExpPort_FamilyBasicKeyboard::Read2 (void)
 			if (KeyState[DIK_3] & 0x80)	result |= 0x10;
 			break;
 		case 7:	if (KeyState[DIK_LSHIFT] & 0x80)	result |= 0x02;
-			if (KeyState[DIK_TAB] & 0x80)		result |= 0x04;	/* GRPH */
+			if (KeyState[DIK_TAB] & 0x80)		result |= 0x04;	// GRPH
 			if (KeyState[DIK_1] & 0x80)		result |= 0x08;
 			if (KeyState[DIK_2] & 0x80)		result |= 0x10;
 			break;
@@ -160,7 +160,7 @@ void	ExpPort_FamilyBasicKeyboard::Write (unsigned char Val)
 	}
 	else
 	{
-		/* tape, not yet implemented */
+		// tape, not yet implemented
 	}
 }
 static	HWND	ConfigWindow = NULL;
@@ -171,7 +171,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		return FALSE;
 	if (wmId == IDOK)
 	{
-		EndDialog(hDlg,1);
+		EndDialog(hDlg, 1);
 		ConfigWindow = NULL;
 		return FALSE;
 	}
@@ -183,8 +183,8 @@ void	ExpPort_FamilyBasicKeyboard::Config (HWND hWnd)
 	if (!ConfigWindow)
 	{
 		// use hMainWnd instead of hWnd, so it stays open after closing Controller Config
-		ConfigWindow = CreateDialog(hInst,(LPCTSTR)IDD_EXPPORT_FBKEY,hMainWnd,ConfigProc);
-		SetWindowPos(ConfigWindow,hMainWnd,0,0,0,0,SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+		ConfigWindow = CreateDialog(hInst, (LPCTSTR)IDD_EXPPORT_FBKEY, hMainWnd, ConfigProc);
+		SetWindowPos(ConfigWindow, hMainWnd, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
 	}
 }
 

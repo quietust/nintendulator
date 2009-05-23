@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -46,7 +46,7 @@ void	StdPort_SnesController::Frame (unsigned char mode)
 				State->NewBit2 |= 1 << i;
 		}
 		if (!EnableOpposites)
-		{	/* prevent simultaneously pressing left+right or up+down */
+		{	// prevent simultaneously pressing left+right or up+down
 			if ((State->NewBit1 & 0xC0) == 0xC0)
 				State->NewBit1 &= 0x3F;
 			if ((State->NewBit1 & 0x30) == 0x30)
@@ -100,12 +100,12 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		Cont = (StdPort *)lParam;
 	}
 	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
-	ParseConfigMessages(hDlg,12,dlgLists,dlgButtons,Cont ? Cont->Buttons : NULL,uMsg,wParam,lParam);
+	ParseConfigMessages(hDlg, 12, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
 	return FALSE;
 }
 void	StdPort_SnesController::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_STDPORT_SNESCONTROLLER,hWnd,ConfigProc,(LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_SNESCONTROLLER, hWnd, ConfigProc, (LPARAM)this);
 }
 StdPort_SnesController::~StdPort_SnesController (void)
 {

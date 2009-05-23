@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -43,13 +43,13 @@ unsigned long VRAMAddr, IntReg;
 unsigned char IntX;
 unsigned char TileData[272];
 
-unsigned long GrayScale;	/* ANDed with palette index (0x30 if grayscale, 0x3F if not) */
-unsigned long ColorEmphasis;	/* ORed with palette index (upper 8 bits of $2001 shifted left 1 bit) */
+unsigned long GrayScale;	// ANDed with palette index (0x30 if grayscale, 0x3F if not)
+unsigned long ColorEmphasis;	// ORed with palette index (upper 8 bits of $2001 shifted left 1 bit)
 
 unsigned long RenderAddr;
 unsigned long IOAddr;
 unsigned char IOVal;
-unsigned char IOMode;	/* Start at 6 for writes, 5 for reads - counts down and eventually hits zero */
+unsigned char IOMode;	// Start at 6 for writes, 5 for reads - counts down and eventually hits zero
 unsigned char buf2007;
 
 #ifdef	ACCURATE_SPRITES
@@ -206,9 +206,9 @@ static	void	MAPINT	NoPPUCycle		(int Addr, int Scanline, int Cycle, int IsRenderi
 
 int	MAPINT	BusRead (int Bank, int Addr)
 {
-/*	if (!Readable[Bank])
-		return Addr & 0xFF;
-*/	return CHRPointer[Bank][Addr];
+//	if (!Readable[Bank])
+//		return Addr & 0xFF;
+	return CHRPointer[Bank][Addr];
 }
 
 void	MAPINT	BusWriteCHR (int Bank, int Addr, int Val)
@@ -291,7 +291,7 @@ __inline static void	ProcessSprites (void)
 				}
 				else
 				{
-					if (++spridx,++sprnum == 64)
+					if (++spridx, ++sprnum == 64)
 					{
 						spridx = 0;
 						sprstate = 4;
@@ -314,7 +314,7 @@ __inline static void	ProcessSprites (void)
 				if (sprsub++ == 3)
 				{
 					sprsub = 0;
-					if (++spridx,++sprnum == 64)
+					if (++spridx, ++sprnum == 64)
 					{
 						spridx = 0;
 						sprstate = 4;
@@ -340,7 +340,7 @@ __inline static void	ProcessSprites (void)
 				else
 				{
 					sprsub = (sprsub + 1) & 3;
-					if (++spridx,++sprnum == 64)
+					if (++spridx, ++sprnum == 64)
 					{
 						spridx = 0;
 						sprstate = 4;
@@ -424,7 +424,7 @@ __inline static	void	DiscoverSprites (void)
 	if (!IsRendering)
 		return;
 	for (spt = 0; spt < 32; spt += 4)
-		SprBuff[spt+1] = 0xFF;	/* pre-init sprite buffer tile indices */
+		SprBuff[spt+1] = 0xFF;	// pre-init sprite buffer tile indices
 	for (spt = 0; spt < 256; spt += 4)
 	{
 		unsigned char off;
@@ -466,48 +466,41 @@ void	PowerOn()
 	buf2007 = 0;
 	HVTog = TRUE;
 	ShortSL = TRUE;
-	ZeroMemory(VRAM,sizeof(VRAM));
-	memset(Palette,0x3F,sizeof(Palette));
-	memset(Sprite,0xFF,sizeof(Sprite));
+	ZeroMemory(VRAM, sizeof(VRAM));
+	memset(Palette, 0x3F, sizeof(Palette));
+	memset(Sprite, 0xFF, sizeof(Sprite));
 	GetHandlers();
 }
 
 int	Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short tps;
-	unsigned char tpc;
-	fwrite(VRAM,1,0x1000,out);	clen += 0x1000;	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
-	fwrite(Sprite,1,0x100,out);	clen += 0x100;	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
-	fwrite(Palette,1,0x20,out);	clen += 0x20;	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
-	fwrite(&Reg2000,1,1,out);	clen++;		//	R2000	uint8		Last value written to $2000
-	fwrite(&Reg2001,1,1,out);	clen++;		//	R2001	uint8		Last value written to $2001
-	fwrite(&Reg2002,1,1,out);	clen++;		//	R2002	uint8		Current contents of $2002
-	fwrite(&SprAddr,1,1,out);	clen++;		//	SPADR	uint8		SPR-RAM Address ($2003)
+	writeArray(VRAM, 0x1000);	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
+	writeArray(Sprite, 0x100);	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
+	writeArray(Palette, 0x20);	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
+	writeByte(Reg2000);		//	R2000	uint8		Last value written to $2000
+	writeByte(Reg2001);		//	R2001	uint8		Last value written to $2001
+	writeByte(Reg2002);		//	R2002	uint8		Current contents of $2002
+	writeByte(SprAddr);		//	SPADR	uint8		SPR-RAM Address ($2003)
 
-	fwrite(&IntX,1,1,out);	clen++;		//	XOFF	uint8		Tile X-offset.
+	writeByte(IntX);		//	XOFF	uint8		Tile X-offset.
 
-	fwrite(&HVTog,1,1,out);	clen++;		//	VTOG	uint8		Toggle used by $2005 and $2006.
-	tps = (unsigned short)VRAMAddr;
-	fwrite(&tps,2,1,out);		clen += 2;	//	RADD	uint16		VRAM Address
-	tps = (unsigned short)IntReg;
-	fwrite(&tps,2,1,out);		clen += 2;	//	TADD	uint16		VRAM Address Latch
-	fwrite(&buf2007,1,1,out);	clen++;		//	VBUF	uint8		VRAM Read Buffer
-	fwrite(&readLatch,1,1,out);	clen++;		//	PGEN	uint8		PPU "general" latch
+	writeByte(HVTog);		//	VTOG	uint8		Toggle used by $2005 and $2006.
+	writeWord(VRAMAddr)		//	RADD	uint16		VRAM Address
+	writeWord(IntReg);		//	TADD	uint16		VRAM Address Latch
+	writeByte(buf2007);		//	VBUF	uint8		VRAM Read Buffer
+	writeByte(readLatch);		//	PGEN	uint8		PPU "general" latch
 
-	tps = (unsigned short)Clockticks | (PALsubticks << 12);
-	fwrite(&tps,2,1,out);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340) with PAL subticks stored in upper 4 bits
-	tps = (unsigned short)SLnum;
-	fwrite(&tps,2,1,out);		clen += 2;	//	SLNUM	uint16		Scanline number
-	fwrite(&ShortSL,1,1,out);	clen++;		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
+	writeWord(Clockticks | (PALsubticks << 12));
+					//	TICKS	uint16		Clock Ticks (0..340) with PAL subticks stored in upper 4 bits
+	writeWord(SLnum);		//	SLNUM	uint16		Scanline number
+	writeByte(ShortSL);		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
 
-	tps = (unsigned short)IOAddr;
-	fwrite(&tps,2,1,out);		clen += 2;	//	IOADD	uint16		External I/O Address
-	fwrite(&IOVal,1,1,out);	clen++;		//	IOVAL	uint8		External I/O Value
-	fwrite(&IOMode,1,1,out);	clen++;		//	IOMOD	uint8		External I/O Mode/Counter
+	writeWord(IOAddr);		//	IOADD	uint16		External I/O Address
+	writeByte(IOVal);		//	IOVAL	uint8		External I/O Value
+	writeByte(IOMode);		//	IOMOD	uint8		External I/O Mode/Counter
 
-	tpc = (unsigned char)IsPAL;
-	fwrite(&tpc,1,1,out);		clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
+	writeByte(IsPAL);		//	NTSCP	uint8		0 for NTSC, 1 for PAL
 	return clen;
 }
 
@@ -515,40 +508,34 @@ int	Load (FILE *in)
 {
 	int clen = 0;
 	unsigned short tps;
-	unsigned char tpc;
-	fread(VRAM,1,0x1000,in);	clen += 0x1000;	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
-	fread(Sprite,1,0x100,in);	clen += 0x100;	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
-	fread(Palette,1,0x20,in);	clen += 0x20;	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
-	fread(&Reg2000,1,1,in);	clen++;		//	R2000	uint8		Last value written to $2000
-	fread(&Reg2001,1,1,in);	clen++;		//	R2001	uint8		Last value written to $2001
-	fread(&Reg2002,1,1,in);	clen++;		//	R2002	uint8		Current contents of $2002
-	fread(&SprAddr,1,1,in);	clen++;		//	SPADR	uint8		SPR-RAM Address ($2003)
+	readArray(VRAM, 0x1000);	//	NTAR	uint8[0x1000]	4 KB of name/attribute table RAM
+	readArray(Sprite, 0x100);	//	SPRA	uint8[0x100]	256 bytes of sprite RAM
+	readArray(Palette, 0x20);	//	PRAM	uint8[0x20]	32 bytes of palette index RAM
+	readByte(Reg2000);		//	R2000	uint8		Last value written to $2000
+	readByte(Reg2001);		//	R2001	uint8		Last value written to $2001
+	readByte(Reg2002);		//	R2002	uint8		Current contents of $2002
+	readByte(SprAddr);		//	SPADR	uint8		SPR-RAM Address ($2003)
 
-	fread(&IntX,1,1,in);	clen++;		//	XOFF	uint8		Tile X-offset.
+	readByte(IntX);			//	XOFF	uint8		Tile X-offset.
 
-	fread(&HVTog,1,1,in);	clen++;		//	VTOG	uint8		Toggle used by $2005 and $2006.
-	fread(&tps,2,1,in);		clen += 2;	//	RADD	uint16		VRAM Address
-	VRAMAddr = tps;
-	fread(&tps,2,1,in);		clen += 2;	//	TADD	uint16		VRAM Address Latch
-	IntReg = tps;
-	fread(&buf2007,1,1,in);	clen++;		//	VBUF	uint8		VRAM Read Buffer
-	fread(&readLatch,1,1,in);	clen++;		//	PGEN	uint8		PPU "general" latch.
+	readByte(HVTog);		//	VTOG	uint8		Toggle used by $2005 and $2006.
+	readWord(VRAMAddr);		//	RADD	uint16		VRAM Address
+	readWord(IntReg);		//	TADD	uint16		VRAM Address Latch
+	readByte(buf2007);		//	VBUF	uint8		VRAM Read Buffer
+	readByte(readLatch);		//	PGEN	uint8		PPU "general" latch.
 
-	fread(&tps,2,1,in);		clen += 2;	//	TICKS	uint16		Clock Ticks (0..340) with PAL subticks stored in upper 4 bits
+	readWord(tps);			//	TICKS	uint16		Clock Ticks (0..340) with PAL subticks stored in upper 4 bits
 	Clockticks = tps & 0xFFF;
 	PALsubticks = (unsigned char)(tps >> 12);
 
-	fread(&tps,2,1,in);		clen += 2;	//	SLNUM	uint16		Scanline number
-	SLnum = tps;
-	fread(&ShortSL,1,1,in);	clen++;		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
+	readWord(SLnum);		//	SLNUM	uint16		Scanline number
+	readByte(ShortSL);		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
 
-	fread(&tps,2,1,in);		clen += 2;	//	IOADD	uint16		External I/O Address
-	IOAddr = tps;
-	fread(&IOVal,1,1,in);	clen++;		//	IOVAL	uint8		External I/O Value
-	fread(&IOMode,1,1,in);	clen++;		//	IOMOD	uint8		External I/O Mode/Counter
+	readWord(IOAddr);		//	IOADD	uint16		External I/O Address
+	readByte(IOVal);		//	IOVAL	uint8		External I/O Value
+	readByte(IOMode);		//	IOMOD	uint8		External I/O Mode/Counter
 
-	fread(&tpc,1,1,in);		clen++;		//	NTSCP	uint8		0 for NTSC, 1 for PAL
-	IsPAL = tpc;
+	readByte(IsPAL);		//	NTSCP	uint8		0 for NTSC, 1 for PAL
 
 	IsRendering = OnScreen = FALSE;
 	ColorEmphasis = (Reg2001 & 0xE0) << 1;
@@ -583,7 +570,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 #ifndef	ACCURATE_SPRITES
 				DiscoverSprites();
 #endif	/* !ACCURATE_SPRITES */
-				ZeroMemory(TileData,sizeof(TileData));
+				ZeroMemory(TileData, sizeof(TileData));
 			}
 			if (SLnum == -1)
 			{
@@ -638,15 +625,15 @@ __inline static	void	RunNoSkip (int NumTicks)
 				{
 					RenderData[(Clockticks >> 1) & 3] = (unsigned char)rand();
 					if (IOMode == 2)
-						WriteHandler[RenderAddr >> 10](RenderAddr >> 10,RenderAddr & 0x3FF,IOVal = RenderData[(Clockticks >> 1) & 3]);
+						WriteHandler[RenderAddr >> 10](RenderAddr >> 10, RenderAddr & 0x3FF, IOVal = RenderData[(Clockticks >> 1) & 3]);
 				}
 				else if (ReadHandler[RenderAddr >> 10] == BusRead)
 					RenderData[(Clockticks >> 1) & 3] = CHRPointer[RenderAddr >> 10][RenderAddr & 0x3FF];
-				else	RenderData[(Clockticks >> 1) & 3] = (unsigned char)ReadHandler[RenderAddr >> 10](RenderAddr >> 10,RenderAddr & 0x3FF);
+				else	RenderData[(Clockticks >> 1) & 3] = (unsigned char)ReadHandler[RenderAddr >> 10](RenderAddr >> 10, RenderAddr & 0x3FF);
 			}
 			switch (Clockticks)
 			{
-			/* BEGIN BACKGROUND */
+				// BEGIN BACKGROUND
 			case   0:	case   8:	case  16:	case  24:	case  32:	case  40:	case  48:	case  56:
 			case  64:	case  72:	case  80:	case  88:	case  96:	case 104:	case 112:	case 120:
 			case 128:	case 136:	case 144:	case 152:	case 160:	case 168:	case 176:	case 184:
@@ -753,8 +740,8 @@ __inline static	void	RunNoSkip (int NumTicks)
 				((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 				((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				break;
-				/* END BACKGROUND */
-				/* BEGIN SPRITES */
+				// END BACKGROUND
+				// BEGIN SPRITES
 			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
 				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
 				break;
@@ -809,7 +796,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				CurTileData[9] = SprBuff[SprNum | 1];
 #endif	/* ACCURATE_SPRITES */
 				break;
-				/* END SPRITES */
+				// END SPRITES
 			case 336:	case 338:
 				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
 			case 337:	case 339:
@@ -819,20 +806,20 @@ __inline static	void	RunNoSkip (int NumTicks)
 			}
 			if (!(Clockticks & 1))
 			{
-				PPUCycle(RenderAddr,SLnum,Clockticks,1);
+				PPUCycle(RenderAddr, SLnum, Clockticks, 1);
 				if (IOMode == 2)
-					WriteHandler[RenderAddr >> 10](RenderAddr >> 10,RenderAddr & 0x3FF,RenderAddr & 0xFF);
+					WriteHandler[RenderAddr >> 10](RenderAddr >> 10, RenderAddr & 0x3FF, RenderAddr & 0xFF);
 			}
 		}
 		if (IOMode)
 		{
 			unsigned short addr = (unsigned short)(IOAddr & 0x3FFF);
 			if ((IOMode >= 5) && (!IsRendering))
-				PPUCycle(addr,SLnum,Clockticks,IsRendering);
+				PPUCycle(addr, SLnum, Clockticks, IsRendering);
 			else if (IOMode == 2)
 			{
 				if (!IsRendering)
-					WriteHandler[addr >> 10](addr >> 10,addr & 0x3FF,IOVal);
+					WriteHandler[addr >> 10](addr >> 10, addr & 0x3FF, IOVal);
 			}
 			else if (IOMode == 1)
 			{
@@ -841,13 +828,13 @@ __inline static	void	RunNoSkip (int NumTicks)
 				{
 					if (ReadHandler[addr >> 10] == BusRead)
 						buf2007 = CHRPointer[addr >> 10][addr & 0x3FF];
-					else	buf2007 = (unsigned char)ReadHandler[addr >> 10](addr >> 10,addr & 0x3FF);
+					else	buf2007 = (unsigned char)ReadHandler[addr >> 10](addr >> 10, addr & 0x3FF);
 				}
 			}
 			IOMode -= 2;
 		}
 		if (!IsRendering && !IOMode)
-			PPUCycle(VRAMAddr,SLnum,Clockticks,0);
+			PPUCycle(VRAMAddr, SLnum, Clockticks, 0);
 		if ((Clockticks < 256) && (OnScreen))
 		{
 			register int PalIndex;
@@ -870,7 +857,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 					{
 						if ((Spr0InLine) && (y == 0) && (TC & 0x3) && (Clockticks < 255))
 						{
-							Reg2002 |= 0x40;	/* Sprite 0 hit */
+							Reg2002 |= 0x40;	// Sprite 0 hit
 							Spr0InLine = FALSE;
 						}
 #ifdef	ACCURATE_SPRITES
@@ -917,7 +904,7 @@ __inline static	void	RunSkip (int NumTicks)
 				DiscoverSprites();
 #endif	/* !ACCURATE_SPRITES */
 				if (Spr0InLine)
-					ZeroMemory(TileData,sizeof(TileData));
+					ZeroMemory(TileData, sizeof(TileData));
 			}
 			if (SLnum == -1)
 			{
@@ -972,15 +959,15 @@ __inline static	void	RunSkip (int NumTicks)
 				{
 					RenderData[(Clockticks >> 1) & 3] = (unsigned char)rand();
 					if (IOMode == 2)
-						WriteHandler[RenderAddr >> 10](RenderAddr >> 10,RenderAddr & 0x3FF,IOVal = RenderData[(Clockticks >> 1) & 3]);
+						WriteHandler[RenderAddr >> 10](RenderAddr >> 10, RenderAddr & 0x3FF, IOVal = RenderData[(Clockticks >> 1) & 3]);
 				}
 				else if (ReadHandler[RenderAddr >> 10] == BusRead)
 					RenderData[(Clockticks >> 1) & 3] = CHRPointer[RenderAddr >> 10][RenderAddr & 0x3FF];
-				else	RenderData[(Clockticks >> 1) & 3] = (unsigned char)ReadHandler[RenderAddr >> 10](RenderAddr >> 10,RenderAddr & 0x3FF);
+				else	RenderData[(Clockticks >> 1) & 3] = (unsigned char)ReadHandler[RenderAddr >> 10](RenderAddr >> 10, RenderAddr & 0x3FF);
 			}
 			switch (Clockticks)
 			{
-			/* BEGIN BACKGROUND */
+				// BEGIN BACKGROUND
 			case   0:	case   8:	case  16:	case  24:	case  32:	case  40:	case  48:	case  56:
 			case  64:	case  72:	case  80:	case  88:	case  96:	case 104:	case 112:	case 120:
 			case 128:	case 136:	case 144:	case 152:	case 160:	case 168:	case 176:	case 184:
@@ -1083,8 +1070,8 @@ __inline static	void	RunSkip (int NumTicks)
 					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				}
 				break;
-				/* END BACKGROUND */
-				/* BEGIN SPRITES */
+				// END BACKGROUND
+				// BEGIN SPRITES
 			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
 				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
 				break;
@@ -1134,7 +1121,7 @@ __inline static	void	RunSkip (int NumTicks)
 				break;
 			case 271:	case 279:	case 287:	case 295:	case 303:	case 311:	case 319:
 				break;
-				/* END SPRITES */
+				// END SPRITES
 			case 336:	case 338:
 				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
 			case 337:	case 339:
@@ -1144,20 +1131,20 @@ __inline static	void	RunSkip (int NumTicks)
 			}
 			if (!(Clockticks & 1))
 			{
-				PPUCycle(RenderAddr,SLnum,Clockticks,1);
+				PPUCycle(RenderAddr, SLnum, Clockticks, 1);
 				if (IOMode == 2)
-					WriteHandler[RenderAddr >> 10](RenderAddr >> 10,RenderAddr & 0x3FF,RenderAddr & 0xFF);
+					WriteHandler[RenderAddr >> 10](RenderAddr >> 10, RenderAddr & 0x3FF, RenderAddr & 0xFF);
 			}
 		}
 		if (IOMode)
 		{
 			unsigned short addr = (unsigned short)(IOAddr & 0x3FFF);
 			if ((IOMode >= 5) && (!IsRendering))
-				PPUCycle(addr,SLnum,Clockticks,IsRendering);
+				PPUCycle(addr, SLnum, Clockticks, IsRendering);
 			else if (IOMode == 2)
 			{
 				if (!IsRendering)
-					WriteHandler[addr >> 10](addr >> 10,addr & 0x3FF,IOVal);
+					WriteHandler[addr >> 10](addr >> 10, addr & 0x3FF, IOVal);
 			}
 			else if (IOMode == 1)
 			{
@@ -1166,18 +1153,18 @@ __inline static	void	RunSkip (int NumTicks)
 				{
 					if (ReadHandler[addr >> 10] == BusRead)
 						buf2007 = CHRPointer[addr >> 10][addr & 0x3FF];
-					else	buf2007 = (unsigned char)ReadHandler[addr >> 10](addr >> 10,addr & 0x3FF);
+					else	buf2007 = (unsigned char)ReadHandler[addr >> 10](addr >> 10, addr & 0x3FF);
 				}
 			}
 			IOMode -= 2;
 		}
 		if (!IsRendering && !IOMode)
-			PPUCycle(VRAMAddr,SLnum,Clockticks,0);
+			PPUCycle(VRAMAddr, SLnum, Clockticks, 0);
 		if ((Spr0InLine) && (Clockticks < 255) && (OnScreen) && ((Reg2001 & 0x18) == 0x18) && ((Clockticks >= 8) || ((Reg2001 & 0x06) == 0x06)))
 		{
 			register int SprPixel = Clockticks - SprBuff[3];
 			if (!(SprPixel & ~7) && (SprData[0][SprPixel] & 0x3) && (TileData[Clockticks + IntX] & 0x3))
-				Reg2002 |= 0x40;	/* Sprite 0 hit */
+				Reg2002 |= 0x40;	// Sprite 0 hit
 		}
 	}
 }

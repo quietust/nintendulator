@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -26,13 +26,13 @@ void	ExpPort_AltKeyboard::Frame (unsigned char mode)
 {
 	if (mode & MOV_RECORD)
 	{
-		MessageBox(hMainWnd,_T("Alternate Famicom Keyboard does not support recording movies!"),_T("Nintendulator"),MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd, _T("Alternate Famicom Keyboard does not support recording movies!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		Movie::Stop();
 	}
 }
 unsigned char	ExpPort_AltKeyboard::Read1 (void)
 {
-	return 0;	/* tape, not yet implemented */
+	return 0;	// tape, not yet implemented
 }
 unsigned char	ExpPort_AltKeyboard::Read2 (void)
 {
@@ -197,12 +197,12 @@ void	ExpPort_AltKeyboard::Write (unsigned char Val)
 	}
 	else
 	{
-		/* tape, not yet implemented */
+		// tape, not yet implemented
 	}
 }
 void	ExpPort_AltKeyboard::Config (HWND hWnd)
 {
-	MessageBox(hWnd,_T("No configuration necessary!"),_T("Nintendulator"),MB_OK);
+	MessageBox(hWnd, _T("No configuration necessary!"), _T("Nintendulator"), MB_OK);
 }
 ExpPort_AltKeyboard::~ExpPort_AltKeyboard (void)
 {

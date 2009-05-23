@@ -1,4 +1,4 @@
-/* Nintendulator - Win32 NES emulator written in C
+/* Nintendulator - Win32 NES emulator written in C++
  * Copyright (C) 2002-2009 QMT Productions
  *
  * $URL$
@@ -47,7 +47,7 @@ void	ExpPort_Fami4Play::Frame (unsigned char mode)
 				State->NewBit2 |= 1 << i;
 		}
 		if (!EnableOpposites)
-		{	/* prevent simultaneously pressing left+right or up+down */
+		{	// prevent simultaneously pressing left+right or up+down
 			if ((State->NewBit1 & 0xC0) == 0xC0)
 				State->NewBit1 &= 0x3F;
 			if ((State->NewBit2 & 0xC0) == 0xC0)
@@ -120,12 +120,12 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		Cont = (ExpPort *)lParam;
 	}
 	else	Cont = (ExpPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
-	ParseConfigMessages(hDlg,16,dlgLists,dlgButtons,Cont ? Cont->Buttons : NULL,uMsg,wParam,lParam);
+	ParseConfigMessages(hDlg, 16, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
 	return FALSE;
 }
 void	ExpPort_Fami4Play::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst,(LPCTSTR)IDD_EXPPORT_FAMI4PLAY,hWnd,ConfigProc,(LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_FAMI4PLAY, hWnd, ConfigProc, (LPARAM)this);
 }
 ExpPort_Fami4Play::~ExpPort_Fami4Play (void)
 {
