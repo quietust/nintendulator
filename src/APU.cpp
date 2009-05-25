@@ -103,8 +103,8 @@ const	unsigned long	DPCMFreqPAL[16] = {
 	0x0B0,0x094,0x084,0x076,0x062,0x04E,0x042,0x032
 };
 const	int	FrameCyclesNTSC_0[7] = { 7459,7456,7458,7457,1,1,7457 };
-const	int	FrameCyclesNTSC_1[6] = { 1,7458,7456,7458,7456,7454 };
 const	int	FrameCyclesPAL_0[7] = { 8315,8314,8312,8313,1,1,8313 };
+const	int	FrameCyclesNTSC_1[6] = { 1,7458,7456,7458,7456,7454 };
 const	int	FrameCyclesPAL_1[6] = { 1,8314,8314,8312,8314,8312 };
 
 namespace Race
@@ -806,20 +806,19 @@ void	WriteReg (int Addr, unsigned char Val)
 unsigned char	Read4015 (void)
 {
 	unsigned char result =
-		((            Square0::Timer) ? 0x01 : 0) |
-		((            Square1::Timer) ? 0x02 : 0) |
-		((           Triangle::Timer) ? 0x04 : 0) |
-		((              Noise::Timer) ? 0x08 : 0) |
-		((           DPCM::LengthCtr) ? 0x10 : 0) |
-		(((CPU::WantIRQ & IRQ_FRAME)) ? 0x40 : 0) |
-		(((CPU::WantIRQ &  IRQ_DPCM)) ? 0x80 : 0);
+		((          Square0::Timer) ? 0x01 : 0) |
+		((          Square1::Timer) ? 0x02 : 0) |
+		((         Triangle::Timer) ? 0x04 : 0) |
+		((            Noise::Timer) ? 0x08 : 0) |
+		((         DPCM::LengthCtr) ? 0x10 : 0) |
+		((CPU::WantIRQ & IRQ_FRAME) ? 0x40 : 0) |
+		((CPU::WantIRQ &  IRQ_DPCM) ? 0x80 : 0);
 	CPU::WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 	return result;
 }
 
 #ifndef	NSFPLAYER
-#define	Try(action, errormsg)\
-{\
+#define	Try(action, errormsg) do {\
 	if (FAILED(action))\
 	{\
 		Release();\
@@ -831,7 +830,7 @@ unsigned char	Read4015 (void)
 			return;\
 		}\
 	}\
-}
+} while (false)
 #endif	/* !NSFPLAYER */
 
 void	SetFPSVars (int FPS)
@@ -1039,11 +1038,11 @@ void	SoundON (void)
 		if (!Buffer)
 			return;
 	}
-	Try(Buffer->Lock(0, 0, &bufPtr, &bufBytes, NULL, 0, DSBLOCK_ENTIREBUFFER), _T("Error locking sound buffer (Clear)"))
+	Try(Buffer->Lock(0, 0, &bufPtr, &bufBytes, NULL, 0, DSBLOCK_ENTIREBUFFER), _T("Error locking sound buffer (Clear)"));
 	ZeroMemory(bufPtr, bufBytes);
-	Try(Buffer->Unlock(bufPtr, bufBytes, NULL, 0), _T("Error unlocking sound buffer (Clear)"))
+	Try(Buffer->Unlock(bufPtr, bufBytes, NULL, 0), _T("Error unlocking sound buffer (Clear)"));
 	isEnabled = TRUE;
-	Try(Buffer->Play(0, 0, DSBPLAY_LOOPING), _T("Unable to start playing buffer"))
+	Try(Buffer->Play(0, 0, DSBPLAY_LOOPING), _T("Unable to start playing buffer"));
 	next_pos = 0;
 }
 
@@ -1234,7 +1233,7 @@ void	Run (void)
 			Sleep(1);
 			if (!isEnabled)
 				break;
-			Try(Buffer->GetCurrentPosition(&rpos, &wpos), _T("Error getting audio position"))
+			Try(Buffer->GetCurrentPosition(&rpos, &wpos), _T("Error getting audio position"));
 			rpos /= LockSize;
 			wpos /= LockSize;
 			if (wpos < rpos)
@@ -1242,9 +1241,9 @@ void	Run (void)
 		} while ((rpos <= next_pos) && (next_pos <= wpos));
 		if (isEnabled)
 		{
-			Try(Buffer->Lock(next_pos * LockSize, LockSize, &bufPtr, &bufBytes, NULL, 0, 0), _T("Error locking sound buffer"))
+			Try(Buffer->Lock(next_pos * LockSize, LockSize, &bufPtr, &bufBytes, NULL, 0, 0), _T("Error locking sound buffer"));
 			memcpy(bufPtr, buffer, bufBytes);
-			Try(Buffer->Unlock(bufPtr, bufBytes, NULL, 0), _T("Error unlocking sound buffer"))
+			Try(Buffer->Unlock(bufPtr, bufBytes, NULL, 0), _T("Error unlocking sound buffer"));
 			next_pos = (next_pos + 1) % FRAMEBUF;
 		}
 	}

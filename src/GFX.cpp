@@ -54,8 +54,7 @@ namespace GFX
 	DDSURFACEDESC2		SurfDesc;
 	DWORD			SurfSize;
 
-#define	Try(action,errormsg)\
-{\
+#define	Try(action,errormsg) do {\
 	if (FAILED(action))\
 	{\
 		Release();\
@@ -69,7 +68,8 @@ namespace GFX
 			return;\
 		}\
 	}\
-}
+} while (false)
+
 void	Init (void)
 {
 	ZeroMemory(&SurfDesc, sizeof(SurfDesc));
@@ -514,13 +514,13 @@ void	Update (void)
 {
 	if (!DirectDraw)
 		return;
-	Try(SecondarySurf->Lock(NULL, &SurfDesc, DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY, NULL), _T("Failed to lock secondary surface"))
+	Try(SecondarySurf->Lock(NULL, &SurfDesc, DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY, NULL), _T("Failed to lock secondary surface"));
 
 	if (Fullscreen || Scanlines)
 		Draw2x();
 	else	Draw1x();
 
-	Try(SecondarySurf->Unlock(NULL), _T("Failed to unlock secondary surface"))
+	Try(SecondarySurf->Unlock(NULL), _T("Failed to unlock secondary surface"));
 	Repaint();
 }
 
@@ -530,7 +530,7 @@ void	Repaint (void)
 		return;
 
 	if (Fullscreen)
-		Try(PrimarySurf->Flip(NULL, DDFLIP_WAIT), _T("Failed to flip to primary surface"))
+		Try(PrimarySurf->Flip(NULL, DDFLIP_WAIT), _T("Failed to flip to primary surface"));
 	else
 	{
 		RECT rect;
@@ -543,7 +543,7 @@ void	Repaint (void)
 		rect.right += pt.x;
 		rect.top += pt.y;
 		rect.bottom += pt.y;
-		Try(PrimarySurf->Blt(&rect, SecondarySurf, NULL, DDBLT_WAIT, NULL), _T("Failed to blit to primary surface"))
+		Try(PrimarySurf->Blt(&rect, SecondarySurf, NULL, DDBLT_WAIT, NULL), _T("Failed to blit to primary surface"));
 	}
 }
 
