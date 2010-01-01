@@ -39,7 +39,8 @@ namespace GFX
 
 	int Pitch;
 	int WantFPS;
-	int aFPScnt, aFPSnum;
+	int aFPScnt;
+	LONGLONG aFPSnum;
 
 	BOOL SlowDown;
 	int SlowRate;
@@ -302,7 +303,7 @@ void	DrawScreen (void)
 		FPSCnt = 0;
 	}
 	QueryPerformanceCounter(&TmpClockVal);
-	aFPSnum += (int)(TmpClockVal.QuadPart - LastClockVal.QuadPart);
+	aFPSnum += TmpClockVal.QuadPart - LastClockVal.QuadPart;
 	LastClockVal = TmpClockVal;
 	if (++aFPScnt >= 20)
 	{
