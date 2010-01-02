@@ -148,7 +148,6 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				int len2;
 				fread(desc, len, 1, Data);
 #ifdef	UNICODE
-				// Windows 9x doesn't support this function natively
 				len2 = MultiByteToWideChar(CP_UTF8, 0, desc, len, NULL, 0);
 				Description = (TCHAR *)malloc(len2 * sizeof(TCHAR));
 				if (Description)
@@ -159,6 +158,9 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 					Description = NULL;
 				}
 #else	/* !UNICODE */
+				// Windows 9x doesn't support MultiByteToWideChar natively,
+				// and it doesn't seem to be able to convert from one multibyte
+				// character set to another
 				len2 = 0;
 #endif	/* UNICODE */
 				free(desc);
@@ -400,9 +402,9 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, Controllers::StdPort_Mappings[Controllers::Port2->Type]);
 		SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, Controllers::ExpPort_Mappings[Controllers::PortExp->Type]);
 		CheckRadioButton(hDlg, IDC_MOVIE_RECORD_RESET, IDC_MOVIE_RECORD_CURRENT, IDC_MOVIE_RECORD_RESET);
-#ifdef	UNICODE
+#ifndef	UNICODE
 		EnableWindow(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION), FALSE);
-#endif	/* UNICODE*/
+#endif	/* !UNICODE */
 		return TRUE;
 		break;
 	case WM_COMMAND:
