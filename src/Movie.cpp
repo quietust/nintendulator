@@ -142,6 +142,7 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			fread(&ReRecords, 4, 1, Data);
 			SetDlgItemInt(hDlg, IDC_MOVIE_PLAY_RERECORDS, ReRecords, FALSE);
 			fread(&len, 4, 1, Data);
+			SetDlgItemText(hDlg, IDC_MOVIE_PLAY_DESCRIPTION, _T(""));
 			if (len)
 			{
 				char *desc = (char *)malloc(len);
