@@ -189,7 +189,7 @@ CAPTION "About"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     ICON            IDI_NINTENDULATOR,IDC_ABOUTICON,8,8,21,20
-    LTEXT           "Nintendulator Version 0.965\nCopyright © 2002-2009 QMT Productions",
+    LTEXT           "Nintendulator Version 0.965\nCopyright © 2002-2010 QMT Productions",
                     IDC_STATIC,32,8,136,20
     DEFPUSHBUTTON   "OK",IDOK,172,12,56,16,WS_GROUP
 END
@@ -2090,7 +2090,7 @@ BEGIN
             VALUE "FileDescription", "Nintendulator"
             VALUE "FileVersion", "0, 9, 6, 5"
             VALUE "InternalName", "Nintendulator"
-            VALUE "LegalCopyright", "Copyright © 2002-2009 QMT Productions"
+            VALUE "LegalCopyright", "Copyright © 2002-2010 QMT Productions"
             VALUE "OriginalFilename", "Nintendulator.exe"
             VALUE "ProductName", "Nintendulator"
             VALUE "ProductVersion", "0, 9, 6, 5"

@@ -1,5 +1,5 @@
 /* Nintendulator - Win32 NES emulator written in C++
- * Copyright (C) 2002-2009 QMT Productions
+ * Copyright (C) 2002-2010 QMT Productions
  *
  * $URL$
  * $Id$
