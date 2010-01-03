@@ -8,7 +8,7 @@
 #ifndef STATES_H
 #define STATES_H
 
-#define	STATES_VERSION	"0965"
+#define	STATES_VERSION	"0970"
 #define	STATES_BETA	"0965"
 #define	STATES_PREV	"0960"
 

@@ -332,7 +332,7 @@ DWORD	WINAPI	PlayThread (void *param)
 In_Module mod = 
 {
 	IN_VER,
-	"Nintendulator NSF Player v0.965",
+	"Nintendulator NSF Player v0.970",
 	0,	// hMainWindow
 	0,	// hDllInstance
 	"NSF\0Nintendo Sound File (*.NSF)\0"
