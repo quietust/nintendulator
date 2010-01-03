@@ -1,4 +1,4 @@
-Nintendulator 0.960
+Nintendulator 0.970
 
 ------------
 Introduction
@@ -29,6 +29,99 @@ hardware as well.
 ---------------
 Version History
 ---------------
+
+0.970
+- Overall:
+   Updated all code to use C++ with namespaces, significantly reducing
+      code size.
+   Added various debugging statements.
+   Various code cleanup and bugfixes.
+- APU:
+   Added code to properly emulate race conditions when writing to APU
+      registers at specific times.
+   Add noise playback frequencies for PAL emulation.
+   Fixed DPCM playback to properly emulate cycle stealing from DMA.
+   Rewrote APU frame timer to properly handle clock jitter.
+- AVI:
+   Major cleanup of AVI capture code.
+   Optimized AVI code to cache video frame information between frames.
+- Controllers:
+   Rewrote code for all controllers to use proper C++ classes.
+   Fix data/movie storage for several controllers to allocate the
+      correct amount of memory.
+   Changed Zapper code to determine "hit" based on overall brightness
+      of the target region.
+   Added support for Vs. Unisystem Zapper controller.
+   Added ability to configure POV hats, either as 2 overlapping axes or
+      as 8 buttons.
+   Updated configuration code to query DirectInput for key/axis/button
+      names rather than hardcoding them.
+   Fix mouse input code to disregard axes that are not present.
+- Debugger:
+   Completely rewrote debugger. New features include:
+   - Edit CPU registers
+   - Toggle individual IRQ sources
+   - Browse CPU, PPU, Sprite, and Palette memory
+   - Add breakpoints based on execution address, operand address (read
+     or write), specific opcodes, or interrupts.
+   - View detailed properties of nametable entries, sprites, pattern
+     table tiles, and palette entries.
+- Game Genie:
+   Fixed several bugs which could cause entered codes to not work.
+- Graphics:
+   Added support for fullscreen display.
+   Added option to add scanlines for 2x Windowed and Fullscreen modes.
+   Configuring a Zapper controller now disables frameskip.
+   Added RGB palettes for Vs. Unisystem PPUs 0002, 0003, and 0004.
+   Rewrote NTSC palette generation code to correctly apply color
+      emphasis.
+   Adjusted color emphasis coefficients used when loading external
+      palettes.
+   After adjusting palette and saving changes, immediately redraw the
+      screen using the updated colors.
+   Add option to preview appearance of palette using various color
+      emphasis modes.
+- Mapper Interface:
+   Updated Mapper Interface version from 3.6 to 3.7.
+   Updated ROM Information structure to support iNES 2.0 format fields.
+- Movies:
+   Added a dialog for movie recording, allowing a description to be
+      added (Unicode version only) for the movie being recorded.
+   Added a dialog for movie playback, allowing the movie's properties
+      to be previewed before movie playback actually begins.
+   Fix problems with playing back movies of games whose mappers
+      maintain state information between resets.
+- Main Program:
+   Savestates, movies, SRAM, and debug memory dumps are now stored
+      within the currently logged in user's Application Data folder
+      rather than within the program's own directory.
+   Nintendulator will now attempt to prevent any configured screensaver
+      from activating while emulation is active.
+   Builtin iNES header editor now detects and automatically cleans ROM
+      headers bearing the "DiskDude!" signature.
+   Fixed several bugs with configuration storage.
+   Allow keyboard shortcuts to work properly with various dialogs.
+- PPU:
+   Enabled per-cycle emulation of sprite evaluation.
+   Improve emulation of PPU I/O registers to properly handle several
+      race conditions.
+- Savestates:
+   Rewrote savestate code for Controlelrs to correctly store all data,
+      as well as data lengths for each individual port.
+   Fixed case where savestates from a previous version might not be
+      loaded correctly.
+- Mappers:
+   Fixed some MMC5 emulation errors.
+   Reduced VS Unisystem coin insert delay.
+   Fixed several bugs in NSF player BIOS.
+   Enabled 8KB PRG RAM on iNES mapper 0.
+   Fixed several issues with iNES mappers 22 and 23.
+   Added support for iNES mappers 37 and 38.
+   Rewrote IRQ logic for iNES mapper 91.
+   Fixed support for NES-SUROM board.
+   Added support for NES-SXROM board.
+   Fixed savestate data for several UNL boards.
+   Fix Vs. Unisystem mappers to force 4-screen VRAM.
 
 0.960
 - Overall:
@@ -98,7 +191,6 @@ Version History
 - Savestates:
    Moved controller savestate code into the Controllers module.
    Moved movie savestate code into the new Movie module.
-
 - Mappers:
    Added a new mapper DLL for VS Unisystem games.
    Increased MMC3/MMC6 IRQ counter threshold for PPU address changes.
@@ -286,24 +378,18 @@ Supporting Features
 Known Issues
 ------------
 
-- "Non-standard" sprite overflow behavior is not yet emulated
-- PAL APU timings have not yet been verified
 - Certain system hardware properties may not be emulated 100%
      correctly.
 - Not all mappers are emulated perfectly.
-- When recording movies, it is not possible to assign text to the
-     'Description' field.
 - When recording a movie and stopping, excess data at the end of the
      movie file is not truncated, though it is ignored during playback.
-- If your CPU speed is below 1000MHz, emulation will likely be slow.
 
 -------------------
 Using Nintendulator
 -------------------
 
-Minimum system requirements for Nintendulator are a 1000MHz or faster
-processor. All commands & options are available through menus, many
-with shortcut keys.
+All commands & options are available through menus, many with shortcut
+keys.
 
 File:
 - Open (Ctrl+O)
@@ -375,6 +461,11 @@ PPU:
 - Slowdown
    Allows you to slow down emulation in order to better control
      the game you are playing.
+- Fullscreen
+   Switches between Fullscreen and Windowed mode.
+- Scanlines
+   Enables 100% scanlines in both Fullscreen and Windowed mode.
+      Scanlines should only be used in Windowed mode at 2X stretch.
 
 Sound Menu:
 - Enabled
@@ -396,21 +487,22 @@ Input Menu:
    The option "Allow simultaneous Left+Right and Up+Down" is available
      to enable the ability to press two opposing direction buttons at
      the same time. Be aware that this causes glitches in some games!
+   If the option "Configure POV triggers as axes" is checked,
+     configuring any controller button to use a POV hat will bind it as
+     a horizontal or vertical axis with a 90 degree range of motion;
+     if unchecked, it will instead be configured as one of the hat's 8
+     valid directions.
 
 Debug:
-- Level 1 (Ctrl+F1)
-   Disables the debugger entirely. This should be used for all actual
-     gameplay.
-- Level 2 (Ctrl+F2)
-   Displays the current contents of the pattern tables and the palette.
-- Level 3 (Ctrl+F3)
-   Displays the current contents of the nametables. (includes Level 2)
-- Level 4 (Ctrl+F4)
-   Displays the game's code where it is currently executing and the
-     status of all CPU registers. Also indicates PPU timing information
-     as well as currently mapped program and character ROM/RAM banks.
-   Breakpoints can be placed by clicking on an instruction.
-   (includes Level 3)
+- Disassembly (Ctrl+F1)
+   Toggles the CPU Debugger window.
+   From this window, CPU registers can be viewed and modified, various
+     parts of system RAM can be viewed, and various types of
+     breakpoints can be configured.
+- Video (Ctrl+F2)
+   Toggles the PPU Debugger window.
+   From this window, the current nametables, sprites, pattern tables,
+     and palette can be viewed and examined in detail.
 - Status Window
    Opens the Debug Information window, where the emulator can display
      various status messages without having to pop up a dialog box.
@@ -419,8 +511,9 @@ Game:
    If the game you have selected has any special options, this menu
      will be enabled. Clicking on it will open a dialog box through
      which you may configure your game more closely.
-   This is used mainly for NSF playback (to choose which song to play)
-     and FDS games (to eject/insert disks).
+   This is used mainly for NSF playback (to choose which song to play),
+     FDS games (to eject/insert disks), and Vs. Unisystem games (to
+     insert coins and toggle configuration DIP switches).
 
 Misc:
 - Start AVI Capture
@@ -432,26 +525,14 @@ Misc:
 - Play Movie
    Allows you to play back a previously recorded movie.
    Browse to the location the movie is stored and open it.
-- Record Movie from Reset
-   Allows you to record a movie starting from system reset. These have
-     the advantage of being significantly smaller than movies recorded
-     from a savestate.
-   Choose a location to save the movie file in, then choose the
-     controllers you wish to use - once recording starts, they cannot
-     be changed!
-- Record Movie from Current State
-   Allows you to record a movie starting from the current system state.
-     These tend to be larger than movies recorded from reset, but they
-     can be used to demonstrate a particular part of a game without
-     having to waste time reaching that point.
-   Choose a location to save the movie file in, then choose the
-     controllers you wish to use - once recording starts, they cannot
-     be changed!
-- Resume Movie
-   Allows you to watch a movie up to a certain point, and then save and
-      load a savestate to continue recording it. Recording is enabled
-      the instant you load a compatible savestate.
-   Browse to the location the movie is stored and open it.
+   A checkbox allows you to switch from playback to recording by
+     loading a compatible savestate.
+- Record Movie
+   Allows you to record a movie.
+   In the dialog that opens, you may specify whether you wish to record
+     starting from system reset or from the current state, configure
+     which controllers you wish to use, and choose where to save the
+     movie file.
 - Stop Movie
    Stops any movie currently playing or recording.
 
@@ -479,7 +560,7 @@ numerous to name.
 Contact
 -------
 
-Homepage - http://qmt.ath.cx/~nes/nintendulator
+Homepage - http://www.qmtpro.com/~nes/nintendulator
            http://nintendulator.sourceforge.net/ (redirect)
 
 ----------
