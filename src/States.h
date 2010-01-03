@@ -8,9 +8,9 @@
 #ifndef STATES_H
 #define STATES_H
 
-#define	STATES_VERSION	"0970"
-#define	STATES_BETA	"0965"
-#define	STATES_PREV	"0960"
+#define	STATES_VERSION	"0975"	// current version, release or beta
+#define	STATES_PREV	"0970"	// last release
+#define	STATES_BETA	"0965"	// last beta
 
 namespace States
 {

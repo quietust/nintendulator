@@ -276,7 +276,7 @@ void	LoadState (void)
 		return;
 	}
 	fread(tpc, 1, 4, in);
-	if ((memcmp(tpc, STATES_VERSION, 4)) && (memcmp(tpc, STATES_BETA,4)) && (memcmp(tpc, STATES_PREV, 4)))
+	if ((memcmp(tpc, STATES_VERSION, 4)) && (memcmp(tpc, STATES_BETA, 4)) && (memcmp(tpc, STATES_PREV, 4)))
 	{
 		fclose(in);
 		tpc[4] = 0;
