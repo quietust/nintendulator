@@ -350,14 +350,35 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	fread(Header, 1, 16, in);
 	if (*(unsigned long *)Header != MKID('NES\x1A'))
 		return _T("iNES header signature not found!");
-	RI.ROMType = ROM_INES;
+
 	if ((Header[7] & 0x0C) == 0x04)
 		return _T("Header is corrupted by \"DiskDude!\" - please repair it and try again.");
 
+	if ((Header[7] & 0x0C) == 0x0C)
+		return _T("Header format not recognized - please repair it and try again.");
+
+	RI.ROMType = ROM_INES;
+
+	RI.INES_Version = 1;	// start off by parsing as iNES v1
+
+	RI.INES_PRGSize = Header[4];
+	RI.INES_CHRSize = Header[5];
+	RI.INES_MapperNum = ((Header[6] & 0xF0) >> 4) | (Header[7] & 0xF0);
+	RI.INES_Flags = (Header[6] & 0x0F) | ((Header[7] & 0x0F) << 4);
+
 	if ((Header[7] & 0x0C) == 0x08)
 	{
-		EI.DbgOut(_T("iNES 2.0 ROM image detected - parsing in compatibility mode."));
-		// TODO - load fields as iNES 2.0
+		EI.DbgOut(_T("iNES 2.0 ROM image detected!"));
+		RI.INES_Version = 2;
+
+		RI.INES_MapperNum |= (Header[8] & 0x0F) << 8;
+		RI.INES2_SubMapper = (Header[8] & 0xF0) >> 4;
+		RI.INES_PRGSize |= (Header[9] & 0x0F) << 8;
+		RI.INES_CHRSize |= (Header[9] & 0xF0) << 4;
+		RI.INES2_PRGRAM = Header[10];
+		RI.INES2_CHRRAM = Header[11];
+		RI.INES2_TVMode = Header[12];
+		RI.INES2_VSDATA = Header[13];
 	}
 	else
 	{
@@ -367,15 +388,7 @@ const TCHAR *	OpenFileiNES (FILE *in)
 				EI.DbgOut(_T("Unrecognized data found at header offset %i - you are recommended to clean this ROM and reload it."));
 				break;
 			}
-		// TODO - move iNES 1.0 loading stuff from below
 	}
-
-	RI.INES_PRGSize = Header[4];
-	RI.INES_CHRSize = Header[5];
-	RI.INES_MapperNum = ((Header[6] & 0xF0) >> 4) | (Header[7] & 0xF0);
-	RI.INES_Flags = (Header[6] & 0xF) | ((Header[7] & 0xF) << 4);
-
-	RI.INES_Version = 1;	// iNES 2 information is not yet parsed
 
 	if (RI.INES_Flags & 0x04)
 		return _T("Trained ROMs are unsupported!");
