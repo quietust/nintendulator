@@ -333,7 +333,9 @@ __inline static void	ProcessSprites (void)
 				if ((SLnum >= sprtmp) && (SLnum <= sprtmp + ((Reg2000 & 0x20) ? 0xF : 0x7)))
 				{	// 9th sprite found "in range"
 					sprstate = 3;
-					sprsub = 1;
+					sprsub = (sprsub + 1) & 3;
+					if (!sprsub)
+						spridx = (spridx + 1) & 63;
 					sprpos = 1;
 					Reg2002 |= 0x20;	// set sprite overflow flag
 				}
@@ -352,7 +354,7 @@ __inline static void	ProcessSprites (void)
 		case 3:	// 9th sprite detected, fetch next 3 bytes
 			if (Clockticks & 1)
 			{
-				SpritePtr = 0x100 | sprpos;
+				SpritePtr = 0x100;
 				sprsub = (sprsub + 1) & 3;
 				if (!sprsub)
 					spridx = (spridx + 1) & 63;
