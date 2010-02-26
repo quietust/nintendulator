@@ -91,20 +91,21 @@ unsigned char	__fastcall	MemGet (unsigned int Addr)
 	static int buf;
 	if (PCMCycles)
 	{
-		int _PCMCycles = PCMCycles;
+		// zero out PCMCycles so we don't recurse back into this case during the following fetches
+		int _PCMCycles = PCMCycles - 1;
 		PCMCycles = 0;
-		if ((Addr == 0x4016) || (Addr == 0x4017))
+		if (((Addr == 0x4016) || (Addr == 0x4017)))
 		{
 			// Consecutive controller port reads from this are treated as one
 			if (_PCMCycles--)
 				MemGet(Addr);
-			while (--_PCMCycles)
+			while (_PCMCycles--)
 				RunCycle();
 		}
 		else
 		{
 			// but other addresses see multiple reads as expected
-			while (--_PCMCycles)
+			while (_PCMCycles--)
 				MemGet(Addr);
 		}
 		APU::DPCM::Fetch();
