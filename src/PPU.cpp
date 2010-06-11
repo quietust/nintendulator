@@ -603,7 +603,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 				Reg2002 |= 0x80;
 				if (Reg2000 & 0x80)
 					CPU::WantNMI = TRUE;
-				SprAddr = 0;
+//				SprAddr = 0;
 			}
 			else if (SLnum == SLEndFrame - 1)
 			{
@@ -937,7 +937,7 @@ __inline static	void	RunSkip (int NumTicks)
 				Reg2002 |= 0x80;
 				if (Reg2000 & 0x80)
 					CPU::WantNMI = TRUE;
-				SprAddr = 0;
+//				SprAddr = 0;
 			}
 			else if (SLnum == SLEndFrame - 1)
 			{
