@@ -625,7 +625,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 			{
 				if (IOMode)
 				{
-					RenderData[(Clockticks >> 1) & 3] = (unsigned char)rand();
+					RenderData[(Clockticks >> 1) & 3] = 0;	// seems to force black in this case
 					if (IOMode == 2)
 						WriteHandler[RenderAddr >> 10](RenderAddr >> 10, RenderAddr & 0x3FF, IOVal = RenderData[(Clockticks >> 1) & 3]);
 				}
@@ -959,7 +959,7 @@ __inline static	void	RunSkip (int NumTicks)
 			{
 				if (IOMode)
 				{
-					RenderData[(Clockticks >> 1) & 3] = (unsigned char)rand();
+					RenderData[(Clockticks >> 1) & 3] = 0;	// seems to force black in this case
 					if (IOMode == 2)
 						WriteHandler[RenderAddr >> 10](RenderAddr >> 10, RenderAddr & 0x3FF, IOVal = RenderData[(Clockticks >> 1) & 3]);
 				}
@@ -1242,10 +1242,28 @@ static	int	__fastcall	Read7 (void)
 {
 	IOAddr = VRAMAddr & 0x3FFF;
 	IOMode = 5;
-	if (Reg2000 & 0x04)
-		VRAMAddr += 32;
-	else	VRAMAddr++;
-	VRAMAddr &= 0x7FFF;
+	if (IsRendering)
+	{
+		// while rendering, it seems to drop by 1 scanline, regardless of increment mode
+		if ((VRAMAddr & 0x7000) == 0x7000)
+		{
+			register int YScroll = VRAMAddr & 0x3E0;
+			VRAMAddr &= 0xFFF;
+			if (YScroll == 0x3A0)
+				VRAMAddr ^= 0xBA0;
+			else if (YScroll == 0x3E0)
+				VRAMAddr ^= 0x3E0;
+			else	VRAMAddr += 0x20;
+		}
+		else	VRAMAddr += 0x1000;
+	}
+	else
+	{
+		if (Reg2000 & 0x04)
+			VRAMAddr += 32;
+		else	VRAMAddr++;
+		VRAMAddr &= 0x7FFF;
+	}
 	if ((IOAddr & 0x3F00) == 0x3F00)
 	{
 		if (Reg2001 & 0x01)
@@ -1360,10 +1378,28 @@ static	void	__fastcall	Write7 (int Val)
 		IOVal = (unsigned char)Val;
 		IOMode = 6;
 	}
-	if (Reg2000 & 0x04)
-		VRAMAddr += 32;
-	else	VRAMAddr++;
-	VRAMAddr &= 0x7FFF;
+	if (IsRendering)
+	{
+		// while rendering, it seems to drop by 1 scanline, regardless of increment mode
+		if ((VRAMAddr & 0x7000) == 0x7000)
+		{
+			register int YScroll = VRAMAddr & 0x3E0;
+			VRAMAddr &= 0xFFF;
+			if (YScroll == 0x3A0)
+				VRAMAddr ^= 0xBA0;
+			else if (YScroll == 0x3E0)
+				VRAMAddr ^= 0x3E0;
+			else	VRAMAddr += 0x20;
+		}
+		else	VRAMAddr += 0x1000;
+	}
+	else
+	{
+		if (Reg2000 & 0x04)
+			VRAMAddr += 32;
+		else	VRAMAddr++;
+		VRAMAddr &= 0x7FFF;
+	}
 }
 
 void	MAPINT	IntWrite (int Bank, int Addr, int Val)
