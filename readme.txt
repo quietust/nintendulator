@@ -106,7 +106,7 @@ Version History
    Improve emulation of PPU I/O registers to properly handle several
       race conditions.
 - Savestates:
-   Rewrote savestate code for Controlelrs to correctly store all data,
+   Rewrote savestate code for Controllers to correctly store all data,
       as well as data lengths for each individual port.
    Fixed case where savestates from a previous version might not be
       loaded correctly.
