@@ -98,6 +98,14 @@ void	OpenFile (TCHAR *filename)
 
 	EI.DbgOut(_T("Loading file '%s'..."), filename);
 	data = _tfopen(filename, _T("rb"));
+
+	if (!data)
+	{
+		MessageBox(hMainWnd, _T("Unable to open file!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		CloseFile();
+		return;
+	}
+
 	if (!_tcsicmp(filename + len - 4, _T(".NES")))
 		LoadRet = OpenFileiNES(data);
 	else if (!_tcsicmp(filename + len - 4, _T(".NSF")))
