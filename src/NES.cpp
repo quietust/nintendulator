@@ -752,6 +752,7 @@ void	Reset (RESET_TYPE ResetType)
 		}
 		CPU::PowerOn();
 		PPU::PowerOn();
+		APU::PowerOn();
 		if (GameGenie)
 			Genie::Reset();
 		else	if ((MI) && (MI->Reset))

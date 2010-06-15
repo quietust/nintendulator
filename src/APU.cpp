@@ -114,6 +114,18 @@ namespace Race
 	unsigned char Triangle_wavehold, Triangle_timer1, Triangle_timer2;
 	unsigned char Noise_wavehold, Noise_timer1, Noise_timer2;
 	void Run (void);
+
+void	PowerOn (void)
+{
+	Reset();
+	Triangle_wavehold = Triangle_timer1 = Triangle_timer2 = 0;
+}
+void	Reset (void)
+{
+	Square0_wavehold = Square0_timer1 = Square0_timer2 = 0;
+	Square1_wavehold = Square1_timer1 = Square1_timer2 = 0;
+	Noise_wavehold = Noise_timer1 = Noise_timer2 = 0;
+}
 } // namespace race
 
 namespace Square0
@@ -129,6 +141,10 @@ namespace Square0
 	unsigned long Cycles;	// short
 	signed long Pos;
 
+void	PowerOn (void)
+{
+	Reset();
+}
 void	Reset (void)
 {
 	volume = envelope = wavehold = duty = swpspeed = swpdir = swpstep = swpenab = 0;
@@ -250,6 +266,10 @@ namespace Square1
 	unsigned long Cycles;	// short
 	signed long Pos;
 
+void	PowerOn (void)
+{
+	Reset();
+}
 void	Reset (void)
 {
 	volume = envelope = wavehold = duty = swpspeed = swpdir = swpstep = swpenab = 0;
@@ -368,6 +388,10 @@ namespace Triangle
 	unsigned long Cycles;	// short
 	signed long Pos;
 
+void	PowerOn (void)
+{
+	Reset();
+}
 void	Reset (void)
 {
 	linear = wavehold = 0;
@@ -459,6 +483,10 @@ namespace Noise
 	signed long Pos;
 
 const unsigned long	*FreqTable;
+void	PowerOn (void)
+{
+	Reset();
+}
 void	Reset (void)
 {
 	volume = envelope = wavehold = datatype = 0;
@@ -549,6 +577,10 @@ namespace DPCM
 	signed long Pos;
 
 const	unsigned long	*FreqTable;
+void	PowerOn (void)
+{
+	Reset();
+}
 void	Reset (void)
 {
 	freq = wavehold = doirq = pcmdata = addr = len = 0;
@@ -559,7 +591,7 @@ void	Reset (void)
 	Pos = 0;
 
 	Cycles = 1;
-	buffull = TRUE;
+	buffull = FALSE;
 	outbits = 8;
 }
 inline void	Write (int Reg, unsigned char Val)
@@ -615,22 +647,23 @@ inline void	Run (void)
 		if (!--outbits)
 		{
 			outbits = 8;
-			if (buffull && LengthCtr)
-			{
-				outmode = TRUE;
-				shiftreg = buffer;
-				buffull = FALSE;
-				CPU::PCMCycles = 4;
-			}
-			else	outmode = FALSE;
+			buffull = FALSE;
+			if (!LengthCtr)
+				outmode = FALSE;
 		}
+	}
+	if (!buffull && LengthCtr)
+	{
+		buffull = TRUE;
+		outmode = TRUE;
+		shiftreg = buffer;
+		CPU::PCMCycles = 4;
 	}
 }
 
 void	Fetch (void)
 {
 	buffer = CPU::MemGet(CurAddr);
-	buffull = TRUE;
 	if (++CurAddr == 0x10000)
 		CurAddr = 0x8000;
 	if (!--LengthCtr)
@@ -654,11 +687,18 @@ namespace Frame
 
 const	int	*CycleTable_0;
 const	int	*CycleTable_1;
-void	Reset (void)
+void	PowerOn (void)
 {
 	Bits = 0;
 	Num = 0;
 	Cycles = CycleTable_0[0];
+}
+void	Reset (void)
+{
+	Num = 0;
+	if (Bits & 0x80)
+		Cycles = CycleTable_1[0];
+	else	Cycles = CycleTable_0[0];
 }
 inline void	Write (unsigned char Val)
 {
@@ -813,7 +853,7 @@ unsigned char	Read4015 (void)
 		((         DPCM::LengthCtr) ? 0x10 : 0) |
 		((CPU::WantIRQ & IRQ_FRAME) ? 0x40 : 0) |
 		((CPU::WantIRQ &  IRQ_DPCM) ? 0x80 : 0);
-	CPU::WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
+	CPU::WantIRQ &= ~IRQ_FRAME;	// DPCM flag doesn't get reset
 	return result;
 }
 
@@ -889,24 +929,22 @@ void	SetFPS (int FPS)
 void	Init (void)
 {
 #ifndef	NSFPLAYER
-	ZeroMemory(Regs, sizeof(Regs));
-	DirectSound		= NULL;
+	DirectSound	= NULL;
 	PrimaryBuffer	= NULL;
 	Buffer		= NULL;
 	buffer		= NULL;
-	isEnabled		= FALSE;
+	isEnabled	= FALSE;
 #endif	/* !NSFPLAYER */
 	WantFPS		= 0;
-	MHz			= 1;
-	PAL			= FALSE;
+	MHz		= 1;
+	PAL		= FALSE;
 #ifndef	NSFPLAYER
-	LockSize		= 0;
+	LockSize	= 0;
 	buflen		= 0;
 #endif	/* !NSFPLAYER */
-	Cycles		= 0;
 	BufPos		= 0;
 #ifndef	NSFPLAYER
-	next_pos		= 0;
+	next_pos	= 0;
 #endif	/* !NSFPLAYER */
 }
 
@@ -1003,6 +1041,22 @@ void	Release (void)
 #endif	/* !NSFPLAYER */
 }
 
+void	PowerOn  (void)
+{
+#ifndef	NSFPLAYER
+	ZeroMemory(Regs, 0x18);
+#endif	/* !NSFPLAYER */
+	Frame::PowerOn();
+	Square0::PowerOn();
+	Square1::PowerOn();
+	Triangle::PowerOn();
+	Noise::PowerOn();
+	DPCM::PowerOn();
+	Race::PowerOn();
+	Cycles = 1;
+	CPU::WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
+	InternalClock = 0;
+}
 void	Reset  (void)
 {
 #ifndef	NSFPLAYER
@@ -1014,6 +1068,7 @@ void	Reset  (void)
 	Triangle::Reset();
 	Noise::Reset();
 	DPCM::Reset();
+	Race::Reset();
 	Cycles = 1;
 	CPU::WantIRQ &= ~(IRQ_FRAME | IRQ_DPCM);
 	InternalClock = 0;

@@ -37,6 +37,7 @@ int	Load		(FILE *);
 void	SoundOFF	(void);
 void	SoundON		(void);
 #endif	/* !NSFPLAYER */
+void	PowerOn		(void);
 void	Reset		(void);
 #ifndef	NSFPLAYER
 void	Config		(HWND);

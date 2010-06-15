@@ -108,6 +108,7 @@ void	Reset (void)
 	CPU::ReadHandler[4] = CPU::Read4k;	CPU::WriteHandler[4] = CPU::Write4k;
 
 	CPU::PowerOn();
+	APU::PowerOn();
 	if (MI->Reset)
 		MI->Reset(RESET_HARD);
 	APU::Reset();
