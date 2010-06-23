@@ -1,5 +1,5 @@
 Nintendulator Save State Format
- Updated:  March 20, 2009
+ Updated:  June 22, 2010
 ---------------------------------------
 
 For simplicity, savestates should only be saved during VBLANK; otherwise,
