@@ -570,7 +570,7 @@ namespace DPCM
 {
 	unsigned char freq, wavehold, doirq, pcmdata, addr, len;
 	unsigned long CurAddr, SampleLen;	// short
-	BOOL outmode, buffull;
+	BOOL silenced, bufempty, fetching;
 	unsigned char shiftreg, outbits, buffer;
 	unsigned long LengthCtr;	// short
 	unsigned long Cycles;	// short
@@ -585,13 +585,14 @@ void	Reset (void)
 {
 	freq = wavehold = doirq = pcmdata = addr = len = 0;
 	CurAddr = SampleLen = 0;
-	outmode = FALSE;
+	silenced = TRUE;
 	shiftreg = buffer = 0;
 	LengthCtr = 0;
 	Pos = 0;
 
 	Cycles = 1;
-	buffull = FALSE;
+	bufempty = TRUE;
+	fetching = FALSE;
 	outbits = 8;
 }
 inline void	Write (int Reg, unsigned char Val)
@@ -629,7 +630,7 @@ inline void	Run (void)
 	if (!--Cycles)
 	{
 		Cycles = FreqTable[freq];
-		if (outmode)
+		if (!silenced)
 		{
 			if (shiftreg & 1)
 			{
@@ -647,16 +648,18 @@ inline void	Run (void)
 		if (!--outbits)
 		{
 			outbits = 8;
-			buffull = FALSE;
-			if (!LengthCtr)
-				outmode = FALSE;
+			if (!bufempty)
+			{
+				shiftreg = buffer;
+				bufempty = TRUE;
+				silenced = FALSE;
+			}
+			else	silenced = TRUE;
 		}
 	}
-	if (!buffull && LengthCtr)
+	if (bufempty && !fetching && LengthCtr)
 	{
-		buffull = TRUE;
-		outmode = TRUE;
-		shiftreg = buffer;
+		fetching = TRUE;
 		CPU::PCMCycles = 4;
 	}
 }
@@ -664,6 +667,8 @@ inline void	Run (void)
 void	Fetch (void)
 {
 	buffer = CPU::MemGet(CurAddr);
+	bufempty = FALSE;
+	fetching = FALSE;
 	if (++CurAddr == 0x10000)
 		CurAddr = 0x8000;
 	if (!--LengthCtr)
@@ -1160,8 +1165,8 @@ int	Save (FILE *out)
 	writeWord(DPCM::CurAddr);	//	uint16		DPCM current address
 	writeWord(DPCM::SampleLen);	//	uint16		DPCM current length
 	writeByte(DPCM::shiftreg);	//	uint8		DPCM shift register
-	tpc = (DPCM::buffull ? 0x1 : 0x0) | (DPCM::outmode ? 0x2 : 0x0);
-	writeByte(tpc);			//	uint8		DPCM output mode(2)/buffer full(1)
+	tpc = (DPCM::fetching ? 0x4 : 0x0) | (DPCM::silenced ? 0x0 : 0x2) | (DPCM::bufempty ? 0x0 : 0x1);	// variables were renamed and inverted
+	writeByte(tpc);			//	uint8		DPCM fetching(D2)/!silenced(D1)/!empty(D0)
 	writeByte(DPCM::outbits);	//	uint8		DPCM shift count
 	writeByte(DPCM::buffer);	//	uint8		DPCM read buffer
 	writeWord(DPCM::Cycles);	//	uint16		DPCM cycles
@@ -1246,9 +1251,10 @@ int	Load (FILE *in)
 	readWord(DPCM::CurAddr);	//	uint16		DPCM current address
 	readWord(DPCM::SampleLen);	//	uint16		DPCM current length
 	readByte(DPCM::shiftreg);	//	uint8		DPCM shift register
-	readByte(tpc);			//	uint8		DPCM output mode(2)/buffer full(1)
-	DPCM::buffull = tpc & 0x1;
-	DPCM::outmode = tpc & 0x2;
+	readByte(tpc);			//	uint8		DPCM fetching(D2)/!silenced(D1)/!empty(D0)
+	DPCM::fetching = tpc & 0x4;
+	DPCM::silenced = !(tpc & 0x2);	// variable was renamed and inverted
+	DPCM::bufempty = !(tpc & 0x1);	// variable was renamed and inverted
 	readByte(DPCM::outbits);	//	uint8		DPCM shift count
 	readByte(DPCM::buffer);		//	uint8		DPCM read buffer
 	readWord(DPCM::Cycles);		//	uint16		DPCM cycles

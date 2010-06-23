@@ -133,7 +133,7 @@ including the header).
 	uint16		DPCM current address
 	uint16		DPCM current length
 	uint8		DPCM shift register
-	uint8		DPCM output mode(D1)/buffer full(D0)
+	uint8		DPCM fetching(D2)/!silenced(D1)/!empty(D0)
 	uint8		DPCM shift count
 	uint8		DPCM read buffer
 	uint16		DPCM cycles
