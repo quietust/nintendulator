@@ -46,7 +46,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 #define WM_WA_MPEG_EOF WM_USER+2
 
 extern In_Module mod;				// the output module (declared near the bottom of this file)
-char lastfn[MAX_PATH];				// currently playing file (used for getting info on the current file)
+TCHAR lastfn[MAX_PATH];				// currently playing file (used for getting info on the current file)
 int file_length;				// file length, in bytes
 int decode_pos_ms;				// current decoding position, in milliseconds
 int paused;					// are we paused?
@@ -60,11 +60,11 @@ DWORD WINAPI PlayThread(void *b);	// the decode thread procedure
 
 void config(HWND hwndParent)
 {
-	MessageBox(hwndParent, "No configuration is yet available", "Configuration", MB_OK);
+	MessageBox(hwndParent, _T("No configuration is yet available"), _T("Configuration"), MB_OK);
 }
 void about(HWND hwndParent)
 {
-	MessageBox(hwndParent, "Nintendulator NSF Player, by Quietust", "About Nintendulator NSF player", MB_OK);
+	MessageBox(hwndParent, _T("Nintendulator NSF Player, by Quietust"), _T("About Nintendulator NSF player"), MB_OK);
 }
 
 void	init (void)
@@ -80,7 +80,7 @@ void	quit (void)
 	MapperInterface::Release();
 }
 
-int isourfile(char *fn) { return 0; }	// used for detecting URL streams.. unused here. strncmp(fn,"http://",7) to detect HTTP streams, etc
+int isourfile(const TCHAR *fn) { return 0; }	// used for detecting URL streams.. unused here. strncmp(fn,"http://",7) to detect HTTP streams, etc
 
 namespace NES
 {
@@ -115,7 +115,7 @@ void	Reset (void)
 	CPU::Reset();
 }
 } // namespace NES
-int play(char *fn) 
+int play(const TCHAR *fn) 
 {
 	int maxlatency;
 	int thread_id;
@@ -130,7 +130,7 @@ int play(char *fn)
 
 	file_length = GetFileSize(input_file, NULL) - 128;
 
-	strcpy(lastfn, fn);
+	_tcscpy(lastfn, fn);
 	paused=0;
 	decode_pos_ms=0;
 
@@ -215,7 +215,7 @@ void stop() {
 		killPlayThread = TRUE;
 		if (WaitForSingleObject(thread_handle, INFINITE) == WAIT_TIMEOUT)
 		{
-			MessageBox(mod.hMainWindow, "error asking thread to die!\n", "error killing decode thread", 0);
+			MessageBox(mod.hMainWindow, _T("error asking thread to die!"), _T("error killing decode thread"), 0);
 			TerminateThread(thread_handle, 0);
 		}
 		CloseHandle(thread_handle);
@@ -252,23 +252,23 @@ void setoutputtime(int time_in_ms) {
 void setvolume(int volume) { mod.outMod->SetVolume(volume); }
 void setpan(int pan) { mod.outMod->SetPan(pan); }
 
-int infoDlg(char *fn, HWND hwnd)
+int infoDlg(const TCHAR *fn, HWND hwnd)
 {
 	if (RI.ROMType)
 		MI->Config(CFG_WINDOW, TRUE);
 	return 0;
 }
 
-void getfileinfo(char *filename, char *title, int *length_in_ms)
+void getfileinfo(const TCHAR *filename, TCHAR *title, int *length_in_ms)
 {
 	if (!filename || !*filename)  // currently playing file
 	{
 		if (length_in_ms) *length_in_ms=getlength();
 		if (title) 
 		{
-			char *p=lastfn+strlen(lastfn);
+			TCHAR *p=lastfn+_tcslen(lastfn);
 			while (*p != '\\' && p >= lastfn) p--;
-			strcpy(title, ++p);
+			_tcscpy(title, ++p);
 		}
 	}
 	else // some other file
@@ -287,9 +287,9 @@ void getfileinfo(char *filename, char *title, int *length_in_ms)
 		}
 		if (title) 
 		{
-			char *p=filename+strlen(filename);
-			while (*p != '\\' && p >= filename) p--;
-			strcpy(title, ++p);
+			const TCHAR *p=filename+_tcslen(filename);
+			while (*p != _T('\\') && p >= filename) p--;
+			_tcscpy(title, ++p);
 		}
 	}
 }
@@ -367,7 +367,7 @@ In_Module mod =
 	0			// out_mod
 };
 
-__declspec(dllexport) In_Module *winampGetInModule2()
+extern "C" __declspec(dllexport) In_Module *winampGetInModule2()
 {
 	return &mod;
 }

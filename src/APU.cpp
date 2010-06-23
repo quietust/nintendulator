@@ -843,7 +843,7 @@ void	WriteReg (int Addr, unsigned char Val)
 #ifndef	NSFPLAYER
 	default:	MessageBox(hMainWnd, _T("ERROR: Invalid sound write!"), _T("Nintendulator"), MB_OK);
 #else	/* NSFPLAYER */
-	default:	MessageBox(mod.hMainWindow, "ERROR: Invalid sound write!", "in_nintendulator", MB_OK);
+	default:	MessageBox(mod.hMainWindow, _T("ERROR: Invalid sound write!"), _T("in_nintendulator"), MB_OK);
 #endif	/* !NSFPLAYER */
 						break;
 	}
@@ -904,7 +904,7 @@ void	SetFPSVars (int FPS)
 #ifndef	NSFPLAYER
 		MessageBox(hMainWnd, _T("Attempted to set indeterminate sound framerate!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 #else	/* NSFPLAYER */
-		MessageBox(mod.hMainWindow, "Attempted to set indeterminate sound framerate!", "in_nintendulator", MB_OK | MB_ICONERROR);
+		MessageBox(mod.hMainWindow, _T("Attempted to set indeterminate sound framerate!"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
 #endif	/* !NSFPLAYER */
 		return;
 	}

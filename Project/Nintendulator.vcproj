@@ -106,7 +106,6 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				SubSystem="2"
-				EntryPointSymbol=""
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"
