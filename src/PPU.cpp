@@ -1286,13 +1286,15 @@ static	void	__fastcall	Write0 (int Val)
 	// race condition
 	if ((SLnum == 241) && !(Val & 0x80) && (Clockticks < 3))
 		CPU::WantNMI = FALSE;
+#ifdef	ENABLE_DEBUGGER
+	if ((Reg2000 ^ Val) & 0x28)
+		Debugger::SprChanged = TRUE;
+	if ((Reg2000 ^ Val) & 0x10)
+		Debugger::NTabChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
 	Reg2000 = (unsigned char)Val;
 	IntReg &= 0x73FF;
 	IntReg |= (Val & 3) << 10;
-#ifdef	ENABLE_DEBUGGER
-	Debugger::NTabChanged = TRUE;
-	Debugger::SprChanged = TRUE;
-#endif	/* ENABLE_DEBUGGER */
 }
 
 static	void	__fastcall	Write1 (int Val)
