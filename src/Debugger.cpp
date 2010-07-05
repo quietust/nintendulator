@@ -750,7 +750,7 @@ void	AddInst (void)
 	}
 }
 
-void	Debug_DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch)
+void	DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch)
 {
 	int sy, sx;
 	int byte0, byte1, color;
@@ -772,7 +772,7 @@ void	Debug_DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch)
 	}
 }
 
-void	Debug_DrawTileStretch (unsigned long *dest, int PPUaddr, int palette, int width, int height, int pitch)
+void	DrawTileStretch (unsigned long *dest, int PPUaddr, int palette, int width, int height, int pitch)
 {
 	int sy, sx, py, px;
 	int byte0, byte1, color;
@@ -866,7 +866,7 @@ void	UpdatePPU (void)
 				for (x = 0; x < 16; x++)
 				{
 					MemAddr = (t << 12) | (y << 8) | (x << 4);
-					Debug_DrawTile(PatternArray + y * 8 * D_PAT_W + x * 8 + t * 128, MemAddr, Palette, D_PAT_W);
+					DrawTile(PatternArray + y * 8 * D_PAT_W + x * 8 + t * 128, MemAddr, Palette, D_PAT_W);
 				}
 			}
 		}
@@ -905,7 +905,7 @@ void	UpdatePPU (void)
 				AttribNum = (((x & 2) >> 1) | (y & 2)) << 1;
 				AttribVal = (PPU::CHRPointer[8 | NT][0x3C0 | ((y << 1) & 0x38) | (x >> 2)] >> AttribNum) & 3;
 				MemAddr = ((PPU::Reg2000 & 0x10) << 8) | (PPU::CHRPointer[8 | NT][x | (y << 5)] << 4);
-				Debug_DrawTile(NameArray + y * 8 * D_NAM_W + x * 8, MemAddr, AttribVal, D_NAM_W);
+				DrawTile(NameArray + y * 8 * D_NAM_W + x * 8, MemAddr, AttribVal, D_NAM_W);
 			}
 		}
 
@@ -951,13 +951,13 @@ void	UpdatePPU (void)
 				if (PPU::Reg2000 & 0x20)
 				{
 					MemAddr = ((TileNum & 0xFE) << 4) | ((TileNum & 0x01) << 12);
-					Debug_DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), D_SPR_W);
-					Debug_DrawTile(SprArray + y * 24 * D_SPR_W + x * 16 + 8 * D_SPR_W, MemAddr + 16, 4 | (Attr & 3), D_SPR_W);
+					DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), D_SPR_W);
+					DrawTile(SprArray + y * 24 * D_SPR_W + x * 16 + 8 * D_SPR_W, MemAddr + 16, 4 | (Attr & 3), D_SPR_W);
 				}
 				else
 				{
 					MemAddr = (TileNum << 4) | ((PPU::Reg2000 & 0x08) << 9);
-					Debug_DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), D_SPR_W);
+					DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), D_SPR_W);
 				}
 			}
 		}
@@ -1045,7 +1045,7 @@ void	UpdatePPU (void)
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP6VAL, tpstr);
 
 			MemAddr = (tile << 4) | ((PPU::Reg2000 & 0x10) << 8);
-			Debug_DrawTileStretch(TileArray, MemAddr, color, 8, 8, D_TIL_W);
+			DrawTileStretch(TileArray, MemAddr, color, 8, 8, D_TIL_W);
 			DrawBitmap = TRUE;
 			break;
 		case DEBUG_DETAIL_SPRITE:
@@ -1087,13 +1087,13 @@ void	UpdatePPU (void)
 			if (PPU::Reg2000 & 0x20)
 			{
 				MemAddr = ((tile & 0xFE) << 4) | ((tile & 0x01) << 12);
-				Debug_DrawTileStretch(TileArray + 16, MemAddr, color | 4, 4, 4, D_TIL_W);
-				Debug_DrawTileStretch(TileArray + 16 + D_TIL_W * 32, MemAddr + 16, color | 4, 4, 4, D_TIL_W);
+				DrawTileStretch(TileArray + 16, MemAddr, color | 4, 4, 4, D_TIL_W);
+				DrawTileStretch(TileArray + 16 + D_TIL_W * 32, MemAddr + 16, color | 4, 4, 4, D_TIL_W);
 			}
 			else
 			{
 				MemAddr = (tile << 4) | ((PPU::Reg2000 & 0x08) << 9);
-				Debug_DrawTileStretch(TileArray, MemAddr, color | 4, 8, 8, D_TIL_W);
+				DrawTileStretch(TileArray, MemAddr, color | 4, 8, 8, D_TIL_W);
 			}
 			DrawBitmap = TRUE;
 			break;
@@ -1132,7 +1132,7 @@ void	UpdatePPU (void)
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP6TYPE, _T(""));
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_PROP6VAL, _T(""));
 
-			Debug_DrawTileStretch(TileArray, MemAddr, color, 8, 8, D_TIL_W);
+			DrawTileStretch(TileArray, MemAddr, color, 8, 8, D_TIL_W);
 			DrawBitmap = TRUE;
 			break;
 		case DEBUG_DETAIL_PALETTE:
