@@ -15,7 +15,7 @@
 
 namespace Controllers
 {
-static	HWND key;
+HWND key;
 
 StdPort *Port1, *Port2;
 StdPort *FSPort1, *FSPort2, *FSPort3, *FSPort4;
@@ -117,9 +117,9 @@ void	ExpPort_SetMappings (void)
 	ExpPort_Mappings[EXP_TABLET] = _T("Oeka Kids Tablet");
 }
 
-static	BOOL	POVAxis = FALSE;
+BOOL	POVAxis = FALSE;
 
-static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	int i;
@@ -211,7 +211,7 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 				STDCONT_TYPE Type = (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_GETCURSEL, 0, 0);
 				if (Type == STD_FOURSCORE)
 				{
-					// undo selection - can NOT set port 1 to this!
+					// undo selection - can NOT set port 2 to this!
 					SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_SETCURSEL, Port2->Type, 0);
 				}
 				else if (Type == STD_FOURSCORE2)
@@ -231,8 +231,8 @@ static	INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 				else if (Port2->Type == STD_FOURSCORE2)
 				{
 					SET_STDCONT(Port1, FSPort1->Type);
-					memcpy(Port1_Buttons, FSPort1_Buttons, sizeof(FSPort1_Buttons));
 					SET_STDCONT(Port2, Type);
+					memcpy(Port1_Buttons, FSPort1_Buttons, sizeof(FSPort1_Buttons));
 					SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_SETCURSEL, Port1->Type, 0);
 				}
 				else	SET_STDCONT(Port2, Type);
@@ -268,7 +268,7 @@ void	OpenConfig (void)
 	Acquire();
 }
 
-static	BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
+BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	int ItemNum = 0;
 	if (IsEqualGUID(lpddoi->guidType, GUID_Key))
@@ -281,7 +281,7 @@ static	BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 	return DIENUM_CONTINUE;
 }
 
-static	BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
+BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	int ItemNum = 0;
 	if (IsEqualGUID(lpddoi->guidType, GUID_XAxis))
@@ -310,7 +310,7 @@ static	BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi,
 	return DIENUM_CONTINUE;
 }
 
-static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
+BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	int DevNum = NumDevices;
 	int ItemNum = 0;
@@ -380,7 +380,7 @@ static	BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpdd
 	return DIENUM_CONTINUE;
 }
 
-static	BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
+BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
 	HRESULT hr;
 	int DevNum = NumDevices;
@@ -412,7 +412,7 @@ end:
 	return hr;
 }
 
-static	BOOL	InitKeyboard (void)
+BOOL	InitKeyboard (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
@@ -446,7 +446,7 @@ end:
 	return FALSE;
 }
 
-static	BOOL	InitMouse (void)
+BOOL	InitMouse (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;

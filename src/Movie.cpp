@@ -608,7 +608,7 @@ void	Record (void)
 	}
 }
 
-static	void	EndMovie (void)
+void	EndMovie (void)
 {
 	if (!Mode)
 	{

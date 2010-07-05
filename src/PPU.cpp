@@ -201,8 +201,8 @@ unsigned char	OpenBus[0x400] =
 	0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF8,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF
 };
 
-static	void	(MAPINT *PPUCycle)		(int,int,int,int);
-static	void	MAPINT	NoPPUCycle		(int Addr, int Scanline, int Cycle, int IsRendering)	{ }
+void	(MAPINT *PPUCycle)		(int,int,int,int);
+void	MAPINT	NoPPUCycle		(int Addr, int Scanline, int Cycle, int IsRendering)	{ }
 
 int	MAPINT	BusRead (int Bank, int Addr)
 {
@@ -256,8 +256,8 @@ void	GetHandlers (void)
 }
 
 #ifdef	ACCURATE_SPRITES
-static	int	SpritePtr;
-__inline static void	ProcessSprites (void)
+int	SpritePtr;
+__inline void	ProcessSprites (void)
 {
 	static int sprpos, sprnum, spridx, sprsub, sprtmp, sprstate, sprtotal, sprzero;
 	if (Clockticks < 64)
@@ -416,7 +416,7 @@ __inline static void	ProcessSprites (void)
 //* Read the first byte in secondary OAM (the Y-coordinate of the first sprite found, sprite #63 if no sprites were found)
 }
 #else	/* !ACCURATE_SPRITES */
-__inline static	void	DiscoverSprites (void)
+__inline void	DiscoverSprites (void)
 {
 	int SprHeight = 7 | ((Reg2000 & 0x20) >> 2);
 	int SL = SLnum;
@@ -546,11 +546,11 @@ int	Load (FILE *in)
 	return clen;
 }
 
-static int EndSLTicks = 341;
-static unsigned long PatAddr;
-static unsigned char RenderData[4];
+int EndSLTicks = 341;
+unsigned long PatAddr;
+unsigned char RenderData[4];
 
-__inline static	void	RunNoSkip (int NumTicks)
+__inline void	RunNoSkip (int NumTicks)
 {
 	register unsigned long TL;
 	register unsigned char TC;
@@ -887,7 +887,7 @@ __inline static	void	RunNoSkip (int NumTicks)
 		}
 	}
 }
-__inline static	void	RunSkip (int NumTicks)
+__inline void	RunSkip (int NumTicks)
 {
 	register unsigned char TC;
 
@@ -1193,12 +1193,12 @@ void	Run (void)
 	}
 }
 
-static	int	__fastcall	Read01356 (void)
+int	__fastcall	Read01356 (void)
 {
 	return readLatch;
 }
 
-static	int	__fastcall	Read2 (void)
+int	__fastcall	Read2 (void)
 {
 	register unsigned char tmp;
 	HVTog = TRUE;
@@ -1216,7 +1216,7 @@ static	int	__fastcall	Read2 (void)
 	return readLatch = tmp;
 }
 
-static	int	__fastcall	Read4 (void)
+int	__fastcall	Read4 (void)
 {
 	if (IsRendering)
 #ifdef	ACCURATE_SPRITES
@@ -1238,7 +1238,7 @@ static	int	__fastcall	Read4 (void)
 	return readLatch;
 }
 
-static	int	__fastcall	Read7 (void)
+int	__fastcall	Read7 (void)
 {
 	IOAddr = VRAMAddr & 0x3FFF;
 	IOMode = 5;
@@ -1272,14 +1272,14 @@ static	int	__fastcall	Read7 (void)
 	}
 	else	return readLatch = buf2007;
 }
-
+typedef int (__fastcall *PPU_IntRead)(void);
 int	MAPINT	IntRead (int Bank, int Addr)
 {
-	static int (__fastcall *funcs[8])(void) = {Read01356,Read01356,Read2,Read01356,Read4,Read01356,Read01356,Read7};
+	const PPU_IntRead funcs[8] = {Read01356,Read01356,Read2,Read01356,Read4,Read01356,Read01356,Read7};
 	return funcs[Addr & 7]();
 }
 
-static	void	__fastcall	Write0 (int Val)
+void	__fastcall	Write0 (int Val)
 {
 	if ((Val & 0x80) && !(Reg2000 & 0x80) && (Reg2002 & 0x80))
 		CPU::WantNMI = TRUE;
@@ -1297,7 +1297,7 @@ static	void	__fastcall	Write0 (int Val)
 	IntReg |= (Val & 3) << 10;
 }
 
-static	void	__fastcall	Write1 (int Val)
+void	__fastcall	Write1 (int Val)
 {
 	Reg2001 = (unsigned char)Val;
 	if ((Val & 0x18) && (SLnum < 240))
@@ -1307,16 +1307,16 @@ static	void	__fastcall	Write1 (int Val)
 	GrayScale = (Val & 0x01) ? 0x30 : 0x3F;
 }
 
-static	void	__fastcall	Write2 (int Val)
+void	__fastcall	Write2 (int Val)
 {
 }
 
-static	void	__fastcall	Write3 (int Val)
+void	__fastcall	Write3 (int Val)
 {
 	SprAddr = (unsigned char)Val;
 }
 
-static	void	__fastcall	Write4 (int Val)
+void	__fastcall	Write4 (int Val)
 {
 	if (IsRendering)
 		Val = 0xFF;
@@ -1328,7 +1328,7 @@ static	void	__fastcall	Write4 (int Val)
 #endif	/* ENABLE_DEBUGGER */
 }
 
-static	void	__fastcall	Write5 (int Val)
+void	__fastcall	Write5 (int Val)
 {
 	if (HVTog)
 	{
@@ -1345,7 +1345,7 @@ static	void	__fastcall	Write5 (int Val)
 	HVTog = !HVTog;
 }
 
-static	void	__fastcall	Write6 (int Val)
+void	__fastcall	Write6 (int Val)
 {
 	if (HVTog)
 	{
@@ -1361,7 +1361,7 @@ static	void	__fastcall	Write6 (int Val)
 	HVTog = !HVTog;
 }
 
-static	void	__fastcall	Write7 (int Val)
+void	__fastcall	Write7 (int Val)
 {
 	if ((VRAMAddr & 0x3F00) == 0x3F00)
 	{
@@ -1404,9 +1404,10 @@ static	void	__fastcall	Write7 (int Val)
 	}
 }
 
+typedef void (__fastcall *PPU_IntWrite)(int Val);
 void	MAPINT	IntWrite (int Bank, int Addr, int Val)
 {
-	static void (__fastcall *funcs[8])(int) = {Write0,Write1,Write2,Write3,Write4,Write5,Write6,Write7};
+	const PPU_IntWrite funcs[8] = {Write0,Write1,Write2,Write3,Write4,Write5,Write6,Write7};
 	readLatch = (unsigned char)Val;
 	funcs[Addr & 7](Val);
 }

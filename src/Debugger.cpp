@@ -74,7 +74,7 @@ struct tBreakpoint
 	unsigned char	PalCache[0x20];
 	struct tBreakpoint *Breakpoints;
 
-static BOOL inUpdate = FALSE;
+BOOL inUpdate = FALSE;
 
 enum ADDRMODE { IMP, ACC, IMM, ADR, ABS, IND, REL, ABX, ABY, ZPG, ZPX, ZPY, INX, INY, ERR, NUM_ADDR_MODES };
 

@@ -22,7 +22,7 @@ struct StdPort_FourScore_State
 #include <poppack.h>
 #define State ((StdPort_FourScore_State *)Data)
 
-static	void	AllocMov1 (StdPort *Cont)
+void	AllocMov1 (StdPort *Cont)
 {
 	if (Cont->MovData)
 		free(Cont->MovData);
@@ -30,7 +30,7 @@ static	void	AllocMov1 (StdPort *Cont)
 	Cont->MovData = (unsigned char *)malloc(Cont->MovLen);
 	ZeroMemory(Cont->MovData, Cont->MovLen);
 }
-static	void	AllocMov2 (StdPort *Cont)
+void	AllocMov2 (StdPort *Cont)
 {
 	if (Cont->MovData)
 		free(Cont->MovData);
