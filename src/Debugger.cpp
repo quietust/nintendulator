@@ -71,6 +71,7 @@ struct tBreakpoint
 
 	FILE	*LogFile;
 	unsigned char	BPcache[0x10101];
+	unsigned char	PalCache[0x20];
 	struct tBreakpoint *Breakpoints;
 
 static BOOL inUpdate = FALSE;
@@ -267,7 +268,7 @@ void	SetMode (int NewMode)
 		CheckMenuItem(hMenu,ID_DEBUG_PPU,MF_CHECKED);
 	else	CheckMenuItem(hMenu,ID_DEBUG_PPU,MF_UNCHECKED);
 
-	Update();
+	Update(DEBUG_MODE_CPU | DEBUG_MODE_PPU);
 	SetFocus(hMainWnd);
 }
 
@@ -760,12 +761,12 @@ void	Debug_DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch)
 		for (sx = 0; sx < 8; sx++)
 		{
 			color = ((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6);
-			byte0 <<= 1;
-			byte1 <<= 1;
 			if (color)
 				color |= palette << 2;
 			color = GFX::Palette32[PPU::Palette[color]];
 			dest[sx] = color;
+			byte0 <<= 1;
+			byte1 <<= 1;
 		}
 		dest += pitch;
 	}
@@ -782,14 +783,14 @@ void	Debug_DrawTileStretch (unsigned long *dest, int PPUaddr, int palette, int w
 		for (sx = 0; sx < 8; sx++)
 		{
 			color = ((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6);
-			byte0 <<= 1;
-			byte1 <<= 1;
 			if (color)
 				color |= palette << 2;
 			color = GFX::Palette32[PPU::Palette[color]];
 			for (py = 0; py < height; py++)
 				for (px = 0; px < width; px++)
 					dest[px + sx * width + py * pitch] = color;
+			byte0 <<= 1;
+			byte1 <<= 1;
 		}
 		dest += pitch * height;
 	}
@@ -802,11 +803,27 @@ void	UpdatePPU (void)
 
 	if (PalChanged)
 	{
+		BOOL palChanged[8] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+		if (PalCache[0] != PPU::Palette[0])
+		{
+			palChanged[0] = palChanged[1] = palChanged[2] = palChanged[3] = TRUE;
+			palChanged[4] = palChanged[5] = palChanged[6] = palChanged[7] = TRUE;
+		}
+		for (int i = 1; i < 0x20; i++)
+		{
+			if (PalCache[i] != PPU::Palette[i])
+				palChanged[i >> 2] = TRUE;
+			PalCache[i] = PPU::Palette[i];
+		}
+
 		unsigned char color;
 		// updating palette also invalidates pattern tables, nametable, and sprites
-		PatChanged = TRUE;
-		NTabChanged = TRUE;
-		SprChanged = TRUE;
+		if (palChanged[Palette])
+			PatChanged = TRUE;
+		if (palChanged[0] || palChanged[1] || palChanged[2] || palChanged[3])
+			NTabChanged = TRUE;
+		if (palChanged[4] || palChanged[5] || palChanged[6] || palChanged[7])
+			SprChanged = TRUE;
 		if (DetailType == DEBUG_DETAIL_PALETTE)
 			DetChanged = TRUE;
 
@@ -1170,11 +1187,11 @@ void	UpdatePPU (void)
 	}
 }
 
-void	Update (void)
+void	Update (int UpdateMode)
 {
-	if (Mode & DEBUG_MODE_CPU)
+	if ((Mode & DEBUG_MODE_CPU) && (UpdateMode & DEBUG_MODE_CPU))
 		UpdateCPU();
-	if (Mode & DEBUG_MODE_PPU)
+	if ((Mode & DEBUG_MODE_PPU) && (UpdateMode & DEBUG_MODE_PPU))
 		UpdatePPU();
 }
 

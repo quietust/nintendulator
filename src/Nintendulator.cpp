@@ -352,7 +352,7 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 #ifdef	ENABLE_DEBUGGER
 			if (Debugger::Enabled)
-				Debugger::Update();
+				Debugger::Update(DEBUG_MODE_CPU | DEBUG_MODE_PPU);
 #endif	/* ENABLE_DEBUGGER */
 			States::SaveState();
 			if (running)	NES::Start(FALSE);

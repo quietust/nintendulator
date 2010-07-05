@@ -781,7 +781,7 @@ void	Reset (RESET_TYPE ResetType)
 	CPU::WantNMI = FALSE;
 #ifdef	ENABLE_DEBUGGER
 	if (Debugger::Enabled)
-		Debugger::Update();
+		Debugger::Update(DEBUG_MODE_CPU | DEBUG_MODE_PPU);
 #endif	/* ENABLE_DEBUGGER */
 	Scanline = FALSE;
 	EI.DbgOut(_T("Reset complete."));
@@ -835,7 +835,7 @@ DWORD	WINAPI	Thread (void *param)
 		CPU::ExecOp();
 #ifdef	ENABLE_DEBUGGER
 		if (Debugger::Enabled)
-			Debugger::Update();
+			Debugger::Update(DEBUG_MODE_CPU);
 #endif	/* ENABLE_DEBUGGER */
 		if (Scanline)
 		{
@@ -844,7 +844,7 @@ DWORD	WINAPI	Thread (void *param)
 			{
 #ifdef	ENABLE_DEBUGGER
 				if (Debugger::Enabled)
-					Debugger::Update();
+					Debugger::Update(DEBUG_MODE_PPU);
 #endif	/* ENABLE_DEBUGGER */
 				if (FrameStep)	// if we pause during emulation
 				{	// it'll get caught down here at scanline 240

@@ -43,7 +43,7 @@ extern BOOL	Step;
 void	Init (void);
 void	Release (void);
 void	SetMode(int NewMode);
-void	Update (void);
+void	Update (int UpdateMode);
 void	AddInst (void);
 
 } // namespace Debugger
