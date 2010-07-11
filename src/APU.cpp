@@ -109,22 +109,22 @@ const	int	FrameCyclesPAL_1[6] = { 1,8314,8314,8312,8314,8312 };
 
 namespace Race
 {
-	unsigned char Square0_wavehold, Square0_timer1, Square0_timer2;
-	unsigned char Square1_wavehold, Square1_timer1, Square1_timer2;
-	unsigned char Triangle_wavehold, Triangle_timer1, Triangle_timer2;
-	unsigned char Noise_wavehold, Noise_timer1, Noise_timer2;
+	unsigned char Square0_wavehold, Square0_LengthCtr1, Square0_LengthCtr2;
+	unsigned char Square1_wavehold, Square1_LengthCtr1, Square1_LengthCtr2;
+	unsigned char Triangle_wavehold, Triangle_LengthCtr1, Triangle_LengthCtr2;
+	unsigned char Noise_wavehold, Noise_LengthCtr1, Noise_LengthCtr2;
 	void Run (void);
 
 void	PowerOn (void)
 {
 	Reset();
-	Triangle_wavehold = Triangle_timer1 = Triangle_timer2 = 0;
+	Triangle_wavehold = Triangle_LengthCtr1 = Triangle_LengthCtr2 = 0;
 }
 void	Reset (void)
 {
-	Square0_wavehold = Square0_timer1 = Square0_timer2 = 0;
-	Square1_wavehold = Square1_timer1 = Square1_timer2 = 0;
-	Noise_wavehold = Noise_timer1 = Noise_timer2 = 0;
+	Square0_wavehold = Square0_LengthCtr1 = Square0_LengthCtr2 = 0;
+	Square1_wavehold = Square1_LengthCtr1 = Square1_LengthCtr2 = 0;
+	Noise_wavehold = Noise_LengthCtr1 = Noise_LengthCtr2 = 0;
 }
 } // namespace race
 
@@ -134,7 +134,7 @@ namespace Square0
 	unsigned long freq;	// short
 	unsigned char Vol;
 	unsigned char CurD;
-	unsigned char Timer;
+	unsigned char LengthCtr;
 	unsigned char EnvCtr, Envelope, BendCtr;
 	BOOL Enabled, ValidFreq, Active;
 	BOOL EnvClk, SwpClk;
@@ -151,7 +151,7 @@ void	Reset (void)
 	freq = 0;
 	Vol = 0;
 	CurD = 0;
-	Timer = 0;
+	LengthCtr = 0;
 	Envelope = 0;
 	Enabled = ValidFreq = Active = FALSE;
 	EnvClk = SwpClk = FALSE;
@@ -163,7 +163,7 @@ void	Reset (void)
 inline void	CheckActive (void)
 {
 	ValidFreq = (freq >= 0x8) && ((swpdir) || !((freq + (freq >> swpstep)) & 0x800));
-	Active = Timer && ValidFreq;
+	Active = LengthCtr && ValidFreq;
 	Pos = Active ? (SquareDuty[duty][CurD] * Vol) : 0;
 }
 inline void	Write (int Reg, unsigned char Val)
@@ -189,15 +189,15 @@ inline void	Write (int Reg, unsigned char Val)
 		freq |= (Val & 0x7) << 8;
 		if (Enabled)
 		{
-			Race::Square0_timer1 = LengthCounts[(Val >> 3) & 0x1F];
-			Race::Square0_timer2 = Timer;
+			Race::Square0_LengthCtr1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race::Square0_LengthCtr2 = LengthCtr;
 		}
 		CurD = 0;
 		EnvClk = TRUE;
 		break;
 	case 4:	Enabled = Val ? TRUE : FALSE;
 		if (!Enabled)
-			Timer = 0;
+			LengthCtr = 0;
 		break;
 	}
 	CheckActive();
@@ -247,8 +247,8 @@ inline void	HalfFrame (void)
 		SwpClk = FALSE;
 		BendCtr = swpspeed + 1;
 	}
-	if (Timer && !wavehold)
-		Timer--;
+	if (LengthCtr && !wavehold)
+		LengthCtr--;
 	CheckActive();
 }
 } // namespace Square0
@@ -259,7 +259,7 @@ namespace Square1
 	unsigned long freq;	// short
 	unsigned char Vol;
 	unsigned char CurD;
-	unsigned char Timer;
+	unsigned char LengthCtr;
 	unsigned char EnvCtr, Envelope, BendCtr;
 	BOOL Enabled, ValidFreq, Active;
 	BOOL EnvClk, SwpClk;
@@ -276,7 +276,7 @@ void	Reset (void)
 	freq = 0;
 	Vol = 0;
 	CurD = 0;
-	Timer = 0;
+	LengthCtr = 0;
 	Envelope = 0;
 	Enabled = ValidFreq = Active = FALSE;
 	EnvClk = SwpClk = FALSE;
@@ -288,7 +288,7 @@ void	Reset (void)
 inline void	CheckActive (void)
 {
 	ValidFreq = (freq >= 0x8) && ((swpdir) || !((freq + (freq >> swpstep)) & 0x800));
-	Active = Timer && ValidFreq;
+	Active = LengthCtr && ValidFreq;
 	Pos = Active ? (SquareDuty[duty][CurD] * Vol) : 0;
 }
 inline void	Write (int Reg, unsigned char Val)
@@ -314,15 +314,15 @@ inline void	Write (int Reg, unsigned char Val)
 		freq |= (Val & 0x7) << 8;
 		if (Enabled)
 		{
-			Race::Square1_timer1 = LengthCounts[(Val >> 3) & 0x1F];
-			Race::Square1_timer2 = Timer;
+			Race::Square1_LengthCtr1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race::Square1_LengthCtr2 = LengthCtr;
 		}
 		CurD = 0;
 		EnvClk = TRUE;
 		break;
 	case 4:	Enabled = Val ? TRUE : FALSE;
 		if (!Enabled)
-			Timer = 0;
+			LengthCtr = 0;
 		break;
 	}
 	CheckActive();
@@ -371,8 +371,8 @@ inline void	HalfFrame (void)
 		SwpClk = FALSE;
 		BendCtr = swpspeed + 1;
 	}
-	if (Timer && !wavehold)
-		Timer--;
+	if (LengthCtr && !wavehold)
+		LengthCtr--;
 	CheckActive();
 }
 } // namespace Square1
@@ -382,7 +382,7 @@ namespace Triangle
 	unsigned char linear, wavehold;
 	unsigned long freq;	// short
 	unsigned char CurD;
-	unsigned char Timer, LinCtr;
+	unsigned char LengthCtr, LinCtr;
 	BOOL Enabled, Active;
 	BOOL LinClk;
 	unsigned long Cycles;	// short
@@ -397,7 +397,7 @@ void	Reset (void)
 	linear = wavehold = 0;
 	freq = 0;
 	CurD = 0;
-	Timer = LinCtr = 0;
+	LengthCtr = LinCtr = 0;
 	Enabled = Active = FALSE;
         LinClk = FALSE;
 	Pos = 0;
@@ -405,7 +405,7 @@ void	Reset (void)
 }
 inline void	CheckActive (void)
 {
-	Active = Timer && LinCtr;
+	Active = LengthCtr && LinCtr;
 	if (freq < 4)
 		Pos = 0;	// beyond hearing range
 	else	Pos = TriangleDuty[CurD] * 8;
@@ -424,14 +424,14 @@ inline void	Write (int Reg, unsigned char Val)
 		freq |= (Val & 0x7) << 8;
 		if (Enabled)
 		{
-			Race::Triangle_timer1 = LengthCounts[(Val >> 3) & 0x1F];
-			Race::Triangle_timer2 = Timer;
+			Race::Triangle_LengthCtr1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race::Triangle_LengthCtr2 = LengthCtr;
 		}
 		LinClk = TRUE;
 		break;
 	case 4:	Enabled = Val ? TRUE : FALSE;
 		if (!Enabled)
-			Timer = 0;
+			LengthCtr = 0;
 		break;
 	}
 	CheckActive();
@@ -463,8 +463,8 @@ inline void	QuarterFrame (void)
 }
 inline void	HalfFrame (void)
 {
-	if (Timer && !wavehold)
-		Timer--;
+	if (LengthCtr && !wavehold)
+		LengthCtr--;
 	CheckActive();
 }
 } // namespace Triangle
@@ -475,7 +475,7 @@ namespace Noise
 	unsigned long freq;	// short
 	unsigned long CurD;	// short
 	unsigned char Vol;
-	unsigned char Timer;
+	unsigned char LengthCtr;
 	unsigned char EnvCtr, Envelope;
 	BOOL Enabled;
 	BOOL EnvClk;
@@ -492,7 +492,7 @@ void	Reset (void)
 	volume = envelope = wavehold = datatype = 0;
 	freq = 0;
 	Vol = 0;
-	Timer = 0;
+	LengthCtr = 0;
 	Envelope = 0;
 	Enabled = FALSE;
 	EnvClk = FALSE;
@@ -509,7 +509,7 @@ inline void	Write (int Reg, unsigned char Val)
 		envelope = Val & 0x10;
 		Race::Noise_wavehold = Val & 0x20;
 		Vol = envelope ? volume : Envelope;
-		if (Timer)
+		if (LengthCtr)
 			Pos = ((CurD & 0x4000) ? -2 : 2) * Vol;
 		break;
 	case 2:	freq = Val & 0xF;
@@ -517,14 +517,14 @@ inline void	Write (int Reg, unsigned char Val)
 		break;
 	case 3:	if (Enabled)
 		{
-			Race::Noise_timer1 = LengthCounts[(Val >> 3) & 0x1F];
-			Race::Noise_timer2 = Timer;
+			Race::Noise_LengthCtr1 = LengthCounts[(Val >> 3) & 0x1F];
+			Race::Noise_LengthCtr2 = LengthCtr;
 		}
 		EnvClk = TRUE;
 		break;
 	case 4:	Enabled = Val ? TRUE : FALSE;
 		if (!Enabled)
-			Timer = 0;
+			LengthCtr = 0;
 		break;
 	}
 }
@@ -536,7 +536,7 @@ inline void	Run (void)
 		if (datatype)
 			CurD = (CurD << 1) | (((CurD >> 14) ^ (CurD >> 8)) & 0x1);
 		else	CurD = (CurD << 1) | (((CurD >> 14) ^ (CurD >> 13)) & 0x1);
-		if (Timer)
+		if (LengthCtr)
 			Pos = ((CurD & 0x4000) ? -2 : 2) * Vol;
 	}
 }
@@ -556,13 +556,13 @@ inline void	QuarterFrame (void)
 		else	Envelope = wavehold ? 0xF : 0x0;
 	}
 	Vol = envelope ? volume : Envelope;
-	if (Timer)
+	if (LengthCtr)
 		Pos = ((CurD & 0x4000) ? -2 : 2) * Vol;
 }
 inline void	HalfFrame (void)
 {
-	if (Timer && !wavehold)
-		Timer--;
+	if (LengthCtr && !wavehold)
+		LengthCtr--;
 }
 } // namespace Noise
 
@@ -773,35 +773,35 @@ inline void	Run (void)
 void	Race::Run (void)
 {
 	Square0::wavehold = Square0_wavehold;
-	if (Square0_timer1)
+	if (Square0_LengthCtr1)
 	{
-		if (Square0::Timer == Square0_timer2)
-			Square0::Timer = Square0_timer1;
-		Square0_timer1 = 0;
+		if (Square0::LengthCtr == Square0_LengthCtr2)
+			Square0::LengthCtr = Square0_LengthCtr1;
+		Square0_LengthCtr1 = 0;
 	}
 
 	Square1::wavehold = Square1_wavehold;
-	if (Square1_timer1)
+	if (Square1_LengthCtr1)
 	{
-		if (Square1::Timer == Square1_timer2)
-			Square1::Timer = Square1_timer1;
-		Square1_timer1 = 0;
+		if (Square1::LengthCtr == Square1_LengthCtr2)
+			Square1::LengthCtr = Square1_LengthCtr1;
+		Square1_LengthCtr1 = 0;
 	}
 
 	Triangle::wavehold = Triangle_wavehold;
-	if (Triangle_timer1)
+	if (Triangle_LengthCtr1)
 	{
-		if (Triangle::Timer == Triangle_timer2)
-			Triangle::Timer = Triangle_timer1;
-		Triangle_timer1 = 0;
+		if (Triangle::LengthCtr == Triangle_LengthCtr2)
+			Triangle::LengthCtr = Triangle_LengthCtr1;
+		Triangle_LengthCtr1 = 0;
 	}
 
 	Noise::wavehold = Noise_wavehold;
-	if (Noise_timer1)
+	if (Noise_LengthCtr1)
 	{
-		if (Noise::Timer == Noise_timer2)
-			Noise::Timer = Noise_timer1;
-		Noise_timer1 = 0;
+		if (Noise::LengthCtr == Noise_LengthCtr2)
+			Noise::LengthCtr = Noise_LengthCtr1;
+		Noise_LengthCtr1 = 0;
 	}
 }
 
@@ -851,10 +851,10 @@ void	WriteReg (int Addr, unsigned char Val)
 unsigned char	Read4015 (void)
 {
 	unsigned char result =
-		((          Square0::Timer) ? 0x01 : 0) |
-		((          Square1::Timer) ? 0x02 : 0) |
-		((         Triangle::Timer) ? 0x04 : 0) |
-		((            Noise::Timer) ? 0x08 : 0) |
+		((      Square0::LengthCtr) ? 0x01 : 0) |
+		((      Square1::LengthCtr) ? 0x02 : 0) |
+		((     Triangle::LengthCtr) ? 0x04 : 0) |
+		((        Noise::LengthCtr) ? 0x08 : 0) |
 		((         DPCM::LengthCtr) ? 0x10 : 0) |
 		((CPU::WantIRQ & IRQ_FRAME) ? 0x40 : 0) |
 		((CPU::WantIRQ &  IRQ_DPCM) ? 0x80 : 0);
@@ -1119,7 +1119,7 @@ int	Save (FILE *out)
 
 	writeByte(Regs[0x01]);		//	uint8		Last value written to $4001
 	writeWord(Square0::freq);	//	uint16		Square0 frequency
-	writeByte(Square0::Timer);	//	uint8		Square0 timer
+	writeByte(Square0::LengthCtr);	//	uint8		Square0 timer
 	writeByte(Square0::CurD);	//	uint8		Square0 duty cycle pointer
 	tpc = (Square0::EnvClk ? 0x2 : 0x0) | (Square0::SwpClk ? 0x1 : 0x0);
 	writeByte(tpc);			//	uint8		Boolean flags for whether Square0 envelope(2)/sweep(1) needs a reload
@@ -1131,7 +1131,7 @@ int	Save (FILE *out)
 
 	writeByte(Regs[0x05]);		//	uint8		Last value written to $4005
 	writeWord(Square1::freq);	//	uint16		Square1 frequency
-	writeByte(Square1::Timer);	//	uint8		Square1 timer
+	writeByte(Square1::LengthCtr);	//	uint8		Square1 timer
 	writeByte(Square1::CurD);	//	uint8		Square1 duty cycle pointer
 	tpc = (Square1::EnvClk ? 0x2 : 0x0) | (Square1::SwpClk ? 0x1 : 0x0);
 	writeByte(tpc);			//	uint8		Boolean flags for whether Square1 envelope(2)/sweep(1) needs a reload
@@ -1142,7 +1142,7 @@ int	Save (FILE *out)
 	writeByte(Regs[0x04]);		//	uint8		Last value written to $4004
 
 	writeWord(Triangle::freq);	//	uint16		Triangle frequency
-	writeByte(Triangle::Timer);	//	uint8		Triangle timer
+	writeByte(Triangle::LengthCtr);	//	uint8		Triangle timer
 	writeByte(Triangle::CurD);	//	uint8		Triangle duty cycle pointer
 	writeByte(Triangle::LinClk);	//	uint8		Boolean flag for whether linear counter needs reload
 	writeByte(Triangle::LinCtr);	//	uint8		Triangle linear counter
@@ -1150,7 +1150,7 @@ int	Save (FILE *out)
 	writeByte(Regs[0x08]);		//	uint8		Last value written to $4008
 
 	writeByte(Regs[0x0E]);		//	uint8		Last value written to $400E
-	writeByte(Noise::Timer);	//	uint8		Noise timer
+	writeByte(Noise::LengthCtr);	//	uint8		Noise timer
 	writeWord(Noise::CurD);		//	uint16		Noise duty cycle pointer
 	writeByte(Noise::EnvClk);	//	uint8		Boolean flag for whether Noise envelope needs a reload
 	writeByte(Noise::EnvCtr);	//	uint8		Noise envelope counter
@@ -1193,7 +1193,7 @@ int	Load (FILE *in)
 	readByte(tpc);			//	uint8		Last value written to $4001
 	WriteReg(0x001, tpc);
 	readWord(Square0::freq);	//	uint16		Square0 frequency
-	readByte(Square0::Timer);	//	uint8		Square0 timer
+	readByte(Square0::LengthCtr);	//	uint8		Square0 timer
 	readByte(Square0::CurD);	//	uint8		Square0 duty cycle pointer
 	readByte(tpc);			//	uint8		Boolean flags for whether Square0 envelope(2)/sweep(1) needs a reload
 	Square0::EnvClk = (tpc & 0x2);
@@ -1208,7 +1208,7 @@ int	Load (FILE *in)
 	readByte(tpc);			//	uint8		Last value written to $4005
 	WriteReg(0x005, tpc);
 	readWord(Square1::freq);	//	uint16		Square1 frequency
-	readByte(Square1::Timer);	//	uint8		Square1 timer
+	readByte(Square1::LengthCtr);	//	uint8		Square1 timer
 	readByte(Square1::CurD);	//	uint8		Square1 duty cycle pointer
 	readByte(tpc);			//	uint8		Boolean flags for whether Square1 envelope(2)/sweep(1) needs a reload
 	Square1::EnvClk = (tpc & 0x2);
@@ -1221,7 +1221,7 @@ int	Load (FILE *in)
 	WriteReg(0x004, tpc);
 
 	readWord(Triangle::freq);	//	uint16		Triangle frequency
-	readByte(Triangle::Timer);	//	uint8		Triangle timer
+	readByte(Triangle::LengthCtr);	//	uint8		Triangle timer
 	readByte(Triangle::CurD);	//	uint8		Triangle duty cycle pointer
 	readByte(Triangle::LinClk);	//	uint8		Boolean flag for whether linear counter needs reload
 	readByte(Triangle::LinCtr);	//	uint8		Triangle linear counter
@@ -1231,7 +1231,7 @@ int	Load (FILE *in)
 
 	readByte(tpc);			//	uint8		Last value written to $400E
 	WriteReg(0x00E, tpc);
-	readByte(Noise::Timer);		//	uint8		Noise timer
+	readByte(Noise::LengthCtr);	//	uint8		Noise timer
 	readWord(Noise::CurD);		//	uint16		Noise duty cycle pointer
 	readByte(Noise::EnvClk);	//	uint8		Boolean flag for whether Noise envelope needs a reload
 	readByte(Noise::EnvCtr);	//	uint8		Noise envelope counter
