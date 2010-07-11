@@ -88,7 +88,8 @@ __forceinline void	RunCycle (void)
 #define	MemGetCode	MemGet
 unsigned char	__fastcall	MemGet (unsigned int Addr)
 {
-	static int buf;
+	int buf;
+
 	if (PCMCycles)
 	{
 		// zero out PCMCycles so we don't recurse back into this case during the following fetches
@@ -112,26 +113,23 @@ unsigned char	__fastcall	MemGet (unsigned int Addr)
 	}
 
 	RunCycle();
-
+	// avoid a function call if possible - if it's ReadPRG, then run it inline
 	if (ReadHandler[(Addr >> 12) & 0xF] == ReadPRG)
 	{
 		if (Readable[(Addr >> 12) & 0xF])
 			buf = PRGPointer[(Addr >> 12) & 0xF][Addr & 0xFFF];
 		else	buf = -1;
-		if (buf != -1)
-			LastRead = (unsigned char)buf;
-		return LastRead;
 	}
-	buf = ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF);
+	else	buf = ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF);
 	if (buf != -1)
 		LastRead = (unsigned char)buf;
 	return LastRead;
 }
 void	__fastcall	MemSet (unsigned int Addr, unsigned char Val)
 {
-	RunCycle();
 	if (PCMCycles)
 		PCMCycles--;
+	RunCycle();
 	WriteHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF, Val);
 }
 __forceinline void	Push (unsigned char Val)
