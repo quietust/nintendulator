@@ -575,7 +575,25 @@ __forceinline void	IN_BRANCH (BOOL Condition)
 {
 	if (Condition)
 	{
+		// If an interrupt occurs during the final cycle of a non-pagecrossing branch
+		// then it will be ignored until the next instruction completes
+#ifndef	NSFPLAYER
+		BOOL SkipNMI = FALSE;
+#endif	/* !NSFPLAYER */
+		BOOL SkipIRQ = FALSE;
+#ifndef	NSFPLAYER
+		if (WantNMI && !LastNMI)
+			SkipNMI = TRUE;
+#endif	/* !NSFPLAYER */
+		if (WantIRQ && !LastIRQ)
+			SkipIRQ = TRUE;
 		MemGet(PC);
+#ifndef	NSFPLAYER
+		if (SkipNMI)
+			LastNMI = FALSE;
+#endif	/* !NSFPLAYER */
+		if (SkipIRQ)
+			LastIRQ = FALSE;
 		__asm
 		{
 			mov	al,BranchOffset
