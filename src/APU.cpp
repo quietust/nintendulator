@@ -661,6 +661,8 @@ inline void	Run (void)
 	{
 		fetching = TRUE;
 		CPU::PCMCycles = 4;
+		// decrement LengthCtr now, so $4015 reads are updated in time
+		LengthCtr--;
 	}
 }
 
@@ -671,7 +673,7 @@ void	Fetch (void)
 	fetching = FALSE;
 	if (++CurAddr == 0x10000)
 		CurAddr = 0x8000;
-	if (!--LengthCtr)
+	if (!LengthCtr)
 	{
 		if (wavehold)
 		{
