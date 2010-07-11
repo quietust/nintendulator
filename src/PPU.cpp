@@ -574,6 +574,14 @@ __inline void	RunNoSkip (int NumTicks)
 #endif	/* !ACCURATE_SPRITES */
 				ZeroMemory(TileData, sizeof(TileData));
 			}
+		}
+		else if (Clockticks == 304)
+		{
+			if ((IsRendering) && (SLnum == -1))
+				VRAMAddr = IntReg;
+		}
+		else if (Clockticks == 338)
+		{
 			if (SLnum == -1)
 			{
 				if ((ShortSL) && (IsRendering) && (!IsPAL))
@@ -581,11 +589,6 @@ __inline void	RunNoSkip (int NumTicks)
 				else	EndSLTicks = 341;
 			}
 			else	EndSLTicks = 341;
-		}
-		else if (Clockticks == 304)
-		{
-			if ((IsRendering) && (SLnum == -1))
-				VRAMAddr = IntReg;
 		}
 		else if (Clockticks == EndSLTicks)
 		{
@@ -908,6 +911,14 @@ __inline void	RunSkip (int NumTicks)
 				if (Spr0InLine)
 					ZeroMemory(TileData, sizeof(TileData));
 			}
+		}
+		else if (Clockticks == 304)
+		{
+			if ((IsRendering) && (SLnum == -1))
+				VRAMAddr = IntReg;
+		}
+		else if (Clockticks == 338)
+		{
 			if (SLnum == -1)
 			{
 				if ((ShortSL) && (IsRendering) && (!IsPAL))
@@ -915,11 +926,6 @@ __inline void	RunSkip (int NumTicks)
 				else	EndSLTicks = 341;
 			}
 			else	EndSLTicks = 341;
-		}
-		else if (Clockticks == 304)
-		{
-			if ((IsRendering) && (SLnum == -1))
-				VRAMAddr = IntReg;
 		}
 		else if (Clockticks == EndSLTicks)
 		{
