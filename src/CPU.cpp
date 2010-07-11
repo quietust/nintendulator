@@ -196,9 +196,22 @@ __forceinline void	DoIRQ (void)
 	JoinFlags();
 	Push(P & 0xEF);
 	FI = 1;
-
+#ifndef	NSFPLAYER
+	if (WantNMI)
+	{
+		WantNMI = FALSE;
+		PCL = MemGet(0xFFFA);
+		PCH = MemGet(0xFFFB);
+	}
+	else
+	{
+		PCL = MemGet(0xFFFE);
+		PCH = MemGet(0xFFFF);
+	}
+#else	/* NSFPLAYER */
 	PCL = MemGet(0xFFFE);
 	PCH = MemGet(0xFFFF);
+#endif	/* !NSFPLAYER */
 #ifdef	ENABLE_DEBUGGER
 	GotInterrupt = INTERRUPT_IRQ;
 #endif	/* ENABLE_DEBUGGER */
