@@ -27,9 +27,6 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				AssemblerOutput="2"
-				AssemblerListingLocation="$(IntDir)/"
-				ObjectFile="$(IntDir)/"
-				ProgramDataBaseFileName="$(IntDir)/"
 				WarningLevel="4"
 				DebugInformationFormat="4"/>
 			<Tool
@@ -37,12 +34,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile="$(OutDir)/in_nintendulator.dll"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/in_nintendulator.pdb"
-				ImportLibrary="$(OutDir)/in_nintendulator.lib"
-				TargetMachine="1"/>
+				GenerateDebugInformation="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
@@ -90,20 +82,13 @@
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				AssemblerOutput="2"
-				AssemblerListingLocation="$(IntDir)/"
-				ObjectFile="$(IntDir)/"
-				ProgramDataBaseFileName="$(IntDir)/"
 				WarningLevel="4"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile="$(OutDir)/in_nintendulator.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				ImportLibrary="$(OutDir)/in_nintendulator.lib"
-				TargetMachine="1"/>
+				LinkIncremental="1"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -148,9 +133,6 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				AssemblerOutput="2"
-				AssemblerListingLocation="$(IntDir)/"
-				ObjectFile="$(IntDir)/"
-				ProgramDataBaseFileName="$(IntDir)/"
 				WarningLevel="4"
 				DebugInformationFormat="4"/>
 			<Tool
@@ -158,12 +140,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile="$(OutDir)/in_nintendulator.dll"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/in_nintendulator.pdb"
-				ImportLibrary="$(OutDir)/in_nintendulator.lib"
-				TargetMachine="1"/>
+				GenerateDebugInformation="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
@@ -211,20 +188,13 @@
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				AssemblerOutput="2"
-				AssemblerListingLocation="$(IntDir)/"
-				ObjectFile="$(IntDir)/"
-				ProgramDataBaseFileName="$(IntDir)/"
 				WarningLevel="4"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile="$(OutDir)/in_nintendulator.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				ImportLibrary="$(OutDir)/in_nintendulator.lib"
-				TargetMachine="1"/>
+				LinkIncremental="1"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"

@@ -27,9 +27,6 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				AssemblerOutput="2"
-				AssemblerListingLocation="$(IntDir)/"
-				ObjectFile="$(IntDir)/"
-				ProgramDataBaseFileName="$(IntDir)/"
 				WarningLevel="4"
 				DebugInformationFormat="4"
 				CallingConvention="1"/>
@@ -38,12 +35,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
-				OutputFile="$(OutDir)/Nintendulator.exe"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/Nintendulator.pdb"
-				SubSystem="2"
-				TargetMachine="1"/>
+				GenerateDebugInformation="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
@@ -59,9 +51,7 @@
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				ResourceOutputFileName="$(IntDir)/Nintendulator.res"/>
+				Name="VCResourceCompilerTool"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -92,9 +82,6 @@
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				AssemblerOutput="2"
-				AssemblerListingLocation="$(IntDir)/"
-				ObjectFile="$(IntDir)/"
-				ProgramDataBaseFileName="$(IntDir)/"
 				WarningLevel="4"
 				CallingConvention="1"/>
 			<Tool
@@ -102,11 +89,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
-				OutputFile="$(OutDir)/Nintendulator.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				SubSystem="2"
-				TargetMachine="1"/>
+				LinkIncremental="1"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -122,9 +105,7 @@
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				ResourceOutputFileName="$(IntDir)/Nintendulator.res"/>
+				Name="VCResourceCompilerTool"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -151,9 +132,6 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				AssemblerOutput="2"
-				AssemblerListingLocation="$(IntDir)/"
-				ObjectFile="$(IntDir)/"
-				ProgramDataBaseFileName="$(IntDir)/"
 				WarningLevel="4"
 				DebugInformationFormat="4"
 				CallingConvention="1"/>
@@ -162,12 +140,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
-				OutputFile="$(OutDir)/Nintendulator.exe"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/Nintendulator.pdb"
-				SubSystem="2"
-				TargetMachine="1"/>
+				GenerateDebugInformation="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="_DEBUG"
@@ -183,9 +156,7 @@
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				ResourceOutputFileName="$(IntDir)/Nintendulator.res"/>
+				Name="VCResourceCompilerTool"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -216,9 +187,6 @@
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				AssemblerOutput="2"
-				AssemblerListingLocation="$(IntDir)/"
-				ObjectFile="$(IntDir)/"
-				ProgramDataBaseFileName="$(IntDir)/"
 				WarningLevel="4"
 				CallingConvention="1"/>
 			<Tool
@@ -226,11 +194,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
-				OutputFile="$(OutDir)/Nintendulator.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				SubSystem="2"
-				TargetMachine="1"/>
+				LinkIncremental="1"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -246,9 +210,7 @@
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				ResourceOutputFileName="$(IntDir)/Nintendulator.res"/>
+				Name="VCResourceCompilerTool"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
