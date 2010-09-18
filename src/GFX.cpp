@@ -562,8 +562,12 @@ void	GetCursorPos (POINT *pos)
 		RECT rect;
 		ScreenToClient(hMainWnd, pos);
 		GetClientRect(hMainWnd, &rect);
-		pos->x = pos->x * 256 / (rect.right - rect.left);
-		pos->y = pos->y * 240 / (rect.bottom - rect.top);
+		if (rect.left == rect.right)
+			pos->x = 0;
+		else	pos->x = pos->x * 256 / (rect.right - rect.left);
+		if (rect.top == rect.bottom)
+			pos->y = 0;
+		else	pos->y = pos->y * 240 / (rect.bottom - rect.top);
 	}
 	
 }
