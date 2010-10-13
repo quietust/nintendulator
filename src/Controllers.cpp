@@ -1019,63 +1019,28 @@ BOOL	IsPressed (int Button)
 		{	// POV trigger (8-button mode)
 			if (POVAxis)
 				return FALSE;
-			switch (Button & 0x1F)
+			int povNum = (Button >> 3) & 0x3;
+			switch (Button & 0x7)
 			{
-			case 0x00:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 33750) || (JoyState[DevNum].rgdwPOV[0] <  2250)) && (JoyState[DevNum].rgdwPOV[0] != -1)) ? TRUE : FALSE;	break;
-			case 0x01:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] >  2250) && (JoyState[DevNum].rgdwPOV[0] <  6750))) ? TRUE : FALSE;	break;
-			case 0x02:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] >  6750) && (JoyState[DevNum].rgdwPOV[0] < 11250))) ? TRUE : FALSE;	break;
-			case 0x03:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 11250) && (JoyState[DevNum].rgdwPOV[0] < 15750))) ? TRUE : FALSE;	break;
-			case 0x04:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 15750) && (JoyState[DevNum].rgdwPOV[0] < 20250))) ? TRUE : FALSE;	break;
-			case 0x05:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 20250) && (JoyState[DevNum].rgdwPOV[0] < 24750))) ? TRUE : FALSE;	break;
-			case 0x06:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 24750) && (JoyState[DevNum].rgdwPOV[0] < 29250))) ? TRUE : FALSE;	break;
-			case 0x07:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 29250) && (JoyState[DevNum].rgdwPOV[0] < 33750))) ? TRUE : FALSE;	break;
-			case 0x08:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 33750) || (JoyState[DevNum].rgdwPOV[1] <  2250)) && (JoyState[DevNum].rgdwPOV[1] != -1)) ? TRUE : FALSE;	break;
-			case 0x09:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] >  2250) && (JoyState[DevNum].rgdwPOV[1] <  6750))) ? TRUE : FALSE;	break;
-			case 0x0A:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] >  6750) && (JoyState[DevNum].rgdwPOV[1] < 11250))) ? TRUE : FALSE;	break;
-			case 0x0B:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 11250) && (JoyState[DevNum].rgdwPOV[1] < 15750))) ? TRUE : FALSE;	break;
-			case 0x0C:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 15750) && (JoyState[DevNum].rgdwPOV[1] < 20250))) ? TRUE : FALSE;	break;
-			case 0x0D:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 20250) && (JoyState[DevNum].rgdwPOV[1] < 24750))) ? TRUE : FALSE;	break;
-			case 0x0E:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 24750) && (JoyState[DevNum].rgdwPOV[1] < 29250))) ? TRUE : FALSE;	break;
-			case 0x0F:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 29250) && (JoyState[DevNum].rgdwPOV[1] < 33750))) ? TRUE : FALSE;	break;
-			case 0x10:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 33750) || (JoyState[DevNum].rgdwPOV[2] <  2250)) && (JoyState[DevNum].rgdwPOV[2] != -1)) ? TRUE : FALSE;	break;
-			case 0x11:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] >  2250) && (JoyState[DevNum].rgdwPOV[2] <  6750))) ? TRUE : FALSE;	break;
-			case 0x12:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] >  6750) && (JoyState[DevNum].rgdwPOV[2] < 11250))) ? TRUE : FALSE;	break;
-			case 0x13:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 11250) && (JoyState[DevNum].rgdwPOV[2] < 15750))) ? TRUE : FALSE;	break;
-			case 0x14:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 15750) && (JoyState[DevNum].rgdwPOV[2] < 20250))) ? TRUE : FALSE;	break;
-			case 0x15:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 20250) && (JoyState[DevNum].rgdwPOV[2] < 24750))) ? TRUE : FALSE;	break;
-			case 0x16:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 24750) && (JoyState[DevNum].rgdwPOV[2] < 29250))) ? TRUE : FALSE;	break;
-			case 0x17:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 29250) && (JoyState[DevNum].rgdwPOV[2] < 33750))) ? TRUE : FALSE;	break;
-			case 0x18:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 33750) || (JoyState[DevNum].rgdwPOV[3] <  2250)) && (JoyState[DevNum].rgdwPOV[3] != -1)) ? TRUE : FALSE;	break;
-			case 0x19:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] >  2250) && (JoyState[DevNum].rgdwPOV[3] <  6750))) ? TRUE : FALSE;	break;
-			case 0x1A:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] >  6750) && (JoyState[DevNum].rgdwPOV[3] < 11250))) ? TRUE : FALSE;	break;
-			case 0x1B:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 11250) && (JoyState[DevNum].rgdwPOV[3] < 15750))) ? TRUE : FALSE;	break;
-			case 0x1C:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 15750) && (JoyState[DevNum].rgdwPOV[3] < 20250))) ? TRUE : FALSE;	break;
-			case 0x1D:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 20250) && (JoyState[DevNum].rgdwPOV[3] < 24750))) ? TRUE : FALSE;	break;
-			case 0x1E:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 24750) && (JoyState[DevNum].rgdwPOV[3] < 29250))) ? TRUE : FALSE;	break;
-			case 0x1F:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 29250) && (JoyState[DevNum].rgdwPOV[3] < 33750))) ? TRUE : FALSE;	break;
-			default:	return FALSE;
+			case 0x00:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 33750) || (JoyState[DevNum].rgdwPOV[povNum] <  2250)) && (JoyState[DevNum].rgdwPOV[povNum] != -1)) ? TRUE : FALSE;	break;
+			case 0x01:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] >  2250) && (JoyState[DevNum].rgdwPOV[povNum] <  6750))) ? TRUE : FALSE;	break;
+			case 0x02:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] >  6750) && (JoyState[DevNum].rgdwPOV[povNum] < 11250))) ? TRUE : FALSE;	break;
+			case 0x03:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 11250) && (JoyState[DevNum].rgdwPOV[povNum] < 15750))) ? TRUE : FALSE;	break;
+			case 0x04:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 15750) && (JoyState[DevNum].rgdwPOV[povNum] < 20250))) ? TRUE : FALSE;	break;
+			case 0x05:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 20250) && (JoyState[DevNum].rgdwPOV[povNum] < 24750))) ? TRUE : FALSE;	break;
+			case 0x06:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 24750) && (JoyState[DevNum].rgdwPOV[povNum] < 29250))) ? TRUE : FALSE;	break;
+			case 0x07:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 29250) && (JoyState[DevNum].rgdwPOV[povNum] < 33750))) ? TRUE : FALSE;	break;
 			}
 		}
 		else if ((Button & 0xE0) == 0xE0)
 		{	// POV trigger (axis mode)
+			int povNum = (Button >> 2) & 0x3;
 			switch (Button & 0x0F)
 			{
-			case 0x0:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 29250) || (JoyState[DevNum].rgdwPOV[0] <  6750)) && (JoyState[DevNum].rgdwPOV[0] != -1)) ? TRUE : FALSE;	break;
-			case 0x1:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] >  2250) && (JoyState[DevNum].rgdwPOV[0] < 15750))) ? TRUE : FALSE;	break;
-			case 0x2:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 11250) && (JoyState[DevNum].rgdwPOV[0] < 24750))) ? TRUE : FALSE;	break;
-			case 0x3:	return ((POVFlags[DevNum] & (1 << 0)) && ((JoyState[DevNum].rgdwPOV[0] > 20250) && (JoyState[DevNum].rgdwPOV[0] < 33750))) ? TRUE : FALSE;	break;
-			case 0x4:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 29250) || (JoyState[DevNum].rgdwPOV[1] <  6750)) && (JoyState[DevNum].rgdwPOV[1] != -1)) ? TRUE : FALSE;	break;
-			case 0x5:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] >  2250) && (JoyState[DevNum].rgdwPOV[1] < 15750))) ? TRUE : FALSE;	break;
-			case 0x6:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 11250) && (JoyState[DevNum].rgdwPOV[1] < 24750))) ? TRUE : FALSE;	break;
-			case 0x7:	return ((POVFlags[DevNum] & (1 << 1)) && ((JoyState[DevNum].rgdwPOV[1] > 20250) && (JoyState[DevNum].rgdwPOV[1] < 33750))) ? TRUE : FALSE;	break;
-			case 0x8:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 29250) || (JoyState[DevNum].rgdwPOV[2] <  6750)) && (JoyState[DevNum].rgdwPOV[2] != -1)) ? TRUE : FALSE;	break;
-			case 0x9:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] >  2250) && (JoyState[DevNum].rgdwPOV[2] < 15750))) ? TRUE : FALSE;	break;
-			case 0xA:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 11250) && (JoyState[DevNum].rgdwPOV[2] < 24750))) ? TRUE : FALSE;	break;
-			case 0xB:	return ((POVFlags[DevNum] & (1 << 2)) && ((JoyState[DevNum].rgdwPOV[2] > 20250) && (JoyState[DevNum].rgdwPOV[2] < 33750))) ? TRUE : FALSE;	break;
-			case 0xC:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 29250) || (JoyState[DevNum].rgdwPOV[3] <  6750)) && (JoyState[DevNum].rgdwPOV[3] != -1)) ? TRUE : FALSE;	break;
-			case 0xD:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] >  2250) && (JoyState[DevNum].rgdwPOV[3] < 15750))) ? TRUE : FALSE;	break;
-			case 0xE:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 11250) && (JoyState[DevNum].rgdwPOV[3] < 24750))) ? TRUE : FALSE;	break;
-			case 0xF:	return ((POVFlags[DevNum] & (1 << 3)) && ((JoyState[DevNum].rgdwPOV[3] > 20250) && (JoyState[DevNum].rgdwPOV[3] < 33750))) ? TRUE : FALSE;	break;
+			case 0x0:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 29250) || (JoyState[DevNum].rgdwPOV[povNum] <  6750)) && (JoyState[DevNum].rgdwPOV[povNum] != -1)) ? TRUE : FALSE;	break;
+			case 0x1:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] >  2250) && (JoyState[DevNum].rgdwPOV[povNum] < 15750))) ? TRUE : FALSE;	break;
+			case 0x2:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 11250) && (JoyState[DevNum].rgdwPOV[povNum] < 24750))) ? TRUE : FALSE;	break;
+			case 0x3:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 20250) && (JoyState[DevNum].rgdwPOV[povNum] < 33750))) ? TRUE : FALSE;	break;
 			default:	return FALSE;
 			}
 		}
