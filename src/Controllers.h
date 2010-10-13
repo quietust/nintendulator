@@ -119,7 +119,7 @@ DEF_EXPCONT(FamilyBasicKeyboard)
 DEF_EXPCONT(AltKeyboard)
 DEF_EXPCONT(FamTrainer)
 DEF_EXPCONT(Tablet)
-#undef DEF_STDCONT
+#undef DEF_EXPCONT
 
 void	ExpPort_SetControllerType (ExpPort *&, EXPCONT_TYPE, int *);
 #define SET_EXPCONT(PORT,TYPE) ExpPort_SetControllerType(PORT, TYPE, PORT##_Buttons)
