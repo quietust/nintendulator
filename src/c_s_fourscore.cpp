@@ -184,10 +184,10 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		case IDOK:
 			EndDialog(hDlg, 1);
 			break;
-		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort1, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
-		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort2, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
-		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort3, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT3, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
-		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort4, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT4, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); AllocMov2(Port2); }	break;
+		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort1, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); }	break;
+		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort2, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_GETCURSEL, 0, 0)); AllocMov2(Port2); }	break;
+		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort3, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT3, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); }	break;
+		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort4, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT4, CB_GETCURSEL, 0, 0)); AllocMov2(Port2); }	break;
 		case IDC_CONT_CPORT1:	FSPort1->Config(hDlg);	break;
 		case IDC_CONT_CPORT2:	FSPort2->Config(hDlg);	break;
 		case IDC_CONT_CPORT3:	FSPort3->Config(hDlg);	break;
