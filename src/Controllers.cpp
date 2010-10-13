@@ -732,6 +732,27 @@ void	UnAcquire (void)
 	MaskKeyboard = 0;
 }
 
+void	ClearKeyState (void)
+{
+	ZeroMemory(KeyState, sizeof(KeyState));
+}
+
+void	ClearMouseState (void)
+{
+	ZeroMemory(&MouseState, sizeof(MouseState));
+}
+
+void	ClearJoyState (int dev)
+{
+	ZeroMemory(&JoyState[dev], sizeof(DIJOYSTATE2));
+	// axes need to be initialized to 0x8000
+	JoyState[dev].lX = JoyState[dev].lY = JoyState[dev].lZ = 0x8000;
+	JoyState[dev].lRx = JoyState[dev].lRy = JoyState[dev].lRz = 0x8000;
+	JoyState[dev].rglSlider[0] = JoyState[dev].rglSlider[1] = 0x8000;
+	// and POV hats need to be initialized to -1
+	JoyState[dev].rgdwPOV[0] = JoyState[dev].rgdwPOV[1] = JoyState[dev].rgdwPOV[2] = JoyState[dev].rgdwPOV[3] = (DWORD)-1;
+}
+
 void	UpdateInput (void)
 {
 	HRESULT hr;
@@ -743,7 +764,7 @@ void	UpdateInput (void)
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
 			DIDevices[0]->Acquire();
-			ZeroMemory(KeyState, sizeof(KeyState));
+			ClearKeyState();
 		}
 	}
 	if (DeviceUsed[1])
@@ -752,7 +773,7 @@ void	UpdateInput (void)
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
 			DIDevices[1]->Acquire();
-			ZeroMemory(&MouseState, sizeof(MouseState));
+			ClearMouseState();
 		}
 	}
 	for (i = 2; i < NumDevices; i++)
@@ -762,12 +783,12 @@ void	UpdateInput (void)
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 			{
 				DIDevices[i]->Acquire();
-				ZeroMemory(&JoyState[i], sizeof(DIJOYSTATE2));
+				ClearJoyState(i);
 				continue;
 			}
 			hr = DIDevices[i]->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[i]);
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
-				ZeroMemory(&JoyState[i], sizeof(DIJOYSTATE2));
+				ClearJoyState(i);
 		}
 
 	if (Movie::Mode & MOV_PLAY)
@@ -985,7 +1006,6 @@ BOOL	IsPressed (int Button)
 			case 0x3:	return ((AxisFlags[1] & (1 << AXIS_Y)) && (MouseState.lY > +1)) ? TRUE : FALSE;	break;
 			case 0x4:	return ((AxisFlags[1] & (1 << AXIS_Z)) && (MouseState.lZ < -1)) ? TRUE : FALSE;	break;
 			case 0x5:	return ((AxisFlags[1] & (1 << AXIS_Z)) && (MouseState.lZ > +1)) ? TRUE : FALSE;	break;
-			default:	return FALSE;
 			}
 		}
 		else	return (MouseState.rgbButtons[Button & 0x7] & 0x80) ? TRUE : FALSE;
@@ -1012,7 +1032,6 @@ BOOL	IsPressed (int Button)
 			case 0xD:	return ((AxisFlags[DevNum] & (1 << AXIS_S0)) && (JoyState[DevNum].rglSlider[0] > 0xC000)) ? TRUE : FALSE;	break;
 			case 0xE:	return ((AxisFlags[DevNum] & (1 << AXIS_S1)) && (JoyState[DevNum].rglSlider[1] < 0x4000)) ? TRUE : FALSE;	break;
 			case 0xF:	return ((AxisFlags[DevNum] & (1 << AXIS_S1)) && (JoyState[DevNum].rglSlider[1] > 0xC000)) ? TRUE : FALSE;	break;
-			default:	return FALSE;
 			}
 		}
 		else if ((Button & 0xE0) == 0xC0)
@@ -1045,6 +1064,8 @@ BOOL	IsPressed (int Button)
 		}
 		else	return (JoyState[DevNum].rgbButtons[Button & 0x7F] & 0x80) ? TRUE : FALSE;
 	}
+	// should never actually reach this point - this is just to make the compiler stop whining
+	return FALSE;
 }
 void	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButtons, int *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
