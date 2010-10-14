@@ -382,29 +382,31 @@ BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
 	HRESULT hr;
 	int DevNum = NumDevices;
-	if (SUCCEEDED(DirectInput->CreateDeviceEx(lpddi->guidInstance, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[DevNum], NULL)))
+	do
 	{
-		DIDEVCAPS caps;
-		if (FAILED(hr = DIDevices[DevNum]->SetDataFormat(&c_dfDIJoystick2)))
-			goto end;
-		if (FAILED(hr = DIDevices[DevNum]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
-			goto end;
-		caps.dwSize = sizeof(DIDEVCAPS);
-		if (FAILED(hr = DIDevices[DevNum]->GetCapabilities(&caps)))
-			goto end;
+		if (SUCCEEDED(DirectInput->CreateDeviceEx(lpddi->guidInstance, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[DevNum], NULL)))
+		{
+			DIDEVCAPS caps;
+			if (FAILED(hr = DIDevices[DevNum]->SetDataFormat(&c_dfDIJoystick2)))
+				break;
+			if (FAILED(hr = DIDevices[DevNum]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+				break;
+			caps.dwSize = sizeof(DIDEVCAPS);
+			if (FAILED(hr = DIDevices[DevNum]->GetCapabilities(&caps)))
+				break;
 
-		NumButtons[DevNum] = caps.dwButtons;
-		AxisFlags[DevNum] = 0;
-		POVFlags[DevNum] = 0;
-		DeviceName[DevNum] = _tcsdup(lpddi->tszProductName);
+			NumButtons[DevNum] = caps.dwButtons;
+			AxisFlags[DevNum] = 0;
+			POVFlags[DevNum] = 0;
+			DeviceName[DevNum] = _tcsdup(lpddi->tszProductName);
 
-		DIDevices[DevNum]->EnumObjects(EnumJoystickObjectsCallback, NULL, DIDFT_ALL);
-		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), lpddi->tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
-		NumDevices++;
-	}
-	return DIENUM_CONTINUE;
+			DIDevices[DevNum]->EnumObjects(EnumJoystickObjectsCallback, NULL, DIDFT_ALL);
+			EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), lpddi->tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
+			NumDevices++;
+		}
+		return DIENUM_CONTINUE;
+	} while (0);
 
-end:
 	DIDevices[DevNum]->Release();
 	DIDevices[DevNum] = NULL;
 	return hr;
@@ -414,31 +416,33 @@ BOOL	InitKeyboard (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(DirectInput->CreateDeviceEx(GUID_SysKeyboard, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[0], NULL)))
-		return FALSE;
-	if (FAILED(DIDevices[0]->SetDataFormat(&c_dfDIKeyboard)))
-		goto end;
-	if (FAILED(DIDevices[0]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
-		goto end;
+	do
+	{
+		if (FAILED(DirectInput->CreateDeviceEx(GUID_SysKeyboard, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[0], NULL)))
+			return FALSE;
+		if (FAILED(DIDevices[0]->SetDataFormat(&c_dfDIKeyboard)))
+			break;
+		if (FAILED(DIDevices[0]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+			break;
 
-	caps.dwSize = sizeof(DIDEVCAPS);
-	if (FAILED(DIDevices[0]->GetCapabilities(&caps)))
-		goto end;
+		caps.dwSize = sizeof(DIDEVCAPS);
+		if (FAILED(DIDevices[0]->GetCapabilities(&caps)))
+			break;
 
-	inst.dwSize = sizeof(DIDEVICEINSTANCE);
-	if (FAILED(DIDevices[0]->GetDeviceInfo(&inst)))
-		goto end;
+		inst.dwSize = sizeof(DIDEVICEINSTANCE);
+		if (FAILED(DIDevices[0]->GetDeviceInfo(&inst)))
+			break;
 
-	NumButtons[0] = 256;	// normally, I would use caps.dwButtons
-	AxisFlags[0] = 0;	// no axes
-	POVFlags[0] = 0;	// no POV hats
-	DeviceName[0] = _tcsdup(inst.tszProductName);
+		NumButtons[0] = 256;	// normally, I would use caps.dwButtons
+		AxisFlags[0] = 0;	// no axes
+		POVFlags[0] = 0;	// no POV hats
+		DeviceName[0] = _tcsdup(inst.tszProductName);
 
-	DIDevices[0]->EnumObjects(EnumKeyboardObjectsCallback, NULL, DIDFT_ALL);
-	EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
-	return TRUE;
+		DIDevices[0]->EnumObjects(EnumKeyboardObjectsCallback, NULL, DIDFT_ALL);
+		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
+		return TRUE;
+	} while (0);
 
-end:
 	DIDevices[0]->Release();
 	DIDevices[0] = NULL;
 	return FALSE;
@@ -448,30 +452,32 @@ BOOL	InitMouse (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
-	if (FAILED(DirectInput->CreateDeviceEx(GUID_SysMouse, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[1], NULL)))
-		return FALSE;
-	if (FAILED(DIDevices[1]->SetDataFormat(&c_dfDIMouse2)))
-		goto end;
-	if (FAILED(DIDevices[1]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
-		goto end;
-	caps.dwSize = sizeof(DIDEVCAPS);
-	if (FAILED(DIDevices[1]->GetCapabilities(&caps)))
-		goto end;
+	do
+	{
+		if (FAILED(DirectInput->CreateDeviceEx(GUID_SysMouse, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[1], NULL)))
+			return FALSE;
+		if (FAILED(DIDevices[1]->SetDataFormat(&c_dfDIMouse2)))
+			break;
+		if (FAILED(DIDevices[1]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+			break;
+		caps.dwSize = sizeof(DIDEVCAPS);
+		if (FAILED(DIDevices[1]->GetCapabilities(&caps)))
+			break;
 
-	inst.dwSize = sizeof(DIDEVICEINSTANCE);
-	if (FAILED(DIDevices[1]->GetDeviceInfo(&inst)))
-		goto end;
+		inst.dwSize = sizeof(DIDEVICEINSTANCE);
+		if (FAILED(DIDevices[1]->GetDeviceInfo(&inst)))
+			break;
 
-	NumButtons[1] = caps.dwButtons;
-	AxisFlags[1] = 0;
-	POVFlags[1] = 0;
-	DeviceName[1] = _tcsdup(inst.tszProductName);
+		NumButtons[1] = caps.dwButtons;
+		AxisFlags[1] = 0;
+		POVFlags[1] = 0;
+		DeviceName[1] = _tcsdup(inst.tszProductName);
 
-	DIDevices[1]->EnumObjects(EnumMouseObjectsCallback, NULL, DIDFT_ALL);
-	EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
-	return TRUE;
+		DIDevices[1]->EnumObjects(EnumMouseObjectsCallback, NULL, DIDFT_ALL);
+		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
+		return TRUE;
+	} while (0);
 
-end:
 	DIDevices[1]->Release();
 	DIDevices[1] = NULL;
 	return FALSE;
@@ -876,8 +882,9 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 			}
 		}
 	}
+	while (1)
 	{
-waitrelease:
+		bool held = false;
 		if (DevNum == 0)
 			hr = dev->GetDeviceState(256, KeyState);
 		else if (DevNum == 1)
@@ -890,13 +897,29 @@ waitrelease:
 		// don't need to reset FirstAxis/LastAxis or FirstPOV/LastPOV, since they were set in the previous loop
 		for (i = 0; i < NumButtons[DevNum]; i++)
 			if (IsPressed((DevNum << 16) | i))
-				goto waitrelease;
+			{
+				held = true;
+				break;
+			}
+		if (held)
+			continue;
 		for (i = FirstAxis; i < LastAxis; i++)
 			if (IsPressed((DevNum << 16) | i))
-				goto waitrelease;
+			{
+				held = true;
+				break;
+			}
+		if (held)
+			continue;
 		for (i = FirstPOV; i < LastPOV; i++)
 			if (IsPressed((DevNum << 16) | i))
-				goto waitrelease;
+			{
+				held = true;
+				break;
+			}
+		if (held)
+			continue;
+		break;
 	}
 	dev->Unacquire();
 	if (FAILED(dev->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
