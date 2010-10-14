@@ -814,6 +814,8 @@ DWORD	WINAPI	Thread (void *param)
 	EI.DbgOut(_T("10 seconds emulated in %lu milliseconds"), (unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
 #else	/* !CPU_BENCHMARK */
 
+	Controllers::Acquire();
+
 	if ((!DoStop) && (SoundEnabled))
 		APU::SoundON();	// don't turn on sound if we're only stepping 1 instruction
 
@@ -860,6 +862,7 @@ DWORD	WINAPI	Thread (void *param)
 	}
 
 	APU::SoundOFF();
+	Controllers::UnAcquire();
 	Movie::ShowFrame();
 
 #endif	/* CPU_BENCHMARK */
@@ -907,8 +910,6 @@ void	LoadSettings (void)
 	unsigned long Size;
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
 	int PosX, PosY;
-
-	Controllers::UnAcquire();
 
 	// Load Defaults
 	SizeMult = 1;
@@ -1020,7 +1021,6 @@ void	LoadSettings (void)
 
 	SetWindowPos(hMainWnd, HWND_TOP, PosX, PosY, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	Controllers::Acquire();
 	UpdateInterface();
 }
 

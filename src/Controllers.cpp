@@ -262,10 +262,8 @@ INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 }
 void	OpenConfig (void)
 {
-	UnAcquire();
 	DialogBox(hInst, (LPCTSTR)IDD_CONTROLLERS, hMainWnd, ControllerProc);
 	SetDeviceUsed();
-	Acquire();
 }
 
 BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
@@ -528,13 +526,11 @@ void	Init (void)
 	DirectInput->EnumDevices(DIDEVTYPE_JOYSTICK, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES);
 
 	Movie::Mode = 0;
-	Acquire();
 }
 
 void	Release (void)
 {
 	int i, j;
-	UnAcquire();
 	delete Port1;	Port1 = NULL;
 	delete Port2;	Port2 = NULL;
 	delete FSPort1;	FSPort1 = NULL;
@@ -546,7 +542,6 @@ void	Release (void)
 	{
 		if (DIDevices[i])
 		{
-			DIDevices[i]->Unacquire();
 			DIDevices[i]->Release();
 			DIDevices[i] = NULL;
 		}
@@ -718,7 +713,7 @@ void	Acquire (void)
 {
 	int i;
 	for (i = 0; i < NumDevices; i++)
-		if (DIDevices[i])
+		if (DeviceUsed[i])
 			DIDevices[i]->Acquire();
 	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_ALTKEYBOARD))
 		MaskKeyboard = 1;
@@ -727,7 +722,7 @@ void	UnAcquire (void)
 {
 	int i;
 	for (i = 0; i < NumDevices; i++)
-		if (DIDevices[i])
+		if (DeviceUsed[i])
 			DIDevices[i]->Unacquire();
 	MaskKeyboard = 0;
 }
@@ -763,8 +758,8 @@ void	UpdateInput (void)
 		hr = DIDevices[0]->GetDeviceState(256, KeyState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
-			DIDevices[0]->Acquire();
 			ClearKeyState();
+			DIDevices[0]->Acquire();
 		}
 	}
 	if (DeviceUsed[1])
@@ -772,8 +767,8 @@ void	UpdateInput (void)
 		hr = DIDevices[1]->GetDeviceState(sizeof(DIMOUSESTATE2), &MouseState);
 		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 		{
-			DIDevices[1]->Acquire();
 			ClearMouseState();
+			DIDevices[1]->Acquire();
 		}
 	}
 	for (i = 2; i < NumDevices; i++)
@@ -782,8 +777,8 @@ void	UpdateInput (void)
 			hr = DIDevices[i]->Poll();
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 			{
-				DIDevices[i]->Acquire();
 				ClearJoyState(i);
+				DIDevices[i]->Acquire();
 				continue;
 			}
 			hr = DIDevices[i]->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[i]);
