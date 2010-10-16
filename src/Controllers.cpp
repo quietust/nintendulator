@@ -99,7 +99,7 @@ void    ExpPort_SetControllerType (ExpPort *&Port, EXPCONT_TYPE Type, int *butto
         case EXP_FAMI4PLAY:		Port = new ExpPort_Fami4Play(buttons);			break;
         case EXP_ARKANOIDPADDLE:	Port = new ExpPort_ArkanoidPaddle(buttons);		break;
         case EXP_FAMILYBASICKEYBOARD:	Port = new ExpPort_FamilyBasicKeyboard(buttons);	break;
-        case EXP_ALTKEYBOARD:		Port = new ExpPort_AltKeyboard(buttons);		break;
+        case EXP_SUBORKEYBOARD:		Port = new ExpPort_SuborKeyboard(buttons);		break;
         case EXP_FAMTRAINER:		Port = new ExpPort_FamTrainer(buttons);			break;
         case EXP_TABLET:		Port = new ExpPort_Tablet(buttons);			break;
         default:MessageBox(hMainWnd, _T("Error: selected invalid controller type for expansion port!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);	break;
@@ -112,7 +112,7 @@ void	ExpPort_SetMappings (void)
 	ExpPort_Mappings[EXP_FAMI4PLAY] = _T("Famicom 4-Player Adapter");
 	ExpPort_Mappings[EXP_ARKANOIDPADDLE] = _T("Famicom Arkanoid Paddle");
 	ExpPort_Mappings[EXP_FAMILYBASICKEYBOARD] = _T("Family Basic Keyboard");
-	ExpPort_Mappings[EXP_ALTKEYBOARD] = _T("Alternate Keyboard");
+	ExpPort_Mappings[EXP_SUBORKEYBOARD] = _T("Subor Keyboard");
 	ExpPort_Mappings[EXP_FAMTRAINER] = _T("Family Trainer");
 	ExpPort_Mappings[EXP_TABLET] = _T("Oeka Kids Tablet");
 }
@@ -711,7 +711,7 @@ void	SetDeviceUsed (void)
 	if ((Port1->Type == STD_ARKANOIDPADDLE) || (Port2->Type == STD_ARKANOIDPADDLE) || (PortExp->Type == EXP_ARKANOIDPADDLE))
 		DeviceUsed[1] = TRUE;
 
-	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_ALTKEYBOARD))
+	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_SUBORKEYBOARD))
 		DeviceUsed[0] = TRUE;
 }
 
@@ -721,7 +721,7 @@ void	Acquire (void)
 	for (i = 0; i < NumDevices; i++)
 		if (DeviceUsed[i])
 			DIDevices[i]->Acquire();
-	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_ALTKEYBOARD))
+	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_SUBORKEYBOARD))
 		MaskKeyboard = 1;
 }
 void	UnAcquire (void)

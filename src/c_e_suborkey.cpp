@@ -14,16 +14,16 @@
 namespace Controllers
 {
 #include <pshpack1.h>
-struct ExpPort_AltKeyboard_State
+struct ExpPort_SuborKeyboard_State
 {
 	unsigned char Column;
 	unsigned char Row;
 	unsigned char Keys[13];
 };
 #include <poppack.h>
-#define State ((ExpPort_AltKeyboard_State *)Data)
+#define State ((ExpPort_SuborKeyboard_State *)Data)
 
-void	ExpPort_AltKeyboard::Frame (unsigned char mode)
+void	ExpPort_SuborKeyboard::Frame (unsigned char mode)
 {
 	int row, col;
 	if (mode & MOV_PLAY)
@@ -39,11 +39,11 @@ void	ExpPort_AltKeyboard::Frame (unsigned char mode)
 			{DIK_INSERT, DIK_BACKSPACE, DIK_PGDN, DIK_RIGHT, DIK_F8, DIK_PGUP, DIK_DELETE, DIK_HOME},
 			{DIK_9, DIK_I, DIK_L, DIK_COMMA, DIK_F5, DIK_O, DIK_0, DIK_PERIOD},
 			{DIK_RBRACKET, DIK_RETURN, DIK_UP, DIK_LEFT, DIK_F7, DIK_LBRACKET, DIK_BACKSLASH, DIK_DOWN},
-			{DIK_Q, DIK_CAPITAL, DIK_Z, DIK_SYSRQ, DIK_ESCAPE, DIK_A, DIK_1, DIK_LCONTROL},
+			{DIK_Q, DIK_CAPITAL, DIK_Z, DIK_TAB, DIK_ESCAPE, DIK_A, DIK_1, DIK_LCONTROL},
 			{DIK_7, DIK_Y, DIK_K, DIK_M, DIK_F4, DIK_U, DIK_8, DIK_J},
-			{DIK_MINUS, DIK_SEMICOLON, DIK_APOSTROPHE, DIK_CAPITAL, DIK_F6, DIK_P, DIK_EQUALS, DIK_LSHIFT},
+			{DIK_MINUS, DIK_SEMICOLON, DIK_APOSTROPHE, DIK_SLASH, DIK_F6, DIK_P, DIK_EQUALS, DIK_LSHIFT},
 			{DIK_T, DIK_H, DIK_N, DIK_SPACE, DIK_F3, DIK_R, DIK_6, DIK_B},
-
+			// these only seem to be used in a further variant
 			{DIK_GRAVE, DIK_F10, DIK_F11, DIK_F12, DIK_ADD, DIK_SUBTRACT, DIK_MULTIPLY, DIK_DIVIDE},
 			{DIK_SCROLL, DIK_PAUSE, DIK_GRAVE, DIK_TAB, DIK_NUMPAD6, DIK_NUMPAD7, DIK_NUMPAD8, DIK_NUMPAD9},
 			{DIK_CAPITAL, DIK_SLASH, DIK_RSHIFT, DIK_LMENU, DIK_NUMPAD0, DIK_ADD, DIK_SUBTRACT, DIK_MULTIPLY},
@@ -57,9 +57,11 @@ void	ExpPort_AltKeyboard::Frame (unsigned char mode)
 				if (KeyState[keymap[row][col]] & 0x80)
 					State->Keys[row] |= 1 << col;
 		}
-		// special case
+		// special cases
 		if (KeyState[DIK_RSHIFT] & 0x80)
 			State->Keys[7] |= 0x80;
+		if (KeyState[DIK_RCONTROL] & 0x80)
+			State->Keys[5] |= 0x80;
 	}
 	if (mode & MOV_RECORD)
 	{
@@ -67,11 +69,11 @@ void	ExpPort_AltKeyboard::Frame (unsigned char mode)
 			MovData[row] = State->Keys[row];
 	}
 }
-unsigned char	ExpPort_AltKeyboard::Read1 (void)
+unsigned char	ExpPort_SuborKeyboard::Read1 (void)
 {
 	return 0;	// tape, not yet implemented
 }
-unsigned char	ExpPort_AltKeyboard::Read2 (void)
+unsigned char	ExpPort_SuborKeyboard::Read2 (void)
 {
 	unsigned char result = 0;
 	if (State->Row < 13)
@@ -83,7 +85,7 @@ unsigned char	ExpPort_AltKeyboard::Read2 (void)
 	return result ^ 0x1E;
 }
 
-void	ExpPort_AltKeyboard::Write (unsigned char Val)
+void	ExpPort_SuborKeyboard::Write (unsigned char Val)
 {
 	BOOL ResetKB = Val & 1;
 	BOOL SelColumn = Val & 2;
@@ -101,18 +103,18 @@ void	ExpPort_AltKeyboard::Write (unsigned char Val)
 		// tape, not yet implemented
 	}
 }
-void	ExpPort_AltKeyboard::Config (HWND hWnd)
+void	ExpPort_SuborKeyboard::Config (HWND hWnd)
 {
 	MessageBox(hWnd, _T("No configuration necessary!"), _T("Nintendulator"), MB_OK);
 }
-ExpPort_AltKeyboard::~ExpPort_AltKeyboard (void)
+ExpPort_SuborKeyboard::~ExpPort_SuborKeyboard (void)
 {
 	free(Data);
 	free(MovData);
 }
-ExpPort_AltKeyboard::ExpPort_AltKeyboard (int *buttons)
+ExpPort_SuborKeyboard::ExpPort_SuborKeyboard (int *buttons)
 {
-	Type = EXP_ALTKEYBOARD;
+	Type = EXP_SUBORKEYBOARD;
 	NumButtons = 0;
 	Buttons = buttons;
 	DataLen = sizeof(*State);
