@@ -84,11 +84,11 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	for (i = _tcslen(ProgPath); (i > 0) && (ProgPath[i] != _T('\\')); i--)
 		ProgPath[i] = 0;
 
-	// find our folder in Application Data, if it exists
-	if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, DataPath)))
+	// find our folder in My Documents, if it exists
+	if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, DataPath)))
 	{
 		// if we can't even find AppData, then there's a much bigger problem...
-		MessageBox(NULL, _T("FATAL: unable to locate Application Data folder for current user"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		MessageBox(NULL, _T("FATAL: unable to locate My Documents folder"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 	PathAppend(DataPath, _T("Nintendulator"));

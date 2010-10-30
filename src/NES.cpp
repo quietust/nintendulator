@@ -1075,47 +1075,21 @@ void	SaveSettings (void)
 	RegCloseKey(SettingsBase);
 }
 
-void	SetupDataPath (void)
+void	RelocateSaveData_Progdir (void)
 {
 	WIN32_FIND_DATA Data;
 	HANDLE Handle;
 
-	TCHAR path[MAX_PATH];
 	TCHAR filename[MAX_PATH];
 
-	// Create data subdirectories
-	// Savestates
-	_tcscpy(path, DataPath);
-	PathAppend(path, _T("States"));
-	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
-		CreateDirectory(path, NULL);
-
-	// SRAM data
-	_tcscpy(path, DataPath);
-	PathAppend(path, _T("SRAM"));
-	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
-		CreateDirectory(path, NULL);
-
-	// FDS disk changes
-	_tcscpy(path, DataPath);
-	PathAppend(path, _T("FDS"));
-	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
-		CreateDirectory(path, NULL);
-
-	// Debug dumps
-	_tcscpy(path, DataPath);
-	PathAppend(path, _T("Dumps"));
-	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
-		CreateDirectory(path, NULL);
-
 	// check if the program's builtin Saves directory is present
-	_tcscpy(path, ProgPath);
-	PathAppend(path, _T("Saves"));
-	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+	_tcscpy(filename, ProgPath);
+	PathAppend(filename, _T("Saves"));
+	if (GetFileAttributes(filename) == INVALID_FILE_ATTRIBUTES)
 		return;
 
 	// is it actually a directory?
-	if (!(GetFileAttributes(path) & FILE_ATTRIBUTE_DIRECTORY))
+	if (!(GetFileAttributes(filename) & FILE_ATTRIBUTE_DIRECTORY))
 		return;
 
 	// Relocate FDS disk changes
@@ -1209,10 +1183,151 @@ void	SetupDataPath (void)
 	}
 
 	// Finally, try to delete the old Saves directory entirely
-	_tcscpy(path, ProgPath);
-	PathAppend(path, _T("Saves"));
-	if (RemoveDirectory(path))
+	_tcscpy(filename, ProgPath);
+	PathAppend(filename, _T("Saves"));
+	if (RemoveDirectory(filename))
 		EI.DbgOut(_T("Savestate directory successfully relocated"));
 	else	MessageBox(NULL, _T("Nintendulator was unable to fully relocate your old savestates.\nPlease remove all remaining files from Nintendulator's \"Saves\" folder."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+}
+
+void	RelocateSaveData_Appdata (void)
+{
+	WIN32_FIND_DATA Data;
+	HANDLE Handle;
+
+	TCHAR oldPath[MAX_PATH];
+	TCHAR filename[MAX_PATH];
+
+	// look for our folder in Application Data, if it exists
+	if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, oldPath)))
+		return;
+	PathAppend(oldPath, _T("Nintendulator"));
+
+	// check if the Nintendulator folder exists in Application Data
+	if (GetFileAttributes(oldPath) == INVALID_FILE_ATTRIBUTES)
+		return;
+	if (!(GetFileAttributes(oldPath) & FILE_ATTRIBUTE_DIRECTORY))
+		return;
+
+	// Relocate FDS disk changes
+	_stprintf(filename, _T("%s\\FDS\\*"), oldPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%s\\FDS\\%s"), oldPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\FDS\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+	_tcscpy(filename, oldPath);
+	PathAppend(filename, _T("FDS"));
+	if ((GetFileAttributes(filename) != INVALID_FILE_ATTRIBUTES) && (GetFileAttributes(filename) & FILE_ATTRIBUTE_DIRECTORY))
+		RemoveDirectory(filename);
+
+	// Relocate SRAM data
+	_stprintf(filename, _T("%s\\SRAM\\*"), oldPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%s\\SRAM\\%s"), oldPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\SRAM\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+	_tcscpy(filename, oldPath);
+	PathAppend(filename, _T("SRAM"));
+	if ((GetFileAttributes(filename) != INVALID_FILE_ATTRIBUTES) && (GetFileAttributes(filename) & FILE_ATTRIBUTE_DIRECTORY))
+		RemoveDirectory(filename);
+
+	// Relocate Savestates
+	_stprintf(filename, _T("%s\\States\\*"), oldPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%s\\States\\%s"), oldPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\States\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+	_tcscpy(filename, oldPath);
+	PathAppend(filename, _T("States"));
+	if ((GetFileAttributes(filename) != INVALID_FILE_ATTRIBUTES) && (GetFileAttributes(filename) & FILE_ATTRIBUTE_DIRECTORY))
+		RemoveDirectory(filename);
+
+	// Relocate Debug dumps
+	_stprintf(filename, _T("%s\\Dumps\\*"), oldPath);
+	Handle = FindFirstFile(filename, &Data);
+	if (Handle != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			TCHAR oldfile[MAX_PATH], newfile[MAX_PATH];
+			_stprintf(oldfile, _T("%s\\Dumps\\%s"), oldPath, Data.cFileName);
+			_stprintf(newfile, _T("%s\\Dumps\\%s"), DataPath, Data.cFileName);
+			MoveFile(oldfile, newfile);
+		}	while (FindNextFile(Handle,&Data));
+		FindClose(Handle);
+	}
+	_tcscpy(filename, oldPath);
+	PathAppend(filename, _T("Dumps"));
+	if ((GetFileAttributes(filename) != INVALID_FILE_ATTRIBUTES) && (GetFileAttributes(filename) & FILE_ATTRIBUTE_DIRECTORY))
+		RemoveDirectory(filename);
+
+	// Finally, try to delete the old directory from Application Data
+	if (RemoveDirectory(oldPath))
+		EI.DbgOut(_T("Savestate directory successfully relocated"));
+	else
+	{
+		TCHAR str[MAX_PATH * 2 + 256];
+		_stprintf(str, _T("Nintendulator was unable to fully relocate its data files to \"%s\".\nPlease delete the folder \"%s\" and all of its contents."), DataPath, oldPath);
+		MessageBox(NULL, str, _T("Nintendulator"), MB_OK | MB_ICONERROR);
+	}
+}
+
+void	SetupDataPath (void)
+{
+	TCHAR path[MAX_PATH];
+
+	// Create data subdirectories
+	// Savestates
+	_tcscpy(path, DataPath);
+	PathAppend(path, _T("States"));
+	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(path, NULL);
+
+	// SRAM data
+	_tcscpy(path, DataPath);
+	PathAppend(path, _T("SRAM"));
+	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(path, NULL);
+
+	// FDS disk changes
+	_tcscpy(path, DataPath);
+	PathAppend(path, _T("FDS"));
+	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(path, NULL);
+
+	// Debug dumps
+	_tcscpy(path, DataPath);
+	PathAppend(path, _T("Dumps"));
+	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(path, NULL);
+
+	// check if we need to relocate save data from the program's "Saves" subfolder
+	RelocateSaveData_Progdir();
+	// and the same for relocating from Application Data
+	RelocateSaveData_Appdata();
 }
 } // namespace NES
