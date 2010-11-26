@@ -40,7 +40,7 @@ namespace NES
 	unsigned char PRG_RAM[0x10][0x1000];	//   64 KB
 	unsigned char CHR_RAM[0x20][0x400];	//   32 KB
 
-	const TCHAR *CompatLevel[COMPAT_NONE] = {_T("Fully supported!"), _T("Mostly supported"), _T("Partially supported")};
+	const TCHAR *CompatLevel[COMPAT_NUMTYPES] = {_T("Unsupported"), _T("Partially supported"), _T("Mostly supported"), _T("Fully supported!")};
 
 void	Init (void)
 {
