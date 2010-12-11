@@ -336,6 +336,8 @@ void	End (void)
 		MessageBox(hMainWnd, _T("No AVI capture is currently in progress!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
+	BOOL running = NES::Running;
+	NES::Stop();
 	CloseAvi(handle);
 	handle = NULL;
 	if (hbm)
@@ -344,6 +346,8 @@ void	End (void)
 	videoBuffer = NULL;
 	EnableMenuItem(hMenu, ID_MISC_STARTAVICAPTURE, MF_ENABLED);
 	EnableMenuItem(hMenu, ID_MISC_STOPAVICAPTURE, MF_GRAYED);
+	if (running)
+		NES::Start(FALSE);
 }
 
 void	Start (void)
@@ -360,6 +364,9 @@ void	Start (void)
 		MessageBox(hMainWnd, _T("An AVI capture is already in progress!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
+
+	BOOL running = NES::Running;
+	NES::Stop();
 
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
@@ -380,7 +387,11 @@ void	Start (void)
 	ofn.lpTemplateName = NULL;
 
 	if (!GetSaveFileName(&ofn))
+	{
+		if (running)
+			NES::Start(FALSE);
 		return;
+	}
 
 	_tcscpy(Path_AVI, FileName);
 	Path_AVI[ofn.nFileOffset - 1] = 0;
@@ -418,10 +429,14 @@ void	Start (void)
 		FormatAviMessage(hr, msg, 256);
 		MessageBox(hMainWnd, msg, _T("Nintendulator"), MB_OK);
 		End();
+		if (running)
+			NES::Start(FALSE);
 		return;
 	}
 	EnableMenuItem(hMenu, ID_MISC_STARTAVICAPTURE, MF_GRAYED);
 	EnableMenuItem(hMenu, ID_MISC_STOPAVICAPTURE, MF_ENABLED);
+	if (running)
+		NES::Start(FALSE);
 }
 
 void	AddVideo (void)
