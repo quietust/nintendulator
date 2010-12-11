@@ -10,6 +10,7 @@
 #include "resource.h"
 #include "MapperInterface.h"
 #include <vfw.h>
+#include "NES.h"
 #include "APU.h"
 #include "PPU.h"
 #include "GFX.h"
