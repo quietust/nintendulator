@@ -36,7 +36,7 @@
 
 // warnings we don't care about
 #pragma warning(disable:4100)	// "unreferenced formal parameter" - functions which don't use every parameter (mostly controllers)
-#pragma warning(disable:4201)	// "nonstandard extension used : nameless struct/union" - used everywhere in DirectX
+#pragma warning(disable:4201)	// "nonstandard extension used : nameless struct/union" - used in several places in mapper interface
 
 #define OUT_VER 0x10
 
