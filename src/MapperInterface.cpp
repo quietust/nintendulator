@@ -21,27 +21,27 @@
 # include "Debugger.h"
 #endif	/* NSFPLAYER */
 
-TEmulatorInterface	EI;
-TROMInfo		RI;
+EmulatorInterface EI;
+ROMInfo RI;
 
-PDLLInfo		DI;
-CPMapperInfo		MI;
+DLLInfo *DI;
+const MapperInfo *MI;
 #ifndef	NSFPLAYER
-CPMapperInfo		MI2;
+const MapperInfo *MI2;
 #endif	/* !NSFPLAYER */
 
 #ifdef	NSFPLAYER
 HINSTANCE		dInst;
-PLoadMapperDLL		LoadDLL;
-PUnloadMapperDLL	UnloadDLL;
+FLoadMapperDLL		LoadDLL;
+FUnloadMapperDLL	UnloadDLL;
 #else	/* !NSFPLAYER */
 struct	tMapperDLL
 {
-	HINSTANCE		dInst;
-	PLoadMapperDLL		LoadDLL;
-	PDLLInfo		DI;
-	PUnloadMapperDLL	UnloadDLL;
-	struct	tMapperDLL *	Next;
+	HINSTANCE	dInst;
+	FLoadMapperDLL	LoadDLL;
+	DLLInfo		*DI;
+	FUnloadMapperDLL	UnloadDLL;
+	tMapperDLL	*Next;
 } *MapperDLLs = NULL;
 #endif	/* NSFPLAYER */
 
@@ -468,13 +468,13 @@ void	Init (void)
 #ifndef	NSFPLAYER
 	WIN32_FIND_DATA Data;
 	HANDLE Handle;
-	struct tMapperDLL *ThisDLL;
+	tMapperDLL *ThisDLL;
 	TCHAR Filename[MAX_PATH], Path[MAX_PATH];
 	_tcscpy(Path, ProgPath);
 	_tcscat(Path, _T("Mappers\\"));
 	_stprintf(Filename, _T("%s%s"), Path, _T("*.dll"));
 	Handle = FindFirstFile(Filename, &Data);
-	ThisDLL = (struct tMapperDLL *)malloc(sizeof(struct tMapperDLL));
+	ThisDLL = (tMapperDLL *)malloc(sizeof(tMapperDLL));
 	if (Handle != INVALID_HANDLE_VALUE)
 	{
 		do
@@ -482,8 +482,8 @@ void	Init (void)
 			TCHAR Tmp[MAX_PATH];
 			_stprintf(Tmp, _T("%s%s"), Path, Data.cFileName);
 			ThisDLL->dInst = LoadLibrary(Tmp);
-			ThisDLL->LoadDLL = (PLoadMapperDLL)GetProcAddress(ThisDLL->dInst, "LoadMapperDLL");
-			ThisDLL->UnloadDLL = (PUnloadMapperDLL)GetProcAddress(ThisDLL->dInst, "UnloadMapperDLL");
+			ThisDLL->LoadDLL = (FLoadMapperDLL)GetProcAddress(ThisDLL->dInst, "LoadMapperDLL");
+			ThisDLL->UnloadDLL = (FUnloadMapperDLL)GetProcAddress(ThisDLL->dInst, "UnloadMapperDLL");
 			if ((ThisDLL->LoadDLL) && (ThisDLL->UnloadDLL))
 			{
 				ThisDLL->DI = ThisDLL->LoadDLL(hMainWnd, &EI, CurrentMapperInterface);
@@ -492,7 +492,7 @@ void	Init (void)
 					DbgOut(_T("Added mapper pack %s: '%s' v%X.%X (%04X/%02X/%02X)"), Data.cFileName, ThisDLL->DI->Description, ThisDLL->DI->Version >> 16, ThisDLL->DI->Version & 0xFFFF, ThisDLL->DI->Date >> 16, (ThisDLL->DI->Date >> 8) & 0xFF, ThisDLL->DI->Date & 0xFF);
 					ThisDLL->Next = MapperDLLs;
 					MapperDLLs = ThisDLL;
-					ThisDLL = (struct tMapperDLL *)malloc(sizeof(struct tMapperDLL));
+					ThisDLL = (tMapperDLL *)malloc(sizeof(tMapperDLL));
 				}
 				else	FreeLibrary(ThisDLL->dInst);
 			}
@@ -505,8 +505,8 @@ void	Init (void)
 		MessageBox(hMainWnd, _T("Fatal error: unable to locate any mapper DLLs!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 #else	/* NSFPLAYER */
 	dInst = LoadLibrary(_T("Plugins\\nsf.dll"));
-	LoadDLL = (PLoadMapperDLL)GetProcAddress(dInst, "LoadMapperDLL");
-	UnloadDLL = (PUnloadMapperDLL)GetProcAddress(dInst, "UnloadMapperDLL");
+	LoadDLL = (FLoadMapperDLL)GetProcAddress(dInst, "LoadMapperDLL");
+	UnloadDLL = (FUnloadMapperDLL)GetProcAddress(dInst, "UnloadMapperDLL");
 	if (!LoadDLL)
 		MessageBox(mod.hMainWindow, _T("Fatal error: unable to locate NSF player mapper DLL!"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
 	if (!UnloadDLL)
@@ -573,12 +573,13 @@ void	Init (void)
 #ifndef	NSFPLAYER
 INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	static PDLLInfo *DLLs;
+	DLLInfo **DLLs;
 	int i;
 	switch (message)
 	{
 	case WM_INITDIALOG:
-		DLLs = (PDLLInfo *)lParam;
+		SetWindowLongPtr(hDlg, GWL_USERDATA, lParam);
+		DLLs = (DLLInfo **)lParam;
 		for (i = 0; DLLs[i] != NULL; i++)
 		{
 			TCHAR *desc = (TCHAR *)malloc(sizeof(TCHAR) * (_tcslen(DLLs[i]->Description) + 32));
@@ -592,6 +593,7 @@ INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 		return TRUE;
 		break;
 	case WM_COMMAND:
+		DLLs = (DLLInfo **)GetWindowLongPtr(hDlg, GWL_USERDATA);
 		switch (LOWORD(wParam))
 		{
 		case IDC_DLL_LIST:
@@ -612,19 +614,19 @@ INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 }
 #endif	/* !NSFPLAYER */
 
-BOOL	LoadMapper (CPROMInfo ROM)
+BOOL	LoadMapper (const ROMInfo *ROM)
 {
 #ifndef	NSFPLAYER
-	PDLLInfo *DLLs;
+	DLLInfo **DLLs;
 	int num = 1;
-	struct tMapperDLL *ThisDLL = MapperDLLs;
+	tMapperDLL *ThisDLL = MapperDLLs;
 	while (ThisDLL)
 	{	// 1 - count how many DLLs we have (add 1 for null terminator)
 		num++;
 		ThisDLL = ThisDLL->Next;
 	}
 
-	DLLs = (PDLLInfo *)malloc(num * sizeof(PDLLInfo));
+	DLLs = (DLLInfo **)malloc(num * sizeof(DLLInfo *));
 	num = 0;
 	ThisDLL = MapperDLLs;
 	while (ThisDLL)
@@ -654,7 +656,7 @@ BOOL	LoadMapper (CPROMInfo ROM)
 	}
 	// else more than one found
 	DLLs[num] = NULL;
-	DI = (PDLLInfo)DialogBoxParam(hInst, (LPCTSTR)IDD_DLLSELECT, hMainWnd, DllSelect, (LPARAM)DLLs);
+	DI = (DLLInfo *)DialogBoxParam(hInst, (LPCTSTR)IDD_DLLSELECT, hMainWnd, DllSelect, (LPARAM)DLLs);
 	if (DI)
 	{
 		MI = DI->LoadMapper(ROM);
@@ -695,7 +697,7 @@ void	UnloadMapper (void)
 void	Release (void)
 {
 #ifndef	NSFPLAYER
-	struct tMapperDLL *ThisDLL = MapperDLLs;
+	tMapperDLL *ThisDLL = MapperDLLs;
 	while (ThisDLL)
 	{
 		MapperDLLs = ThisDLL->Next;
