@@ -393,7 +393,7 @@ const TCHAR *	OpenFileiNES (FILE *in)
 		for (i = 8; i < 0x10; i++)
 			if (Header[i] != 0)
 			{
-				EI.DbgOut(_T("Unrecognized data found at header offset %i - you are recommended to clean this ROM and reload it."));
+				EI.DbgOut(_T("Unrecognized data found at header offset %i - you are recommended to clean this ROM and reload it."), i);
 				break;
 			}
 	}
@@ -681,6 +681,7 @@ const TCHAR *	OpenFileNSF (FILE *in)
 	EI.DbgOut(_T("Data length: %iKB"), RI.NSF_DataSize >> 10);
 	return NULL;
 }
+
 void	SetCPUMode (int NewMode)
 {
 	if (NewMode == 0)
