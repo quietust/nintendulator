@@ -1,5 +1,5 @@
 /* Nintendulator Mapper Interface
- * Copyright (C) 2002-2010 QMT Productions
+ * Copyright (C) 2002-2011 QMT Productions
  *
  * $URL$
  * $Id$
