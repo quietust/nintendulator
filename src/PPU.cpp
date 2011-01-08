@@ -70,6 +70,8 @@ unsigned char PALsubticks;
 unsigned char	VRAM[0x4][0x400];
 unsigned short	DrawArray[256*240];
 
+unsigned char VsSecurity;
+
 /*#define	SHORQ	/* Enable ShoRQ(tm) technology */
 
 const	unsigned char	ReverseCHR[256] =
@@ -1222,6 +1224,23 @@ int	__fastcall	Read2 (void)
 	return readLatch = tmp;
 }
 
+int	__fastcall	Read2Vs (void)
+{
+	register unsigned char tmp;
+	HVTog = TRUE;
+	tmp = Reg2002 | VsSecurity;
+	if (tmp & 0x80)
+		Reg2002 &= 0x60;
+	// race conditions
+	if (SLnum == 241)
+	{
+		if ((Clockticks == 0))
+			tmp &= ~0x80;
+		if (Clockticks < 3)
+			CPU::WantNMI = FALSE;
+	}
+	return readLatch = tmp;
+}
 int	__fastcall	Read4 (void)
 {
 	if (IsRendering)
@@ -1282,6 +1301,11 @@ typedef int (__fastcall *PPU_IntRead)(void);
 int	MAPINT	IntRead (int Bank, int Addr)
 {
 	const PPU_IntRead funcs[8] = {Read01356,Read01356,Read2,Read01356,Read4,Read01356,Read01356,Read7};
+	return funcs[Addr & 7]();
+}
+int	MAPINT	IntReadVs (int Bank, int Addr)
+{
+	const PPU_IntRead funcs[8] = {Read01356,Read01356,Read2Vs,Read01356,Read4,Read01356,Read01356,Read7};
 	return funcs[Addr & 7]();
 }
 
@@ -1414,6 +1438,12 @@ typedef void (__fastcall *PPU_IntWrite)(int Val);
 void	MAPINT	IntWrite (int Bank, int Addr, int Val)
 {
 	const PPU_IntWrite funcs[8] = {Write0,Write1,Write2,Write3,Write4,Write5,Write6,Write7};
+	readLatch = (unsigned char)Val;
+	funcs[Addr & 7](Val);
+}
+void	MAPINT	IntWriteVs (int Bank, int Addr, int Val)
+{
+	const PPU_IntWrite funcs[8] = {Write1,Write0,Write2,Write3,Write4,Write5,Write6,Write7};
 	readLatch = (unsigned char)Val;
 	funcs[Addr & 7](Val);
 }

@@ -741,6 +741,26 @@ void	Reset (RESET_TYPE ResetType)
 	CPU::ReadHandler[1] = CPU::ReadRAM;	CPU::WriteHandler[1] = CPU::WriteRAM;
 	CPU::ReadHandler[2] = PPU::IntRead;	CPU::WriteHandler[2] = PPU::IntWrite;
 	CPU::ReadHandler[3] = PPU::IntRead;	CPU::WriteHandler[3] = PPU::IntWrite;
+	// special check for Vs. Unisystem ROMs with NES 2.0 headers to apply a special PPU
+	if ((RI.ROMType == ROM_INES) && (RI.INES_Flags & 0x10) && (RI.INES_Version == 2))
+	{
+		int VsPPU = RI.INES2_VSDATA & 0x0F;
+		// only 5 of the special PPUs need this behavior
+		if ((VsPPU >= 0x8) && (VsPPU <= 0xC))
+		{
+			CPU::ReadHandler[2] = PPU::IntReadVs;	CPU::WriteHandler[2] = PPU::IntWriteVs;
+			CPU::ReadHandler[3] = PPU::IntReadVs;	CPU::WriteHandler[3] = PPU::IntWriteVs;
+			switch (VsPPU)
+			{
+			case 0x8:	PPU::VsSecurity = 0x1B;	break;
+			case 0x9:	PPU::VsSecurity = 0x3D;	break;
+			case 0xA:	PPU::VsSecurity = 0x1C;	break;
+			case 0xB:	PPU::VsSecurity = 0x1B;	break;
+			case 0xC:	PPU::VsSecurity = 0x00;	break;	// don't know what value the 2C05-05 uses
+			}
+		}
+	}
+
 	CPU::ReadHandler[4] = CPU::Read4k;	CPU::WriteHandler[4] = CPU::Write4k;
 	if (!GameGenie)
 		Genie::CodeStat = 0;

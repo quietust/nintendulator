@@ -39,13 +39,17 @@ extern unsigned char	VRAM[0x4][0x400];
 extern unsigned char	OpenBus[0x400];
 extern unsigned short	DrawArray[256*240];
 
+extern unsigned char VsSecurity;
+
 void	GetHandlers (void);
 void	PowerOn (void);
 void	Reset (void);
 int	Save (FILE *);
 int	Load (FILE *);
 int	MAPINT	IntRead (int, int);
+int	MAPINT	IntReadVs (int, int);
 void	MAPINT	IntWrite (int, int, int);
+void	MAPINT	IntWriteVs (int, int, int);
 void	Run (void);
 void	GetGFXPtr (void);
 
