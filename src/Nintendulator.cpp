@@ -65,7 +65,6 @@ INT_PTR CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	DebugWnd(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	InesHeader(HWND, UINT, WPARAM, LPARAM);
-void	ShowDebug (void);
 
 TCHAR	TitlebarBuffer[256];
 int	TitlebarDelay;
@@ -199,7 +198,6 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 	DragAcceptFiles(hMainWnd, TRUE);
 
 	hDebug = CreateDialog(hInst, (LPCTSTR)IDD_DEBUG, hMainWnd, DebugWnd);
-	SetWindowPos(hDebug, hMainWnd, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOSIZE);
 
 	NES::Init();
 	return TRUE;
@@ -533,7 +531,11 @@ INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Debugger::SetMode(Debugger::Mode ^ DEBUG_MODE_PPU);
 			break;
 		case ID_DEBUG_STATWND:
-			ShowDebug();
+			dbgVisible = !dbgVisible;
+			if (dbgVisible)
+				CheckMenuItem(hMenu, ID_DEBUG_STATWND, MF_CHECKED);
+			else	CheckMenuItem(hMenu, ID_DEBUG_STATWND, MF_UNCHECKED);
+			ShowWindow(hDebug, dbgVisible ? SW_SHOW : SW_HIDE);
 			break;
 #endif	/* ENABLE_DEBUGGER */
 		case ID_GAME:
@@ -609,23 +611,20 @@ INT_PTR CALLBACK	About (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-static TCHAR *DebugText;
-static int DebugLen;
 INT_PTR CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
 	case WM_INITDIALOG:
-		dbgVisible = TRUE;
 		SendDlgItemMessage(hDlg, IDC_DEBUGTEXT, EM_SETLIMITTEXT, 0, 0);
-		DebugLen = 8192;
-		DebugText = (TCHAR *)malloc(DebugLen * sizeof(TCHAR));
+		SetWindowPos(hDlg, hMainWnd, 0, 0, 0, 0, SWP_HIDEWINDOW | SWP_NOOWNERZORDER | SWP_NOSIZE);
 		return FALSE;
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDCANCEL)
 		{
 			dbgVisible = FALSE;
-			ShowWindow(hDlg, SW_HIDE);
+			ShowWindow(hDebug, SW_HIDE);
+			CheckMenuItem(hMenu, ID_DEBUG_STATWND, MF_UNCHECKED);
 			return FALSE;
 		}
 		break;
@@ -637,28 +636,18 @@ INT_PTR CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 }
 void	AddDebug (TCHAR *txt)
 {
-	int i = (int)_tcslen(txt), j = GetWindowTextLength(GetDlgItem(hDebug, IDC_DEBUGTEXT));
-	if (!dbgVisible)
-		return;
-	if (i + j + 2 > DebugLen)
+	int dbglen = GetWindowTextLength(GetDlgItem(hDebug, IDC_DEBUGTEXT));
+//	if (!dbgVisible)
+//		return;
+	if (dbglen)
 	{
-		while (i + j + 2 > DebugLen)
-			DebugLen += 8192;
-		DebugText = (TCHAR *)realloc(DebugText, DebugLen * sizeof(TCHAR));
+		TCHAR *newline = _T("\r\n");
+		SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SETSEL, dbglen, dbglen);
+		SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_REPLACESEL, FALSE, (LPARAM)newline);
+		dbglen += 2;
 	}
-	GetDlgItemText(hDebug, IDC_DEBUGTEXT, DebugText, DebugLen);
-	_tcscat(DebugText, txt);
-	_tcscat(DebugText, _T("\r\n"));
-	SetDlgItemText(hDebug, IDC_DEBUGTEXT, DebugText);
-	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SETSEL, i+j+2, -1);	// select last char, move caret to end
-	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SCROLLCARET, 0, 0);	// scroll caret onto screen
-}
-void	ShowDebug (void)
-{
-	if (dbgVisible)
-		return;
-	dbgVisible = TRUE;
-	ShowWindow(hDebug, SW_SHOW);
+	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SETSEL, dbglen, dbglen);
+	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_REPLACESEL, FALSE, (LPARAM)txt);
 }
 
 INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
