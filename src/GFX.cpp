@@ -45,7 +45,7 @@ namespace GFX
 	BOOL SlowDown;
 	int SlowRate;
 
-	int PaletteNTSC, PalettePAL;
+	PALETTE PaletteNTSC, PalettePAL;
 	int NTSChue, NTSCsat, PALsat;
 	TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
 
@@ -92,8 +92,8 @@ void	Init (void)
 	Depth = 0;
 	ClockFreq.QuadPart = 0;
 	LastClockVal.QuadPart = 0;
-	PaletteNTSC = 0;
-	PalettePAL = 1;
+	PaletteNTSC = PALETTE_NTSC;
+	PalettePAL = PALETTE_PAL;
 	NTSChue = 0;
 	NTSCsat = 50;
 	PALsat = 50;
@@ -588,8 +588,6 @@ void	SetCursorPos (int x, int y)
 	else	pos.x += 32;
 	::SetCursorPos(pos.x, pos.y);
 }
-
-enum PALETTE { PALETTE_NTSC, PALETTE_PAL, PALETTE_PC10, PALETTE_VS1, PALETTE_VS2, PALETTE_VS3, PALETTE_VS4, PALETTE_EXT, PALETTE_MAX };
 
 BOOL	ZapperHit (int color)
 {
@@ -1132,7 +1130,7 @@ BOOL	ImportPalette (TCHAR *filename, BOOL load)
 	return TRUE;
 }
 
-void	LoadPalette (int PalNum)
+void	LoadPalette (PALETTE PalNum)
 {
 	unsigned int RV, GV, BV;
 	int i;
@@ -1238,7 +1236,8 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	HDC hdc;
 
 	static BOOL ispal;
-	static int pal, i;
+	static PALETTE pal;
+	static int i;
 
 	switch (uMsg)
 	{

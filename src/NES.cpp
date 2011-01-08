@@ -432,6 +432,24 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	EI.DbgOut(_T("iNES ROM image loaded: mapper %i (%s) - %s"), RI.INES_MapperNum, MI->Description, CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"), RI.INES_PRGSize << 4, RI.INES_CHRSize << 3);
 	EI.DbgOut(_T("Flags: %s%s"), RI.INES_Flags & 0x02 ? _T("Battery-backed SRAM, ") : _T(""), RI.INES_Flags & 0x08 ? _T("Four-screen VRAM") : (RI.INES_Flags & 0x01 ? _T("Vertical mirroring") : _T("Horizontal mirroring")));
+
+	// Special checks for Playchoice-10 and Vs. Unisystem ROMs to auto-select palette
+	if ((RI.INES_Flags & 0x10) && (RI.INES_Version == 2))
+	{
+		switch (RI.INES2_VSDATA & 0x0F)
+		{
+		case 2:	GFX::LoadPalette(GFX::PALETTE_VS1);	break;
+		case 3:	GFX::LoadPalette(GFX::PALETTE_VS2);	break;
+		case 4:	GFX::LoadPalette(GFX::PALETTE_VS3);	break;
+		case 5:	GFX::LoadPalette(GFX::PALETTE_VS4);	break;
+		default:
+			GFX::LoadPalette(GFX::PALETTE_PC10);	break;
+		}
+	}
+	else if (RI.INES_Flags & 0x20)
+		GFX::LoadPalette(GFX::PALETTE_PC10);
+	// Need to do this, in case the last loaded ROM was one of the above
+	else	GFX::LoadPalette(PPU::IsPAL ? GFX::PalettePAL : GFX::PaletteNTSC);
 	return NULL;
 }
 
@@ -917,8 +935,8 @@ void	LoadSettings (void)
 	SoundEnabled = 1;
 	GFX::aFSkip = 1;
 	GFX::FSkip = 0;
-	GFX::PaletteNTSC = 0;
-	GFX::PalettePAL = 1;
+	GFX::PaletteNTSC = GFX::PALETTE_NTSC;
+	GFX::PalettePAL = GFX::PALETTE_PAL;
 	GFX::NTSChue = 0;
 	GFX::NTSCsat = 50;
 	GFX::PALsat = 50;

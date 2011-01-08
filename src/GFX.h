@@ -13,6 +13,9 @@
 
 namespace GFX
 {
+
+enum PALETTE { PALETTE_NTSC, PALETTE_PAL, PALETTE_PC10, PALETTE_VS1, PALETTE_VS2, PALETTE_VS3, PALETTE_VS4, PALETTE_EXT, PALETTE_MAX };
+
 extern unsigned char RawPalette[8][64][3];
 extern unsigned long Palette32[512];
 extern BOOL Fullscreen, Scanlines;
@@ -25,7 +28,7 @@ extern int WantFPS;
 extern BOOL SlowDown;
 extern int SlowRate;
 
-extern int PaletteNTSC, PalettePAL;
+extern PALETTE PaletteNTSC, PalettePAL;
 extern int NTSChue, NTSCsat, PALsat;
 extern TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
 
@@ -39,7 +42,7 @@ void	Draw1x (void);
 void	Draw2x (void);
 void	Update (void);
 void	Repaint (void);
-void	LoadPalette (int);
+void	LoadPalette (PALETTE);
 void	SetFrameskip (int);
 void	PaletteConfig (void);
 void	GetCursorPos (POINT *);
