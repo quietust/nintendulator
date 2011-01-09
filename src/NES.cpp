@@ -995,7 +995,13 @@ void	LoadSettings (void)
 	HKEY SettingsBase;
 	unsigned long Size;
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
-	int PosX = 0, PosY = 0;
+	int PosX, PosY;
+
+	// set default window position to just right of the debug status window
+	RECT dbg;
+	GetWindowRect(hDebug, &dbg);
+	PosX = dbg.right;
+	PosY = 0;
 
 	// Load Defaults
 	SizeMult = 2;
