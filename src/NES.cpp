@@ -35,10 +35,10 @@ namespace NES
 	BOOL FrameStep, GotStep;
 	BOOL HasMenu;
 
-	unsigned char PRG_ROM[0x800][0x1000];	// 8192 KB
-	unsigned char CHR_ROM[0x1000][0x400];	// 4096 KB
-	unsigned char PRG_RAM[0x10][0x1000];	//   64 KB
-	unsigned char CHR_RAM[0x20][0x400];	//   32 KB
+	unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
+	unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
+	unsigned char CHR_ROM[MAX_CHRROM_SIZE][0x400];
+	unsigned char CHR_RAM[MAX_CHRRAM_SIZE][0x400];
 
 	const TCHAR *CompatLevel[COMPAT_NUMTYPES] = {_T("Unsupported"), _T("Partially supported"), _T("Mostly supported"), _T("Fully supported!")};
 
@@ -352,8 +352,8 @@ const TCHAR *	OpenFileiNES (FILE *in)
 {
 	int i;
 	unsigned char Header[16];
-	unsigned long tmp;
 	BOOL p2Found;
+	DWORD p2;
 
 	fread(Header, 1, 16, in);
 	if (*(unsigned long *)Header != MKID('NES\x1A'))
@@ -401,23 +401,28 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	if (RI.INES_Flags & 0x04)
 		return _T("Trained ROMs are unsupported!");
 
+	if (RI.INES_PRGSize > MAX_PRGROM_SIZE / 4)
+		return _T("PRG ROM is too large! Increase MAX_PRGROM_SIZE and recompile!");
+
+	if (RI.INES_CHRSize > MAX_CHRROM_SIZE / 8)
+		return _T("CHR ROM is too large! Increase MAX_CHRROM_SIZE and recompile!");
+
 	fread(PRG_ROM, 1, RI.INES_PRGSize * 0x4000, in);
 	fread(CHR_ROM, 1, RI.INES_CHRSize * 0x2000, in);
-
 
 	PRGMask = ((RI.INES_PRGSize << 2) - 1) & MAX_PRGROM_MASK;
 	CHRMask = ((RI.INES_CHRSize << 3) - 1) & MAX_CHRROM_MASK;
 
 	p2Found = FALSE;
-	for (tmp = 1; tmp < 0x40000000; tmp <<= 1)
-		if (tmp == RI.INES_PRGSize)
+	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
+		if (p2 == RI.INES_PRGSize)
 			p2Found = TRUE;
 	if (!p2Found)
 		PRGMask = MAX_PRGROM_MASK;
 
 	p2Found = FALSE;
-	for (tmp = 1; tmp < 0x40000000; tmp <<= 1)
-		if (tmp == RI.INES_CHRSize)
+	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
+		if (p2 == RI.INES_CHRSize)
 			p2Found = TRUE;
 	if (!p2Found)
 		CHRMask = MAX_CHRROM_MASK;
@@ -458,7 +463,8 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 	unsigned long Signature, BlockLen;
 	unsigned char *tPRG[0x10], *tCHR[0x10];
 	unsigned char *PRGPoint, *CHRPoint;
-	unsigned long PRGsize, CHRsize;
+	unsigned long PRGsize = 0, CHRsize = 0;
+	const TCHAR *error = NULL;
 	int i;
 	unsigned char tp;
 	BOOL p2Found;
@@ -472,9 +478,18 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 
 	RI.ROMType = ROM_UNIF;
 
+	RI.UNIF_BoardName = NULL;
+	RI.UNIF_Mirroring = 0;
+	RI.UNIF_NTSCPAL = 0;
+	RI.UNIF_Battery = FALSE;
+	RI.UNIF_NumPRG = 0;
+	RI.UNIF_NumCHR = 0;
 	for (i = 0; i < 0x10; i++)
 	{
-		tPRG[i] = tCHR[i] = 0;
+		RI.UNIF_PRGSize[i] = 0;
+		RI.UNIF_CHRSize[i] = 0;
+		tPRG[i] = NULL;
+		tCHR[i] = NULL;
 	}
 
 	while (!feof(in))
@@ -493,8 +508,6 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 		case MKID('TVCI'):
 			fread(&tp, 1, 1, in);
 			RI.UNIF_NTSCPAL = tp;
-			if (tp == 0) SetCPUMode(0);
-			if (tp == 1) SetCPUMode(1);
 			break;
 		case MKID('BATR'):
 			fread(&tp, 1, 1, in);
@@ -522,6 +535,7 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 		case MKID('PRG0'):
 			RI.UNIF_NumPRG++;
 			RI.UNIF_PRGSize[id] = BlockLen;
+			PRGsize += BlockLen;
 			tPRG[id] = (unsigned char *)malloc(BlockLen);
 			fread(tPRG[id], 1, BlockLen, in);
 			break;
@@ -544,6 +558,7 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 		case MKID('CHR0'):
 			RI.UNIF_NumCHR++;
 			RI.UNIF_CHRSize[id] = BlockLen;
+			CHRsize += BlockLen;
 			tCHR[id] = (unsigned char *)malloc(BlockLen);
 			fread(tCHR[id], 1, BlockLen, in);
 			break;
@@ -554,27 +569,41 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 
 	PRGPoint = PRG_ROM[0];
 	CHRPoint = CHR_ROM[0];
-	
+
+	// check for size overflow, but don't immediately return
+	// since we need to clean up after this other stuff too
+	if (PRGsize > MAX_PRGROM_SIZE * 0x1000)
+		error = _T("PRG ROM is too large! Increase MAX_PRGROM_SIZE and recompile!");
+
+	if (CHRsize > MAX_CHRROM_SIZE * 0x400)
+		error = _T("CHR ROM is too large! Increase MAX_CHRROM_SIZE and recompile!");
+
+	PRGMask = ((PRGsize / 0x1000) - 1) & MAX_PRGROM_MASK;
+	CHRMask = ((CHRsize / 0x400) - 1) & MAX_CHRROM_MASK;
+
 	for (i = 0; i < 0x10; i++)
 	{
 		if (tPRG[i])
 		{
-			memcpy(PRGPoint, tPRG[i], RI.UNIF_PRGSize[i]);
-			PRGPoint += RI.UNIF_PRGSize[i];
+			if (!error)
+			{
+				memcpy(PRGPoint, tPRG[i], RI.UNIF_PRGSize[i]);
+				PRGPoint += RI.UNIF_PRGSize[i];
+			}
 			free(tPRG[i]);
 		}
 		if (tCHR[i])
 		{
-			memcpy(CHRPoint, tCHR[i], RI.UNIF_CHRSize[i]);
-			CHRPoint += RI.UNIF_CHRSize[i];
+			if (!error)
+			{
+				memcpy(CHRPoint, tCHR[i], RI.UNIF_CHRSize[i]);
+				CHRPoint += RI.UNIF_CHRSize[i];
+			}
 			free(tCHR[i]);
 		}
 	}
-
-	PRGsize = (unsigned int)(PRGPoint - PRG_ROM[0]);
-	PRGMask = ((PRGsize / 0x1000) - 1) & MAX_PRGROM_MASK;
-	CHRsize = (unsigned int)(CHRPoint - CHR_ROM[0]);
-	CHRMask = ((CHRsize / 0x400) - 1) & MAX_CHRROM_MASK;
+	if (error)
+		return error;
 
 	p2Found = FALSE;
 	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
@@ -592,21 +621,23 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 
 	if (!MapperInterface::LoadMapper(&RI))
 	{
-		static TCHAR err[256];
+		static TCHAR err[1024];
 		_stprintf(err, _T("UNIF boardset \"%hs\" not supported!"), RI.UNIF_BoardName);
 		return err;
 	}
+
+	if ((RI.UNIF_NTSCPAL == 0) || (RI.UNIF_NTSCPAL == 1))
+		SetCPUMode(RI.UNIF_NTSCPAL);
+
 	EI.DbgOut(_T("UNIF file loaded: %hs (%s) - %s"), RI.UNIF_BoardName, MI->Description, CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"), PRGsize >> 10, CHRsize >> 10);
 	EI.DbgOut(_T("Battery status: %s"), RI.UNIF_Battery ? _T("present") : _T("not present"));
-	{
-		const TCHAR *mir[6] = {_T("Horizontal"), _T("Vertical"), _T("Single-screen L"), _T("Single-screen H"), _T("Four-screen"), _T("Dynamic")};
-		EI.DbgOut(_T("Mirroring mode: %i (%s)"), RI.UNIF_Mirroring, mir[RI.UNIF_Mirroring]);
-	}
-	{
-		const TCHAR *ntscpal[3] = {_T("NTSC"), _T("PAL"), _T("Dual")};
-		EI.DbgOut(_T("Television standard: %s"), ntscpal[RI.UNIF_NTSCPAL]);
-	}
+
+	const TCHAR *mir[6] = {_T("Horizontal"), _T("Vertical"), _T("Single-screen L"), _T("Single-screen H"), _T("Four-screen"), _T("Dynamic")};
+	EI.DbgOut(_T("Mirroring mode: %i (%s)"), RI.UNIF_Mirroring, mir[RI.UNIF_Mirroring]);
+
+	const TCHAR *ntscpal[3] = {_T("NTSC"), _T("PAL"), _T("Dual")};
+	EI.DbgOut(_T("Television standard: %s"), ntscpal[RI.UNIF_NTSCPAL]);
 	return NULL;
 }
 
@@ -672,6 +703,10 @@ const TCHAR *	OpenFileNSF (FILE *in)
 	memcpy(RI.NSF_Title, &Header[0x0E], 32);
 	memcpy(RI.NSF_Artist, &Header[0x2E], 32);
 	memcpy(RI.NSF_Copyright, &Header[0x4E], 32);
+
+	if (ROMlen > MAX_PRGROM_SIZE * 0x1000)
+		return _T("NSF is too large! Increase MAX_PRGROM_SIZE and recompile!");
+
 	if (memcmp(RI.NSF_InitBanks, "\0\0\0\0\0\0\0\0", 8))
 		fread(&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF), 1, ROMlen, in);
 	else
@@ -679,6 +714,9 @@ const TCHAR *	OpenFileNSF (FILE *in)
 		memcpy(RI.NSF_InitBanks, "\x00\x01\x02\x03\x04\x05\x06\x07", 8);
 		fread(&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF), 1, ROMlen, in);
 	}
+
+	// don't bother trying to figure out the maximum value
+	PRGMask = MAX_PRGROM_MASK;
 
 	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
 	{
@@ -690,8 +728,6 @@ const TCHAR *	OpenFileNSF (FILE *in)
 		EI.DbgOut(_T("Adjusting NSF playback speed for PAL..."));
 		RI.NSF_PALSpeed = 19997;
 	}
-
-	PRGMask = MAX_PRGROM_MASK;
 
 	if (!MapperInterface::LoadMapper(&RI))
 		return _T("NSF support not found!");

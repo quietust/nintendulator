@@ -22,14 +22,28 @@ extern BOOL AutoRun;
 extern BOOL FrameStep, GotStep;
 extern BOOL HasMenu;
 
-#define	MAX_PRGROM_MASK	0x7FF
-#define	MAX_PRGRAM_MASK	0xF
-#define	MAX_CHRROM_MASK	0xFFF
-#define	MAX_CHRRAM_MASK	0x1F
-extern unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];	/* 8192 KB */
-extern unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];	/*   64 KB */
-extern unsigned char CHR_ROM[MAX_CHRROM_MASK+1][0x400];	/* 4096 KB */
-extern unsigned char CHR_RAM[MAX_CHRRAM_MASK+1][0x400];	/*   32 KB */
+// Maximum supported data sizes, since it's far easier than dynamically allocating them
+
+// 8192KB PRG ROM
+#define	MAX_PRGROM_SIZE	0x800
+#define	MAX_PRGROM_MASK	(MAX_PRGROM_SIZE - 1)
+
+// 64KB PRG RAM
+#define	MAX_PRGRAM_SIZE	0x10
+#define	MAX_PRGRAM_MASK	(MAX_PRGRAM_SIZE - 1)
+
+// 4096KB CHR ROM
+#define	MAX_CHRROM_SIZE	0x1000
+#define	MAX_CHRROM_MASK	(MAX_CHRROM_SIZE - 1)
+
+// 32KB CHR RAM
+#define	MAX_CHRRAM_SIZE	0x20
+#define	MAX_CHRRAM_MASK	(MAX_CHRRAM_SIZE - 1)
+
+extern unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
+extern unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
+extern unsigned char CHR_ROM[MAX_CHRROM_SIZE][0x400];
+extern unsigned char CHR_RAM[MAX_CHRRAM_SIZE][0x400];
 
 void	Init (void);
 void	Release (void);

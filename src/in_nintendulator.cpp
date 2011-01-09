@@ -90,8 +90,8 @@ namespace NES
 	BOOL IsNSF;
 	BOOL SoundEnabled;
 
-	unsigned char PRG_ROM[MAX_PRGROM_MASK+1][0x1000];
-	unsigned char PRG_RAM[MAX_PRGRAM_MASK+1][0x1000];
+	unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
+	unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
 
 void	Reset (void)
 {
@@ -129,6 +129,9 @@ int play(const TCHAR *fn)
 		return 1;
 
 	file_length = GetFileSize(input_file, NULL) - 128;
+	// make sure the NSF isn't so large that it overflows the PRG ROM buffer
+	if (file_length > MAX_PRGROM_SIZE * 0x1000)
+		return 1;
 
 	_tcscpy(lastfn, fn);
 	paused=0;
