@@ -45,7 +45,6 @@ extern	TCHAR		Path_NMV[MAX_PATH];
 extern	TCHAR		Path_AVI[MAX_PATH];
 extern	TCHAR		Path_PAL[MAX_PATH];
 
-extern	void		SetWindowClientArea (HWND hWnd, int w, int h);
 extern	BOOL		ProcessMessages	(void);
 
 extern	TCHAR		TitlebarBuffer[256];

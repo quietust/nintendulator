@@ -843,14 +843,6 @@ BOOL	ProcessMessages (void)
 	return gotMessage;
 }
 
-void	SetWindowClientArea (HWND hWnd, int w, int h)
-{
-	RECT client;
-	SetWindowPos(hWnd, hWnd, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
-	GetClientRect(hWnd, &client);
-	SetWindowPos(hWnd, hWnd, 0, 0, 2 * w - client.right, 2 * h - client.bottom, SWP_NOMOVE | SWP_NOZORDER);
-}
-
 void	UpdateTitlebar (void)
 {
 	TCHAR titlebar[256];

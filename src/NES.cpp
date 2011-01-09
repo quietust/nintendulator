@@ -935,12 +935,59 @@ void	Stop (void)
 
 void	MapperConfig (void)
 {
-	MI->Config(CFG_WINDOW, TRUE);
+	if ((MI) && (MI->Config))
+		MI->Config(CFG_WINDOW, TRUE);
 }
 
 void	UpdateInterface (void)
 {
-	SetWindowClientArea(hMainWnd, 256 * SizeMult, 240 * SizeMult);
+	HWND hWnd = hMainWnd;
+	int w = 256 * SizeMult;
+	int h = 240 * SizeMult;
+
+	RECT client, window, desktop;
+	SetWindowPos(hWnd, hWnd, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	GetClientRect(hWnd, &client);
+	SetWindowPos(hWnd, hWnd, 0, 0, 2 * w - client.right, 2 * h - client.bottom, SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW);
+
+	// try to make sure the window is completely visible on the desktop
+	desktop.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+	desktop.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+	desktop.right = desktop.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	desktop.bottom = desktop.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+	
+	bool moved = false;
+	GetWindowRect(hWnd, &window);
+	// check right/bottom first, then left/top
+	if (window.right > desktop.right)
+	{
+		window.left -= window.right - desktop.right;
+		window.right = desktop.right;
+		moved = true;
+	}
+	if (window.bottom > desktop.bottom)
+	{
+		window.top -= window.bottom - desktop.bottom;
+		window.bottom = desktop.bottom;
+		moved = true;
+	}
+	// that way, if the window is bigger than the desktop, the bottom/right will be cut off instead of the top/left
+	if (window.left < desktop.left)
+	{
+		window.right += desktop.left - window.left;
+		window.left = desktop.left;
+		moved = true;
+	}
+	if (window.top < desktop.top)
+	{
+		window.bottom += desktop.top - window.top;
+		window.top = desktop.top;
+		moved = true;
+	}
+	// it's still technically possible for the window to get lost if the desktop is not rectangular (e.g. one monitor is rotated)
+	// but this should take care of most of the complaints about the window getting lost
+	if (moved)
+		SetWindowPos(hWnd, hWnd, window.left, window.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 void	LoadSettings (void)
@@ -948,7 +995,7 @@ void	LoadSettings (void)
 	HKEY SettingsBase;
 	unsigned long Size;
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
-	int PosX, PosY;
+	int PosX = 0, PosY = 0;
 
 	// Load Defaults
 	SizeMult = 2;
