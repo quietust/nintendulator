@@ -984,7 +984,7 @@ void	UpdateInterface (void)
 	RECT client, window, desktop;
 	SetWindowPos(hWnd, hWnd, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 	GetClientRect(hWnd, &client);
-	SetWindowPos(hWnd, hWnd, 0, 0, 2 * w - client.right, 2 * h - client.bottom, SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW);
+	SetWindowPos(hWnd, hWnd, 0, 0, 2 * w - client.right, 2 * h - client.bottom, SWP_NOMOVE | SWP_NOZORDER);
 
 	// try to make sure the window is completely visible on the desktop
 	desktop.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
