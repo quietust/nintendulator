@@ -61,7 +61,7 @@ TCHAR	szWindowClass[MAX_LOADSTRING];	// The title bar text
 // Foward declarations of functions included in this code module:
 ATOM			MyRegisterClass(HINSTANCE hInstance);
 BOOL			InitInstance(HINSTANCE, int);
-INT_PTR CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	DebugWnd(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	InesHeader(HWND, UINT, WPARAM, LPARAM);
@@ -162,7 +162,7 @@ ATOM	MyRegisterClass (HINSTANCE hInstance)
 	wcex.cbSize = sizeof(WNDCLASSEX); 
 
 	wcex.style		= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= (WNDPROC)WndProc;
+	wcex.lpfnWndProc	= WndProc;
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
@@ -213,7 +213,7 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 //  WM_DESTROY	- post a quit message and return
 //
 //
-INT_PTR CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
 	PAINTSTRUCT ps;
