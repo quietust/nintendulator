@@ -2029,10 +2029,9 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-INT_PTR CALLBACK PPUProc_Nametable (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PPUProc_Nametable (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT point;
-	WNDPROC proc;
 	if (uMsg == WM_MOUSEMOVE)
 	{
 		point.x = GET_X_LPARAM(lParam);
@@ -2048,13 +2047,11 @@ INT_PTR CALLBACK PPUProc_Nametable (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 		DetailNumSave = DetailNum;
 		return 0;
 	}
-	proc = (WNDPROC)GetWindowLongPtr(hwndDlg, GWL_USERDATA);
-	return CallWindowProc(proc, hwndDlg, uMsg, wParam, lParam);
+	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWL_USERDATA), hWnd, uMsg, wParam, lParam);
 }
-INT_PTR CALLBACK PPUProc_Pattern (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PPUProc_Pattern (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT point;
-	WNDPROC proc;
 	if (uMsg == WM_MOUSEMOVE)
 	{
 		point.x = GET_X_LPARAM(lParam);
@@ -2070,13 +2067,11 @@ INT_PTR CALLBACK PPUProc_Pattern (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 		DetailNumSave = DetailNum;
 		return 0;
 	}
-	proc = (WNDPROC)GetWindowLongPtr(hwndDlg, GWL_USERDATA);
-	return CallWindowProc(proc, hwndDlg, uMsg, wParam, lParam);
+	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWL_USERDATA), hWnd, uMsg, wParam, lParam);
 }
-INT_PTR CALLBACK PPUProc_Palette (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PPUProc_Palette (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT point;
-	WNDPROC proc;
 	if (uMsg == WM_MOUSEMOVE)
 	{
 		point.x = GET_X_LPARAM(lParam);
@@ -2092,13 +2087,11 @@ INT_PTR CALLBACK PPUProc_Palette (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 		DetailNumSave = DetailNum;
 		return 0;
 	}
-	proc = (WNDPROC)GetWindowLongPtr(hwndDlg, GWL_USERDATA);
-	return CallWindowProc(proc, hwndDlg, uMsg, wParam, lParam);
+	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWL_USERDATA), hWnd, uMsg, wParam, lParam);
 }
-INT_PTR CALLBACK PPUProc_Sprite (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PPUProc_Sprite (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT point;
-	WNDPROC proc;
 	if (uMsg == WM_MOUSEMOVE)
 	{
 		int height = (PPU::Reg2000 & 0x20) ? 16 : 8;
@@ -2115,8 +2108,7 @@ INT_PTR CALLBACK PPUProc_Sprite (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		DetailNumSave = DetailNum;
 		return 0;
 	}
-	proc = (WNDPROC)GetWindowLongPtr(hwndDlg, GWL_USERDATA);
-	return CallWindowProc(proc, hwndDlg, uMsg, wParam, lParam);
+	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWL_USERDATA), hWnd, uMsg, wParam, lParam);
 }
 
 INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
