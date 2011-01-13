@@ -2047,7 +2047,7 @@ LRESULT CALLBACK PPUProc_Nametable (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		DetailNumSave = DetailNum;
 		return 0;
 	}
-	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWL_USERDATA), hWnd, uMsg, wParam, lParam);
+	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWLP_USERDATA), hWnd, uMsg, wParam, lParam);
 }
 LRESULT CALLBACK PPUProc_Pattern (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -2067,7 +2067,7 @@ LRESULT CALLBACK PPUProc_Pattern (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		DetailNumSave = DetailNum;
 		return 0;
 	}
-	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWL_USERDATA), hWnd, uMsg, wParam, lParam);
+	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWLP_USERDATA), hWnd, uMsg, wParam, lParam);
 }
 LRESULT CALLBACK PPUProc_Palette (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -2087,7 +2087,7 @@ LRESULT CALLBACK PPUProc_Palette (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		DetailNumSave = DetailNum;
 		return 0;
 	}
-	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWL_USERDATA), hWnd, uMsg, wParam, lParam);
+	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWLP_USERDATA), hWnd, uMsg, wParam, lParam);
 }
 LRESULT CALLBACK PPUProc_Sprite (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -2108,7 +2108,7 @@ LRESULT CALLBACK PPUProc_Sprite (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		DetailNumSave = DetailNum;
 		return 0;
 	}
-	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWL_USERDATA), hWnd, uMsg, wParam, lParam);
+	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWLP_USERDATA), hWnd, uMsg, wParam, lParam);
 }
 
 INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -2125,16 +2125,16 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		NTabChanged = PalChanged = PatChanged = SprChanged = DetChanged = TRUE;
 
 		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_NAMETABLE);
-		SetWindowLongPtr(dlgItem, GWL_USERDATA, SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Nametable));
+		SetWindowLongPtr(dlgItem, GWLP_USERDATA, SetWindowLongPtr(dlgItem, GWLP_WNDPROC, (LONG)PPUProc_Nametable));
 
 		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_PATTERN);
-		SetWindowLongPtr(dlgItem, GWL_USERDATA, SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Pattern));
+		SetWindowLongPtr(dlgItem, GWLP_USERDATA, SetWindowLongPtr(dlgItem, GWLP_WNDPROC, (LONG)PPUProc_Pattern));
 
 		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_PALETTE);
-		SetWindowLongPtr(dlgItem, GWL_USERDATA, SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Palette));
+		SetWindowLongPtr(dlgItem, GWLP_USERDATA, SetWindowLongPtr(dlgItem, GWLP_WNDPROC, (LONG)PPUProc_Palette));
 
 		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_SPRITE);
-		SetWindowLongPtr(dlgItem, GWL_USERDATA, SetWindowLongPtr(dlgItem, GWL_WNDPROC, (LONG)PPUProc_Sprite));
+		SetWindowLongPtr(dlgItem, GWLP_USERDATA, SetWindowLongPtr(dlgItem, GWLP_WNDPROC, (LONG)PPUProc_Sprite));
 		return FALSE;
 	case WM_DRAWITEM:
 		lpDrawItem = (LPDRAWITEMSTRUCT)lParam;
