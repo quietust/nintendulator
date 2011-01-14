@@ -191,7 +191,7 @@ int	FDSSave (FILE *out)
 	{
 		for (y = 0; y < 4096; y++)
 		{
-			if (PRG_ROM[x][y] != PRG_ROM[0x400 | x][y])
+			if (PRG_ROM[x][y] != PRG_ROM[(MAX_PRGROM_SIZE >> 1) | x][y])
 			{
 				data = y | (x << 12) | (PRG_ROM[x][y] << 24);
 				writeLong(data);
@@ -660,7 +660,7 @@ const TCHAR *	OpenFileFDS (FILE *in)
 	for (i = 0; i < numSides; i++)
 		fread(PRG_ROM[i << 4], 1, 65500, in);
 
-	memcpy(PRG_ROM[0x400], PRG_ROM[0x000], numSides << 16);
+	memcpy(PRG_ROM[MAX_PRGROM_SIZE >> 1], PRG_ROM[0x000], numSides << 16);
 
 	RI.FDS_NumSides = numSides;
 
