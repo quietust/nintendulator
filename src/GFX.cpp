@@ -970,11 +970,11 @@ int	getPhase (double *wave)
 
 void	GenerateNTSC (int hue, int sat)
 {
-	const double black = 0.519;
-	const double white = 1.443;
+	const double black = 0.518;
+	const double white = 1.960;
 	const double voltage[2][4] = {
-		{1.094,1.506,1.962,1.962},
-		{0.350,0.519,0.962,1.550}
+		{1.090,1.500,1.960,1.960},
+		{0.350,0.518,0.962,1.550}
 	};
 
 	const char phases[12][12] = {
@@ -1033,8 +1033,8 @@ void	GenerateNTSC (int hue, int sat)
 					Y += wave[i] / 12.0;
 				for (i = 0; i < 12; i++)
 					S += (wave[i] - Y) * (wave[i] - Y);
-				Y = (Y - black) / white;
-				S = S / white;	// don't remove black offset, since this is already relative
+				Y = (Y - black) / (white - black);
+				S = S / (white - black);
 				S = sqrt(S / 12.0) * sat / 50.0;
 
 				H = M_PI * (270 + getPhase(wave) + hue) / 180.0;
