@@ -25,7 +25,7 @@
 typedef struct
 {
 	PAVIFILE pfile;			// created by CreateAvi
-	WAVEFORMATEX wfx;		// as given to CreateAvi (.nChanels=0 if none was given). Used when audio stream is first created.
+	WAVEFORMATEX wfx;		// as given to CreateAvi (.nChannels=0 if none was given). Used when audio stream is first created.
 	int period;			// specified in CreateAvi, used when the video stream is first created
 	PAVISTREAM audStream;		// audio stream, initialised when audio stream is first created
 	PAVISTREAM vidStream;		// video stream, uncompressed
@@ -449,16 +449,14 @@ void	AddVideo (void)
 		MessageBox(hMainWnd, _T("Error! AVI frame capture attempted while not recording!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
+	register unsigned short *src = PPU::DrawArray;
+	register unsigned long *dst = videoBuffer + 256 * 240;
+	for (int y = 0; y < 240; y++)
 	{
-		register unsigned short *src = PPU::DrawArray;
-		int x, y;
-		for (y = 0; y < 240; y++)
-		{
-			register unsigned long *dst = videoBuffer + 256 * (239 - y);
-			for (x = 0; x < 256; x++)
-				dst[x] = GFX::Palette32[src[x]];
-			src += x;
-		}
+		dst -= 256;
+		for (int x = 0; x < 256; x++)
+			dst[x] = GFX::Palette32[src[x]];
+		src += 256;
 	}
 	hr = AddAviFrame(handle, hbm);
 	if (hr)
