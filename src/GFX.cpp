@@ -359,24 +359,25 @@ void	SetFrameskip (int skip)
 
 void	Draw2x (void)
 {
+	int x, y;
 	register unsigned short *src = PPU::DrawArray;
 	if (Depth == 32)
 	{
-		int x, y;
+		register unsigned long *dst;
 		for (y = 0; y < 480; y++)
 		{
-			register unsigned long *dst = (unsigned long *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
+			dst = (unsigned long *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
-					*dst++ = 0;
+					*dst++ = 0x000000;
 			}
 			if (Scanlines && (y & 1))
 			{
 				for (x = 0; x < 256; x++)
 				{
-					*dst++ = 0;
-					*dst++ = 0;
+					*dst++ = 0x000000;
+					*dst++ = 0x000000;
 				}
 				src += 256;
 			}
@@ -392,7 +393,7 @@ void	Draw2x (void)
 			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
-					*dst++ = 0;
+					*dst++ = 0x000000;
 			}
 			if (!(y & 1))
 				src -= 256;
@@ -400,21 +401,21 @@ void	Draw2x (void)
 	}
 	else if (Depth == 16)
 	{
-		int x, y;
+		register unsigned short *dst;
 		for (y = 0; y < 480; y++)
 		{
-			register unsigned short *dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
+			dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
-					*dst++ = 0;
+					*dst++ = 0x0000;
 			}
 			if (Scanlines && (y & 1))
 			{
 				for (x = 0; x < 256; x++)
 				{
-					*dst++ = 0;
-					*dst++ = 0;
+					*dst++ = 0x0000;
+					*dst++ = 0x0000;
 				}
 				src += 256;
 			}
@@ -430,7 +431,7 @@ void	Draw2x (void)
 			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
-					*dst++ = 0;
+					*dst++ = 0x0000;
 			}
 			if (!(y & 1))
 				src -= 256;
@@ -438,21 +439,21 @@ void	Draw2x (void)
 	}
 	else
 	{
-		int x, y;
+		register unsigned short *dst;
 		for (y = 0; y < 240; y++)
 		{
-			register unsigned short *dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
+			dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
-					*dst++ = 0;
+					*dst++ = 0x0000;
 			}
 			if (Scanlines && (y & 1))
 			{
 				for (x = 0; x < 256; x++)
 				{
-					*dst++ = 0;
-					*dst++ = 0;
+					*dst++ = 0x0000;
+					*dst++ = 0x0000;
 				}
 				src += 256;
 			}
@@ -468,7 +469,7 @@ void	Draw2x (void)
 			if (Fullscreen)
 			{
 				for (x = 0; x < 64; x++)
-					*dst++ = 0;
+					*dst++ = 0x0000;
 			}
 			if (!(y & 1))
 				src -= 256;
@@ -478,33 +479,34 @@ void	Draw2x (void)
 
 void	Draw1x (void)
 {
+	int x, y;
 	register unsigned short *src = PPU::DrawArray;
 	if (Depth == 32)
 	{
-		int x, y;
+		register unsigned long *dst;
 		for (y = 0; y < 240; y++)
 		{
-			register unsigned long *dst = (unsigned long *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
+			dst = (unsigned long *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			for (x = 0; x < 256; x++)
 				*dst++ = Palette32[*src++];
 		}
 	}
 	else if (Depth == 16)
 	{
-		int x, y;
+		register unsigned short *dst;
 		for (y = 0; y < 240; y++)
 		{
-			register unsigned short *dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
+			dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			for (x = 0; x < 256; x++)
 				*dst++ = Palette16[*src++];
 		}
 	}
 	else
 	{
-		int x, y;
+		register unsigned short *dst;
 		for (y = 0; y < 240; y++)
 		{
-			register unsigned short *dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
+			dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			for (x = 0; x < 256; x++)
 				*dst++ = Palette15[*src++];
 		}
