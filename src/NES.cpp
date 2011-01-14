@@ -655,14 +655,17 @@ const TCHAR *	OpenFileFDS (FILE *in)
 		return _T("FDS header signature not found!");
 	fread(&numSides, 1, 1, in);
 	fseek(in, 11, SEEK_CUR);
+
 	RI.ROMType = ROM_FDS;
+	RI.FDS_NumSides = numSides;
+
+	if (RI.FDS_NumSides > (MAX_PRGROM_SIZE >> 1) / 16)
+		return _T("FDS image is too large! Increase MAX_PRGROM_SIZE and recompile!");
 
 	for (i = 0; i < numSides; i++)
 		fread(PRG_ROM[i << 4], 1, 65500, in);
 
 	memcpy(PRG_ROM[MAX_PRGROM_SIZE >> 1], PRG_ROM[0x000], numSides << 16);
-
-	RI.FDS_NumSides = numSides;
 
 	PRGMask = ((RI.FDS_NumSides << 4) - 1) & MAX_PRGROM_MASK;
 
