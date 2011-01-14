@@ -455,6 +455,9 @@ const TCHAR *	OpenFileiNES (FILE *in)
 		GFX::LoadPalette(GFX::PALETTE_PC10);
 	// Need to do this, in case the last loaded ROM was one of the above
 	else	GFX::LoadPalette(PPU::IsPAL ? GFX::PalettePAL : GFX::PaletteNTSC);
+
+	if ((RI.INES_Version == 2) && !(RI.INES2_TVMode & 0x02))
+		SetCPUMode(RI.INES2_TVMode & 0x01);
 	return NULL;
 }
 
