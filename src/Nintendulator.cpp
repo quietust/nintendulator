@@ -37,11 +37,6 @@
 #include "States.h"
 #include <shellapi.h>
 
-#ifndef UNICODE
-// need this for SHGetFolderPath() on Windows 98
-#pragma comment(lib, "shfolder.lib")
-#endif
-
 #pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "winmm.lib")
 
