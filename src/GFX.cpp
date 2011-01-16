@@ -34,35 +34,41 @@
 
 namespace GFX
 {
-	unsigned char RawPalette[8][64][3];
-	unsigned short Palette15[512];
-	unsigned short Palette16[512];
-	unsigned long Palette32[512];
-	char Depth;
-	BOOL Fullscreen, Scanlines;
+unsigned char RawPalette[8][64][3];
+unsigned short Palette15[512];
+unsigned short Palette16[512];
+unsigned long Palette32[512];
+char Depth;
+BOOL Fullscreen, Scanlines;
 
-	LARGE_INTEGER ClockFreq;
-	LARGE_INTEGER LastClockVal;
-	int FPSnum, FPSCnt, FSkip;
-	BOOL aFSkip;
+LARGE_INTEGER ClockFreq;
+LARGE_INTEGER LastClockVal;
+int FPSnum, FPSCnt, FSkip;
+BOOL aFSkip;
 
-	int Pitch;
-	int WantFPS;
-	int aFPScnt;
-	LONGLONG aFPSnum;
+int Pitch;
+int WantFPS;
+int aFPScnt;
+LONGLONG aFPSnum;
 
-	BOOL SlowDown;
-	int SlowRate;
+BOOL SlowDown;
+int SlowRate;
 
-	PALETTE PaletteNTSC, PalettePAL;
-	int NTSChue, NTSCsat, PALsat;
-	TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
+PALETTE PaletteNTSC, PalettePAL;
+int NTSChue, NTSCsat, PALsat;
+TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
 
-	LPDIRECTDRAW7		DirectDraw;
-	LPDIRECTDRAWSURFACE7	PrimarySurf, SecondarySurf;
-	LPDIRECTDRAWCLIPPER	Clipper;
-	DDSURFACEDESC2		SurfDesc;
-	DWORD			SurfSize;
+LPDIRECTDRAW7		DirectDraw;
+LPDIRECTDRAWSURFACE7	PrimarySurf, SecondarySurf;
+LPDIRECTDRAWCLIPPER	Clipper;
+DDSURFACEDESC2		SurfDesc;
+DWORD			SurfSize;
+
+#if (_MSC_VER >= 1400)
+typedef HRESULT (WINAPI *LPDIRECTDRAWCREATEEX)(GUID FAR *, LPVOID *, REFIID,IUnknown FAR *);
+HINSTANCE dDrawInst;
+LPDIRECTDRAWCREATEEX DirectDrawCreateEx;
+#endif
 
 #define	Try(action,errormsg) do {\
 	if (FAILED(action))\
@@ -90,6 +96,10 @@ void	Init (void)
 	PrimarySurf = NULL;
 	SecondarySurf = NULL;
 	Clipper = NULL;
+#if (_MSC_VER >= 1400)
+	dDrawInst = NULL;
+	DirectDrawCreateEx = NULL;
+#endif
 	Pitch = 0;
 	WantFPS = 0;
 	FPSCnt = 0;
@@ -111,9 +121,25 @@ void	Init (void)
 
 void	Create (void)
 {
+#if (_MSC_VER >= 1400)
+	dDrawInst = LoadLibrary(_T("ddraw.dll"));
+	if (!dDrawInst)
+	{
+		MessageBox(hMainWnd, _T("Fatal error: unable to load DirectDraw DLL!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		return;
+	}
+	DirectDrawCreateEx = (LPDIRECTDRAWCREATEEX)GetProcAddress(dDrawInst, "DirectDrawCreateEx");
+	if (!DirectDrawCreateEx)
+	{
+		MessageBox(hMainWnd, _T("Fatal error: unable to locate entry point for DirectDrawCreateEx!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		Release();
+		return;
+	}
+#endif
 	if (!QueryPerformanceFrequency(&ClockFreq))
 	{
 		MessageBox(hMainWnd, _T("Failed to determine performance counter frequency!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		Release();
 		return;
 	}
 
@@ -296,6 +322,14 @@ void	Release (void)
 			ShowWindow(hDebug, SW_RESTORE);
 		NES::UpdateInterface();
 	}
+#if (_MSC_VER >= 1400)
+	DirectDrawCreateEx = NULL;
+	if (dDrawInst)
+	{
+		FreeLibrary(dDrawInst);
+		dDrawInst = NULL;
+	}
+#endif
 }
 
 void	DrawScreen (void)
