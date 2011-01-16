@@ -8,8 +8,6 @@
 #ifndef PPU_H
 #define PPU_H
 
-#define	ACCURATE_SPRITES	/* enable cycle-accurate sprite evaluation logic */
-
 namespace PPU
 {
 extern FPPURead	ReadHandler[0x10];

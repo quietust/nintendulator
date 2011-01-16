@@ -24,8 +24,11 @@
 #ifndef NINTENDULATOR_H
 #define NINTENDULATOR_H
 
-#define	ENABLE_DEBUGGER
-/*#define	CPU_BENCHMARK */
+#define	ENABLE_DEBUGGER	// Enable the debugger - emulation is faster without it
+//#define	CPU_BENCHMARK	// Run cyctest.nes for 4542110 cycles (10 seconds), then report how long it took
+#define	CPU_INLINE_ASM	// Enable usage of inline assembly in the CPU for minor performance improvements
+#define	ACCURATE_SPRITES	// Enable cycle-accurate sprite evaluation logic
+//#define	SHORQ	// Enable ShoRQ(tm) technology - enable green color emphasis whenever there's an active IRQ
 
 extern	HINSTANCE	hInst;	/* current instance */
 extern	HWND		hMainWnd;	/* main window */

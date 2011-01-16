@@ -72,8 +72,6 @@ unsigned short	DrawArray[256*240];
 
 unsigned char VsSecurity;
 
-/*#define	SHORQ	/* Enable ShoRQ(tm) technology */
-
 const	unsigned char	ReverseCHR[256] =
 {
 	0x00,0x80,0x40,0xC0,0x20,0xA0,0x60,0xE0,0x10,0x90,0x50,0xD0,0x30,0xB0,0x70,0xF0,
@@ -884,7 +882,7 @@ __inline void	RunNoSkip (int NumTicks)
 			PalIndex &= GrayScale;
 			PalIndex |= ColorEmphasis;
 #ifdef	SHORQ
-			if (CPU.WantIRQ)
+			if (CPU::WantIRQ)
 				PalIndex ^= 0x80;
 #endif	/* SHORQ */
 			*GfxData = (unsigned short)PalIndex;

@@ -152,6 +152,7 @@ void	JoinFlags (void)
 }
 void	SplitFlags (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,P
@@ -168,6 +169,14 @@ void	SplitFlags (void)
 		shr	al,1
 		setc	FN
 	}
+#else
+	FC = (P & 0x01);
+	FZ = (P & 0x02) >> 1;
+	FI = (P & 0x04) >> 2;
+	FD = (P & 0x08) >> 3;
+	FV = (P & 0x40) >> 6;
+	FN = (P & 0x80) >> 7;
+#endif
 }
 #ifndef	NSFPLAYER
 __forceinline void	DoNMI (void)
@@ -386,6 +395,7 @@ __forceinline void	AM_ABX (void)
 	FixPC();
 	CalcAddrH = MemGetCode(PC++);
 	FixPC();
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,X
@@ -396,6 +406,15 @@ __forceinline void	AM_ABX (void)
 		inc	CalcAddrH
 noinc:
 	}
+#else
+	bool inc = (CalcAddrL + X) > 0xFF;
+	CalcAddrL += X;
+	if (inc)
+	{
+		MemGet(CalcAddr);
+		CalcAddrH++;
+	}
+#endif
 }
 __forceinline void	AM_ABXW (void)
 {
@@ -403,6 +422,7 @@ __forceinline void	AM_ABXW (void)
 	FixPC();
 	CalcAddrH = MemGetCode(PC++);
 	FixPC();
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,X
@@ -416,6 +436,13 @@ doinc:		mov	ecx,CalcAddr
 		inc	CalcAddrH
 end:
 	}
+#else
+	bool inc = (CalcAddrL + X) > 0xFF;
+	CalcAddrL += X;
+	MemGet(CalcAddr);
+	if (inc)
+		CalcAddrH++;
+#endif
 }
 __forceinline void	AM_ABY (void)
 {
@@ -423,6 +450,7 @@ __forceinline void	AM_ABY (void)
 	FixPC();
 	CalcAddrH = MemGetCode(PC++);
 	FixPC();
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,Y
@@ -433,6 +461,15 @@ __forceinline void	AM_ABY (void)
 		inc	CalcAddrH
 noinc:
 	}
+#else
+	bool inc = (CalcAddrL + Y) > 0xFF;
+	CalcAddrL += Y;
+	if (inc)
+	{
+		MemGet(CalcAddr);
+		CalcAddrH++;
+	}
+#endif
 }
 __forceinline void	AM_ABYW (void)
 {
@@ -440,6 +477,7 @@ __forceinline void	AM_ABYW (void)
 	FixPC();
 	CalcAddrH = MemGetCode(PC++);
 	FixPC();
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,Y
@@ -453,6 +491,13 @@ doinc:		mov	ecx,CalcAddr
 		inc	CalcAddrH
 end:
 	}
+#else
+	bool inc = (CalcAddrL + Y) > 0xFF;
+	CalcAddrL += Y;
+	MemGet(CalcAddr);
+	if (inc)
+		CalcAddrH++;
+#endif
 }
 __forceinline void	AM_ZPG (void)
 {
@@ -490,6 +535,7 @@ __forceinline void	AM_INY (void)
 	CalcAddrL = MemGet(TmpAddr);
 	TmpAddrL++;
 	CalcAddrH = MemGet(TmpAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,Y
@@ -500,6 +546,15 @@ __forceinline void	AM_INY (void)
 		inc	CalcAddrH
 noinc:
 	}
+#else
+	bool inc = (CalcAddrL + Y) > 0xFF;
+	CalcAddrL += Y;
+	if (inc)
+	{
+		MemGet(CalcAddr);
+		CalcAddrH++;
+	}
+#endif
 }
 __forceinline void	AM_INYW (void)
 {
@@ -508,6 +563,7 @@ __forceinline void	AM_INYW (void)
 	CalcAddrL = MemGet(TmpAddr);
 	TmpAddrL++;
 	CalcAddrH = MemGet(TmpAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,Y
@@ -521,10 +577,18 @@ doinc:		mov	ecx,CalcAddr
 		inc	CalcAddrH
 end:
 	}
+#else
+	bool inc = (CalcAddrL + Y) > 0xFF;
+	CalcAddrL += Y;
+	MemGet(CalcAddr);
+	if (inc)
+		CalcAddrH++;
+#endif
 }
 __forceinline void	IN_ADC (void)
 {
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	ah,FC
@@ -536,10 +600,19 @@ __forceinline void	IN_ADC (void)
 		sets	FN
 		seto	FV
 	}
+#else
+	int result = A + LastRead + FC;
+	FV = (~(A ^ LastRead) & (A ^ result) & 0x80) >> 7;
+	FC = (result & 0x100) >> 8;
+	A = result & 0xFF;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_AND (void)
 {
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,LastRead
@@ -547,11 +620,17 @@ __forceinline void	IN_AND (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	A &= LastRead;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_ASL (void)
 {
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		shl	TmpData,1
@@ -559,10 +638,17 @@ __forceinline void	IN_ASL (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	FC = (TmpData & 0x80) >> 7;
+	TmpData <<= 1;
+	FZ = (TmpData == 0);
+	FN = (TmpData & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IN_ASL_A (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		shl	A,1
@@ -570,6 +656,12 @@ __forceinline void	IN_ASL_A (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	FC = (A & 0x80) >> 7;
+	A <<= 1;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_BRANCH (BOOL Condition)
 {
@@ -594,6 +686,7 @@ __forceinline void	IN_BRANCH (BOOL Condition)
 #endif	/* !NSFPLAYER */
 		if (SkipIRQ)
 			LastIRQ = FALSE;
+#ifdef	CPU_INLINE_ASM
 		__asm
 		{
 			mov	al,BranchOffset
@@ -613,6 +706,26 @@ pos:			add	PCL,al
 			inc	PCH
 end:
 		}
+#else
+		bool inc = (PCL + (unsigned char)BranchOffset) > 0xFF;
+		PCL += BranchOffset;
+		if (BranchOffset & 0x80)
+		{
+			if (!inc)
+			{
+				MemGet(PC);
+				PCH--;
+			}
+		}
+		else
+		{
+			if (inc)
+			{
+				MemGet(PC);
+				PCH++;
+			}
+		}
+#endif
 	}
 }
 __forceinline void	IN_BCS (void) {	IN_BRANCH( FC);	}
@@ -626,6 +739,7 @@ __forceinline void	IN_BVC (void) {	IN_BRANCH(!FV);	}
 __forceinline void	IN_BIT (void)
 {
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,LastRead
@@ -637,6 +751,12 @@ __forceinline void	IN_BIT (void)
 		and	dl,A
 		setz	FZ
 	}
+#else
+	FV = (LastRead & 0x40) >> 6;
+	FN = (LastRead & 0x80) >> 7;
+	FZ = (LastRead & A) == 0;
+
+#endif
 }
 __forceinline void	IN_BRK (void)
 {
@@ -666,13 +786,14 @@ __forceinline void	IN_BRK (void)
 	GotInterrupt = INTERRUPT_BRK;
 #endif	/* ENABLE_DEBUGGER */
 }
-__forceinline void	IN_CLC (void) {	__asm	mov FC,0	}
-__forceinline void	IN_CLD (void) {	__asm	mov FD,0	}
-__forceinline void	IN_CLI (void) {	__asm	mov FI,0	}
-__forceinline void	IN_CLV (void) {	__asm	mov FV,0	}
+__forceinline void	IN_CLC (void) { FC = 0; }
+__forceinline void	IN_CLD (void) { FD = 0; }
+__forceinline void	IN_CLI (void) { FI = 0; }
+__forceinline void	IN_CLV (void) { FV = 0; }
 __forceinline void	IN_CMP (void)
 {
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,A
@@ -681,10 +802,17 @@ __forceinline void	IN_CMP (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	int result = A - LastRead;
+	FC = (result < 0) ? 0 : 1;
+	FZ = (result == 0);
+	FN = (result & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_CPX (void)
 {
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,X
@@ -693,10 +821,17 @@ __forceinline void	IN_CPX (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	int result = X - LastRead;
+	FC = (result < 0) ? 0 : 1;
+	FZ = (result == 0);
+	FN = (result & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_CPY (void)
 {
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,Y
@@ -705,40 +840,65 @@ __forceinline void	IN_CPY (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	int result = Y - LastRead;
+	FC = (result < 0) ? 0 : 1;
+	FZ = (result == 0);
+	FN = (result & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_DEC (void)
 {
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		dec	TmpData
 		setz	FZ
 		sets	FN
 	}
+#else
+	TmpData--;
+	FZ = (TmpData == 0);
+	FN = (TmpData & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IN_DEX (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		dec	X
 		setz	FZ
 		sets	FN
 	}
+#else
+	X--;
+	FZ = (X == 0);
+	FN = (X & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_DEY (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		dec	Y
 		setz	FZ
 		sets	FN
 	}
+#else
+	Y--;
+	FZ = (Y == 0);
+	FN = (Y & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_EOR (void)
 {
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,LastRead
@@ -746,36 +906,59 @@ __forceinline void	IN_EOR (void)
 		setz	FZ
 		sets	FN
  	}
+#else
+	A ^= LastRead;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_INC (void)
 {
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		inc	TmpData
 		setz	FZ
 		sets	FN
 	}
+#else
+	TmpData++;
+	FZ = (TmpData == 0);
+	FN = (TmpData & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IN_INX (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		inc	X
 		setz	FZ
 		sets	FN
 	}
+#else
+	X++;
+	FZ = (X == 0);
+	FN = (X & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_INY (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		inc	Y
 		setz	FZ
 		sets	FN
 	}
+#else
+	Y++;
+	FZ = (Y == 0);
+	FN = (Y & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_JMP (void)
 {
@@ -800,37 +983,53 @@ __forceinline void	IN_JSR (void)
 __forceinline void	IN_LDA (void)
 {
 	A = MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		test	A,0xFF
 		setz	FZ
 		sets	FN
 	}
+#else
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_LDX (void)
 {
 	X = MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		test	X,0xFF
 		setz	FZ
 		sets	FN
 	}
+#else
+	FZ = (X == 0);
+	FN = (X & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_LDY (void)
 {
 	Y = MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		test	Y,0xFF
 		setz	FZ
 		sets	FN
 	}
+#else
+	FZ = (Y == 0);
+	FN = (Y & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_LSR (void)
 {
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		shr	TmpData,1
@@ -838,10 +1037,17 @@ __forceinline void	IN_LSR (void)
 		mov	FN,0
 		setz	FZ
 	}
+#else
+	FC = (TmpData & 0x01);
+	TmpData >>= 1;
+	FZ = (TmpData == 0);
+	FN = (TmpData & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IN_LSR_A (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		shr	A,1
@@ -849,6 +1055,12 @@ __forceinline void	IN_LSR_A (void)
 		mov	FN,0
 		setz	FZ
 	}
+#else
+	FC = (A & 0x01);
+	A >>= 1;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_NOP (void)
 {
@@ -856,6 +1068,7 @@ __forceinline void	IN_NOP (void)
 __forceinline void	IN_ORA (void)
 {
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,LastRead
@@ -863,6 +1076,11 @@ __forceinline void	IN_ORA (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	A |= LastRead;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_PHA (void)
 {
@@ -877,12 +1095,17 @@ __forceinline void	IN_PLA (void)
 {
 	MemGet(0x100 | SP);
 	A = Pull();
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		test	A,0xFF
 		setz	FZ
 		sets	FN
 	}
+#else
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_PLP (void)
 {
@@ -894,6 +1117,7 @@ __forceinline void	IN_ROL (void)
 {
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,FC
@@ -904,10 +1128,18 @@ __forceinline void	IN_ROL (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	unsigned char carry = FC;
+	FC = (TmpData & 0x80) >> 7;
+	TmpData = (TmpData << 1) | carry;
+	FZ = (TmpData == 0);
+	FN = (TmpData & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IN_ROL_A (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,FC
@@ -918,11 +1150,19 @@ __forceinline void	IN_ROL_A (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	unsigned char carry = FC;
+	FC = (A & 0x80) >> 7;
+	A = (A << 1) | carry;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_ROR (void)
 {
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,FC
@@ -933,10 +1173,18 @@ __forceinline void	IN_ROR (void)
 		test	TmpData,0xFF
 		setz	FZ
 	}
+#else
+	unsigned char carry = FC << 7;
+	FC = (TmpData & 0x01);
+	TmpData = (TmpData >> 1) | carry;
+	FZ = (TmpData == 0);
+	FN = (TmpData & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IN_ROR_A (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,FC
@@ -947,6 +1195,13 @@ __forceinline void	IN_ROR_A (void)
 		test	A,0xFF
 		setz	FZ
 	}
+#else
+	unsigned char carry = FC << 7;
+	FC = (A & 0x01);
+	A = (A >> 1) | carry;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_RTI (void)
 {
@@ -967,6 +1222,7 @@ __forceinline void	IN_RTS (void)
 __forceinline void	IN_SBC (void)
 {
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	ah,FC
@@ -978,10 +1234,18 @@ __forceinline void	IN_SBC (void)
 		sets	FN
 		seto	FV
 	}
+#else
+	int result = A + ~LastRead + FC;
+	FV = ((A ^ LastRead) & (A ^ result) & 0x80) >> 7;
+	FC = (result & 0x100) ? 0 : 1;
+	A = result & 0xFF;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
-__forceinline void	IN_SEC (void) {	__asm	mov FC,1	}
-__forceinline void	IN_SED (void) {	__asm	mov FD,1	}
-__forceinline void	IN_SEI (void) {	__asm	mov FI,1	}
+__forceinline void	IN_SEC (void) { FC = 1; }
+__forceinline void	IN_SED (void) { FD = 1; }
+__forceinline void	IN_SEI (void) { FI = 1; }
 __forceinline void	IN_STA (void)
 {
 	MemSet(CalcAddr, A);
@@ -996,6 +1260,7 @@ __forceinline void	IN_STY (void)
 }
 __forceinline void	IN_TAX (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,A
@@ -1004,9 +1269,15 @@ __forceinline void	IN_TAX (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	X = A;
+	FZ = (X == 0);
+	FN = (X & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_TAY (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,A
@@ -1015,9 +1286,15 @@ __forceinline void	IN_TAY (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	Y = A;
+	FZ = (Y == 0);
+	FN = (Y & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_TSX (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,CPU::SP
@@ -1026,9 +1303,15 @@ __forceinline void	IN_TSX (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	X = SP;
+	FZ = (X == 0);
+	FN = (X & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_TXA (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,X
@@ -1037,6 +1320,11 @@ __forceinline void	IN_TXA (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	A = X;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IN_TXS (void)
 {
@@ -1044,6 +1332,7 @@ __forceinline void	IN_TXS (void)
 }
 __forceinline void	IN_TYA (void)
 {
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,Y
@@ -1052,6 +1341,11 @@ __forceinline void	IN_TYA (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	A = Y;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 
 __forceinline void	IV_UNK (void)
@@ -1081,6 +1375,7 @@ __forceinline void	IV_SLO (void)
 	EI.DbgOut(_T("Invalid opcode $%02X (SLO) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		shl	TmpData,1
@@ -1090,6 +1385,13 @@ __forceinline void	IV_SLO (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	FC = (TmpData & 0x80) >> 7;
+	TmpData <<= 1;
+	A |= TmpData;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IV_RLA (void)
@@ -1097,6 +1399,7 @@ __forceinline void	IV_RLA (void)
 	EI.DbgOut(_T("Invalid opcode $%02X (RLA) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,FC
@@ -1108,6 +1411,14 @@ __forceinline void	IV_RLA (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	unsigned char carry = FC;
+	FC = (TmpData & 0x80) >> 7;
+	TmpData = (TmpData << 1) | carry;
+	A &= TmpData;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IV_SRE (void)
@@ -1115,6 +1426,7 @@ __forceinline void	IV_SRE (void)
 	EI.DbgOut(_T("Invalid opcode $%02X (SRE) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		shr	TmpData,1
@@ -1124,6 +1436,13 @@ __forceinline void	IV_SRE (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	FC = (TmpData & 0x01);
+	TmpData >>= 1;
+	A ^= TmpData;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IV_RRA (void)
@@ -1131,6 +1450,7 @@ __forceinline void	IV_RRA (void)
 	EI.DbgOut(_T("Invalid opcode $%02X (RRA) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	al,FC
@@ -1143,6 +1463,17 @@ __forceinline void	IV_RRA (void)
 		sets	FN
 		seto	FV
 	}
+#else
+	unsigned char carry = FC << 7;
+	FC = (TmpData & 0x01);
+	TmpData = (TmpData >> 1) | carry;
+	int result = A + TmpData + FC;
+	FV = (~(A ^ TmpData) & (A ^ result) & 0x80) >> 7;
+	FC = (result & 0x100) >> 8;
+	A = result & 0xFF;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IV_SAX (void)
@@ -1154,18 +1485,24 @@ __forceinline void	IV_LAX (void)
 {	// LDA + LDX
 	EI.DbgOut(_T("Invalid opcode $%02X (LAX) encountered at $%04X"), Opcode, OpAddr);
 	X = A = MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		test	A,0xFF
 		setz	FZ
 		sets	FN
 	}
+#else
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 __forceinline void	IV_DCP (void)
 {	// DEC + CMP
 	EI.DbgOut(_T("Invalid opcode $%02X (DCP) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		dec	TmpData
@@ -1175,6 +1512,13 @@ __forceinline void	IV_DCP (void)
 		setz	FZ
 		sets	FN
 	}
+#else
+	TmpData--;
+	int result = A - TmpData;
+	FC = (result < 0) ? 0 : 1;
+	FZ = (result == 0);
+	FN = (result & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IV_ISB (void)
@@ -1182,6 +1526,7 @@ __forceinline void	IV_ISB (void)
 	EI.DbgOut(_T("Invalid opcode $%02X (ISB) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		inc	TmpData
@@ -1194,12 +1539,22 @@ __forceinline void	IV_ISB (void)
 		sets	FN
 		seto	FV
 	}
+#else
+	TmpData++;
+	int result = A + ~TmpData + FC;
+	FV = ((A ^ TmpData) & (A ^ result) & 0x80) >> 7;
+	FC = (result & 0x100) ? 0 : 1;
+	A = result & 0xFF;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 	MemSet(CalcAddr, TmpData);
 }
 __forceinline void	IV_SBC (void)
 {	// NOP + SBC
 	EI.DbgOut(_T("Invalid opcode $%02X (SBC) encountered at $%04X"), Opcode, OpAddr);
 	MemGet(CalcAddr);
+#ifdef	CPU_INLINE_ASM
 	__asm
 	{
 		mov	ah,FC
@@ -1211,6 +1566,14 @@ __forceinline void	IV_SBC (void)
 		sets	FN
 		seto	FV
 	}
+#else
+	int result = A + ~LastRead + FC;
+	FV = ((A ^ LastRead) & (A ^ result) & 0x80) >> 7;
+	FC = (result & 0x100) ? 0 : 1;
+	A = result & 0xFF;
+	FZ = (A == 0);
+	FN = (A & 0x80) >> 7;
+#endif
 }
 
 void	ExecOp (void)
