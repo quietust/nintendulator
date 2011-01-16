@@ -8,7 +8,7 @@
 #ifndef CONTROLLERS_H
 #define CONTROLLERS_H
 
-#define DIRECTINPUT_VERSION 0x0700
+#define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 
 #define	CONTROLLERS_MAXBUTTONS	32

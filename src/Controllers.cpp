@@ -44,8 +44,8 @@ TCHAR	*ButtonNames[MAX_CONTROLLERS][128],
 	*POVNames[MAX_CONTROLLERS][4],
 	*KeyNames[256];
 
-LPDIRECTINPUT7		DirectInput;
-LPDIRECTINPUTDEVICE7	DIDevices[MAX_CONTROLLERS];
+LPDIRECTINPUT8		DirectInput;
+LPDIRECTINPUTDEVICE8	DIDevices[MAX_CONTROLLERS];
 
 BYTE		KeyState[256];
 DIMOUSESTATE2	MouseState;
@@ -384,7 +384,7 @@ BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 	int DevNum = NumDevices;
 	do
 	{
-		if (SUCCEEDED(DirectInput->CreateDeviceEx(lpddi->guidInstance, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[DevNum], NULL)))
+		if (SUCCEEDED(DirectInput->CreateDevice(lpddi->guidInstance, &DIDevices[DevNum], NULL)))
 		{
 			DIDEVCAPS caps;
 			if (FAILED(hr = DIDevices[DevNum]->SetDataFormat(&c_dfDIJoystick2)))
@@ -418,7 +418,7 @@ BOOL	InitKeyboard (void)
 	DIDEVCAPS caps;
 	do
 	{
-		if (FAILED(DirectInput->CreateDeviceEx(GUID_SysKeyboard, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[0], NULL)))
+		if (FAILED(DirectInput->CreateDevice(GUID_SysKeyboard, &DIDevices[0], NULL)))
 			return FALSE;
 		if (FAILED(DIDevices[0]->SetDataFormat(&c_dfDIKeyboard)))
 			break;
@@ -454,7 +454,7 @@ BOOL	InitMouse (void)
 	DIDEVCAPS caps;
 	do
 	{
-		if (FAILED(DirectInput->CreateDeviceEx(GUID_SysMouse, IID_IDirectInputDevice7, (LPVOID *)&DIDevices[1], NULL)))
+		if (FAILED(DirectInput->CreateDevice(GUID_SysMouse, &DIDevices[1], NULL)))
 			return FALSE;
 		if (FAILED(DIDevices[1]->SetDataFormat(&c_dfDIMouse2)))
 			break;
@@ -517,7 +517,7 @@ void	Init (void)
 	FSPort4 = new StdPort_Unconnected(FSPort4_Buttons);
 	PortExp = new ExpPort_Unconnected(PortExp_Buttons);
 	
-	if (FAILED(DirectInputCreateEx(hInst, DIRECTINPUT_VERSION, IID_IDirectInput7, (LPVOID *)&DirectInput, NULL)))
+	if (FAILED(DirectInput8Create(hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (LPVOID *)&DirectInput, NULL)))
 	{
 		MessageBox(hMainWnd, _T("Unable to initialize DirectInput!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return;
@@ -529,7 +529,7 @@ void	Init (void)
 		MessageBox(hMainWnd, _T("Failed to initialize mouse!"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 
 	NumDevices = 2;	// joysticks start at slot 2
-	DirectInput->EnumDevices(DIDEVTYPE_JOYSTICK, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES);
+	DirectInput->EnumDevices(DI8DEVTYPE_JOYSTICK, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES);
 
 	Movie::Mode = 0;
 }
@@ -810,7 +810,7 @@ void	UpdateInput (void)
 
 int	GetConfigButton (HWND hWnd, int DevNum)
 {
-	LPDIRECTINPUTDEVICE7 dev = DIDevices[DevNum];
+	LPDIRECTINPUTDEVICE8 dev = DIDevices[DevNum];
 	HRESULT hr;
 	int i;
 	int Key = -1;

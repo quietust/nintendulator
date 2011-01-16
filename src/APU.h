@@ -9,8 +9,8 @@
 #define APU_H
 
 #ifndef	NSFPLAYER
-#define DIRECTSOUND_VERSION 0x0700
 #include <mmsystem.h>
+#define DIRECTSOUND_VERSION 0x0800
 #include <dsound.h>
 #endif	/* !NSFPLAYER */
 
