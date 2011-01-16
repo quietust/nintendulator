@@ -534,6 +534,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_DEBUG_PPU:
 			Debugger::SetMode(Debugger::Mode ^ DEBUG_MODE_PPU);
 			break;
+#endif	/* ENABLE_DEBUGGER */
 		case ID_DEBUG_STATWND:
 			dbgVisible = !dbgVisible;
 			if (dbgVisible)
@@ -541,7 +542,6 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else	CheckMenuItem(hMenu, ID_DEBUG_STATWND, MF_UNCHECKED);
 			ShowWindow(hDebug, dbgVisible ? SW_SHOW : SW_HIDE);
 			break;
-#endif	/* ENABLE_DEBUGGER */
 		case ID_GAME:
 			NES::MapperConfig();
 			break;
