@@ -192,7 +192,7 @@ typedef struct
 	Out_Module *outMod; // filled in by winamp, optionally used :)
 } In_Module;
 
-#pragma warning(disable:4761)
+#define	CPU_INLINE_ASM	// Enable usage of inline assembly in the CPU for minor performance improvements
 
 namespace NES
 {
