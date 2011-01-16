@@ -13,6 +13,9 @@
 #include "Controllers.h"
 #include <commdlg.h>
 
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
+
 namespace Controllers
 {
 HWND key;

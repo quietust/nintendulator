@@ -16,6 +16,15 @@
 #include "AVI.h"
 #include <commctrl.h>
 
+#if (_MSC_VER < 1400)
+// newer versions of the DirectX SDK helpfully fail to include ddraw.lib
+// and those newer versions can only be used in Visual Studio 2005 and later
+// If we're using .NET 2003 or earlier, it's definitely available
+// Otherwise, we need to do LoadLibrary/GetProcAddress
+#pragma comment(lib, "ddraw.lib")
+#endif
+#pragma comment(lib, "dxguid.lib")
+
 #define	_USE_MATH_DEFINES
 #include <math.h>
 

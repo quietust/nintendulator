@@ -36,6 +36,15 @@
 #include "Controllers.h"
 #include "States.h"
 #include <shellapi.h>
+
+#ifndef UNICODE
+// need this for SHGetFolderPath() on Windows 98
+#pragma comment(lib, "shfolder.lib")
+#endif
+
+#pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "winmm.lib")
+
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -86,7 +95,7 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	// find our folder in My Documents, if it exists
 	if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, DataPath)))
 	{
-		// if we can't even find AppData, then there's a much bigger problem...
+		// if we can't even find that, then there's a much bigger problem...
 		MessageBox(NULL, _T("FATAL: unable to locate My Documents folder"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return FALSE;
 	}

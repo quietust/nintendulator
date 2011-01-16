@@ -21,6 +21,9 @@
 # include "AVI.h"
 #endif	/* NSFPLAYER */
 
+#pragma comment(lib, "dsound.lib")
+#pragma comment(lib, "dxguid.lib")
+
 #define	SOUND_FILTERING
 
 namespace APU

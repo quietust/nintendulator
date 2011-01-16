@@ -34,7 +34,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shfolder.lib odbc32.lib odbccp32.lib dxguid.lib dinput8.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
 				GenerateDebugInformation="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -82,7 +81,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shfolder.lib odbc32.lib odbccp32.lib dxguid.lib dinput8.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
 				LinkIncremental="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -127,7 +125,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput8.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
 				GenerateDebugInformation="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -175,7 +172,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib dxguid.lib dinput8.lib dsound.lib ddraw.lib winmm.lib vfw32.lib shlwapi.lib"
 				LinkIncremental="1"/>
 			<Tool
 				Name="VCMIDLTool"/>

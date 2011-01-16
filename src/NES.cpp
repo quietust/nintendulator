@@ -21,6 +21,8 @@
 #include "Controllers.h"
 #include "Genie.h"
 
+#pragma comment(lib, "shlwapi.lib")
+
 namespace NES
 {
 	int SRAM_Size;

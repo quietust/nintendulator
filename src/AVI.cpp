@@ -17,6 +17,8 @@
 #include "AVI.h"
 #include <commdlg.h>
 
+#pragma comment(lib, "vfw32.lib")
+
 // AVI utilities -- for creating avi files
 // (c) 2002 Lucian Wischik. No restrictions on use.
 // http://www.wischik.com/lu/programmer/avi_utils.html
