@@ -35,13 +35,13 @@ HINSTANCE		dInst;
 FLoadMapperDLL		LoadDLL;
 FUnloadMapperDLL	UnloadDLL;
 #else	/* !NSFPLAYER */
-struct	tMapperDLL
+struct	MapperDLL
 {
 	HINSTANCE	dInst;
 	FLoadMapperDLL	LoadDLL;
 	DLLInfo		*DI;
 	FUnloadMapperDLL	UnloadDLL;
-	tMapperDLL	*Next;
+	MapperDLL	*Next;
 } *MapperDLLs = NULL;
 #endif	/* NSFPLAYER */
 
@@ -468,13 +468,13 @@ void	Init (void)
 #ifndef	NSFPLAYER
 	WIN32_FIND_DATA Data;
 	HANDLE Handle;
-	tMapperDLL *ThisDLL;
+	MapperDLL *ThisDLL;
 	TCHAR Filename[MAX_PATH], Path[MAX_PATH];
 	_tcscpy(Path, ProgPath);
 	_tcscat(Path, _T("Mappers\\"));
 	_stprintf(Filename, _T("%s%s"), Path, _T("*.dll"));
 	Handle = FindFirstFile(Filename, &Data);
-	ThisDLL = (tMapperDLL *)malloc(sizeof(tMapperDLL));
+	ThisDLL = (MapperDLL *)malloc(sizeof(MapperDLL));
 	if (Handle != INVALID_HANDLE_VALUE)
 	{
 		do
@@ -482,6 +482,11 @@ void	Init (void)
 			TCHAR Tmp[MAX_PATH];
 			_stprintf(Tmp, _T("%s%s"), Path, Data.cFileName);
 			ThisDLL->dInst = LoadLibrary(Tmp);
+			if (!ThisDLL->dInst)
+			{
+				DbgOut(_T("Failed to load %s - not a valid DLL file!"), Data.cFileName);
+				continue;
+			}
 			ThisDLL->LoadDLL = (FLoadMapperDLL)GetProcAddress(ThisDLL->dInst, "LoadMapperDLL");
 			ThisDLL->UnloadDLL = (FUnloadMapperDLL)GetProcAddress(ThisDLL->dInst, "UnloadMapperDLL");
 			if ((ThisDLL->LoadDLL) && (ThisDLL->UnloadDLL))
@@ -492,7 +497,7 @@ void	Init (void)
 					DbgOut(_T("Added mapper pack %s: '%s' v%X.%X (%04X/%02X/%02X)"), Data.cFileName, ThisDLL->DI->Description, ThisDLL->DI->Version >> 16, ThisDLL->DI->Version & 0xFFFF, ThisDLL->DI->Date >> 16, (ThisDLL->DI->Date >> 8) & 0xFF, ThisDLL->DI->Date & 0xFF);
 					ThisDLL->Next = MapperDLLs;
 					MapperDLLs = ThisDLL;
-					ThisDLL = (tMapperDLL *)malloc(sizeof(tMapperDLL));
+					ThisDLL = (MapperDLL *)malloc(sizeof(MapperDLL));
 				}
 				else
 				{
@@ -502,7 +507,7 @@ void	Init (void)
 			}
 			else
 			{
-				DbgOut(_T("Failed to load %s - not a mapper pack!"), Data.cFileName);
+				DbgOut(_T("Failed to load %s - not a valid mapper pack!"), Data.cFileName);
 				FreeLibrary(ThisDLL->dInst);
 			}
 		}	while (FindNextFile(Handle, &Data));
@@ -512,16 +517,30 @@ void	Init (void)
 	if (MapperDLLs == NULL)
 		MessageBox(hMainWnd, _T("Fatal error: unable to locate any mapper DLLs!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 #else	/* NSFPLAYER */
+	DI = NULL;
 	dInst = LoadLibrary(_T("Plugins\\nsf.dll"));
-	LoadDLL = (FLoadMapperDLL)GetProcAddress(dInst, "LoadMapperDLL");
-	UnloadDLL = (FUnloadMapperDLL)GetProcAddress(dInst, "UnloadMapperDLL");
-	if (!LoadDLL)
-		MessageBox(mod.hMainWindow, _T("Fatal error: unable to locate NSF player mapper DLL!"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
-	if (!UnloadDLL)
-		MessageBox(mod.hMainWindow, _T("Fatal error: unable to locate NSF player mapper DLL!"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
-	DI = LoadDLL(mod.hMainWindow, &EI, CurrentMapperInterface);
-	if (!DI)
-		MessageBox(mod.hMainWindow, _T("Fatal error: unable to locate NSF player mapper DLL!"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
+	if (dInst)
+	{
+		LoadDLL = (FLoadMapperDLL)GetProcAddress(dInst, "LoadMapperDLL");
+		UnloadDLL = (FUnloadMapperDLL)GetProcAddress(dInst, "UnloadMapperDLL");
+		if (LoadDLL && UnloadDLL)
+		{
+			DI = LoadDLL(mod.hMainWindow, &EI, CurrentMapperInterface);
+			if (!DI)
+			{
+				MessageBox(mod.hMainWindow, _T("Fatal error: NSF.DLL reported version mismatch!"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
+				FreeLibrary(dInst);
+				dInst = NULL;
+			}
+		}
+		else
+		{
+			MessageBox(mod.hMainWindow, _T("Fatal error: NSF.DLL is not a valid mapper pack!"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
+			FreeLibrary(dInst);
+			dInst = NULL;
+		}
+	}
+	else	MessageBox(mod.hMainWindow, _T("Fatal error: unable to load NSF.DLL!"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
 #endif	/* !NSFPLAYER */
 	ZeroMemory(&EI, sizeof(EI));
 	ZeroMemory(&RI, sizeof(RI));
@@ -627,7 +646,7 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 #ifndef	NSFPLAYER
 	DLLInfo **DLLs;
 	int num = 1;
-	tMapperDLL *ThisDLL = MapperDLLs;
+	MapperDLL *ThisDLL = MapperDLLs;
 	while (ThisDLL)
 	{	// 1 - count how many DLLs we have (add 1 for null terminator)
 		num++;
@@ -705,7 +724,7 @@ void	UnloadMapper (void)
 void	Release (void)
 {
 #ifndef	NSFPLAYER
-	tMapperDLL *ThisDLL = MapperDLLs;
+	MapperDLL *ThisDLL = MapperDLLs;
 	while (ThisDLL)
 	{
 		MapperDLLs = ThisDLL->Next;
