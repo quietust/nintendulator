@@ -1136,8 +1136,8 @@ void	LoadSettings (void)
 	if (AutoRun)
 		CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_CHECKED);
 
-	if (GFX::NTSChue >= 300)		// old hue settings were 300 to 360
-		GFX::NTSChue -= 330;	// new settings are -30 to +30
+	if (GFX::NTSChue >= 300)	// Old versions of Nintendulator used hue settings between 300 and 360
+		GFX::NTSChue -= 330;	// Current versions use values between -30 and +30, so convert them if necessary
 
 	GFX::SetFrameskip(-1);
 
@@ -1341,6 +1341,9 @@ void	RelocateSaveData_Progdir (void)
 	}
 }
 
+// Nintendulator 0.975 builds between October 29, 2010 and January 18, 2011 relocated files from Application Data to My Documents
+// As it turns out, this was the wrong thing to do - Application Data was the correct location all along
+// In order to properly handle users who used builds during that time period, we need to be able to move the stuff back to Application Data
 void	RelocateSaveData_Mydocs (void)
 {
 	WIN32_FIND_DATA Data;
@@ -1479,7 +1482,7 @@ void	SetupDataPath (void)
 
 	// check if we need to relocate save data from the program's "Saves" subfolder
 	RelocateSaveData_Progdir();
-	// and the same for relocating from My Documents, for people who used 0.975 builds between October 29, 2010 and January 18, 2011
+	// and the same for My Documents, for people who used 0.975 builds between October 29, 2010 and January 18, 2011
 	RelocateSaveData_Mydocs();
 }
 } // namespace NES
