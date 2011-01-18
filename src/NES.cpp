@@ -47,7 +47,6 @@ namespace NES
 
 void	Init (void)
 {
-	SetWindowPos(hMainWnd, HWND_TOP, 0, 0, 256, 240, SWP_NOZORDER);
 	MapperInterface::Init();
 	Controllers::Init();
 	APU::Init();
