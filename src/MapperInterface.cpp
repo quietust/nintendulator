@@ -494,9 +494,17 @@ void	Init (void)
 					MapperDLLs = ThisDLL;
 					ThisDLL = (tMapperDLL *)malloc(sizeof(tMapperDLL));
 				}
-				else	FreeLibrary(ThisDLL->dInst);
+				else
+				{
+					DbgOut(_T("Failed to load mapper pack %s - version mismatch!"), Data.cFileName);
+					FreeLibrary(ThisDLL->dInst);
+				}
 			}
-			else	FreeLibrary(ThisDLL->dInst);
+			else
+			{
+				DbgOut(_T("Failed to load %s - not a mapper pack!"), Data.cFileName);
+				FreeLibrary(ThisDLL->dInst);
+			}
 		}	while (FindNextFile(Handle, &Data));
 		FindClose(Handle);
 	}
