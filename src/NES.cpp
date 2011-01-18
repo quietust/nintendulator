@@ -1335,7 +1335,7 @@ void	RelocateSaveData_Progdir (void)
 	else	MessageBox(NULL, _T("Nintendulator was unable to fully relocate your old savestates.\nPlease remove all remaining files from Nintendulator's \"Saves\" folder."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 }
 
-void	RelocateSaveData_Appdata (void)
+void	RelocateSaveData_Mydocs (void)
 {
 	WIN32_FIND_DATA Data;
 	HANDLE Handle;
@@ -1343,12 +1343,12 @@ void	RelocateSaveData_Appdata (void)
 	TCHAR oldPath[MAX_PATH];
 	TCHAR filename[MAX_PATH];
 
-	// look for our folder in Application Data, if it exists
-	if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, oldPath)))
+	// look for our folder in My Documents, if it exists
+	if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, 0, oldPath)))
 		return;
 	PathAppend(oldPath, _T("Nintendulator"));
 
-	// check if the Nintendulator folder exists in Application Data
+	// check if the Nintendulator folder exists in My Documents
 	if (GetFileAttributes(oldPath) == INVALID_FILE_ATTRIBUTES)
 		return;
 	if (!(GetFileAttributes(oldPath) & FILE_ATTRIBUTE_DIRECTORY))
@@ -1430,7 +1430,7 @@ void	RelocateSaveData_Appdata (void)
 	if ((GetFileAttributes(filename) != INVALID_FILE_ATTRIBUTES) && (GetFileAttributes(filename) & FILE_ATTRIBUTE_DIRECTORY))
 		RemoveDirectory(filename);
 
-	// Finally, try to delete the old directory from Application Data
+	// Finally, try to delete the old directory from My Documents
 	if (RemoveDirectory(oldPath))
 		EI.DbgOut(_T("Savestate directory successfully relocated"));
 	else
@@ -1472,7 +1472,7 @@ void	SetupDataPath (void)
 
 	// check if we need to relocate save data from the program's "Saves" subfolder
 	RelocateSaveData_Progdir();
-	// and the same for relocating from Application Data
-	RelocateSaveData_Appdata();
+	// and the same for relocating from My Documents, for people who used 0.975 builds between October 29, 2010 and January 18, 2011
+	RelocateSaveData_Mydocs();
 }
 } // namespace NES

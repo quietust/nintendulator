@@ -77,6 +77,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Auto-Run",                   ID_FILE_AUTORUN
         MENUITEM SEPARATOR
+        MENUITEM "Browse Save Files",           ID_FILE_BROWSESAVES
+        MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+F4",               ID_FILE_EXIT
     END
     POPUP "&CPU"
