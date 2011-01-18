@@ -20,6 +20,7 @@
 #include "Movie.h"
 #include "Controllers.h"
 #include "Genie.h"
+#include <shellapi.h>
 
 #pragma comment(lib, "shlwapi.lib")
 
@@ -1332,7 +1333,13 @@ void	RelocateSaveData_Progdir (void)
 	PathAppend(filename, _T("Saves"));
 	if (RemoveDirectory(filename))
 		EI.DbgOut(_T("Savestate directory successfully relocated"));
-	else	MessageBox(NULL, _T("Nintendulator was unable to fully relocate your old savestates.\nPlease remove all remaining files from Nintendulator's \"Saves\" folder."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+	else
+	{
+		TCHAR str[MAX_PATH * 2 + 256];
+		_stprintf(str, _T("Nintendulator was unable to fully relocate its data files to \"%s\".\nPlease delete the folder \"%s\" after relocating its contents."), DataPath, filename);
+		MessageBox(NULL, str, _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		ShellExecute(hMainWnd, NULL, filename, NULL, NULL, SW_SHOWNORMAL);
+	}
 }
 
 void	RelocateSaveData_Mydocs (void)
@@ -1436,8 +1443,9 @@ void	RelocateSaveData_Mydocs (void)
 	else
 	{
 		TCHAR str[MAX_PATH * 2 + 256];
-		_stprintf(str, _T("Nintendulator was unable to fully relocate its data files to \"%s\".\nPlease delete the folder \"%s\" and all of its contents."), DataPath, oldPath);
+		_stprintf(str, _T("Nintendulator was unable to fully relocate its data files to \"%s\".\nPlease delete the folder \"%s\" after relocating its contents."), DataPath, oldPath);
 		MessageBox(NULL, str, _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		ShellExecute(hMainWnd, NULL, oldPath, NULL, NULL, SW_SHOWNORMAL);
 	}
 }
 
