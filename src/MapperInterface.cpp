@@ -605,7 +605,7 @@ INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 	switch (message)
 	{
 	case WM_INITDIALOG:
-		SetWindowLongPtr(hDlg, GWL_USERDATA, lParam);
+		SetWindowLongPtr(hDlg, GWLP_USERDATA, lParam);
 		DLLs = (DLLInfo **)lParam;
 		for (i = 0; DLLs[i] != NULL; i++)
 		{
@@ -620,7 +620,7 @@ INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 		return TRUE;
 		break;
 	case WM_COMMAND:
-		DLLs = (DLLInfo **)GetWindowLongPtr(hDlg, GWL_USERDATA);
+		DLLs = (DLLInfo **)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 		switch (LOWORD(wParam))
 		{
 		case IDC_DLL_LIST:

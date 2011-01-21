@@ -116,10 +116,10 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	ExpPort *Cont;
 	if (uMsg == WM_INITDIALOG)
 	{
-		SetWindowLongPtr(hDlg, GWL_USERDATA, lParam);
+		SetWindowLongPtr(hDlg, GWLP_USERDATA, lParam);
 		Cont = (ExpPort *)lParam;
 	}
-	else	Cont = (ExpPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
+	else	Cont = (ExpPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 	ParseConfigMessages(hDlg, 16, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
 	return FALSE;
 }

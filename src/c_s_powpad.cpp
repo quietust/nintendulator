@@ -93,10 +93,10 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	StdPort *Cont;
 	if (uMsg == WM_INITDIALOG)
 	{
-		SetWindowLongPtr(hDlg, GWL_USERDATA, lParam);
+		SetWindowLongPtr(hDlg, GWLP_USERDATA, lParam);
 		Cont = (StdPort *)lParam;
 	}
-	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWL_USERDATA);
+	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 	if ((uMsg == WM_COMMAND) && (LOWORD(wParam) == IDC_CONT_FLIP))
 	{
 		int i;
