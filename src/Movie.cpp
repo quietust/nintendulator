@@ -19,15 +19,15 @@
 
 namespace Movie
 {
-	unsigned char	Mode;
-	FILE *		Data;
-	unsigned char	ControllerTypes[4];
-	int		ReRecords;
-	TCHAR		Filename[MAX_PATH];
-	TCHAR *		Description;
-	int		Len;
-	int		Pos;
-	int		FrameLen;
+unsigned char	Mode;
+FILE *		Data;
+unsigned char	ControllerTypes[4];
+int		ReRecords;
+TCHAR		Filename[MAX_PATH];
+TCHAR *		Description;
+int		Len;
+int		Pos;
+int		FrameLen;
 
 void	FindBlock (void)
 {
@@ -145,17 +145,17 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			SetDlgItemText(hDlg, IDC_MOVIE_PLAY_DESCRIPTION, _T(""));
 			if (len)
 			{
-				char *desc = (char *)malloc(len);
+				char *desc = new char[len];
 				int len2;
 				fread(desc, len, 1, Data);
 #ifdef	UNICODE
 				len2 = MultiByteToWideChar(CP_UTF8, 0, desc, len, NULL, 0);
-				Description = (TCHAR *)malloc(len2 * sizeof(TCHAR));
+				Description = new TCHAR[len2];
 				if (Description)
 				{
 					MultiByteToWideChar(CP_UTF8, 0, desc, len, Description, len2);
 					SetDlgItemText(hDlg, IDC_MOVIE_PLAY_DESCRIPTION, Description);
-					free(Description);
+					delete[] Description;
 					Description = NULL;
 				}
 #else	/* !UNICODE */
@@ -164,7 +164,7 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				// character set to another
 				len2 = 0;
 #endif	/* UNICODE */
-				free(desc);
+				delete[] desc;
 			}
 			fread(&Len, 4, 1, Data);
 			SetDlgItemInt(hDlg, IDC_MOVIE_PLAY_FRAMES, Len, FALSE);
@@ -338,23 +338,23 @@ void	Play (void)
 	fread(&len, 4, 1, Data);
 	if (len)
 	{
-		char *desc = (char *)malloc(len);
+		char *desc = new char[len];
 		int len2;
 		fread(desc, len, 1, Data);
 #ifdef	UNICODE
 		len2 = MultiByteToWideChar(CP_UTF8, 0, desc, len, NULL, 0);
-		Description = (TCHAR *)malloc(len2 * sizeof(TCHAR));
+		Description = new TCHAR[len2];
 		if (Description)
 		{
 			MultiByteToWideChar(CP_UTF8, 0, desc, len, Description, len2);
 			EI.DbgOut(_T("Description: \"%s\""), Description);
-			free(Description);
+			delete[] Description;
 			Description = NULL;
 		}
 #else	/* !UNICODE */
 		len2 = 0;
 #endif	 /* UNICODE */
-		free(desc);
+		delete[] desc;
 	}
 	EI.DbgOut(_T("Re-record count: %i"), ReRecords);
 	Pos = 0;
@@ -468,7 +468,7 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			{
 #ifdef	UNICODE
 				int len = GetWindowTextLength(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION)) + 1;
-				Description = (TCHAR *)malloc(len * sizeof(TCHAR));
+				Description = new TCHAR[len];
 				if (Description)
 					GetDlgItemText(hDlg, IDC_MOVIE_RECORD_DESCRIPTION, Description, len);
 #else	/* !UNICODE */
@@ -577,11 +577,11 @@ void	Record (void)
 	{
 		char *desc;
 		len = WideCharToMultiByte(CP_UTF8, 0, Description, -1, NULL, 0, NULL, NULL);
-		desc = (char *)malloc(len);
+		desc = new char[len];
 		WideCharToMultiByte(CP_UTF8, 0, Description, -1, desc, len, NULL, NULL);
 		fwrite(&len, 4, 1, Data);		// comment length
 		fwrite(desc, len, 1, Data);	// comment data
-		free(desc);
+		delete[] desc;
 	}
 	else
 	{
@@ -603,7 +603,7 @@ void	Record (void)
 
 	if (Description)
 	{
-		free(Description);	// don't need this anymore
+		delete[] Description;	// don't need this anymore
 		Description = NULL;
 	}
 }

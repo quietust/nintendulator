@@ -69,6 +69,5 @@ int	MAPINT	Read4k (int, int);
 void	MAPINT	Write4k (int, int, int);
 int	MAPINT	ReadPRG (int, int);
 void	MAPINT	WritePRG (int, int, int);
-
 } // namespace CPU
 #endif	/* !CPU_H */

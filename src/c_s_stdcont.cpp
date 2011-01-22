@@ -95,18 +95,18 @@ void	StdPort_StdController::Config (HWND hWnd)
 }
 StdPort_StdController::~StdPort_StdController (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 StdPort_StdController::StdPort_StdController (int *buttons)
 {
 	Type = STD_STDCONTROLLER;
 	NumButtons = 8;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(StdPort_StdController_State);
+	Data = new StdPort_StdController_State;
 	MovLen = 1;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Bits = 0;
 	State->BitPtr = 0;

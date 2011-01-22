@@ -127,18 +127,18 @@ void	StdPort_PowerPad::Config (HWND hWnd)
 }
 StdPort_PowerPad::~StdPort_PowerPad (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 StdPort_PowerPad::StdPort_PowerPad (int *buttons)
 {
 	Type = STD_POWERPAD;
 	NumButtons = 12;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(StdPort_PowerPad_State);
+	Data = new StdPort_PowerPad_State;
 	MovLen = 2;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Bits1 = 0;
 	State->Bits2 = 0;

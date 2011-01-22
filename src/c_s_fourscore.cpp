@@ -25,17 +25,17 @@ struct StdPort_FourScore_State
 void	AllocMov1 (StdPort *Cont)
 {
 	if (Cont->MovData)
-		free(Cont->MovData);
+		delete[] Cont->MovData;
 	Cont->MovLen = FSPort1->MovLen + FSPort3->MovLen;
-	Cont->MovData = (unsigned char *)malloc(Cont->MovLen);
+	Cont->MovData = new unsigned char[Cont->MovLen];
 	ZeroMemory(Cont->MovData, Cont->MovLen);
 }
 void	AllocMov2 (StdPort *Cont)
 {
 	if (Cont->MovData)
-		free(Cont->MovData);
+		delete[] Cont->MovData;
 	Cont->MovLen = FSPort2->MovLen + FSPort4->MovLen;
-	Cont->MovData = (unsigned char *)malloc(Cont->MovLen);
+	Cont->MovData = new unsigned char[Cont->MovLen];
 	ZeroMemory(Cont->MovData, Cont->MovLen);
 }
 void	StdPort_FourScore::Frame (unsigned char mode)
@@ -208,21 +208,21 @@ void	StdPort_FourScore2::Config (HWND hWnd)
 }
 StdPort_FourScore::~StdPort_FourScore (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 StdPort_FourScore2::~StdPort_FourScore2 (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 StdPort_FourScore::StdPort_FourScore (int *buttons)
 {
 	Type = STD_FOURSCORE;
 	NumButtons = 0;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(StdPort_FourScore_State);
+	Data = new StdPort_FourScore_State;
 	State->BitPtr = 0;
 	State->Strobe = 0;
 	MovData = NULL;
@@ -233,8 +233,8 @@ StdPort_FourScore2::StdPort_FourScore2 (int *buttons)
 	Type = STD_FOURSCORE2;
 	NumButtons = 0;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(StdPort_FourScore_State);
+	Data = new StdPort_FourScore_State;
 	State->BitPtr = 0;
 	State->Strobe = 0;
 	MovData = NULL;

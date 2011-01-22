@@ -21,6 +21,5 @@ void	Reset (void);
 void	Init (void);
 int	Save (FILE *);
 int	Load (FILE *);
-
 } // namespace Genie
 #endif	/* !GENIE_H */

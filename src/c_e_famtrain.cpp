@@ -104,18 +104,18 @@ void	ExpPort_FamTrainer::Config (HWND hWnd)
 }
 ExpPort_FamTrainer::~ExpPort_FamTrainer (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 ExpPort_FamTrainer::ExpPort_FamTrainer (int *buttons)
 {
 	Type = EXP_FAMTRAINER;
 	NumButtons = 12;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(ExpPort_FamTrainer_State);
+	Data = new ExpPort_FamTrainer_State;
 	MovLen = 2;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Bits = 0;
 	State->Sel = 0;

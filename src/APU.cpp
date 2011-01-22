@@ -917,8 +917,8 @@ void	SetFPSVars (int FPS)
 	LockSize = LOCK_SIZE / WantFPS;
 	buflen = LockSize / (BITS / 8);
 	if (buffer)
-		free(buffer);
-	buffer = (short *)malloc(LockSize);
+		delete buffer;
+	buffer = new short[LockSize];
 #endif	/* !NSFPLAYER */
 }
 
@@ -1047,6 +1047,11 @@ void	Release (void)
 	{
 		DirectSound->Release();
 		DirectSound = NULL;
+	}
+	if (buffer)
+	{
+		delete buffer;
+		buffer = NULL;
 	}
 #endif	/* !NSFPLAYER */
 }

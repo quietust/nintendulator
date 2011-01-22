@@ -21,10 +21,8 @@
 
 namespace States
 {
-	TCHAR BaseFilename[MAX_PATH];
-	int SelSlot;
-
-//extern FILE *movie;
+TCHAR BaseFilename[MAX_PATH];
+int SelSlot;
 
 void	Init (void)
 {
@@ -135,12 +133,12 @@ int	SaveData (FILE *out)
 		else	clen = 0;
 		if (clen)
 		{
-			unsigned char *tpmi = (unsigned char *)malloc(clen);
+			unsigned char *tpmi = new unsigned char[clen];
 			MI->SaveLoad(STATE_SAVE, 0, tpmi);
 			fwrite("MAPR", 1, 4, out);	flen += 4;
 			fwrite(&clen, 4, 1, out);	flen += 4;
 			fwrite(tpmi, 1, clen, out);	flen += clen;	//	CUST	uint8[...]	Custom mapper data
-			free(tpmi);
+			delete[] tpmi;
 		}
 	}
 	if (Movie::Mode)	// save state when recording, reviewing, OR playing
@@ -230,10 +228,10 @@ BOOL	LoadData (FILE *in, int flen)
 			if ((MI) && (MI->SaveLoad))
 			{
 				int len = MI->SaveLoad(STATE_SIZE, 0, NULL);
-				unsigned char *tpmi = (unsigned char *)malloc(len);
+				unsigned char *tpmi = new unsigned char[len];
 				fread(tpmi, 1, len, in);		//	CUST	uint8[...]	Custom mapper data
 				MI->SaveLoad(STATE_LOAD, 0, tpmi);
-				free(tpmi);
+				delete[] tpmi;
 				clen -= len;
 			}
 		}

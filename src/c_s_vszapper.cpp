@@ -134,18 +134,18 @@ void	StdPort_VSZapper::Config (HWND hWnd)
 }
 StdPort_VSZapper::~StdPort_VSZapper (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 StdPort_VSZapper::StdPort_VSZapper (int *buttons)
 {
 	Type = STD_VSZAPPER;
 	NumButtons = 1;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(StdPort_VSZapper_State);
+	Data = new StdPort_VSZapper_State;
 	MovLen = 3;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->PosX = 0;
 	State->PosY = 0;

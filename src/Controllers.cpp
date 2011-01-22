@@ -554,26 +554,31 @@ void	Release (void)
 			DIDevices[i]->Release();
 			DIDevices[i] = NULL;
 		}
+		// Allocated using _tcsdup()
 		free(DeviceName[i]);
 		DeviceName[i] = NULL;
 		for (j = 0; j < 128; j++)
 		{
+			// Allocated using _tcsdup()
 			free(ButtonNames[i][j]);
 			ButtonNames[i][j] = NULL;
 		}
 		for (j = 0; j < 8; j++)
 		{
+			// Allocated using _tcsdup()
 			free(AxisNames[i][j]);
 			AxisNames[i][j] = NULL;
 		}
 		for (j = 0; j < 4; j++)
 		{
+			// Allocated using _tcsdup()
 			free(POVNames[i][j]);
 			POVNames[i][j] = NULL;
 		}
 	}
 	for (j = 0; j < 256; j++)
 	{
+		// Allocated using _tcsdup()
 		free(KeyNames[j]);
 		KeyNames[j] = NULL;
 	}

@@ -26,8 +26,6 @@ void	StdPort_Unconnected::Config (HWND hWnd)
 }
 StdPort_Unconnected::~StdPort_Unconnected (void)
 {
-	free(Data);
-	free(MovData);
 }
 StdPort_Unconnected::StdPort_Unconnected (int *buttons)
 {
@@ -35,9 +33,8 @@ StdPort_Unconnected::StdPort_Unconnected (int *buttons)
 	NumButtons = 0;
 	Buttons = buttons;
 	DataLen = 0;
-	Data = malloc(DataLen);
+	Data = NULL;
 	MovLen = 0;
-	MovData = (unsigned char *)malloc(MovLen);
-	ZeroMemory(MovData, MovLen);
+	MovData = NULL;
 }
 } // namespace Controllers

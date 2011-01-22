@@ -26,24 +26,24 @@
 
 namespace NES
 {
-	int SRAM_Size;
+int SRAM_Size;
 
-	int PRGMask, CHRMask;
+int PRGMask, CHRMask;
 
-	BOOL ROMLoaded;
-	BOOL DoStop, Running, Scanline;
-	BOOL GameGenie;
-	BOOL SoundEnabled;
-	BOOL AutoRun;
-	BOOL FrameStep, GotStep;
-	BOOL HasMenu;
+BOOL ROMLoaded;
+BOOL DoStop, Running, Scanline;
+BOOL GameGenie;
+BOOL SoundEnabled;
+BOOL AutoRun;
+BOOL FrameStep, GotStep;
+BOOL HasMenu;
 
-	unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
-	unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
-	unsigned char CHR_ROM[MAX_CHRROM_SIZE][0x400];
-	unsigned char CHR_RAM[MAX_CHRRAM_SIZE][0x400];
+unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
+unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
+unsigned char CHR_ROM[MAX_CHRROM_SIZE][0x400];
+unsigned char CHR_RAM[MAX_CHRRAM_SIZE][0x400];
 
-	const TCHAR *CompatLevel[COMPAT_NUMTYPES] = {_T("Unsupported"), _T("Partially supported"), _T("Mostly supported"), _T("Fully supported!")};
+const TCHAR *CompatLevel[COMPAT_NUMTYPES] = {_T("Unsupported"), _T("Partially supported"), _T("Mostly supported"), _T("Fully supported!")};
 
 void	Init (void)
 {
@@ -81,8 +81,6 @@ void	Release (void)
 		CloseFile();
 	SaveSettings();
 	APU::Release();
-	if (APU::buffer)	// this really should go in APU.cpp
-		free(APU::buffer);
 	GFX::Release();
 	Controllers::Release();
 	MapperInterface::Release();
@@ -295,13 +293,14 @@ void	CloseFile (void)
 	if (RI.ROMType)
 	{
 		if (RI.ROMType == ROM_UNIF)
-			free(RI.UNIF_BoardName);
+			delete[] RI.UNIF_BoardName;
 		else if (RI.ROMType == ROM_NSF)
 		{
-			free(RI.NSF_Title);
-			free(RI.NSF_Artist);
-			free(RI.NSF_Copyright);
+			delete[] RI.NSF_Title;
+			delete[] RI.NSF_Artist;
+			delete[] RI.NSF_Copyright;
 		}
+		// Allocated using _tcsdup()
 		free(RI.Filename);
 		ZeroMemory(&RI, sizeof(RI));
 	}
@@ -507,7 +506,7 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 		switch (Signature)
 		{
 		case MKID('MAPR'):
-			RI.UNIF_BoardName = (char *)malloc(BlockLen);
+			RI.UNIF_BoardName = new char[BlockLen];
 			fread(RI.UNIF_BoardName, 1, BlockLen, in);
 			break;
 		case MKID('TVCI'):
@@ -541,7 +540,7 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 			RI.UNIF_NumPRG++;
 			RI.UNIF_PRGSize[id] = BlockLen;
 			PRGsize += BlockLen;
-			tPRG[id] = (unsigned char *)malloc(BlockLen);
+			tPRG[id] = new unsigned char[BlockLen];
 			fread(tPRG[id], 1, BlockLen, in);
 			break;
 
@@ -564,7 +563,7 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 			RI.UNIF_NumCHR++;
 			RI.UNIF_CHRSize[id] = BlockLen;
 			CHRsize += BlockLen;
-			tCHR[id] = (unsigned char *)malloc(BlockLen);
+			tCHR[id] = new unsigned char[BlockLen];
 			fread(tCHR[id], 1, BlockLen, in);
 			break;
 		default:
@@ -595,7 +594,7 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 				memcpy(PRGPoint, tPRG[i], RI.UNIF_PRGSize[i]);
 				PRGPoint += RI.UNIF_PRGSize[i];
 			}
-			free(tPRG[i]);
+			delete tPRG[i];
 		}
 		if (tCHR[i])
 		{
@@ -604,7 +603,7 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 				memcpy(CHRPoint, tCHR[i], RI.UNIF_CHRSize[i]);
 				CHRPoint += RI.UNIF_CHRSize[i];
 			}
-			free(tCHR[i]);
+			delete tCHR[i];
 		}
 	}
 	if (error)
@@ -705,12 +704,15 @@ const TCHAR *	OpenFileNSF (FILE *in)
 	RI.NSF_InitSong = Header[0x07];
 	RI.NSF_InitAddr = Header[0x0A] | (Header[0x0B] << 8);
 	RI.NSF_PlayAddr = Header[0x0C] | (Header[0x0D] << 8);
-	RI.NSF_Title = (char *)malloc(32);
-	RI.NSF_Artist = (char *)malloc(32);
-	RI.NSF_Copyright = (char *)malloc(32);
+	RI.NSF_Title = new char[32];
+	RI.NSF_Artist = new char[32];
+	RI.NSF_Copyright = new char[32];
 	memcpy(RI.NSF_Title, &Header[0x0E], 32);
+	RI.NSF_Title[31] = 0;
 	memcpy(RI.NSF_Artist, &Header[0x2E], 32);
+	RI.NSF_Artist[31] = 0;
 	memcpy(RI.NSF_Copyright, &Header[0x4E], 32);
+	RI.NSF_Copyright[31] = 0;
 
 	if (ROMlen > MAX_PRGROM_SIZE * 0x1000)
 		return _T("NSF is too large! Increase MAX_PRGROM_SIZE and recompile!");

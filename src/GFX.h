@@ -13,7 +13,6 @@
 
 namespace GFX
 {
-
 enum PALETTE { PALETTE_NTSC, PALETTE_PAL, PALETTE_PC10, PALETTE_VS1, PALETTE_VS2, PALETTE_VS3, PALETTE_VS4, PALETTE_EXT, PALETTE_MAX };
 
 extern unsigned char RawPalette[8][64][3];
@@ -48,6 +47,5 @@ void	PaletteConfig (void);
 void	GetCursorPos (POINT *);
 void	SetCursorPos (int, int);
 BOOL	ZapperHit (int);
-
 } // namespace GFX
 #endif	/* !GFX_H */

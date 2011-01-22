@@ -101,18 +101,18 @@ void	ExpPort_ArkanoidPaddle::Config (HWND hWnd)
 }
 ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 ExpPort_ArkanoidPaddle::ExpPort_ArkanoidPaddle (int *buttons)
 {
 	Type = EXP_ARKANOIDPADDLE;
 	NumButtons = 1;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(ExpPort_ArkanoidPaddle_State);
+	Data = new ExpPort_ArkanoidPaddle_State;
 	MovLen = 2;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Bits = 0;
 	State->Pos = 340;

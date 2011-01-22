@@ -129,18 +129,18 @@ void	ExpPort_Fami4Play::Config (HWND hWnd)
 }
 ExpPort_Fami4Play::~ExpPort_Fami4Play (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 ExpPort_Fami4Play::ExpPort_Fami4Play (int *buttons)
 {
 	Type = EXP_FAMI4PLAY;
 	NumButtons = 16;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(ExpPort_Fami4Play_State);
+	Data = new ExpPort_Fami4Play_State;
 	MovLen = 2;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Bits1 = 0;
 	State->Bits2 = 0;

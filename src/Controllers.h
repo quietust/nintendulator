@@ -16,7 +16,6 @@
 
 namespace Controllers
 {
-
 enum	STDCONT_TYPE
 {
 	STD_UNCONNECTED,
@@ -158,6 +157,5 @@ void	ConfigButton (int *, int, HWND, BOOL);
 
 BOOL	IsPressed (int);
 void	ParseConfigMessages (HWND, int, int *, int *, int *, UINT, WPARAM, LPARAM);
-
 } // namespace Controllers
 #endif	/* !CONTROLLERS_H */

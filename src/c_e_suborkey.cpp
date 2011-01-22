@@ -109,18 +109,18 @@ void	ExpPort_SuborKeyboard::Config (HWND hWnd)
 }
 ExpPort_SuborKeyboard::~ExpPort_SuborKeyboard (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 ExpPort_SuborKeyboard::ExpPort_SuborKeyboard (int *buttons)
 {
 	Type = EXP_SUBORKEYBOARD;
 	NumButtons = 0;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(ExpPort_SuborKeyboard_State);
+	Data = new ExpPort_SuborKeyboard_State;
 	MovLen = 13;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Row = 0;
 	State->Column = 0;

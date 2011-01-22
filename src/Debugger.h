@@ -45,7 +45,6 @@ void	Release (void);
 void	SetMode(int NewMode);
 void	Update (int UpdateMode);
 void	AddInst (void);
-
 } // namespace Debugger
 #endif	/* !ENABLE_DEBUGGER */
 

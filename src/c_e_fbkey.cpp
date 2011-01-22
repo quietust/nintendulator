@@ -119,8 +119,8 @@ void	ExpPort_FamilyBasicKeyboard::Config (HWND hWnd)
 
 ExpPort_FamilyBasicKeyboard::~ExpPort_FamilyBasicKeyboard (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 	if (ConfigWindow)
 	{
 		DestroyWindow(ConfigWindow);
@@ -132,10 +132,10 @@ ExpPort_FamilyBasicKeyboard::ExpPort_FamilyBasicKeyboard (int *buttons)
 	Type = EXP_FAMILYBASICKEYBOARD;
 	NumButtons = 0;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(ExpPort_FamilyBasicKeyboard_State);
+	Data = new ExpPort_FamilyBasicKeyboard_State;
 	MovLen = 9;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Column = 0;
 	State->Row = 0;

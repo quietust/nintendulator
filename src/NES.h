@@ -68,6 +68,5 @@ void	LoadSettings (void);
 void	SaveSettings (void);
 void	SetupDataPath (void);
 void	MapperConfig (void);
-
 } // namespace NES
 #endif	/* !NES_H */

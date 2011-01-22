@@ -474,7 +474,7 @@ void	Init (void)
 	_tcscat(Path, _T("Mappers\\"));
 	_stprintf(Filename, _T("%s%s"), Path, _T("*.dll"));
 	Handle = FindFirstFile(Filename, &Data);
-	ThisDLL = (MapperDLL *)malloc(sizeof(MapperDLL));
+	ThisDLL = new MapperDLL;
 	if (Handle != INVALID_HANDLE_VALUE)
 	{
 		do
@@ -497,7 +497,7 @@ void	Init (void)
 					DbgOut(_T("Added mapper pack %s: '%s' v%X.%X (%04X/%02X/%02X)"), Data.cFileName, ThisDLL->DI->Description, ThisDLL->DI->Version >> 16, ThisDLL->DI->Version & 0xFFFF, ThisDLL->DI->Date >> 16, (ThisDLL->DI->Date >> 8) & 0xFF, ThisDLL->DI->Date & 0xFF);
 					ThisDLL->Next = MapperDLLs;
 					MapperDLLs = ThisDLL;
-					ThisDLL = (MapperDLL *)malloc(sizeof(MapperDLL));
+					ThisDLL = new MapperDLL;
 				}
 				else
 				{
@@ -513,7 +513,7 @@ void	Init (void)
 		}	while (FindNextFile(Handle, &Data));
 		FindClose(Handle);
 	}
-	free(ThisDLL);
+	delete ThisDLL;
 	if (MapperDLLs == NULL)
 		MessageBox(hMainWnd, _T("Fatal error: unable to locate any mapper DLLs!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 #else	/* NSFPLAYER */
@@ -609,13 +609,13 @@ INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 		DLLs = (DLLInfo **)lParam;
 		for (i = 0; DLLs[i] != NULL; i++)
 		{
-			TCHAR *desc = (TCHAR *)malloc(sizeof(TCHAR) * (_tcslen(DLLs[i]->Description) + 32));
+			TCHAR *desc = new TCHAR[_tcslen(DLLs[i]->Description) + 32];
 			_stprintf(desc, _T("\"%s\" v%x.%x (%04x/%02x/%02x)"),
 				DLLs[i]->Description,
 				(DLLs[i]->Version >> 16) & 0xFFFF, DLLs[i]->Version & 0xFFFF,
 				(DLLs[i]->Date >> 16) & 0xFFFF, (DLLs[i]->Date >> 8) & 0xFF, DLLs[i]->Date & 0xFF);
 			SendDlgItemMessage(hDlg, IDC_DLL_LIST, LB_INSERTSTRING, i, (LPARAM)desc);
-			free(desc);
+			delete[] desc;
 		}
 		return TRUE;
 		break;
@@ -653,7 +653,7 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 		ThisDLL = ThisDLL->Next;
 	}
 
-	DLLs = (DLLInfo **)malloc(num * sizeof(DLLInfo *));
+	DLLs = new DLLInfo *[num];
 	num = 0;
 	ThisDLL = MapperDLLs;
 	while (ThisDLL)
@@ -669,7 +669,7 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 	if (num == 0)
 	{	// none found
 		DI = NULL;
-		free(DLLs);
+		delete[] DLLs;
 		return FALSE;
 	}
 	if (num == 1)
@@ -678,7 +678,7 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 		MI = DI->LoadMapper(ROM);
 		if (MI->Load)
 			MI->Load();
-		free(DLLs);
+		delete[] DLLs;
 		return TRUE;
 	}
 	// else more than one found
@@ -689,10 +689,10 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 		MI = DI->LoadMapper(ROM);
 		if (MI->Load)
 			MI->Load();
-		free(DLLs);
+		delete[] DLLs;
 		return TRUE;
 	}
-	free(DLLs);
+	delete[] DLLs;
 #else	/* NSFPLAYER */
 	if (!DI)
 		return FALSE;
@@ -730,7 +730,7 @@ void	Release (void)
 		MapperDLLs = ThisDLL->Next;
 		ThisDLL->UnloadDLL();
 		FreeLibrary(ThisDLL->dInst);
-		free(ThisDLL);
+		delete ThisDLL;
 		ThisDLL = MapperDLLs;
 	}
 #else	/* NSFPLAYER */

@@ -109,18 +109,18 @@ void	StdPort_SnesController::Config (HWND hWnd)
 }
 StdPort_SnesController::~StdPort_SnesController (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 StdPort_SnesController::StdPort_SnesController (int *buttons)
 {
 	Type = STD_SNESCONTROLLER;
 	NumButtons = 12;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(StdPort_SnesController_State);
+	Data = new StdPort_SnesController_State;
 	MovLen = 2;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Bits1 = 0;
 	State->Bits2 = 0;

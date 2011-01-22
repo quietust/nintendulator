@@ -99,18 +99,18 @@ void StdPort_ArkanoidPaddle::Config (HWND hWnd)
 }
 StdPort_ArkanoidPaddle::~StdPort_ArkanoidPaddle (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 StdPort_ArkanoidPaddle::StdPort_ArkanoidPaddle (int *buttons)
 {
 	Type = STD_ARKANOIDPADDLE;
 	NumButtons = 1;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(StdPort_ArkanoidPaddle_State);
+	Data = new StdPort_ArkanoidPaddle_State;
 	MovLen = 2;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Bits = 0;
 	State->Pos = 340;

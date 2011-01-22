@@ -58,40 +58,34 @@ BOOL killPlayThread = FALSE;			// the kill switch for the play thread
 HANDLE thread_handle = INVALID_HANDLE_VALUE;	// the handle to the play thread
 DWORD WINAPI PlayThread(void *b);	// the decode thread procedure
 
-void config(HWND hwndParent)
-{
-	MessageBox(hwndParent, _T("No configuration is yet available"), _T("Configuration"), MB_OK);
-}
-void about(HWND hwndParent)
-{
-	MessageBox(hwndParent, _T("Nintendulator NSF Player, by Quietust"), _T("About Nintendulator NSF player"), MB_OK);
-}
-
-void	init (void)
-{
-	APU::Init();
-	APU::Create();
-	MapperInterface::Init();
-}
-
-void	quit (void)
-{
-	APU::Release();
-	MapperInterface::Release();
-}
-
-int isourfile(const TCHAR *fn) { return 0; }	// used for detecting URL streams.. unused here. strncmp(fn,"http://",7) to detect HTTP streams, etc
-
 namespace NES
 {
-	int PRGMask;
+int PRGMask;
 
-	BOOL ROMLoaded;
-	BOOL IsNSF;
-	BOOL SoundEnabled;
+BOOL ROMLoaded;
 
-	unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
-	unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
+unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
+unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
+
+void	CloseFile (void)
+{
+	if (ROMLoaded)
+	{
+		MapperInterface::UnloadMapper();
+		ROMLoaded = FALSE;
+	}
+
+	if (RI.ROMType)
+	{
+		if (RI.ROMType == ROM_NSF)
+		{
+			delete[] RI.NSF_Title;
+			delete[] RI.NSF_Artist;
+			delete[] RI.NSF_Copyright;
+		}
+		ZeroMemory(&RI, sizeof(RI));
+	}
+}
 
 void	Reset (void)
 {
@@ -115,12 +109,47 @@ void	Reset (void)
 	CPU::Reset();
 }
 } // namespace NES
+
+void config(HWND hwndParent)
+{
+	MessageBox(hwndParent, _T("No configuration is yet available"), _T("Configuration"), MB_OK);
+}
+void about(HWND hwndParent)
+{
+	MessageBox(hwndParent, _T("Nintendulator NSF Player, by Quietust"), _T("About Nintendulator NSF player"), MB_OK);
+}
+
+void	init (void)
+{
+	NES::ROMLoaded = FALSE;
+	APU::Init();
+	APU::Create();
+	MapperInterface::Init();
+}
+
+void	quit (void)
+{
+	if (NES::ROMLoaded)
+		NES::CloseFile();
+	APU::Release();
+	MapperInterface::Release();
+}
+
+int isourfile(const TCHAR *fn) { return 0; }	// used for detecting URL streams.. unused here. strncmp(fn,"http://",7) to detect HTTP streams, etc
+
 int play(const TCHAR *fn) 
 {
 	int maxlatency;
 	int thread_id;
 	unsigned char Header[128];	// NSF header bytes
 	DWORD numBytesRead;	// so ReadFile() won't crash under Windows 9x
+
+	if (NES::ROMLoaded)
+	{
+		// this should never happen
+		NES::CloseFile();
+		MessageBox(mod.hMainWindow, _T("Already playing NSF?"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
+	}
 
 	input_file = CreateFile(fn, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
 		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -170,12 +199,15 @@ int play(const TCHAR *fn)
 	RI.NSF_InitSong = Header[0x07];
 	RI.NSF_InitAddr = Header[0x0A] | (Header[0x0B] << 8);
 	RI.NSF_PlayAddr = Header[0x0C] | (Header[0x0D] << 8);
-	RI.NSF_Title = (char *)malloc(32);
-	RI.NSF_Artist = (char *)malloc(32);
-	RI.NSF_Copyright = (char *)malloc(32);
+	RI.NSF_Title = new char[32];
+	RI.NSF_Artist = new char[32];
+	RI.NSF_Copyright = new char[32];
 	memcpy(RI.NSF_Title, &Header[0x0E], 32);
+	RI.NSF_Title[31] = 0;
 	memcpy(RI.NSF_Artist, &Header[0x2E], 32);
+	RI.NSF_Artist[31] = 0;
 	memcpy(RI.NSF_Copyright, &Header[0x4E], 32);
+	RI.NSF_Copyright[31] = 0;
 	if (memcmp(RI.NSF_InitBanks, "\0\0\0\0\0\0\0\0", 8))
 		ReadFile(input_file, &NES::PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF), file_length, &numBytesRead, NULL);
 	else
@@ -193,9 +225,10 @@ int play(const TCHAR *fn)
 
 	if (!MapperInterface::LoadMapper(&RI))
 	{
-		RI.ROMType = ROM_UNDEFINED;
+		NES::CloseFile();
 		return 1;	// couldn't load mapper!
 	}
+	NES::ROMLoaded = TRUE;
 	if (MI->Load)
 		MI->Load();
 
@@ -234,11 +267,7 @@ void stop() {
 
 	mod.SAVSADeInit();
 
-	MapperInterface::UnloadMapper();
-	free(RI.NSF_Title);
-	free(RI.NSF_Artist);
-	free(RI.NSF_Copyright);
-	RI.ROMType = ROM_UNDEFINED;
+	NES::CloseFile();
 }
 
 int getlength() { 
@@ -277,17 +306,7 @@ void getfileinfo(const TCHAR *filename, TCHAR *title, int *length_in_ms)
 	else // some other file
 	{
 		if (length_in_ms) 
-		{
-			HANDLE hFile;
-			*length_in_ms=-1000;
-			hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-				OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-			if (hFile != INVALID_HANDLE_VALUE)
-			{
-				*length_in_ms = (GetFileSize(hFile, NULL)*10)/(SAMPLERATE/100*NCH*(BPS/8));
-			}
-			CloseHandle(hFile);
-		}
+			*length_in_ms = -1000;
 		if (title) 
 		{
 			const TCHAR *p=filename+_tcslen(filename);
@@ -330,7 +349,7 @@ DWORD	WINAPI	PlayThread (void *param)
 		}
 	}
 	ExitThread(0);
-//	return 0;
+	return 0;
 }
 
 In_Module mod = 

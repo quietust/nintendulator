@@ -126,6 +126,7 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 			*_tcschr(cmdline, ' ') = 0;
 
 		NES::OpenFile(cmdline);
+		// Allocated using _tcsdup()
 		free(bkptr);	// free up the memory from its original pointer
 	}
 

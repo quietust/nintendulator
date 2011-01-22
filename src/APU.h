@@ -46,6 +46,5 @@ void	Run		(void);
 void	SetFPS		(int);
 void	WriteReg	(int, unsigned char);
 unsigned char	Read4015	(void);
-
 } // namespace APU
 #endif	/* !APU_H */

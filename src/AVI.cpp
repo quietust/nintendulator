@@ -49,7 +49,7 @@ HAVI CreateAvi (const TCHAR *filename, int frameperiod, const WAVEFORMATEX *wfx)
 		AVIFileExit();
 		return NULL;
 	}
-	au = (TAviUtil *)malloc(sizeof(TAviUtil));
+	au = new TAviUtil;
 	au->pfile = pfile;
 	if (wfx)
 		CopyMemory(&au->wfx, wfx, sizeof(WAVEFORMATEX));
@@ -79,7 +79,7 @@ HRESULT CloseAvi (HAVI avi)
 	if (au->pfile)
 		AVIFileRelease(au->pfile);
 	AVIFileExit();
-	free(au);
+	delete au;
 	return S_OK;
 }
 

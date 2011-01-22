@@ -30,8 +30,6 @@ void	ExpPort_Unconnected::Config (HWND hWnd)
 }
 ExpPort_Unconnected::~ExpPort_Unconnected (void)
 {
-	free(Data);
-	free(MovData);
 }
 ExpPort_Unconnected::ExpPort_Unconnected (int *buttons)
 {
@@ -39,9 +37,8 @@ ExpPort_Unconnected::ExpPort_Unconnected (int *buttons)
 	NumButtons = 0;
 	Buttons = buttons;
 	DataLen = 0;
-	Data = malloc(DataLen);
+	Data = NULL;
 	MovLen = 0;
-	MovData = (unsigned char *)malloc(MovLen);
-	ZeroMemory(MovData, MovLen);
+	MovData = NULL;
 }
 } // namespace Controllers

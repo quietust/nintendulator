@@ -120,18 +120,18 @@ void	ExpPort_Tablet::Config (HWND hWnd)
 }
 ExpPort_Tablet::~ExpPort_Tablet (void)
 {
-	free(Data);
-	free(MovData);
+	delete Data;
+	delete[] MovData;
 }
 ExpPort_Tablet::ExpPort_Tablet (int *buttons)
 {
 	Type = EXP_TABLET;
 	NumButtons = 1;
 	Buttons = buttons;
-	DataLen = sizeof(*State);
-	Data = malloc(DataLen);
+	DataLen = sizeof(ExpPort_Tablet_State);
+	Data = new ExpPort_Tablet_State;
 	MovLen = 3;
-	MovData = (unsigned char *)malloc(MovLen);
+	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
 	State->Bits = 0;
 	State->Strobe = 0;
