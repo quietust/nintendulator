@@ -268,7 +268,7 @@ void	Release (void)
 	while (Breakpoints != NULL)
 	{
 		Breakpoints = Breakpoints->next;
-		free(Breakpoints->prev);
+		delete Breakpoints->prev;
 	}
 }
 
@@ -1578,7 +1578,7 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			}
 			if (bp == NULL)
 			{
-				bp = (struct tBreakpoint *)malloc(sizeof(struct tBreakpoint));
+				bp = new struct tBreakpoint;
 				if (bp == NULL)
 				{
 					MessageBox(hwndDlg, _T("Failed to add breakpoint!"), _T("Breakpoint"), MB_ICONERROR);
@@ -1855,7 +1855,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else	Breakpoints = bp->next;
 			if (bp->next != NULL)
 				bp->next->prev = bp->prev;
-			free(bp);
+			delete bp;
 			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
 			SetBreakpoint(hwndDlg, NULL);
 			// then recache the breakpoints
@@ -1892,12 +1892,12 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (line == -1)
 				break;
 			len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETTEXTLEN, line, 0);
-			str = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
+			str = new TCHAR[len + 1];
 			SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETTEXT, line, (LPARAM)str);
 			Addr = _tcstol(str, NULL, 16);
 			_stprintf(tpc, _T("%04X"), Addr);
 			SetDlgItemText(hwndDlg, IDC_DEBUG_CONT_SEEKADDR, tpc);
-			free(str);
+			delete[] str;
 			return TRUE;
 		case IDC_DEBUG_CONT_SEEKADDR:
 			if (TraceOffset != -1)
