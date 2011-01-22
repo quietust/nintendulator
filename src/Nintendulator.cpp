@@ -633,12 +633,12 @@ INT_PTR CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			dbgVisible = FALSE;
 			ShowWindow(hDebug, SW_HIDE);
 			CheckMenuItem(hMenu, ID_DEBUG_STATWND, MF_UNCHECKED);
-			return FALSE;
+			return TRUE;
 		}
 		break;
 	case WM_SIZE:
 		MoveWindow(GetDlgItem(hDlg, IDC_DEBUGTEXT), 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
-		break;
+		return TRUE;
 	}
 	return FALSE;
 }
@@ -674,6 +674,7 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		{
 			MessageBox(hMainWnd, _T("Unable to open ROM!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			EndDialog(hDlg, 0);
+			break;
 		}
 		fread(header, 16, 1, rom);
 		fclose(rom);
@@ -681,11 +682,13 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		{
 			MessageBox(hMainWnd, _T("Selected file is not an iNES ROM image!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			EndDialog(hDlg, 0);
+			break;
 		}
 		if ((header[7] & 0x0C) == 0x08)
 		{
 			MessageBox(hMainWnd, _T("Selected ROM contains iNES 2.0 information,  which is not yet supported. Please use a stand-alone editor."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			EndDialog(hDlg, 0);
+			break;
 		}
 		if ((header[7] & 0x0C) == 0x04)
 		{
@@ -737,7 +740,6 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), TRUE);
 		}
 		return TRUE;
-		break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
@@ -746,25 +748,25 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			if ((i < 0) || (i > 255))
 				SetDlgItemInt(hDlg, IDC_INES_PRG, i = 0, FALSE);
 			header[4] = (char)(i & 0xFF);
-			break;
+			return TRUE;
 		case IDC_INES_CHR:
 			i = GetDlgItemInt(hDlg, IDC_INES_CHR, NULL, FALSE);
 			if ((i < 0) || (i > 255))
 				SetDlgItemInt(hDlg, IDC_INES_CHR, i = 0, FALSE);
 			header[5] = (char)(i & 0xFF);
-			break;
+			return TRUE;
 		case IDC_INES_MAP:
 			i = GetDlgItemInt(hDlg, IDC_INES_MAP, NULL, FALSE);
 			if ((i < 0) || (i > 255))
 				SetDlgItemInt(hDlg, IDC_INES_MAP, i = 0, FALSE);
 			header[6] = (char)((header[6] & 0x0F) | ((i & 0x0F) << 4));
 			header[7] = (char)((header[7] & 0x0F) | (i & 0xF0));
-			break;
+			return TRUE;
 		case IDC_INES_BATT:
 			if (IsDlgButtonChecked(hDlg, IDC_INES_BATT))
 				header[6] |= 0x02;
 			else	header[6] &= ~0x02;
-			break;
+			return TRUE;
 		case IDC_INES_TRAIN:
 			if (IsDlgButtonChecked(hDlg, IDC_INES_TRAIN))
 			{
@@ -772,7 +774,7 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 				header[6] |= 0x04;
 			}
 			else	header[6] &= ~0x04;
-			break;
+			return TRUE;
 		case IDC_INES_4SCR:
 			if (IsDlgButtonChecked(hDlg, IDC_INES_4SCR))
 			{
@@ -786,15 +788,15 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 				EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), TRUE);
 				header[6] &= ~0x08;
 			}
-			break;
+			return TRUE;
 		case IDC_INES_HORIZ:
 			if (IsDlgButtonChecked(hDlg, IDC_INES_HORIZ))
 				header[6] &= ~0x01;
-			break;
+			return TRUE;
 		case IDC_INES_VERT:
 			if (IsDlgButtonChecked(hDlg, IDC_INES_VERT))
 				header[6] |= 0x01;
-			break;
+			return TRUE;
 		case IDC_INES_VS:
 			if (IsDlgButtonChecked(hDlg, IDC_INES_VS))
 			{
@@ -806,7 +808,7 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 				EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), TRUE);
 				header[7] &= ~0x01;
 			}
-			break;
+			return TRUE;
 		case IDC_INES_PC10:
 			if (IsDlgButtonChecked(hDlg, IDC_INES_PC10))
 			{
@@ -818,7 +820,7 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 				EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), TRUE);
 				header[7] &= ~0x02;
 			}
-			break;
+			return TRUE;
 		case IDOK:
 			rom = _tfopen(filename, _T("r+b"));
 			if (rom)
@@ -830,7 +832,7 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 			// fall through
 		case IDCANCEL:
 			EndDialog(hDlg, 0);
-			break;
+			return TRUE;
 		}
 	}
 	return FALSE;

@@ -161,7 +161,6 @@ INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		else	CheckDlgButton(hDlg, IDC_CONT_UDLR, BST_UNCHECKED);
 
 		return TRUE;
-		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
@@ -169,12 +168,12 @@ INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		{
 		case IDC_CONT_POV:
 			POVAxis = (IsDlgButtonChecked(hDlg, IDC_CONT_POV) == BST_CHECKED);
-			break;
+			return TRUE;
 		case IDOK:
 			EnableOpposites = (IsDlgButtonChecked(hDlg, IDC_CONT_UDLR) == BST_CHECKED);
 			POVAxis = FALSE;
 			EndDialog(hDlg, 1);
-			break;
+			return TRUE;
 		case IDC_CONT_SPORT1:
 			if (wmEvent == CBN_SELCHANGE)
 			{
@@ -207,7 +206,7 @@ INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 				}
 				else	SET_STDCONT(Port1, Type);
 			}
-			break;
+			return TRUE;
 		case IDC_CONT_SPORT2:
 			if (wmEvent == CBN_SELCHANGE)
 			{
@@ -240,27 +239,26 @@ INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 				}
 				else	SET_STDCONT(Port2, Type);
 			}
-			break;
+			return TRUE;
 		case IDC_CONT_SEXPPORT:
 			if (wmEvent == CBN_SELCHANGE)
 			{
 				EXPCONT_TYPE Type = (EXPCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SEXPPORT, CB_GETCURSEL, 0, 0);
 				SET_EXPCONT(PortExp, Type);
 			}
-			break;
+			return TRUE;
 		case IDC_CONT_CPORT1:
 			Port1->Config(hDlg);
-			break;
+			return TRUE;
 		case IDC_CONT_CPORT2:
 			Port2->Config(hDlg);
-			break;
+			return TRUE;
 		case IDC_CONT_CEXPPORT:
 			PortExp->Config(hDlg);
-			break;
-		};
+			return TRUE;
+		}
 		break;
 	}
-
 	return FALSE;
 }
 void	OpenConfig (void)
@@ -1093,13 +1091,13 @@ BOOL	IsPressed (int Button)
 	// should never actually reach this point - this is just to make the compiler stop whining
 	return FALSE;
 }
-void	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButtons, int *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButtons, int *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId = LOWORD(wParam);
 	int wmEvent = HIWORD(wParam);
 	int i;
 	if (key)
-		return;
+		return FALSE;
 	if (uMsg == WM_INITDIALOG)
 	{
 		for (i = 0; i < numItems; i++)
@@ -1113,11 +1111,11 @@ void	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButt
 		}
 	}
 	if (uMsg != WM_COMMAND)
-		return;
+		return FALSE;
 	if (wmId == IDOK)
 	{
 		EndDialog(hDlg, 1);
-		return;
+		return TRUE;
 	}
 	for (i = 0; i < numItems; i++)
 	{
@@ -1127,9 +1125,14 @@ void	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButt
 				break;
 			Buttons[i] = 0;
 			ConfigButton(&Buttons[i], (int)SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0), GetDlgItem(hDlg, dlgButtons[i]), FALSE);
+			return TRUE;
 		}
 		if (wmId == dlgButtons[i])
+		{
 			ConfigButton(&Buttons[i], Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), TRUE);
+			return TRUE;
+		}
 	}
+	return FALSE;
 }
 } // namespace Controllers

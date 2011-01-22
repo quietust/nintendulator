@@ -69,7 +69,6 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 	{
 	case WM_INITDIALOG:
 		return TRUE;
-		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
@@ -173,7 +172,7 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 			fclose(Data);
 			Data = NULL;
-			break;
+			return TRUE;
 		case IDOK:
 			GetDlgItemText(hDlg, IDC_MOVIE_PLAY_FILE, Filename, MAX_PATH);
 			resume = IsDlgButtonChecked(hDlg, IDC_MOVIE_PLAY_RESUME);
@@ -187,14 +186,13 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				else	EndDialog(hDlg, 1);
 			}
 			else	MessageBox(hDlg, _T("Unable to open movie file!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-			break;
+			return TRUE;
 		case IDCANCEL:
 			EndDialog(hDlg, 0);
-			break;
-		};
+			return TRUE;
+		}
 		break;
 	}
-
 	return FALSE;
 }
 
@@ -407,7 +405,6 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		EnableWindow(GetDlgItem(hDlg, IDC_MOVIE_RECORD_DESCRIPTION), FALSE);
 #endif	/* !UNICODE */
 		return TRUE;
-		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
@@ -441,7 +438,7 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			_tcscpy(Path_NMV, filename);
 			Path_NMV[ofn.nFileOffset-1] = 0;
 			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_FILE, filename);
-			break;
+			return TRUE;
 		case IDC_MOVIE_RECORD_CONT_CONFIG:
 			Controllers::OpenConfig();
 			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT1, Controllers::StdPort_Mappings[Controllers::Port1->Type]);
@@ -460,7 +457,7 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			}
 			else	SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_PORT2, Controllers::StdPort_Mappings[Controllers::Port2->Type]);
 			SetDlgItemText(hDlg, IDC_MOVIE_RECORD_CONT_EXPPORT, Controllers::ExpPort_Mappings[Controllers::PortExp->Type]);
-			break;
+			return TRUE;
 		case IDOK:
 			GetDlgItemText(hDlg, IDC_MOVIE_RECORD_FILE, Filename, MAX_PATH);
 			Data = _tfopen(Filename, _T("w+b"));
@@ -480,14 +477,13 @@ INT_PTR	CALLBACK	MovieRecordProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 				else	EndDialog(hDlg, 1);
 			}
 			else	MessageBox(hDlg, _T("Unable to create movie file!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-			break;
+			return TRUE;
 		case IDCANCEL:
 			EndDialog(hDlg, 0);
-			break;
-		};
+			return TRUE;
+		}
 		break;
 	}
-
 	return FALSE;
 }
 

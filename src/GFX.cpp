@@ -1320,7 +1320,6 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		UpdatePalette(hDlg, pal);
 		inUpdate = FALSE;
 		return TRUE;
-		break;
 	case WM_COMMAND:
 		if (inUpdate)
 			break;
@@ -1332,48 +1331,49 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			pal = PALETTE_NTSC;
 			GenerateNTSC(hue, nsat);
 			UpdatePalette(hDlg, pal);
-			break;
+			return TRUE;
 		case IDC_PAL_PAL:
 			pal = PALETTE_PAL;
 			GeneratePAL(psat);
 			UpdatePalette(hDlg, pal);
-			break;
+			return TRUE;
 		case IDC_PAL_PC10:
 			pal = PALETTE_PC10;
 			GenerateRGB(pal);
 			UpdatePalette(hDlg, pal);
-			break;
+			return TRUE;
 		case IDC_PAL_EXTFILE:
 			GetDlgItemText(hDlg, IDC_PAL_EXTFILE, extfn, MAX_PATH);
 			UpdatePalette(hDlg, pal);
-			break;
+			return TRUE;
 		case IDC_PAL_EXT:
 			if (ImportPalette(extfn, TRUE))
 			{
 				pal = PALETTE_EXT;
 				UpdatePalette(hDlg, pal);
+				return TRUE;
 			}
 			break;
 		case IDC_PAL_VS1:
 			pal = PALETTE_VS1;
 			GenerateRGB(pal);
 			UpdatePalette(hDlg, pal);
-			break;
+			return TRUE;
 		case IDC_PAL_VS2:
 			pal = PALETTE_VS2;
 			GenerateRGB(pal);
 			UpdatePalette(hDlg, pal);
-			break;
+			return TRUE;
 		case IDC_PAL_VS3:
 			pal = PALETTE_VS3;
 			GenerateRGB(pal);
 			UpdatePalette(hDlg, pal);
-			break;
+			return TRUE;
 		case IDC_PAL_VS4:
 			pal = PALETTE_VS4;
 			GenerateRGB(pal);
 			UpdatePalette(hDlg, pal);
-			break;
+			return TRUE;
 		case IDC_PAL_BROWSE:
 			ZeroMemory(&ofn, sizeof(ofn));
 			ofn.lStructSize = sizeof(ofn);
@@ -1405,12 +1405,12 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				}
 				else	MessageBox(hDlg, _T("Selected file is not a valid palette!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			}
-			break;
+			return TRUE;
 		case IDC_PAL_ER:
 		case IDC_PAL_EG:
 		case IDC_PAL_EB:
 			UpdatePalette(hDlg, pal);
-			break;
+			return TRUE;
 		case IDOK:
 			if (pal == PALETTE_NTSC)
 			{
@@ -1426,15 +1426,15 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			else	PaletteNTSC = pal;
 			LoadPalette(pal);
 			EndDialog(hDlg, 0);
-			break;
+			return TRUE;
 		case IDCANCEL:
 			if (ispal)
 				pal = PalettePAL;
 			else	pal = PaletteNTSC;
 			LoadPalette(pal);
 			EndDialog(hDlg, 0);
-			break;
-		};
+			return TRUE;
+		}
 		break;
 	case WM_HSCROLL:
 		if (lParam == (LPARAM)GetDlgItem(hDlg, IDC_PAL_HUESLIDER))
@@ -1443,6 +1443,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			SetDlgItemInt(hDlg, IDC_PAL_HUE, hue, TRUE);
 			GenerateNTSC(hue, nsat);
 			UpdatePalette(hDlg, pal);
+			return TRUE;
 		}
 		if (lParam == (LPARAM)GetDlgItem(hDlg, IDC_PAL_SATSLIDER))
 		{
@@ -1459,6 +1460,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				GeneratePAL(psat);
 			}
 			UpdatePalette(hDlg, pal);
+			return TRUE;
 		}
 		break;
 	case WM_PAINT:
@@ -1500,9 +1502,8 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			DeleteObject(bmp);
 		}
 		EndPaint(hDlg, &ps);
-		break;
+		return TRUE;
 	}
-
 	return FALSE;
 }
 void	PaletteConfig (void)

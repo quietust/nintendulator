@@ -156,6 +156,6 @@ void	UpdateInput (void);
 void	ConfigButton (int *, int, HWND, BOOL);
 
 BOOL	IsPressed (int);
-void	ParseConfigMessages (HWND, int, int *, int *, int *, UINT, WPARAM, LPARAM);
+INT_PTR	ParseConfigMessages (HWND, int, int *, int *, int *, UINT, WPARAM, LPARAM);
 } // namespace Controllers
 #endif	/* !CONTROLLERS_H */

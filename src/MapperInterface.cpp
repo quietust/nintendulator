@@ -600,7 +600,7 @@ void	Init (void)
 #ifndef	NSFPLAYER
 INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	DLLInfo **DLLs;
+	DLLInfo **DLLs = (DLLInfo **)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 	int i;
 	switch (message)
 	{
@@ -618,23 +618,21 @@ INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 			delete[] desc;
 		}
 		return TRUE;
-		break;
 	case WM_COMMAND:
-		DLLs = (DLLInfo **)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 		switch (LOWORD(wParam))
 		{
 		case IDC_DLL_LIST:
 			if (HIWORD(wParam) != LBN_DBLCLK)
-				break;	// have double-clicks fall through
+				return TRUE;	// have double-clicks fall through
 		case IDOK:
 			i = SendDlgItemMessage(hDlg, IDC_DLL_LIST, LB_GETCURSEL, 0, 0);
 			if (i == LB_ERR)
 				EndDialog(hDlg, (INT_PTR)NULL);
 			else	EndDialog(hDlg, (INT_PTR)DLLs[i]);
-			break;
+			return TRUE;
 		case IDCANCEL:
 			EndDialog(hDlg, (INT_PTR)NULL);
-			break;
+			return TRUE;
 		}
 	}
 	return FALSE;

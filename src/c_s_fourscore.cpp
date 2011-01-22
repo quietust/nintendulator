@@ -175,7 +175,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT3), TRUE);
 			EnableWindow(GetDlgItem(hDlg, IDC_CONT_SPORT4), TRUE);
 		}
-		break;
+		return TRUE;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
@@ -183,19 +183,54 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 		case IDOK:
 			EndDialog(hDlg, 1);
+			return TRUE;
+		case IDC_CONT_SPORT1:
+			if (wmEvent == CBN_SELCHANGE)
+			{
+				SET_STDCONT(FSPort1, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_GETCURSEL, 0, 0));
+				AllocMov1(Port1);
+				return TRUE;
+			}
 			break;
-		case IDC_CONT_SPORT1:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort1, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT1, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); }	break;
-		case IDC_CONT_SPORT2:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort2, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_GETCURSEL, 0, 0)); AllocMov2(Port2); }	break;
-		case IDC_CONT_SPORT3:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort3, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT3, CB_GETCURSEL, 0, 0)); AllocMov1(Port1); }	break;
-		case IDC_CONT_SPORT4:	if (wmEvent == CBN_SELCHANGE) { SET_STDCONT(FSPort4, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT4, CB_GETCURSEL, 0, 0)); AllocMov2(Port2); }	break;
-		case IDC_CONT_CPORT1:	FSPort1->Config(hDlg);	break;
-		case IDC_CONT_CPORT2:	FSPort2->Config(hDlg);	break;
-		case IDC_CONT_CPORT3:	FSPort3->Config(hDlg);	break;
-		case IDC_CONT_CPORT4:	FSPort4->Config(hDlg);	break;
+		case IDC_CONT_SPORT2:
+			if (wmEvent == CBN_SELCHANGE)
+			{
+				SET_STDCONT(FSPort2, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT2, CB_GETCURSEL, 0, 0));
+				AllocMov2(Port2);
+				return TRUE;
+			}
+			break;
+		case IDC_CONT_SPORT3:
+			if (wmEvent == CBN_SELCHANGE)
+			{
+				SET_STDCONT(FSPort3, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT3, CB_GETCURSEL, 0, 0));
+				AllocMov1(Port1);
+				return TRUE;
+			}
+			break;
+		case IDC_CONT_SPORT4:
+			if (wmEvent == CBN_SELCHANGE)
+			{
+				SET_STDCONT(FSPort4, (STDCONT_TYPE)SendDlgItemMessage(hDlg, IDC_CONT_SPORT4, CB_GETCURSEL, 0, 0));
+				AllocMov2(Port2);
+				return TRUE;
+			}
+			break;
+		case IDC_CONT_CPORT1:
+			FSPort1->Config(hDlg);
+			return TRUE;
+		case IDC_CONT_CPORT2:
+			FSPort2->Config(hDlg);
+			return TRUE;
+		case IDC_CONT_CPORT3:
+			FSPort3->Config(hDlg);
+			return TRUE;
+		case IDC_CONT_CPORT4:
+			FSPort4->Config(hDlg);
+			return TRUE;
 		}
 		break;
 	}
-
 	return FALSE;
 }
 void	StdPort_FourScore::Config (HWND hWnd)

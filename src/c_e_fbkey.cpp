@@ -102,7 +102,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 		EndDialog(hDlg, 1);
 		ConfigWindow = NULL;
-		return FALSE;
+		return TRUE;
 	}
 	return FALSE;
 }
