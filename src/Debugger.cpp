@@ -32,47 +32,91 @@ struct tBreakpoint
 	unsigned char type;
 	unsigned char enabled;
 	struct tBreakpoint *prev, *next;
+	void updateDescription ()
+	{
+		switch (type)
+		{
+		case DEBUG_BREAK_EXEC:
+			if (addr_start == addr_end)
+				_stprintf(desc, _T("Exec: $%04X"), addr_start);
+			else	_stprintf(desc, _T("Exec: $%04X-$%04X"), addr_start, addr_end);
+			break;
+		case DEBUG_BREAK_READ:
+			if (addr_start == addr_end)
+				_stprintf(desc, _T("Read: $%04X"), addr_start);
+			else	_stprintf(desc, _T("Read: $%04X-$%04X"), addr_start, addr_end);
+			break;
+		case DEBUG_BREAK_WRITE:
+			if (addr_start == addr_end)
+				_stprintf(desc, _T("Write: $%04X"), addr_start);
+			else	_stprintf(desc, _T("Write: $%04X-$%04X"), addr_start, addr_end);
+			break;
+		case DEBUG_BREAK_READ | DEBUG_BREAK_WRITE:
+			if (addr_start == addr_end)
+				_stprintf(desc, _T("Access: $%04X"), addr_start);
+			else	_stprintf(desc, _T("Access: $%04X-$%04X"), addr_start, addr_end);
+			break;
+		case DEBUG_BREAK_OPCODE:
+			_stprintf(desc, _T("Opcode: $%00X"), opcode);
+			break;
+		case DEBUG_BREAK_NMI:
+			_stprintf(desc, _T("Interrupt: NMI"));
+			break;
+		case DEBUG_BREAK_IRQ:
+			_stprintf(desc, _T("Interrupt: IRQ"));
+			break;
+		case DEBUG_BREAK_BRK:
+			_stprintf(desc, _T("Interrupt: BRK"));
+			break;
+		default:
+			_stprintf(desc, _T("UNDEFINED"));
+			break;
+		}
+		if (enabled)
+			_tcscat(desc, _T(" (+)"));
+		else	_tcscat(desc, _T(" (-)"));
+	}
 };
 	
-	BOOL	Enabled;
-	int	Mode;
+BOOL	Enabled;
+int	Mode;
 
-	BOOL	NTabChanged, PalChanged, PatChanged, SprChanged, DetChanged;
+BOOL	NTabChanged, PalChanged, PatChanged, SprChanged, DetChanged;
 
-	int	DetailType, DetailNum;
-	int	DetailTypeSave, DetailNumSave;
+int	DetailType, DetailNum;
+int	DetailTypeSave, DetailNumSave;
 
-	BOOL	Logging, Step;
+BOOL	Logging, Step;
 
-	int	Depth;
+int	Depth;
 
-	int	Palette, Nametable;
+int	Palette, Nametable;
 
-	HDC	PaletteDC;	// Palette
-	HBITMAP	PaletteBMP;
+HDC	PaletteDC;	// Palette
+HBITMAP	PaletteBMP;
 
-	HDC	PatternDC;	// Pattern tables
-	HBITMAP	PatternBMP;
+HDC	PatternDC;	// Pattern tables
+HBITMAP	PatternBMP;
 
-	HDC	NameDC;		// Nametable
-	HBITMAP	NameBMP;
+HDC	NameDC;		// Nametable
+HBITMAP	NameBMP;
 
-	HDC	SpriteDC;	// Sprites
-	HBITMAP	SpriteBMP;
+HDC	SpriteDC;	// Sprites
+HBITMAP	SpriteBMP;
 
-	HDC	TileDC;		// Preview Tile
-	HBITMAP	TileBMP;
+HDC	TileDC;		// Preview Tile
+HBITMAP	TileBMP;
 
-	HWND	CPUWnd;
-	HWND	PPUWnd;
+HWND	CPUWnd;
+HWND	PPUWnd;
 
-	int	TraceOffset;	// -1 to center on PC, otherwise center on TraceOffset
-	int	MemOffset;
+int	TraceOffset;	// -1 to center on PC, otherwise center on TraceOffset
+int	MemOffset;
 
-	FILE	*LogFile;
-	unsigned char	BPcache[0x10101];
-	unsigned char	PalCache[0x20];
-	struct tBreakpoint *Breakpoints;
+FILE	*LogFile;
+unsigned char	BPcache[0x10101];
+unsigned char	PalCache[0x20];
+struct tBreakpoint *Breakpoints;
 
 BOOL inUpdate = FALSE;
 
@@ -1292,7 +1336,7 @@ struct tBreakpoint *GetBreakpoint (HWND hwndDlg, int *_line)
 	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), TRUE);
 
 	len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXTLEN, line, 0);
-	str = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
+	str = new TCHAR[len + 1];
 	SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXT, line, (LPARAM)str);
 
 	// try to find it in the breakpoint list
@@ -1303,7 +1347,7 @@ struct tBreakpoint *GetBreakpoint (HWND hwndDlg, int *_line)
 			break;
 		bp = bp->next;
 	}
-	free(str);
+	delete[] str;
 	if (_line != NULL)
 		*_line = line;
 	return bp;
@@ -1338,31 +1382,34 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 {
 	int wmId, wmEvent;
 	TCHAR tpc[8];
-	static struct tBreakpoint *bp = NULL;
+	struct tBreakpoint *bp = (struct tBreakpoint *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	int line, len, Addr;
+	TCHAR *str;
+
+	int addr1, addr2, opcode, type, enabled;
 
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
+		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 		bp = (struct tBreakpoint *)lParam;
 		if (bp == (struct tBreakpoint *)(size_t)0xFFFFFFFF)
 		{
 			bp = NULL;
+			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, NULL);
 			CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_EXEC);
-			{
-				int line, len, Addr;
-				TCHAR *str;
 
-				line = SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_GETCURSEL, 0, 0);
-				if (line == -1)
-					break;
-				len = SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_GETTEXTLEN, line, 0);
-				str = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
-				SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_GETTEXT, line, (LPARAM)str);
-				Addr = _tcstol(str, NULL, 16);
-				_stprintf(tpc, _T("%04X"), Addr);
-				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, tpc);
-				free(str);
-			}
+			line = SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_GETCURSEL, 0, 0);
+			if (line == -1)
+				break;
+			len = SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_GETTEXTLEN, line, 0);
+			str = new TCHAR[len + 1];
+			SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_GETTEXT, line, (LPARAM)str);
+			Addr = _tcstol(str, NULL, 16);
+			_stprintf(tpc, _T("%04X"), Addr);
+			SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, tpc);
+			delete[] str;
+
 			SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
 			SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
 			CheckDlgButton(hwndDlg, IDC_BREAK_ENABLED, BST_CHECKED);
@@ -1483,8 +1530,6 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			return TRUE;
 
 		case IDOK:
-			int addr1, addr2, opcode, type, enabled;
-			TCHAR desc[32];
 			GetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, tpc, 5);
 			addr1 = _tcstol(tpc, NULL, 16);
 			GetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, tpc, 5);
@@ -1497,48 +1542,21 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 
 			type = 0;
 			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_EXEC) == BST_CHECKED)
-			{
 				type = DEBUG_BREAK_EXEC;
-				_stprintf(desc, _T("Exec: %04X-%04X"), addr1, addr2);
-			}
 			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_READ) == BST_CHECKED)
-			{
 				type = DEBUG_BREAK_READ;
-				_stprintf(desc, _T("Read: %04X-%04X"), addr1, addr2);
-			}
 			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_WRITE) == BST_CHECKED)
-			{
 				type = DEBUG_BREAK_WRITE;
-				_stprintf(desc, _T("Write: %04X-%04X"), addr1, addr2);
-			}
 			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_ACCESS) == BST_CHECKED)
-			{
 				type = DEBUG_BREAK_READ | DEBUG_BREAK_WRITE;
-				_stprintf(desc, _T("Access: %04X-%04X"), addr1, addr2);
-			}
 			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_OPCODE) == BST_CHECKED)
-			{
 				type = DEBUG_BREAK_OPCODE;
-				_stprintf(desc, _T("Opcode: %02X"), opcode);
-			}
 			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_NMI) == BST_CHECKED)
-			{
 				type = DEBUG_BREAK_NMI;
-				_stprintf(desc, _T("NMI"), opcode);
-			}
 			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_IRQ) == BST_CHECKED)
-			{
 				type = DEBUG_BREAK_IRQ;
-				_stprintf(desc, _T("IRQ"), opcode);
-			}
 			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_BRK) == BST_CHECKED)
-			{
 				type = DEBUG_BREAK_BRK;
-				_stprintf(desc, _T("BRK"), opcode);
-			}
-			if (enabled)
-				_tcscat(desc, _T(" (+)"));
-			else	_tcscat(desc, _T(" (-)"));
 
 			if (type & (DEBUG_BREAK_EXEC | DEBUG_BREAK_READ | DEBUG_BREAK_WRITE))
 			{
@@ -1578,9 +1596,10 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			bp->enabled = (unsigned char)enabled;
 			bp->addr_start = (unsigned short)addr1;
 			bp->addr_end = (unsigned short)addr2;
-			_tcscpy(bp->desc, desc);
+			bp->updateDescription();
 			EndDialog(hwndDlg, (INT_PTR)bp);
 			return TRUE;
+
 		case IDCANCEL:
 			EndDialog(hwndDlg, (INT_PTR)NULL);
 			return TRUE;
@@ -1778,15 +1797,11 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				// get selected breakpoint
 				bp = GetBreakpoint(hwndDlg, &line);
-
 				if (bp == NULL)
 					break;
 
 				bp->enabled = !bp->enabled;
-				if (bp->enabled)
-					bp->desc[_tcslen(bp->desc) - 2] = _T('+');
-				else	bp->desc[_tcslen(bp->desc) - 2] = _T('-');
-
+				bp->updateDescription();
 				// update breakpoint description
 				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
 				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
@@ -1831,7 +1846,6 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_DEBUG_BREAK_DELETE:
 			// get selected breakpoint
 			bp = GetBreakpoint(hwndDlg, &line);
-
 			if (bp == NULL)
 				break;
 
@@ -1891,8 +1905,9 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				GetDlgItemText(hwndDlg, IDC_DEBUG_CONT_SEEKADDR, tpc, 5);
 				TraceOffset = _tcstol(tpc, NULL, 16);
 				UpdateCPU();
+				return TRUE;
 			}
-			return TRUE;
+			break;
 		case IDC_DEBUG_CONT_DUMPCPU:
 			DumpCPU();
 			return TRUE;
@@ -1977,6 +1992,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SetDlgItemText(hwndDlg, IDC_DEBUG_CONT_SEEKADDR, tpc);
 			CheckRadioButton(hwndDlg, IDC_DEBUG_CONT_SEEKPC, IDC_DEBUG_CONT_SEEKTO, IDC_DEBUG_CONT_SEEKTO);
 			UpdateCPU();
+			return TRUE;
 		}
 		if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_DEBUG_MEM_SCROLL))
 		{
@@ -2008,8 +2024,9 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (MemOffset > sinfo.nMax)
 				MemOffset = sinfo.nMax;
 			UpdateCPU();
+			return TRUE;
 		}
-		return TRUE;
+		break;
 	}
 	return FALSE;
 }
