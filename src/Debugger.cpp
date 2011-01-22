@@ -1468,141 +1468,138 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
-			break;
+			return TRUE;
 		case IDC_BREAK_OPCODE:
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), TRUE);
-			break;
+			return TRUE;
 		case IDC_BREAK_NMI:
 		case IDC_BREAK_IRQ:
 		case IDC_BREAK_BRK:
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
-			break;
+			return TRUE;
 
 		case IDOK:
+			int addr1, addr2, opcode, type, enabled;
+			TCHAR desc[32];
+			GetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, tpc, 5);
+			addr1 = _tcstol(tpc, NULL, 16);
+			GetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, tpc, 5);
+			addr2 = _tcstol(tpc, NULL, 16);
+			if (!_tcslen(tpc))
+				addr2 = addr1;
+			GetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, tpc, 3);
+			opcode = _tcstol(tpc, NULL, 16);
+			enabled = (IsDlgButtonChecked(hwndDlg, IDC_BREAK_ENABLED) == BST_CHECKED);
+
+			type = 0;
+			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_EXEC) == BST_CHECKED)
 			{
-				int addr1, addr2, opcode, type, enabled;
-				TCHAR desc[32];
-				GetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, tpc, 5);
-				addr1 = _tcstol(tpc, NULL, 16);
-				GetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, tpc, 5);
-				addr2 = _tcstol(tpc, NULL, 16);
-				if (!_tcslen(tpc))
-					addr2 = addr1;
-				GetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, tpc, 3);
-				opcode = _tcstol(tpc, NULL, 16);
-				enabled = (IsDlgButtonChecked(hwndDlg, IDC_BREAK_ENABLED) == BST_CHECKED);
+				type = DEBUG_BREAK_EXEC;
+				_stprintf(desc, _T("Exec: %04X-%04X"), addr1, addr2);
+			}
+			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_READ) == BST_CHECKED)
+			{
+				type = DEBUG_BREAK_READ;
+				_stprintf(desc, _T("Read: %04X-%04X"), addr1, addr2);
+			}
+			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_WRITE) == BST_CHECKED)
+			{
+				type = DEBUG_BREAK_WRITE;
+				_stprintf(desc, _T("Write: %04X-%04X"), addr1, addr2);
+			}
+			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_ACCESS) == BST_CHECKED)
+			{
+				type = DEBUG_BREAK_READ | DEBUG_BREAK_WRITE;
+				_stprintf(desc, _T("Access: %04X-%04X"), addr1, addr2);
+			}
+			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_OPCODE) == BST_CHECKED)
+			{
+				type = DEBUG_BREAK_OPCODE;
+				_stprintf(desc, _T("Opcode: %02X"), opcode);
+			}
+			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_NMI) == BST_CHECKED)
+			{
+				type = DEBUG_BREAK_NMI;
+				_stprintf(desc, _T("NMI"), opcode);
+			}
+			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_IRQ) == BST_CHECKED)
+			{
+				type = DEBUG_BREAK_IRQ;
+				_stprintf(desc, _T("IRQ"), opcode);
+			}
+			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_BRK) == BST_CHECKED)
+			{
+				type = DEBUG_BREAK_BRK;
+				_stprintf(desc, _T("BRK"), opcode);
+			}
+			if (enabled)
+				_tcscat(desc, _T(" (+)"));
+			else	_tcscat(desc, _T(" (-)"));
 
-				type = 0;
-				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_EXEC) == BST_CHECKED)
+			if (type & (DEBUG_BREAK_EXEC | DEBUG_BREAK_READ | DEBUG_BREAK_WRITE))
+			{
+				if ((addr1 < 0x0000) || (addr1 > 0xFFFF) ||
+					(addr2 < 0x0000) || (addr2 > 0xFFFF) ||
+					(addr1 > addr2))
 				{
-					type = DEBUG_BREAK_EXEC;
-					_stprintf(desc, _T("Exec: %04X-%04X"), addr1, addr2);
+					MessageBox(hwndDlg, _T("Invalid address range specified!"), _T("Breakpoint"), MB_ICONERROR);
+					break;
 				}
-				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_READ) == BST_CHECKED)
+			}
+			if (type & (DEBUG_BREAK_OPCODE))
+			{
+				if ((opcode < 0x00) || (opcode > 0xFF))
 				{
-					type = DEBUG_BREAK_READ;
-					_stprintf(desc, _T("Read: %04X-%04X"), addr1, addr2);
+					MessageBox(hwndDlg, _T("Invalid opcode specified!"), _T("Breakpoint"), MB_ICONERROR);
+					break;
 				}
-				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_WRITE) == BST_CHECKED)
-				{
-					type = DEBUG_BREAK_WRITE;
-					_stprintf(desc, _T("Write: %04X-%04X"), addr1, addr2);
-				}
-				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_ACCESS) == BST_CHECKED)
-				{
-					type = DEBUG_BREAK_READ | DEBUG_BREAK_WRITE;
-					_stprintf(desc, _T("Access: %04X-%04X"), addr1, addr2);
-				}
-				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_OPCODE) == BST_CHECKED)
-				{
-					type = DEBUG_BREAK_OPCODE;
-					_stprintf(desc, _T("Opcode: %02X"), opcode);
-				}
-				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_NMI) == BST_CHECKED)
-				{
-					type = DEBUG_BREAK_NMI;
-					_stprintf(desc, _T("NMI"), opcode);
-				}
-				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_IRQ) == BST_CHECKED)
-				{
-					type = DEBUG_BREAK_IRQ;
-					_stprintf(desc, _T("IRQ"), opcode);
-				}
-				if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_BRK) == BST_CHECKED)
-				{
-					type = DEBUG_BREAK_BRK;
-					_stprintf(desc, _T("BRK"), opcode);
-				}
-				if (enabled)
-					_tcscat(desc, _T(" (+)"));
-				else	_tcscat(desc, _T(" (-)"));
-
-				if (type & (DEBUG_BREAK_EXEC | DEBUG_BREAK_READ | DEBUG_BREAK_WRITE))
-				{
-					if ((addr1 < 0x0000) || (addr1 > 0xFFFF) ||
-						(addr2 < 0x0000) || (addr2 > 0xFFFF) ||
-						(addr1 > addr2))
-					{
-						MessageBox(hwndDlg, _T("Invalid address range specified!"), _T("Breakpoint"), MB_ICONERROR);
-						break;
-					}
-				}
-				if (type & (DEBUG_BREAK_OPCODE))
-				{
-					if ((opcode < 0x00) || (opcode > 0xFF))
-					{
-						MessageBox(hwndDlg, _T("Invalid opcode specified!"), _T("Breakpoint"), MB_ICONERROR);
-						break;
-					}
-				}
+			}
+			if (bp == NULL)
+			{
+				bp = (struct tBreakpoint *)malloc(sizeof(struct tBreakpoint));
 				if (bp == NULL)
 				{
-					bp = (struct tBreakpoint *)malloc(sizeof(struct tBreakpoint));
-					if (bp == NULL)
-					{
-						MessageBox(hwndDlg, _T("Failed to add breakpoint!"), _T("Breakpoint"), MB_ICONERROR);
-						EndDialog(hwndDlg, (INT_PTR)NULL);
-						break;
-					}
-					bp->next = Breakpoints;
-					bp->prev = NULL;
-					if (bp->next != NULL)
-						bp->next->prev = bp;
-					Breakpoints = bp;
+					MessageBox(hwndDlg, _T("Failed to add breakpoint!"), _T("Breakpoint"), MB_ICONERROR);
+					EndDialog(hwndDlg, (INT_PTR)NULL);
+					break;
 				}
-				bp->type = (unsigned char)type;
-				bp->opcode = (unsigned char)opcode;
-				bp->enabled = (unsigned char)enabled;
-				bp->addr_start = (unsigned short)addr1;
-				bp->addr_end = (unsigned short)addr2;
-				_tcscpy(bp->desc, desc);
+				bp->next = Breakpoints;
+				bp->prev = NULL;
+				if (bp->next != NULL)
+					bp->next->prev = bp;
+				Breakpoints = bp;
 			}
+			bp->type = (unsigned char)type;
+			bp->opcode = (unsigned char)opcode;
+			bp->enabled = (unsigned char)enabled;
+			bp->addr_start = (unsigned short)addr1;
+			bp->addr_end = (unsigned short)addr2;
+			_tcscpy(bp->desc, desc);
 			EndDialog(hwndDlg, (INT_PTR)bp);
-			break;
+			return TRUE;
 		case IDCANCEL:
 			EndDialog(hwndDlg, (INT_PTR)NULL);
-			break;
+			return TRUE;
 		}
 		break;
 	}
 	return FALSE;
-
 }
 
 INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	PAINTSTRUCT ps;
-	HDC hdc;
 	int wmId, wmEvent;
 	/* const */ int mem_tabs[16] = {24, 34, 44, 54, 66, 76, 86, 96, 108, 118, 128, 138, 150, 160, 170, 180};
 	/* const */ int trace_tabs[3] = {25, 60, 80};	// Win9x requires these to be in writable memory
 	TCHAR tpc[8];
 	SCROLLINFO sinfo;
 	struct tBreakpoint *bp;
+	int line, len, Addr;
+	TCHAR *str;
 
 	switch (uMsg)
 	{
@@ -1637,10 +1634,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		for (bp = Breakpoints; bp != NULL; bp = bp->next)
 			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
 		return FALSE;
-	case WM_PAINT:
-		hdc = BeginPaint(hwndDlg, &ps);
-		EndPaint(hwndDlg, &ps);
-		break;
+
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
 		wmEvent = HIWORD(wParam); 
@@ -1659,7 +1653,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			CPU::A = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_REG_X:
 			if (NES::Running)
 				break;
@@ -1667,7 +1661,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			CPU::X = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_REG_Y:
 			if (NES::Running)
 				break;
@@ -1675,7 +1669,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			CPU::Y = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_REG_P:
 			if (NES::Running)
 				break;
@@ -1684,7 +1678,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			CPU::SplitFlags();
 			if (wmEvent == EN_KILLFOCUS)
 				UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_REG_SP:
 			if (NES::Running)
 				break;
@@ -1692,7 +1686,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			CPU::SP = (unsigned char)_tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_REG_PC:
 			if (NES::Running)
 				break;
@@ -1700,38 +1694,40 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			CPU::PC = _tcstol(tpc, NULL, 16);
 			if (wmEvent == EN_KILLFOCUS)
 				UpdateCPU();
-			break;
+			return TRUE;
 
 		case IDC_DEBUG_IRQ_EXT:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_IRQ_EXT) == BST_CHECKED)
 				CPU::WantIRQ |= IRQ_EXTERNAL;
 			else	CPU::WantIRQ &= ~IRQ_EXTERNAL;
-			break;
+			return TRUE;
 		case IDC_DEBUG_IRQ_PCM:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_IRQ_PCM) == BST_CHECKED)
 				CPU::WantIRQ |= IRQ_DPCM;
 			else	CPU::WantIRQ &= ~IRQ_DPCM;
-			break;
+			return TRUE;
 		case IDC_DEBUG_IRQ_FRAME:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_IRQ_FRAME) == BST_CHECKED)
 				CPU::WantIRQ |= IRQ_FRAME;
 			else	CPU::WantIRQ &= ~IRQ_FRAME;
-			break;
+			return TRUE;
 		case IDC_DEBUG_IRQ_DEBUG:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_IRQ_DEBUG) == BST_CHECKED)
 				CPU::WantIRQ |= IRQ_DEBUG;
 			else	CPU::WantIRQ &= ~IRQ_DEBUG;
-			break;
+			return TRUE;
 
+			// or modify flags while running
 		case IDC_DEBUG_FLAG_N:
+			if (NES::Running)
+				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_N) == BST_CHECKED)
 				CPU::FN = 1;
 			else	CPU::FN = 0;
 			CPU::JoinFlags();
 			UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_FLAG_V:
-			// or modify flags while running
 			if (NES::Running)
 				break;
 			if (IsDlgButtonChecked(hwndDlg, IDC_DEBUG_FLAG_V) == BST_CHECKED)
@@ -1739,7 +1735,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else	CPU::FV = 0;
 			CPU::JoinFlags();
 			UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_FLAG_D:
 			if (NES::Running)
 				break;
@@ -1748,7 +1744,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else	CPU::FD = 0;
 			CPU::JoinFlags();
 			UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_FLAG_I:
 			if (NES::Running)
 				break;
@@ -1757,7 +1753,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else	CPU::FI = 0;
 			CPU::JoinFlags();
 			UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_FLAG_Z:
 			if (NES::Running)
 				break;
@@ -1766,7 +1762,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else	CPU::FZ = 0;
 			CPU::JoinFlags();
 			UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_FLAG_C:
 			if (NES::Running)
 				break;
@@ -1775,12 +1771,11 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else	CPU::FC = 0;
 			CPU::JoinFlags();
 			UpdateCPU();
-			break;
+			return TRUE;
 
 		case IDC_DEBUG_BREAK_LIST:
 			if (wmEvent == LBN_DBLCLK)
 			{
-				int line;
 				// get selected breakpoint
 				bp = GetBreakpoint(hwndDlg, &line);
 
@@ -1801,7 +1796,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				CacheBreakpoints();
 			}
 			else	GetBreakpoint(hwndDlg, NULL);	// enable the add/remove buttons
-			break;
+			return TRUE;
 		case IDC_DEBUG_BREAK_ADD:
 			bp = (struct tBreakpoint *)DialogBoxParam(hInst, (LPCTSTR)IDD_BREAKPOINT, hwndDlg, BreakpointProc, (LPARAM)NULL);
 			// if user cancels, nothing was added
@@ -1813,94 +1808,83 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			SetBreakpoint(hwndDlg, bp);
 			// then recache the breakpoints
 			CacheBreakpoints();
-			break;
+			return TRUE;
 		case IDC_DEBUG_BREAK_EDIT:
-			{
-				int line;
-				// get selected breakpoint
-				bp = GetBreakpoint(hwndDlg, &line);
-				if (bp == NULL)
-					break;
+			// get selected breakpoint
+			bp = GetBreakpoint(hwndDlg, &line);
+			if (bp == NULL)
+				break;
 
-				// then open the editor on it
-				bp = (struct tBreakpoint *)DialogBoxParam(hInst, (LPCTSTR)IDD_BREAKPOINT, hwndDlg, BreakpointProc, (LPARAM)bp);
-				// if user cancels, nothing was changed
-				if (bp == NULL)
-					break;
-				// update breakpoint description
-				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
-				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
-				// reselect it
-				SetBreakpoint(hwndDlg, bp);
-				// then recache the breakpoints
-				CacheBreakpoints();
-			}
-			break;
+			// then open the editor on it
+			bp = (struct tBreakpoint *)DialogBoxParam(hInst, (LPCTSTR)IDD_BREAKPOINT, hwndDlg, BreakpointProc, (LPARAM)bp);
+			// if user cancels, nothing was changed
+			if (bp == NULL)
+				break;
+			// update breakpoint description
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+			// reselect it
+			SetBreakpoint(hwndDlg, bp);
+			// then recache the breakpoints
+			CacheBreakpoints();
+			return TRUE;
 		case IDC_DEBUG_BREAK_DELETE:
-			{
-				int line;
-				// get selected breakpoint
-				bp = GetBreakpoint(hwndDlg, &line);
+			// get selected breakpoint
+			bp = GetBreakpoint(hwndDlg, &line);
 
-				if (bp == NULL)
-					break;
+			if (bp == NULL)
+				break;
 
-				// and take it out of the list
-				if (bp->prev != NULL)
-					bp->prev->next = bp->next;
-				else	Breakpoints = bp->next;
-				if (bp->next != NULL)
-					bp->next->prev = bp->prev;
-				free(bp);
-				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
-				SetBreakpoint(hwndDlg, NULL);
-				// then recache the breakpoints
-				CacheBreakpoints();
-			}
-			break;
+			// and take it out of the list
+			if (bp->prev != NULL)
+				bp->prev->next = bp->next;
+			else	Breakpoints = bp->next;
+			if (bp->next != NULL)
+				bp->next->prev = bp->prev;
+			free(bp);
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
+			SetBreakpoint(hwndDlg, NULL);
+			// then recache the breakpoints
+			CacheBreakpoints();
+			return TRUE;
 
 		case IDC_DEBUG_CONT_RUN:
 			if (NES::ROMLoaded)
 				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_RUN, 0);
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_STEP:
 			if (NES::ROMLoaded)
 				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_STEP, 0);
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_RESET:
 			if (NES::ROMLoaded)
 				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_SOFTRESET, 0);
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_POWER:
 			if (NES::ROMLoaded)
 				SendMessage(hMainWnd, WM_COMMAND, ID_CPU_HARDRESET, 0);
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_SEEKPC:
 			TraceOffset = -1;
 			UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_SEEKTO:
 			GetDlgItemText(hwndDlg, IDC_DEBUG_CONT_SEEKADDR, tpc, 5);
 			TraceOffset = _tcstol(tpc, NULL, 16);
 			UpdateCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_SEEKSEL:
-			{
-				int line, len, Addr;
-				TCHAR *str;
-
-				line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETCURSEL, 0, 0);
-				if (line == -1)
-					break;
-				len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETTEXTLEN, line, 0);
-				str = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
-				SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETTEXT, line, (LPARAM)str);
-				Addr = _tcstol(str, NULL, 16);
-				_stprintf(tpc, _T("%04X"), Addr);
-				SetDlgItemText(hwndDlg, IDC_DEBUG_CONT_SEEKADDR, tpc);
-				free(str);
-			}
-			break;
+			line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETCURSEL, 0, 0);
+			if (line == -1)
+				break;
+			len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETTEXTLEN, line, 0);
+			str = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_TRACE_LIST, LB_GETTEXT, line, (LPARAM)str);
+			Addr = _tcstol(str, NULL, 16);
+			_stprintf(tpc, _T("%04X"), Addr);
+			SetDlgItemText(hwndDlg, IDC_DEBUG_CONT_SEEKADDR, tpc);
+			free(str);
+			return TRUE;
 		case IDC_DEBUG_CONT_SEEKADDR:
 			if (TraceOffset != -1)
 			{
@@ -1908,19 +1892,19 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				TraceOffset = _tcstol(tpc, NULL, 16);
 				UpdateCPU();
 			}
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_DUMPCPU:
 			DumpCPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_DUMPPPU:
 			DumpPPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_STARTLOG:
 			StartLogging();
-			break;
+			return TRUE;
 		case IDC_DEBUG_CONT_STOPLOG:
 			StopLogging();
-			break;
+			return TRUE;
 
 		case IDC_DEBUG_MEM_CPU:
 		case IDC_DEBUG_MEM_PPU:
@@ -1929,7 +1913,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// all of these should just jump to address 0 and redraw
 			MemOffset = 0;
 			UpdateCPU();
-			break;
+			return TRUE;
 
 		case IDC_DEBUG_TRACE_LIST:
 			if (wmEvent == LBN_DBLCLK)
@@ -1944,12 +1928,13 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SetBreakpoint(hwndDlg, bp);
 				// then recache the breakpoints
 				CacheBreakpoints();
+				return TRUE;
 			}
 			break;
 
 		case IDCANCEL:
 			SetMode(Mode & ~DEBUG_MODE_CPU);
-			break;
+			return TRUE;
 		}
 		break;
 	case WM_VSCROLL:
@@ -2024,7 +2009,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				MemOffset = sinfo.nMax;
 			UpdateCPU();
 		}
-		break;
+		return TRUE;
 	}
 	return FALSE;
 }
@@ -2142,19 +2127,19 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 		case IDC_DEBUG_PPU_NAMETABLE:
 			BitBlt(lpDrawItem->hDC, 0, 0, D_NAM_W, D_NAM_H, NameDC, 0, 0, SRCCOPY);
-			break;
+			return TRUE;
 		case IDC_DEBUG_PPU_PATTERN:
 			BitBlt(lpDrawItem->hDC, 0, 0, D_PAT_W, D_PAT_H, PatternDC, 0, 0, SRCCOPY);
-			break;
+			return TRUE;
 		case IDC_DEBUG_PPU_PALETTE:
 			BitBlt(lpDrawItem->hDC, 0, 0, D_PAL_W, D_PAL_H, PaletteDC, 0, 0, SRCCOPY);
-			break;
+			return TRUE;
 		case IDC_DEBUG_PPU_SPRITE:
 			BitBlt(lpDrawItem->hDC, 0, 0, D_SPR_W, D_SPR_H, SpriteDC, 0, 0, SRCCOPY);
-			break;
+			return TRUE;
 		case IDC_DEBUG_PPU_TILE:
 			BitBlt(lpDrawItem->hDC, 0, 0, D_TIL_W, D_TIL_H, TileDC, 0, 0, SRCCOPY);
-			break;
+			return TRUE;
 		}
 		break;
 	case WM_COMMAND:
@@ -2168,45 +2153,45 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			CheckRadioButton(hwndDlg, IDC_DEBUG_PPU_NT0, IDC_DEBUG_PPU_NT3, dbgRadio[Nametable]);
 			NTabChanged = TRUE;
 			UpdatePPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_PPU_PATTERN:
 			Palette = (Palette + 1) & 7;
 			PatChanged = TRUE;
 			UpdatePPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_PPU_NT0:
 			Nametable = 0;
 			NTabChanged = TRUE;
 			UpdatePPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_PPU_NT1:
 			Nametable = 1;
 			NTabChanged = TRUE;
 			UpdatePPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_PPU_NT2:
 			Nametable = 2;
 			NTabChanged = TRUE;
 			UpdatePPU();
-			break;
+			return TRUE;
 		case IDC_DEBUG_PPU_NT3:
 			Nametable = 3;
 			NTabChanged = TRUE;
 			UpdatePPU();
-			break;
+			return TRUE;
 		case IDCANCEL:
 			SetMode(Mode & ~DEBUG_MODE_PPU);
-			break;
+			return TRUE;
 		}
 		break;
 	case WM_MOUSEMOVE:
 		SetDetail(DetailTypeSave, DetailNumSave);
-		break;
+		return TRUE;
 	case WM_RBUTTONDOWN:
 		DetailTypeSave = DEBUG_DETAIL_NONE;
 		DetailNumSave = 0;
 		SetDetail(DetailTypeSave, DetailNumSave);
-		break;
+		return TRUE;
 	}
 	return FALSE;
 }
