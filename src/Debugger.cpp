@@ -57,7 +57,7 @@ struct tBreakpoint
 			else	_stprintf(desc, _T("Access: $%04X-$%04X"), addr_start, addr_end);
 			break;
 		case DEBUG_BREAK_OPCODE:
-			_stprintf(desc, _T("Opcode: $%00X"), opcode);
+			_stprintf(desc, _T("Opcode: $%02X"), opcode);
 			break;
 		case DEBUG_BREAK_NMI:
 			_stprintf(desc, _T("Interrupt: NMI"));
