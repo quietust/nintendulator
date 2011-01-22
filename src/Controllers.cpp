@@ -311,7 +311,7 @@ BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID
 
 BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
-	int DevNum = NumDevices;
+	int DevNum = (int)pvRef;
 	int ItemNum = 0;
 	if (IsEqualGUID(lpddoi->guidType, GUID_XAxis))
 	{
@@ -345,7 +345,16 @@ BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPV
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_Slider))
 	{
-		ItemNum = (lpddoi->dwOfs - ((BYTE *)&JoyState[0].rglSlider - (BYTE *)&JoyState[0])) / sizeof(JoyState[0].rglSlider[0]);
+		// ItemNum = DIDFT_GETINSTANCE(lpddoi->dwType);
+		// Sliders are enumerated as axes, and this index
+		// starts where the other axes left off
+		// Thus, we need to ignore it and assign them incrementally
+		// Hopefully, this actually works reliably
+		if (!(AxisFlags[DevNum] & 0x40))
+			ItemNum = 0;
+		else if (!(AxisFlags[DevNum] & 0x80))
+			ItemNum = 1;
+		else	ItemNum = 2;
 		if (ItemNum == 0)
 		{
 			AxisFlags[DevNum] |= 0x40;
@@ -356,26 +365,22 @@ BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPV
 			AxisFlags[DevNum] |= 0x80;
 			AxisNames[DevNum][AXIS_S1] = _tcsdup(lpddoi->tszName);
 		}
-		else	MessageBox(hMainWnd, _T("Error - encountered invalid slider ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_POV))
 	{
-		ItemNum = (lpddoi->dwOfs - ((BYTE *)&JoyState[0].rgdwPOV - (BYTE *)&JoyState[0])) / sizeof(JoyState[0].rgdwPOV[0]);
+		ItemNum = DIDFT_GETINSTANCE(lpddoi->dwType);
 		if ((ItemNum >= 0) && (ItemNum < 4))
 		{
 			POVFlags[DevNum] |= 0x01 << ItemNum;
 			POVNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
 		}
-		else	MessageBox(hMainWnd, _T("Error - encountered invalid POV hat ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_Button))
 	{
-		ItemNum = (lpddoi->dwOfs - ((BYTE *)&JoyState[0].rgbButtons - (BYTE *)&JoyState[0])) / sizeof(JoyState[0].rgbButtons[0]);
+		ItemNum = DIDFT_GETINSTANCE(lpddoi->dwType);
 		if ((ItemNum >= 0) && (ItemNum < 128))
 			ButtonNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
-		else	MessageBox(hMainWnd, _T("Error - encountered invalid joystick button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
-
 	return DIENUM_CONTINUE;
 }
 
@@ -401,7 +406,7 @@ BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 			POVFlags[DevNum] = 0;
 			DeviceName[DevNum] = _tcsdup(lpddi->tszProductName);
 
-			DIDevices[DevNum]->EnumObjects(EnumJoystickObjectsCallback, NULL, DIDFT_ALL);
+			DIDevices[DevNum]->EnumObjects(EnumJoystickObjectsCallback, (LPVOID)DevNum, DIDFT_ALL);
 			EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), lpddi->tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 			NumDevices++;
 		}
@@ -530,7 +535,8 @@ void	Init (void)
 		MessageBox(hMainWnd, _T("Failed to initialize mouse!"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 
 	NumDevices = 2;	// joysticks start at slot 2
-	DirectInput->EnumDevices(DI8DEVTYPE_JOYSTICK, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES);
+	if (FAILED(DirectInput->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES)))
+		MessageBox(hMainWnd, _T("Failed to initialize joysticks!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 
 	Movie::Mode = 0;
 }
