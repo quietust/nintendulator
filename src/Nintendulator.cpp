@@ -137,13 +137,12 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 		// or to keep one handle and have each modeless dialog set that handle whenever they get focus (KB 71450)
 		// The problem is that mapper DLLs have no way of (un)registering any modeless dialogs they create
 		// or notifying me that they've acquired focus and should be the ones passed to IsDialogMessage
-		// Thus, this horrible hack is being used instead, based on the currently valid
-		// assumption that all windows other than the main one will be modeless dialogs
-		// (or modal dialogs, which don't matter because they have their own message loops)
+		// Thus, this (probably incorrect) method is being used instead, based on the (currently) valid
+		// assumption that all windows other than the main one (and modal dialogs) will be modeless dialogs
 		// ProcessMessages() doesn't have this because it's only used in 2 places which don't matter
 		// (namely, controller configuration and the brief delay when stopping emulation)
-		HWND focus = GetForegroundWindow();
-		if ((focus != hMainWnd) && IsDialogMessage(focus, &msg))
+		HWND focus = GetActiveWindow();
+		if ((focus != NULL) && (focus != hMainWnd) && IsDialogMessage(focus, &msg))
 			continue;
 		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) 
 		{
