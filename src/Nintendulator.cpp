@@ -320,7 +320,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else	CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_UNCHECKED);
 			break;
 		case ID_FILE_BROWSESAVES:
-			ShellExecute(hMainWnd, NULL, DataPath, NULL, NULL, SW_SHOWNORMAL);
+			BrowseFolder(DataPath);
 			break;
 
 		case ID_CPU_RUN:
@@ -845,6 +845,12 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 		}
 	}
 	return FALSE;
+}
+
+// Shortcut for browsing to folders (though it could be used to run anything else, it's only ever called with folder names)
+void	BrowseFolder (TCHAR *dir)
+{
+	ShellExecute(hMainWnd, NULL, dir, NULL, NULL, SW_SHOWNORMAL);
 }
 
 BOOL	ProcessMessages (void)

@@ -1339,7 +1339,7 @@ void	RelocateSaveData_Progdir (void)
 		TCHAR str[MAX_PATH * 2 + 256];
 		_stprintf(str, _T("Nintendulator was unable to fully relocate its data files to \"%s\".\nPlease delete the folder \"%s\" after relocating its contents."), DataPath, filename);
 		MessageBox(NULL, str, _T("Nintendulator"), MB_OK | MB_ICONERROR);
-		ShellExecute(hMainWnd, NULL, filename, NULL, NULL, SW_SHOWNORMAL);
+		BrowseFolder(filename);
 	}
 }
 
@@ -1449,7 +1449,7 @@ void	RelocateSaveData_Mydocs (void)
 		TCHAR str[MAX_PATH * 2 + 256];
 		_stprintf(str, _T("Nintendulator was unable to fully relocate its data files to \"%s\".\nPlease delete the folder \"%s\" after relocating its contents."), DataPath, oldPath);
 		MessageBox(NULL, str, _T("Nintendulator"), MB_OK | MB_ICONERROR);
-		ShellExecute(hMainWnd, NULL, oldPath, NULL, NULL, SW_SHOWNORMAL);
+		BrowseFolder(oldPath);
 	}
 }
 
