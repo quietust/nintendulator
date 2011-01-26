@@ -142,12 +142,12 @@ struct	ROMInfo
 			BYTE	INES_Flags;	/* byte 6 flags in lower 4 bits, byte 7 flags in upper 4 bits */
 			WORD	INES_PRGSize;	/* number of 16KB banks */
 			WORD	INES_CHRSize;	/* number of 8KB banks */
-			BYTE	INES_Version;	/* 1 for standard .NES, 2 Denotes presence of iNES 2.0 data */
-			BYTE	INES2_SubMapper;	/* iNES 2.0 - submapper */
-			BYTE	INES2_TVMode;	/* iNES 2.0 - NTSC/PAL indicator */
-			BYTE	INES2_PRGRAM;	/* iNES 2.0 - PRG RAM counts, batteried and otherwise */
-			BYTE	INES2_CHRRAM;	/* iNES 2.0 - CHR RAM counts, batteried and otherwise */
-			BYTE	INES2_VSDATA;	/* iNES 2.0 - VS Unisystem information */
+			BYTE	INES_Version;	/* 1 for standard .NES, 2 Denotes presence of NES 2.0 data */
+			BYTE	INES2_SubMapper;	/* NES 2.0 - submapper */
+			BYTE	INES2_TVMode;	/* NES 2.0 - NTSC/PAL indicator */
+			BYTE	INES2_PRGRAM;	/* NES 2.0 - PRG RAM counts, batteried and otherwise */
+			BYTE	INES2_CHRRAM;	/* NES 2.0 - CHR RAM counts, batteried and otherwise */
+			BYTE	INES2_VSDATA;	/* NES 2.0 - VS Unisystem information */
 		};	/* INES */
 		struct
 		{

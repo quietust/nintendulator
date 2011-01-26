@@ -377,7 +377,7 @@ const TCHAR *	OpenFileiNES (FILE *in)
 
 	if ((Header[7] & 0x0C) == 0x08)
 	{
-		EI.DbgOut(_T("iNES 2.0 ROM image detected!"));
+		EI.DbgOut(_T("NES 2.0 ROM image detected!"));
 		RI.INES_Version = 2;
 
 		RI.INES_MapperNum |= (Header[8] & 0x0F) << 8;
