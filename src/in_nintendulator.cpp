@@ -349,7 +349,8 @@ DWORD	WINAPI	PlayThread (void *param)
 		}
 	}
 	ExitThread(0);
-	return 0;
+// warning C4702: unreachable code
+//	return 0;
 }
 
 In_Module mod = 
