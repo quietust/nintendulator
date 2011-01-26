@@ -225,6 +225,9 @@
 				RelativePath="..\src\GFX.cpp">
 			</File>
 			<File
+				RelativePath="..\src\HeaderEdit.cpp">
+			</File>
+			<File
 				RelativePath="..\src\MapperInterface.cpp">
 			</File>
 			<File
@@ -319,6 +322,9 @@
 			</File>
 			<File
 				RelativePath="..\src\GFX.h">
+			</File>
+			<File
+				RelativePath="..\src\HeaderEdit.h">
 			</File>
 			<File
 				RelativePath="..\src\MapperInterface.h">

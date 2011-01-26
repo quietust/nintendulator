@@ -107,6 +107,9 @@
     <ClCompile Include="..\src\c_e_unconnected.cpp">
       <Filter>Source Files\Exp Controllers</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\HeaderEdit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\APU.h">
@@ -153,6 +156,9 @@
     </ClInclude>
     <ClInclude Include="..\src\resource.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\HeaderEdit.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
