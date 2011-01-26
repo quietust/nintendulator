@@ -750,7 +750,7 @@ inline void	Run (void)
 		}
 		else
 		{
-			if ((Num == 0) || (Num == 1) || (Num == 2) ||(Num == 4))
+			if ((Num == 0) || (Num == 1) || (Num == 2) || (Num == 4))
 			{
 				Square0::QuarterFrame();
 				Square1::QuarterFrame();
