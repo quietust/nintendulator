@@ -299,6 +299,18 @@
 #define IDC_MOVIE_PLAY_RERECORDS        1265
 #define IDC_MOVIE_PLAY_TVMODE           1266
 #define IDC_MOVIE_PLAY_RESUME           1267
+#define IDC_INES_VER1                   1268
+#define IDC_INES_VER2                   1269
+#define IDC_INES_SUBMAP                 1270
+#define IDC_INES_PRAM                   1271
+#define IDC_INES_PSAV                   1272
+#define IDC_INES_CRAM                   1273
+#define IDC_INES_CSAV                   1274
+#define IDC_INES_NTSC                   1275
+#define IDC_INES_PAL                    1276
+#define IDC_INES_DUAL                   1277
+#define IDC_INES_VSPPU                  1278
+#define IDC_INES_VSFLAG                 1279
 #define ID_FILE_OPEN                    32768
 #define ID_FILE_CLOSE                   32769
 #define ID_FILE_HEADER                  32770
@@ -365,7 +377,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         32825
-#define _APS_NEXT_CONTROL_VALUE         1268
+#define _APS_NEXT_CONTROL_VALUE         1280
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

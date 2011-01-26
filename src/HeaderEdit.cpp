@@ -12,177 +12,414 @@
 
 namespace HeaderEdit
 {
-INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+TCHAR *filename = NULL;
+unsigned char header[16];
+BOOL isExtended;
+BOOL Mask = FALSE;
+
+void	UpdateNum (HWND hDlg, int Control, int num)
 {
-	static TCHAR *filename;
-	static char header[16];
+	int oldnum = -1;
+	GetDlgItemInt(hDlg, Control, NULL, FALSE);
+	if (num == oldnum)
+		return;
+	SetDlgItemInt(hDlg, Control, num, FALSE);
+}
+
+void	UpdateDialog (HWND hDlg)
+{
+	const int extended[] = { IDC_INES_SUBMAP, IDC_INES_PRAM, IDC_INES_PSAV, IDC_INES_CRAM, IDC_INES_CSAV, IDC_INES_NTSC, IDC_INES_PAL, IDC_INES_DUAL, IDC_INES_VSPPU, IDC_INES_VSFLAG, 0 };
 	int i;
-	FILE *rom;
+	Mask = TRUE;
+
+	if ((header[7] & 0x0C) == 0x08)
+		isExtended = TRUE;
+	else	isExtended = FALSE;
+
+	CheckRadioButton(hDlg, IDC_INES_VER1, IDC_INES_VER2, isExtended ? IDC_INES_VER2 : IDC_INES_VER1);
+
+	for (i = 0; extended[i] != 0; i++)
+		EnableWindow(GetDlgItem(hDlg, extended[i]), isExtended);
+
+	if (isExtended)
+	{
+		UpdateNum(hDlg, IDC_INES_MAP, ((header[6] & 0xF0) >> 4) | (header[7] & 0xF0) | ((header[8] & 0x0F) << 8));
+		UpdateNum(hDlg, IDC_INES_PRG, header[4] | ((header[9] & 0x0F) << 8));
+		UpdateNum(hDlg, IDC_INES_CHR, header[5] | ((header[9] & 0xF0) << 4));
+	}
+	else
+	{
+		UpdateNum(hDlg, IDC_INES_MAP, ((header[6] & 0xF0) >> 4) | (header[7] & 0xF0));
+		UpdateNum(hDlg, IDC_INES_PRG, header[4]);
+		UpdateNum(hDlg, IDC_INES_CHR, header[5]);
+	}
+
+	CheckDlgButton(hDlg, IDC_INES_BATT, (header[6] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hDlg, IDC_INES_TRAIN, (header[6] & 0x04) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hDlg, IDC_INES_4SCR, (header[6] & 0x08) ? BST_CHECKED : BST_UNCHECKED);
+
+	if (header[6] & 0x01)
+		CheckRadioButton(hDlg, IDC_INES_HORIZ, IDC_INES_VERT, IDC_INES_VERT);
+	else	CheckRadioButton(hDlg, IDC_INES_HORIZ, IDC_INES_VERT, IDC_INES_HORIZ);
+
+	CheckDlgButton(hDlg, IDC_INES_VS, (header[7] & 0x01) ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hDlg, IDC_INES_PC10, (header[7] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
+
+	if (IsDlgButtonChecked(hDlg, IDC_INES_4SCR))
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), FALSE);
+		EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), FALSE);
+	}
+	else
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), TRUE);
+	}
+
+	if (IsDlgButtonChecked(hDlg, IDC_INES_VS))
+		EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), FALSE);
+	else if (IsDlgButtonChecked(hDlg, IDC_INES_PC10))
+		EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), FALSE);
+	else
+	{
+		EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), TRUE);
+		EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), TRUE);
+	}
+
+	if (isExtended)
+	{
+		UpdateNum(hDlg, IDC_INES_SUBMAP, ((header[8] & 0xF0) >> 4));
+		SendDlgItemMessage(hDlg, IDC_INES_PRAM, CB_SETCURSEL, header[10] & 0x0F, 0);
+		SendDlgItemMessage(hDlg, IDC_INES_PSAV, CB_SETCURSEL, (header[10] & 0xF0) >> 4, 0);
+		SendDlgItemMessage(hDlg, IDC_INES_CRAM, CB_SETCURSEL, header[11] & 0x0F, 0);
+		SendDlgItemMessage(hDlg, IDC_INES_CSAV, CB_SETCURSEL, (header[11] & 0xF0) >> 4, 0);
+
+		if (header[12] & 0x02)
+			CheckRadioButton(hDlg, IDC_INES_NTSC, IDC_INES_DUAL, IDC_INES_DUAL);
+		else if (header[12] & 0x01)
+			CheckRadioButton(hDlg, IDC_INES_NTSC, IDC_INES_DUAL, IDC_INES_PAL);
+		else	CheckRadioButton(hDlg, IDC_INES_NTSC, IDC_INES_DUAL, IDC_INES_NTSC);
+
+		if (header[7] & 0x01)
+		{
+			SendDlgItemMessage(hDlg, IDC_INES_VSPPU, CB_SETCURSEL, header[13] & 0x0F, 0);
+			SendDlgItemMessage(hDlg, IDC_INES_VSFLAG, CB_SETCURSEL, (header[13] & 0xF0) >> 4, 0);
+		}
+		else
+		{
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_VSPPU), FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_VSFLAG), FALSE);
+			SendDlgItemMessage(hDlg, IDC_INES_VSPPU, CB_SETCURSEL, 0xF, 0);
+			SendDlgItemMessage(hDlg, IDC_INES_VSFLAG, CB_SETCURSEL, 0xF, 0);
+		}
+	}
+	else
+	{
+		SetDlgItemText(hDlg, IDC_INES_SUBMAP, _T(""));
+		SendDlgItemMessage(hDlg, IDC_INES_PRAM, CB_SETCURSEL, 0xF, 0);
+		SendDlgItemMessage(hDlg, IDC_INES_PSAV, CB_SETCURSEL, 0xF, 0);
+		SendDlgItemMessage(hDlg, IDC_INES_CRAM, CB_SETCURSEL, 0xF, 0);
+		SendDlgItemMessage(hDlg, IDC_INES_CSAV, CB_SETCURSEL, 0xF, 0);
+		CheckRadioButton(hDlg, IDC_INES_NTSC, IDC_INES_DUAL, IDC_INES_DUAL);
+		SendDlgItemMessage(hDlg, IDC_INES_VSPPU, CB_SETCURSEL, 0xF, 0);
+		SendDlgItemMessage(hDlg, IDC_INES_VSFLAG, CB_SETCURSEL, 0xF, 0);
+	}
+	Mask = FALSE;
+}
+
+bool	SaveROM (HWND hDlg)
+{
+	FILE *ROM = _tfopen(filename, _T("r+b"));
+	if (ROM == NULL)
+	{
+		int result = MessageBox(hDlg, _T("Unable to reopen file! Discard changes?"), _T("iNES Editor"), MB_YESNO | MB_ICONQUESTION);
+		return (result == IDYES);
+	}
+	if (!isExtended)
+		memset(header+8, 0, 8);
+	fseek(ROM, 0, SEEK_SET);
+	fwrite(header, 1, 16, ROM);
+	fclose(ROM);
+	return true;
+}
+
+bool	OpenROM (void)
+{
+	FILE *rom = _tfopen(filename, _T("rb"));
+	if (!rom)
+	{
+		MessageBox(hMainWnd, _T("Unable to open ROM!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		return false;
+	}
+	fread(header, 16, 1, rom);
+	fclose(rom);
+	if (memcmp(header, "NES\x1A", 4))
+	{
+		MessageBox(hMainWnd, _T("Selected file is not an iNES ROM image!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		return false;
+	}
+	if ((header[7] & 0x0C) == 0x08)
+		;	// NES 2.0 detected and supported
+	else if ((header[7] & 0x0C) == 0x04)
+	{
+		MessageBox(hMainWnd, _T("Selected ROM appears to have been corrupted by \"DiskDude!\" - cleaning..."), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
+		memset(header+7, 0, 9);
+	}
+	else if (((header[8] || header[9] || header[10] || header[11] || header[12] || header[13] || header[14] || header[15])) && 
+		(MessageBox(hMainWnd, _T("Unrecognized data detected in ROM header! Do you wish to clean it?"), _T("Nintendulator"), MB_YESNO | MB_ICONQUESTION) == IDYES))
+	{
+		memset(header+7, 0, 9);
+	}
+	return true;
+}
+
+
+INT_PTR CALLBACK	dlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	const TCHAR *RAMsizes[16] = {_T("None"), _T("128"), _T("256"), _T("512"), _T("1K"), _T("2K"), _T("4K"), _T("8K"), _T("16K"), _T("32K"), _T("64K"), _T("128K"), _T("256K"), _T("512K"), _T("1MB"), _T("N/A") };
+	const TCHAR *VSPPUs[16] = {_T("RP2C03B"), _T("RP2C03G"), _T("RP2C04-0001"), _T("RP2C04-0002"), _T("RP2C04-0003"), _T("RP2C04-0004"), _T("RC2C03B"), _T("RC2C03C"), _T("RC2C05-01"), _T("RC2C05-02"), _T("RC2C05-03"), _T("RC2C05-04"), _T("RC2C05-053"), _T("N/A"), _T("N/A"), _T("N/A") };
+	const TCHAR *VSFlags[16] = {_T("Normal"), _T("RBI Baseball"), _T("TKO Boxing"), _T("Super Xevious"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A") };
 	TCHAR name[MAX_PATH];
+
+	int i, n;
 	switch (message)
 	{
 	case WM_INITDIALOG:
-		filename = (TCHAR *)lParam;
-		rom = _tfopen(filename, _T("rb"));
-		if (!rom)
-		{
-			MessageBox(hMainWnd, _T("Unable to open ROM!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-			EndDialog(hDlg, 0);
-			break;
-		}
-		fread(header, 16, 1, rom);
-		fclose(rom);
-		if (memcmp(header, "NES\x1A", 4))
-		{
-			MessageBox(hMainWnd, _T("Selected file is not an iNES ROM image!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-			EndDialog(hDlg, 0);
-			break;
-		}
-		if ((header[7] & 0x0C) == 0x08)
-		{
-			MessageBox(hMainWnd, _T("Selected ROM contains iNES 2.0 information,  which is not yet supported. Please use a stand-alone editor."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-			EndDialog(hDlg, 0);
-			break;
-		}
-		if ((header[7] & 0x0C) == 0x04)
-		{
-			MessageBox(hMainWnd, _T("Selected ROM appears to have been corrupted by \"DiskDude!\" - cleaning..."), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
-			for (i = 7; i < 16; i++)
-				header[i] = 0;
-		}
-		else if (((header[8] || header[9] || header[10] || header[11] || header[12] || header[13] || header[14] || header[15])) && 
-			(MessageBox(hDlg, _T("Unrecognized data has been detected in the reserved region of this ROM's header! Do you wish to clean it?"), _T("Nintendulator"), MB_YESNO | MB_ICONQUESTION) == IDYES))
-		{
-			for (i = 7; i < 16; i++)
-				header[i] = 0;
-		}
-
 		i = (int)_tcslen(filename)-1;
 		while ((i >= 0) && (filename[i] != _T('\\')))
 			i--;
-		_tcscpy(name, filename+i+1);
-		name[_tcslen(name)-4] = 0;
+		_tcscpy(name, filename + i + 1);
+		name[_tcslen(name) - 4] = 0;
 		SetDlgItemText(hDlg, IDC_INES_NAME, name);
-		SetDlgItemInt(hDlg, IDC_INES_PRG, header[4], FALSE);
-		SetDlgItemInt(hDlg, IDC_INES_CHR, header[5], FALSE);
-		SetDlgItemInt(hDlg, IDC_INES_MAP, ((header[6] >> 4) & 0xF) | (header[7] & 0xF0), FALSE);
-		CheckDlgButton(hDlg, IDC_INES_BATT, (header[6] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hDlg, IDC_INES_TRAIN, (header[6] & 0x04) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hDlg, IDC_INES_4SCR, (header[6] & 0x08) ? BST_CHECKED : BST_UNCHECKED);
-		if (header[6] & 0x01)
-			CheckRadioButton(hDlg, IDC_INES_HORIZ, IDC_INES_VERT, IDC_INES_VERT);
-		else	CheckRadioButton(hDlg, IDC_INES_HORIZ, IDC_INES_VERT, IDC_INES_HORIZ);
-		CheckDlgButton(hDlg, IDC_INES_VS, (header[7] & 0x01) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hDlg, IDC_INES_PC10, (header[7] & 0x02) ? BST_CHECKED : BST_UNCHECKED);
-		if (IsDlgButtonChecked(hDlg, IDC_INES_4SCR))
+
+		for (i = 0; i < 16; i++)
 		{
-			EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), FALSE);
-			EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), FALSE);
+			SendDlgItemMessage(hDlg, IDC_INES_PRAM, CB_ADDSTRING, 0, (LPARAM)RAMsizes[i]);
+			SendDlgItemMessage(hDlg, IDC_INES_PSAV, CB_ADDSTRING, 0, (LPARAM)RAMsizes[i]);
+			SendDlgItemMessage(hDlg, IDC_INES_CRAM, CB_ADDSTRING, 0, (LPARAM)RAMsizes[i]);
+			SendDlgItemMessage(hDlg, IDC_INES_CSAV, CB_ADDSTRING, 0, (LPARAM)RAMsizes[i]);
+			SendDlgItemMessage(hDlg, IDC_INES_VSPPU, CB_ADDSTRING, 0, (LPARAM)VSPPUs[i]);
+			SendDlgItemMessage(hDlg, IDC_INES_VSFLAG, CB_ADDSTRING, 0, (LPARAM)VSFlags[i]);
 		}
-		else
-		{
-			EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), TRUE);
-			EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), TRUE);
-		}
-		if (IsDlgButtonChecked(hDlg, IDC_INES_VS))
-			EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), FALSE);
-		else if (IsDlgButtonChecked(hDlg, IDC_INES_PC10))
-			EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), FALSE);
-		else
-		{
-			EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), TRUE);
-			EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), TRUE);
-		}
+		UpdateDialog(hDlg);
 		return TRUE;
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
-		case IDC_INES_PRG:
-			i = GetDlgItemInt(hDlg, IDC_INES_PRG, NULL, FALSE);
-			if ((i < 0) || (i > 255))
-				SetDlgItemInt(hDlg, IDC_INES_PRG, i = 0, FALSE);
-			header[4] = (char)(i & 0xFF);
+		case IDC_INES_VER1:
+			if (Mask)
+				break;
+			header[7] &= 0xF3;
+			UpdateDialog(hDlg);
 			return TRUE;
-		case IDC_INES_CHR:
-			i = GetDlgItemInt(hDlg, IDC_INES_CHR, NULL, FALSE);
-			if ((i < 0) || (i > 255))
-				SetDlgItemInt(hDlg, IDC_INES_CHR, i = 0, FALSE);
-			header[5] = (char)(i & 0xFF);
+
+		case IDC_INES_VER2:
+			if (Mask)
+				break;
+			header[7] &= 0xF3;
+			header[7] |= 0x08;
+			UpdateDialog(hDlg);
 			return TRUE;
+
 		case IDC_INES_MAP:
-			i = GetDlgItemInt(hDlg, IDC_INES_MAP, NULL, FALSE);
-			if ((i < 0) || (i > 255))
-				SetDlgItemInt(hDlg, IDC_INES_MAP, i = 0, FALSE);
-			header[6] = (char)((header[6] & 0x0F) | ((i & 0x0F) << 4));
-			header[7] = (char)((header[7] & 0x0F) | (i & 0xF0));
+			if (Mask)
+				break;
+			n = GetDlgItemInt(hDlg, IDC_INES_MAP, NULL, FALSE);
+			if (isExtended)
+			{
+				header[6] &= 0x0F;
+				header[6] |= (n & 0x00F) << 4;
+				header[7] &= 0x0F;
+				header[7] |= (n & 0x0F0) << 0;
+				header[8] &= 0x0F;
+				header[8] |= (n & 0xF00) >> 8;
+			}
+			else
+			{
+				header[6] &= 0x0F;
+				header[6] |= (n & 0x00F) << 4;
+				header[7] &= 0x0F;
+				header[7] |= (n & 0x0F0) << 0;
+			}
+			UpdateDialog(hDlg);
 			return TRUE;
+
+		case IDC_INES_PRG:
+			if (Mask)
+				break;
+			n = GetDlgItemInt(hDlg, IDC_INES_PRG, NULL, FALSE);
+			if (isExtended)
+			{
+				header[4] = n & 0xFF;
+				header[9] &= 0xF0;
+				header[9] |= (n & 0xF00) >> 8;
+			}
+			else	header[4] = n & 0xFF;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_CHR:
+			if (Mask)
+				break;
+			n = GetDlgItemInt(hDlg, IDC_INES_CHR, NULL, FALSE);
+			if (isExtended)
+			{
+				header[5] = n & 0xFF;
+				header[9] &= 0x0F;
+				header[9] |= (n & 0xF00) >> 4;
+			}
+			else	header[5] = n & 0xFF;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_HORIZ:
+			if (Mask)
+				break;
+			header[6] &= ~0x01;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_VERT:
+			if (Mask)
+				break;
+			header[6] |= 0x01;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_4SCR:
+			if (Mask)
+				break;
+			if (IsDlgButtonChecked(hDlg, IDC_INES_4SCR))
+				header[6] |= 0x08;
+			else	header[6] &= ~0x08;
+			UpdateDialog(hDlg);
+			return TRUE;
+
 		case IDC_INES_BATT:
+			if (Mask)
+				break;
 			if (IsDlgButtonChecked(hDlg, IDC_INES_BATT))
 				header[6] |= 0x02;
 			else	header[6] &= ~0x02;
+			UpdateDialog(hDlg);
 			return TRUE;
+
 		case IDC_INES_TRAIN:
+			if (Mask)
+				break;
 			if (IsDlgButtonChecked(hDlg, IDC_INES_TRAIN))
-			{
-				MessageBox(hDlg, _T("Trained ROMs are not supported in Nintendulator!"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 				header[6] |= 0x04;
-			}
 			else	header[6] &= ~0x04;
+			UpdateDialog(hDlg);
 			return TRUE;
-		case IDC_INES_4SCR:
-			if (IsDlgButtonChecked(hDlg, IDC_INES_4SCR))
-			{
-				EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), FALSE);
-				EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), FALSE);
-				header[6] |= 0x08;
-			}
-			else
-			{
-				EnableWindow(GetDlgItem(hDlg, IDC_INES_HORIZ), TRUE);
-				EnableWindow(GetDlgItem(hDlg, IDC_INES_VERT), TRUE);
-				header[6] &= ~0x08;
-			}
-			return TRUE;
-		case IDC_INES_HORIZ:
-			if (IsDlgButtonChecked(hDlg, IDC_INES_HORIZ))
-				header[6] &= ~0x01;
-			return TRUE;
-		case IDC_INES_VERT:
-			if (IsDlgButtonChecked(hDlg, IDC_INES_VERT))
-				header[6] |= 0x01;
-			return TRUE;
+
 		case IDC_INES_VS:
+			if (Mask)
+				break;
 			if (IsDlgButtonChecked(hDlg, IDC_INES_VS))
-			{
-				EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), FALSE);
 				header[7] |= 0x01;
-			}
-			else
-			{
-				EnableWindow(GetDlgItem(hDlg, IDC_INES_PC10), TRUE);
-				header[7] &= ~0x01;
-			}
+			else	header[7] &= ~0x01;
+			UpdateDialog(hDlg);
 			return TRUE;
+
 		case IDC_INES_PC10:
+			if (Mask)
+				break;
 			if (IsDlgButtonChecked(hDlg, IDC_INES_PC10))
-			{
-				EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), FALSE);
 				header[7] |= 0x02;
-			}
-			else
-			{
-				EnableWindow(GetDlgItem(hDlg, IDC_INES_VS), TRUE);
-				header[7] &= ~0x02;
-			}
+			else	header[7] &= ~0x02;
+			UpdateDialog(hDlg);
 			return TRUE;
+
+		case IDC_INES_SUBMAP:
+			if (Mask)
+				break;
+			n = GetDlgItemInt(hDlg, IDC_INES_SUBMAP, NULL, FALSE);
+			header[8] &= 0x0F;
+			header[8] |= (n & 0xF) << 4;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_PRAM:
+			if (Mask)
+				break;
+			n = (int)SendDlgItemMessage(hDlg, IDC_INES_PRAM, CB_GETCURSEL, 0, 0);
+			header[10] &= 0xF0;
+			header[10] |= n & 0xF;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_PSAV:
+			if (Mask)
+				break;
+			n = (int)SendDlgItemMessage(hDlg, IDC_INES_PSAV, CB_GETCURSEL, 0, 0);
+			header[10] &= 0x0F;
+			header[10] |= (n & 0xF) << 4;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_CRAM:
+			if (Mask)
+				break;
+			n = (int)SendDlgItemMessage(hDlg, IDC_INES_CRAM, CB_GETCURSEL, 0, 0);
+			header[11] &= 0xF0;
+			header[11] |= n & 0xF;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_CSAV:
+			if (Mask)
+				break;
+			n = (int)SendDlgItemMessage(hDlg, IDC_INES_CSAV, CB_GETCURSEL, 0, 0);
+			header[11] &= 0x0F;
+			header[11] |= (n & 0xF) << 4;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_NTSC:
+			if (Mask)
+				break;
+			header[12] &= ~0x03;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_PAL:
+			if (Mask)
+				break;
+			header[12] &= ~0x03;
+			header[12] |= 0x01;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_DUAL:
+			if (Mask)
+				break;
+			header[12] &= ~0x03;
+			header[12] |= 0x02;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_VSPPU:
+			if (Mask)
+				break;
+			n = (int)SendDlgItemMessage(hDlg, IDC_INES_VSPPU, CB_GETCURSEL, 0, 0);
+			header[13] &= 0xF0;
+			header[13] |= n & 0xF;
+			UpdateDialog(hDlg);
+			return TRUE;
+
+		case IDC_INES_VSFLAG:
+			if (Mask)
+				break;
+			n = (int)SendDlgItemMessage(hDlg, IDC_INES_VSFLAG, CB_GETCURSEL, 0, 0);
+			header[13] &= 0x0F;
+			header[13] |= (n & 0xF) << 4;
+			UpdateDialog(hDlg);
+			return TRUE;
+
 		case IDOK:
-			rom = _tfopen(filename, _T("r+b"));
-			if (rom)
-			{
-				fwrite(header, 16, 1, rom);
-				fclose(rom);
-			}
-			else	MessageBox(hMainWnd, _T("Failed to open ROM!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+			if (!SaveROM(hDlg))
+				break;
 			// fall through
 		case IDCANCEL:
 			EndDialog(hDlg, 0);
@@ -192,8 +429,14 @@ INT_PTR CALLBACK	InesHeader (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 	return FALSE;
 }
 
-void	Open (TCHAR *filename)
+void	Open (TCHAR *file)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_INESHEADER, hMainWnd, InesHeader, (LPARAM)filename);
+	// not re-entrant
+	if (filename)
+		return;
+	filename = file;
+	if (OpenROM())
+		DialogBox(hInst, (LPCTSTR)IDD_INESHEADER, hMainWnd, dlgProc);
+	filename = NULL;
 }
 }
