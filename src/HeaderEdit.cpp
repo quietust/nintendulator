@@ -12,10 +12,10 @@
 
 namespace HeaderEdit
 {
-TCHAR *filename = NULL;
-unsigned char header[16];
-BOOL isExtended;
-BOOL Mask = FALSE;
+TCHAR *filename = NULL;		// name of ROM being edited
+unsigned char header[16];	// ROM's header data
+BOOL isExtended;		// whether or not the editor is in NES 2.0 mode
+BOOL Mask = FALSE;		// whether we're in UpdateDialog() or not
 
 void	UpdateNum (HWND hDlg, int Control, int num)
 {
@@ -135,7 +135,8 @@ bool	SaveROM (HWND hDlg)
 		int result = MessageBox(hDlg, _T("Unable to reopen file! Discard changes?"), _T("iNES Editor"), MB_YESNO | MB_ICONQUESTION);
 		return (result == IDYES);
 	}
-	if (!isExtended)
+	// discard any NES 2.0 header data if we're saving as version 1.0
+	if ((header[7] & 0x0C) != 0x08)
 		memset(header+8, 0, 8);
 	fseek(ROM, 0, SEEK_SET);
 	fwrite(header, 1, 16, ROM);
@@ -173,25 +174,17 @@ bool	OpenROM (void)
 	return true;
 }
 
-
 INT_PTR CALLBACK	dlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	const TCHAR *RAMsizes[16] = {_T("None"), _T("128"), _T("256"), _T("512"), _T("1K"), _T("2K"), _T("4K"), _T("8K"), _T("16K"), _T("32K"), _T("64K"), _T("128K"), _T("256K"), _T("512K"), _T("1MB"), _T("N/A") };
-	const TCHAR *VSPPUs[16] = {_T("RP2C03B"), _T("RP2C03G"), _T("RP2C04-0001"), _T("RP2C04-0002"), _T("RP2C04-0003"), _T("RP2C04-0004"), _T("RC2C03B"), _T("RC2C03C"), _T("RC2C05-01"), _T("RC2C05-02"), _T("RC2C05-03"), _T("RC2C05-04"), _T("RC2C05-053"), _T("N/A"), _T("N/A"), _T("N/A") };
+	const TCHAR *VSPPUs[16] = {_T("RP2C03B"), _T("RP2C03G"), _T("RP2C04-0001"), _T("RP2C04-0002"), _T("RP2C04-0003"), _T("RP2C04-0004"), _T("RC2C03B"), _T("RC2C03C"), _T("RC2C05-01"), _T("RC2C05-02"), _T("RC2C05-03"), _T("RC2C05-04"), _T("RC2C05-05"), _T("N/A"), _T("N/A"), _T("N/A") };
 	const TCHAR *VSFlags[16] = {_T("Normal"), _T("RBI Baseball"), _T("TKO Boxing"), _T("Super Xevious"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A") };
-	TCHAR name[MAX_PATH];
 
 	int i, n;
 	switch (message)
 	{
 	case WM_INITDIALOG:
-		i = (int)_tcslen(filename)-1;
-		while ((i >= 0) && (filename[i] != _T('\\')))
-			i--;
-		_tcscpy(name, filename + i + 1);
-		name[_tcslen(name) - 4] = 0;
-		SetDlgItemText(hDlg, IDC_INES_NAME, name);
-
+		SetDlgItemText(hDlg, IDC_INES_NAME, filename);
 		for (i = 0; i < 16; i++)
 		{
 			SendDlgItemMessage(hDlg, IDC_INES_PRAM, CB_ADDSTRING, 0, (LPARAM)RAMsizes[i]);
@@ -225,21 +218,14 @@ INT_PTR CALLBACK	dlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			if (Mask)
 				break;
 			n = GetDlgItemInt(hDlg, IDC_INES_MAP, NULL, FALSE);
+			header[6] &= 0x0F;
+			header[6] |= (n & 0x00F) << 4;
+			header[7] &= 0x0F;
+			header[7] |= (n & 0x0F0) << 0;
 			if (isExtended)
 			{
-				header[6] &= 0x0F;
-				header[6] |= (n & 0x00F) << 4;
-				header[7] &= 0x0F;
-				header[7] |= (n & 0x0F0) << 0;
 				header[8] &= 0x0F;
 				header[8] |= (n & 0xF00) >> 8;
-			}
-			else
-			{
-				header[6] &= 0x0F;
-				header[6] |= (n & 0x00F) << 4;
-				header[7] &= 0x0F;
-				header[7] |= (n & 0x0F0) << 0;
 			}
 			UpdateDialog(hDlg);
 			return TRUE;
@@ -248,13 +234,12 @@ INT_PTR CALLBACK	dlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			if (Mask)
 				break;
 			n = GetDlgItemInt(hDlg, IDC_INES_PRG, NULL, FALSE);
+			header[4] = n & 0xFF;
 			if (isExtended)
 			{
-				header[4] = n & 0xFF;
 				header[9] &= 0xF0;
 				header[9] |= (n & 0xF00) >> 8;
 			}
-			else	header[4] = n & 0xFF;
 			UpdateDialog(hDlg);
 			return TRUE;
 
@@ -262,13 +247,12 @@ INT_PTR CALLBACK	dlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			if (Mask)
 				break;
 			n = GetDlgItemInt(hDlg, IDC_INES_CHR, NULL, FALSE);
+			header[5] = n & 0xFF;
 			if (isExtended)
 			{
-				header[5] = n & 0xFF;
 				header[9] &= 0x0F;
 				header[9] |= (n & 0xF00) >> 4;
 			}
-			else	header[5] = n & 0xFF;
 			UpdateDialog(hDlg);
 			return TRUE;
 
