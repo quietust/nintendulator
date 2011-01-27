@@ -642,7 +642,6 @@ INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
 BOOL	LoadMapper (const ROMInfo *ROM)
 {
 #ifndef	NSFPLAYER
-	DLLInfo **DLLs;
 	int num = 1;
 	MapperDLL *ThisDLL = MapperDLLs;
 	while (ThisDLL)
@@ -650,8 +649,9 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 		num++;
 		ThisDLL = ThisDLL->Next;
 	}
-
-	DLLs = new DLLInfo *[num];
+	// TODO - change this to keep track of the MapperInfo struct as well
+	// so we don't need to LoadMapper, then UnloadMapper, then finally LoadMapper again
+	DLLInfo **DLLs = new DLLInfo *[num];
 	num = 0;
 	ThisDLL = MapperDLLs;
 	while (ThisDLL)
@@ -673,32 +673,39 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 	if (num == 1)
 	{	// 1 found
 		DI = DLLs[0];
-		MI = DI->LoadMapper(ROM);
-		if (MI->Load)
-			MI->Load();
 		delete[] DLLs;
-		return TRUE;
+		MI = DI->LoadMapper(ROM);
+		// this should be impossible, since it worked just a moment ago
+		if (!MI)
+			return FALSE;
+		if (MI->Load)
+			return MI->Load();
+		else	return TRUE;
 	}
 	// else more than one found
 	DLLs[num] = NULL;
 	DI = (DLLInfo *)DialogBoxParam(hInst, (LPCTSTR)IDD_DLLSELECT, hMainWnd, DllSelect, (LPARAM)DLLs);
+	delete[] DLLs;
 	if (DI)
 	{
 		MI = DI->LoadMapper(ROM);
+		if (!MI)
+			return FALSE;
 		if (MI->Load)
-			MI->Load();
-		delete[] DLLs;
-		return TRUE;
+			return MI->Load();
+		else	return TRUE;
 	}
-	delete[] DLLs;
+	return FALSE;
 #else	/* NSFPLAYER */
 	if (!DI)
 		return FALSE;
 	MI = DI->LoadMapper(ROM);
-	if (MI)
-		return TRUE;
+	if (!MI)
+		return FALSE;
+	if (MI->Load)
+		return MI->Load();
+        else	return TRUE;
 #endif	/* !NSFPLAYER */
-	return FALSE;
 }
 
 void	UnloadMapper (void)

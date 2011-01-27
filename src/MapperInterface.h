@@ -116,7 +116,7 @@ struct	MapperInfo
 	COMPAT_TYPE	Compatibility;
 
 /* Mapper Functions */
-	void		(MAPINT *Load)		(void);
+	BOOL		(MAPINT *Load)		(void);
 	void		(MAPINT *Reset)	(RESET_TYPE);		/* ResetType */
 	void		(MAPINT *Unload)	(void);
 	void		(MAPINT *CPUCycle)	(void);

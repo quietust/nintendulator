@@ -229,8 +229,6 @@ int play(const TCHAR *fn)
 		return 1;	// couldn't load mapper!
 	}
 	NES::ROMLoaded = TRUE;
-	if (MI->Load)
-		MI->Load();
 
 	NES::Reset();	// NSF loaded successfully, reset the NES
 			// and start it running
