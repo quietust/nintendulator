@@ -1053,6 +1053,7 @@ void	LoadSettings (void)
 	SizeMult = 2;
 	SoundEnabled = TRUE;
 	dbgVisible = TRUE;
+	CPU::LogBadOps = FALSE;
 	GFX::aFSkip = 1;
 	GFX::FSkip = 0;
 	GFX::PaletteNTSC = GFX::PALETTE_NTSC;
@@ -1079,6 +1080,7 @@ void	LoadSettings (void)
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("Scanlines")   , 0, NULL, (LPBYTE)&GFX::Scanlines              , &Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("UDLR")        , 0, NULL, (LPBYTE)&Controllers::EnableOpposites, &Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("DebugWindow") , 0, NULL, (LPBYTE)&dbgVisible                  , &Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("BadOpcodes")  , 0, NULL, (LPBYTE)&CPU::LogBadOps              , &Size);
 
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("SizeMult")   , 0, NULL, (LPBYTE)&SizeMult        , &Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSkip")      , 0, NULL, (LPBYTE)&GFX::FSkip      , &Size);
@@ -1138,6 +1140,9 @@ void	LoadSettings (void)
 	if (AutoRun)
 		CheckMenuItem(hMenu, ID_FILE_AUTORUN, MF_CHECKED);
 
+	if (CPU::LogBadOps)
+		CheckMenuItem(hMenu, ID_CPU_BADOPS, MF_CHECKED);
+
 	if (GFX::NTSChue >= 300)	// Old versions of Nintendulator used hue settings between 300 and 360
 		GFX::NTSChue -= 330;	// Current versions use values between -30 and +30, so convert them if necessary
 
@@ -1177,24 +1182,25 @@ void	SaveSettings (void)
 	GetWindowRect(hMainWnd, &wRect);
 	if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase))
 		RegCreateKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, _T("NintendulatorClass"), REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &SettingsBase, NULL);
-	RegSetValueEx(SettingsBase, _T("SoundEnabled"), 0, REG_DWORD, (LPBYTE)&SoundEnabled  , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("SizeMult")    , 0, REG_DWORD, (LPBYTE)&SizeMult      , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("FSkip")       , 0, REG_DWORD, (LPBYTE)&GFX::FSkip    , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("aFSkip")      , 0, REG_DWORD, (LPBYTE)&GFX::aFSkip   , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("PPUMode")     , 0, REG_DWORD, (LPBYTE)&PPU::IsPAL    , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("AutoRun")     , 0, REG_DWORD, (LPBYTE)&AutoRun       , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("PosX")        , 0, REG_DWORD, (LPBYTE)&wRect.left    , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("PosY")        , 0, REG_DWORD, (LPBYTE)&wRect.top     , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("Scanlines")   , 0, REG_DWORD, (LPBYTE)&GFX::Scanlines, sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("DebugWindow") , 0, REG_DWORD, (LPBYTE)&dbgVisible    , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("SoundEnabled"), 0, REG_DWORD, (LPBYTE)&SoundEnabled                , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("aFSkip")      , 0, REG_DWORD, (LPBYTE)&GFX::aFSkip                 , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("PPUMode")     , 0, REG_DWORD, (LPBYTE)&PPU::IsPAL                  , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("AutoRun")     , 0, REG_DWORD, (LPBYTE)&AutoRun                     , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("Scanlines")   , 0, REG_DWORD, (LPBYTE)&GFX::Scanlines              , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("UDLR")        , 0, REG_DWORD, (LPBYTE)&Controllers::EnableOpposites, sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("DebugWindow") , 0, REG_DWORD, (LPBYTE)&dbgVisible                  , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("BadOpcodes")  , 0, REG_DWORD, (LPBYTE)&CPU::LogBadOps              , sizeof(BOOL));
 
+	RegSetValueEx(SettingsBase, _T("SizeMult")    , 0, REG_DWORD, (LPBYTE)&SizeMult        , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FSkip")       , 0, REG_DWORD, (LPBYTE)&GFX::FSkip      , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("PosX")        , 0, REG_DWORD, (LPBYTE)&wRect.left      , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("PosY")        , 0, REG_DWORD, (LPBYTE)&wRect.top       , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("PaletteNTSC") , 0, REG_DWORD, (LPBYTE)&GFX::PaletteNTSC, sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("PalettePAL")  , 0, REG_DWORD, (LPBYTE)&GFX::PalettePAL , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("NTSChue")     , 0, REG_DWORD, (LPBYTE)&GFX::NTSChue    , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("NTSCsat")     , 0, REG_DWORD, (LPBYTE)&GFX::NTSCsat    , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("PALsat")      , 0, REG_DWORD, (LPBYTE)&GFX::PALsat     , sizeof(DWORD));
 
-	RegSetValueEx(SettingsBase, _T("UDLR")        , 0, REG_DWORD, (LPBYTE)&Controllers::EnableOpposites, sizeof(BOOL));
 
 	RegSetValueEx(SettingsBase, _T("CustPaletteNTSC"), 0, REG_SZ, (LPBYTE)GFX::CustPaletteNTSC, (DWORD)(sizeof(TCHAR) * _tcslen(GFX::CustPaletteNTSC)));
 	RegSetValueEx(SettingsBase, _T("CustPalettePAL") , 0, REG_SZ, (LPBYTE)GFX::CustPalettePAL , (DWORD)(sizeof(TCHAR) * _tcslen(GFX::CustPalettePAL)));

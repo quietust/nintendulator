@@ -95,6 +95,7 @@ BEGIN
         MENUITEM "&Next State\tF7",             ID_CPU_NEXTSTATE
         MENUITEM SEPARATOR
         MENUITEM "&Game Genie\tCtrl+G",         ID_CPU_GAMEGENIE
+        MENUITEM "L&og Invalid Opcodes",        ID_CPU_BADOPS
         MENUITEM SEPARATOR
         POPUP "&Frame Step"
         BEGIN

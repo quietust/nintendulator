@@ -368,6 +368,7 @@
 #define ID_MISC_STOPMOVIE               32822
 #define ID_HELP_ABOUT                   32823
 #define ID_FILE_BROWSESAVES             32824
+#define ID_CPU_BADOPS                   32825
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -376,7 +377,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        152
-#define _APS_NEXT_COMMAND_VALUE         32825
+#define _APS_NEXT_COMMAND_VALUE         32826
 #define _APS_NEXT_CONTROL_VALUE         1280
 #define _APS_NEXT_SYMED_VALUE           107
 #endif

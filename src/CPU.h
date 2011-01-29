@@ -24,10 +24,10 @@ namespace CPU
 {
 union SplitReg { unsigned long Full; unsigned char Segment[4]; };
 
-extern FCPURead	ReadHandler[0x10];
-extern FCPUWrite	WriteHandler[0x10];
-extern unsigned char *	PRGPointer[0x10];
-extern BOOL	Readable[0x10], Writable[0x10];
+extern FCPURead ReadHandler[0x10];
+extern FCPUWrite WriteHandler[0x10];
+extern unsigned char *PRGPointer[0x10];
+extern BOOL Readable[0x10], Writable[0x10];
 
 #ifndef	NSFPLAYER
 extern unsigned char WantNMI;
@@ -43,7 +43,9 @@ extern unsigned char FC, FZ, FI, FD, FV, FN;
 extern unsigned char LastRead;
 extern union SplitReg rPC;
 
-extern	unsigned char RAM[0x800];
+extern unsigned char RAM[0x800];
+
+extern BOOL LogBadOps;
 
 #define PC rPC.Full
 #define PCL rPC.Segment[0]

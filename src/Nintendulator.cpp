@@ -392,6 +392,12 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_CHECKED);
 			else	CheckMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_UNCHECKED);
 			break;
+		case ID_CPU_BADOPS:
+			CPU::LogBadOps = !CPU::LogBadOps;
+			if (CPU::LogBadOps)
+				CheckMenuItem(hMenu, ID_CPU_BADOPS, MF_CHECKED);
+			else	CheckMenuItem(hMenu, ID_CPU_BADOPS, MF_UNCHECKED);
+			break;
 		case ID_CPU_FRAMESTEP_ENABLED:
 			NES::FrameStep = !NES::FrameStep;
 			if (NES::FrameStep)

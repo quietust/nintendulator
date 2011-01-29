@@ -43,6 +43,8 @@ unsigned char LastRead;
 union SplitReg rPC;
 unsigned char RAM[0x800];
 
+BOOL LogBadOps;
+
 union SplitReg rCalcAddr;
 union SplitReg rTmpAddr;
 signed char BranchOffset;
@@ -1350,12 +1352,14 @@ __forceinline void	IN_TYA (void)
 
 __forceinline void	IV_UNK (void)
 {
-	EI.DbgOut(_T("Invalid opcode $%02X (???) encountered at $%04X"), Opcode, OpAddr);
+	// This isn't affected by the "Log Invalid Ops" toggle
+	EI.DbgOut(_T("Unsupported opcode $%02X (???) encountered at $%04X"), Opcode, OpAddr);
 }
 
 __forceinline void	IV_HLT (void)
 {
-	EI.DbgOut(_T("Invalid opcode $%02X (HLT) encountered at $%04X; CPU locked"), Opcode, OpAddr);
+	// And neither is this, considering it's going to be followed immediately by a message box
+	EI.DbgOut(_T("HLT opcode $%02X encountered at $%04X; CPU locked"), Opcode, OpAddr);
 #ifndef	NSFPLAYER
 	MessageBox(hMainWnd, _T("Bad opcode, CPU locked"), _T("Nintendulator"), MB_OK);
 	NES::DoStop = TRUE;
@@ -1363,16 +1367,19 @@ __forceinline void	IV_HLT (void)
 }
 __forceinline void	IV_NOP (void)
 {
-	EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"), Opcode, OpAddr);
 	MemGet(CalcAddr);
 }
 __forceinline void	IV_NOP2 (void)
 {
-	EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"), Opcode, OpAddr);
 }
 __forceinline void	IV_SLO (void)
 {	// ASL + ORA
-	EI.DbgOut(_T("Invalid opcode $%02X (SLO) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (SLO) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 #ifdef	CPU_INLINE_ASM
@@ -1396,7 +1403,8 @@ __forceinline void	IV_SLO (void)
 }
 __forceinline void	IV_RLA (void)
 {	// ROL + AND
-	EI.DbgOut(_T("Invalid opcode $%02X (RLA) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (RLA) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 #ifdef	CPU_INLINE_ASM
@@ -1423,7 +1431,8 @@ __forceinline void	IV_RLA (void)
 }
 __forceinline void	IV_SRE (void)
 {	// LSR + EOR
-	EI.DbgOut(_T("Invalid opcode $%02X (SRE) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (SRE) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 #ifdef	CPU_INLINE_ASM
@@ -1447,7 +1456,8 @@ __forceinline void	IV_SRE (void)
 }
 __forceinline void	IV_RRA (void)
 {	// ROR + ADC
-	EI.DbgOut(_T("Invalid opcode $%02X (RRA) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (RRA) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 #ifdef	CPU_INLINE_ASM
@@ -1478,12 +1488,14 @@ __forceinline void	IV_RRA (void)
 }
 __forceinline void	IV_SAX (void)
 {	// STA + STX
-	EI.DbgOut(_T("Invalid opcode $%02X (SAX) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (SAX) encountered at $%04X"), Opcode, OpAddr);
 	MemSet(CalcAddr, A & X);
 }
 __forceinline void	IV_LAX (void)
 {	// LDA + LDX
-	EI.DbgOut(_T("Invalid opcode $%02X (LAX) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (LAX) encountered at $%04X"), Opcode, OpAddr);
 	X = A = MemGet(CalcAddr);
 #ifdef	CPU_INLINE_ASM
 	__asm
@@ -1499,7 +1511,8 @@ __forceinline void	IV_LAX (void)
 }
 __forceinline void	IV_DCP (void)
 {	// DEC + CMP
-	EI.DbgOut(_T("Invalid opcode $%02X (DCP) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (DCP) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 #ifdef	CPU_INLINE_ASM
@@ -1523,7 +1536,8 @@ __forceinline void	IV_DCP (void)
 }
 __forceinline void	IV_ISB (void)
 {	// INC + SBC
-	EI.DbgOut(_T("Invalid opcode $%02X (ISB) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (ISB) encountered at $%04X"), Opcode, OpAddr);
 	TmpData = MemGet(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 #ifdef	CPU_INLINE_ASM
@@ -1552,7 +1566,8 @@ __forceinline void	IV_ISB (void)
 }
 __forceinline void	IV_SBC (void)
 {	// NOP + SBC
-	EI.DbgOut(_T("Invalid opcode $%02X (SBC) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (SBC) encountered at $%04X"), Opcode, OpAddr);
 	MemGet(CalcAddr);
 #ifdef	CPU_INLINE_ASM
 	__asm
@@ -1578,7 +1593,8 @@ __forceinline void	IV_SBC (void)
 
 __forceinline void	IV_AAC (void)
 {	// ASL A+ORA and ROL A+AND, behaves strangely
-	EI.DbgOut(_T("Invalid opcode $%02X (AAC) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (AAC) encountered at $%04X"), Opcode, OpAddr);
 	MemGet(CalcAddr);
 #ifdef	CPU_INLINE_ASM
 	__asm
@@ -1597,7 +1613,8 @@ __forceinline void	IV_AAC (void)
 }
 __forceinline void	IV_ASR (void)
 {	// LSR A+EOR, behaves strangely
-	EI.DbgOut(_T("Invalid opcode $%02X (ASR) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (ASR) encountered at $%04X"), Opcode, OpAddr);
 	MemGet(CalcAddr);
 #ifdef	CPU_INLINE_ASM
 	__asm
@@ -1619,7 +1636,8 @@ __forceinline void	IV_ASR (void)
 }
 __forceinline void	IV_ARR (void)
 {	// ROR A+AND, behaves strangely
-	EI.DbgOut(_T("Invalid opcode $%02X (ARR) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (ARR) encountered at $%04X"), Opcode, OpAddr);
 	MemGet(CalcAddr);
 #ifdef	CPU_INLINE_ASM
 	__asm
@@ -1651,7 +1669,8 @@ __forceinline void	IV_ARR (void)
 __forceinline void	IV_ATX (void)
 {	// LDA+TAX, behaves strangely
 	// documented as ANDing accumulator with data, but seemingly behaves exactly the same as LAX
-	EI.DbgOut(_T("Invalid opcode $%02X (ATX) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (ATX) encountered at $%04X"), Opcode, OpAddr);
 	X = A = MemGet(CalcAddr);
 #ifdef	CPU_INLINE_ASM
 	__asm
@@ -1667,7 +1686,8 @@ __forceinline void	IV_ATX (void)
 }
 __forceinline void	IV_AXS (void)
 {	// CMP+DEX, behaves strangely
-	EI.DbgOut(_T("Invalid opcode $%02X (AXS) encountered at $%04X"), Opcode, OpAddr);
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (AXS) encountered at $%04X"), Opcode, OpAddr);
 	MemGet(CalcAddr);
 #ifdef	CPU_INLINE_ASM
 	__asm
