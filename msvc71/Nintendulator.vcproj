@@ -168,8 +168,7 @@
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				AssemblerOutput="2"
-				WarningLevel="4"
-				CallingConvention="1"/>
+				WarningLevel="4"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
