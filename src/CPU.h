@@ -22,7 +22,7 @@
 
 namespace CPU
 {
-union SplitReg { unsigned long Full; unsigned char Segment[4]; };
+union SplitReg { unsigned short Full; unsigned char Segment[2]; };
 
 extern FCPURead ReadHandler[0x10];
 extern FCPUWrite WriteHandler[0x10];
@@ -39,9 +39,9 @@ extern unsigned char GotInterrupt;
 #endif	/* ENABLE_DEBUGGER */
 
 extern unsigned char A, X, Y, SP, P;
-extern unsigned char FC, FZ, FI, FD, FV, FN;
+extern bool FC, FZ, FI, FD, FV, FN;
 extern unsigned char LastRead;
-extern union SplitReg rPC;
+extern SplitReg rPC;
 
 extern unsigned char RAM[0x800];
 
@@ -51,8 +51,8 @@ extern BOOL LogBadOps;
 #define PCL rPC.Segment[0]
 #define PCH rPC.Segment[1]
 
-unsigned char	__fastcall	MemGet (unsigned int);
-void	__fastcall	MemSet (unsigned int, unsigned char);
+unsigned char	MemGet (unsigned int);
+void	MemSet (unsigned int, unsigned char);
 
 void	JoinFlags (void);
 void	SplitFlags (void);

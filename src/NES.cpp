@@ -879,7 +879,7 @@ DWORD	WINAPI	Thread (void *param)
 	LARGE_INTEGER ClockVal1, ClockVal2;
 	QueryPerformanceFrequency(&ClockFreq);
 	QueryPerformanceCounter(&ClockVal1);
-	for (i = 0; i < 454211; i++)
+	for (i = 0; i < 2725266; i++)
 	{
 		CPU::ExecOp();
 		CPU::ExecOp();
@@ -894,7 +894,7 @@ DWORD	WINAPI	Thread (void *param)
 	}
 	QueryPerformanceCounter(&ClockVal2);
 
-	EI.DbgOut(_T("10 seconds emulated in %lu milliseconds"), (unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
+	EI.DbgOut(_T("1 minute emulated in %lu milliseconds"), (unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
 #else	/* !CPU_BENCHMARK */
 
 	Controllers::Acquire();

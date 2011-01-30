@@ -34,8 +34,6 @@
 #define IN_VER 0x100
 #endif
 
-#define	CPU_INLINE_ASM	// Enable usage of inline assembly in the CPU for minor performance improvements
-
 // warnings we don't care about
 #pragma warning(disable:4100)	// "unreferenced formal parameter" - functions which don't use every parameter (mostly controllers)
 #pragma warning(disable:4201)	// "nonstandard extension used : nameless struct/union" - used in several places in mapper interface
