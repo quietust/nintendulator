@@ -311,6 +311,8 @@
 #define IDC_INES_DUAL                   1277
 #define IDC_INES_VSPPU                  1278
 #define IDC_INES_VSFLAG                 1279
+#define IDC_DLL_FILEDESC                1280
+#define IDC_DLL_MAPPERDESC              1281
 #define ID_FILE_OPEN                    32768
 #define ID_FILE_CLOSE                   32769
 #define ID_FILE_HEADER                  32770
@@ -378,7 +380,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         32826
-#define _APS_NEXT_CONTROL_VALUE         1280
+#define _APS_NEXT_CONTROL_VALUE         1282
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

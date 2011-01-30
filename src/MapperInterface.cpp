@@ -38,9 +38,10 @@ FUnloadMapperDLL	UnloadDLL;
 struct	MapperDLL
 {
 	HINSTANCE	dInst;
+	TCHAR		filename[MAX_PATH];
 	FLoadMapperDLL	LoadDLL;
-	DLLInfo		*DI;
 	FUnloadMapperDLL	UnloadDLL;
+	DLLInfo		*DI;
 	MapperDLL	*Next;
 } *MapperDLLs = NULL;
 #endif	/* NSFPLAYER */
@@ -463,6 +464,8 @@ static	void	MAPINT	StatusOut (TCHAR *text, ...)
 
 namespace MapperInterface
 {
+const TCHAR *CompatLevel[COMPAT_NUMTYPES] = {_T("Unsupported"), _T("Partially supported"), _T("Mostly supported"), _T("Fully supported!")};
+
 void	Init (void)
 {
 #ifndef	NSFPLAYER
@@ -480,7 +483,8 @@ void	Init (void)
 		do
 		{
 			TCHAR Tmp[MAX_PATH];
-			_stprintf(Tmp, _T("%s%s"), Path, Data.cFileName);
+			_tcscpy(ThisDLL->filename, Data.cFileName);
+			_stprintf(Tmp, _T("%s%s"), Path, ThisDLL->filename);
 			ThisDLL->dInst = LoadLibrary(Tmp);
 			if (!ThisDLL->dInst)
 			{
@@ -598,40 +602,62 @@ void	Init (void)
 }
 
 #ifndef	NSFPLAYER
+struct	MapperFindInfo
+{
+	TCHAR		*filename;
+	DLLInfo		*DI;
+	const MapperInfo	*MI;
+};
+
 INT_PTR CALLBACK	DllSelect (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	DLLInfo **DLLs = (DLLInfo **)GetWindowLongPtr(hDlg, GWLP_USERDATA);
+	MapperFindInfo *DLLs = (MapperFindInfo *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 	int i;
 	switch (message)
 	{
 	case WM_INITDIALOG:
 		SetWindowLongPtr(hDlg, GWLP_USERDATA, lParam);
-		DLLs = (DLLInfo **)lParam;
-		for (i = 0; DLLs[i] != NULL; i++)
-		{
-			TCHAR *desc = new TCHAR[_tcslen(DLLs[i]->Description) + 32];
-			_stprintf(desc, _T("\"%s\" v%x.%x (%04x/%02x/%02x)"),
-				DLLs[i]->Description,
-				(DLLs[i]->Version >> 16) & 0xFFFF, DLLs[i]->Version & 0xFFFF,
-				(DLLs[i]->Date >> 16) & 0xFFFF, (DLLs[i]->Date >> 8) & 0xFF, DLLs[i]->Date & 0xFF);
-			SendDlgItemMessage(hDlg, IDC_DLL_LIST, LB_INSERTSTRING, i, (LPARAM)desc);
-			delete[] desc;
-		}
+		DLLs = (MapperFindInfo *)lParam;
+		for (i = 0; DLLs[i].DI != NULL; i++)
+			SendDlgItemMessage(hDlg, IDC_DLL_LIST, LB_INSERTSTRING, i, (LPARAM)DLLs[i].filename);
 		return TRUE;
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
 		case IDC_DLL_LIST:
 			if (HIWORD(wParam) != LBN_DBLCLK)
-				return TRUE;	// have double-clicks fall through
+			{
+				i = SendDlgItemMessage(hDlg, IDC_DLL_LIST, LB_GETCURSEL, 0, 0);
+				if (i == LB_ERR)
+				{
+					SetDlgItemText(hDlg, IDC_DLL_FILEDESC, _T(""));
+					SetDlgItemText(hDlg, IDC_DLL_MAPPERDESC, _T(""));
+					return FALSE;
+				}
+				TCHAR *desc;
+				desc = new TCHAR[_tcslen(DLLs[i].DI->Description) + 27];
+				_stprintf(desc, _T("\"%s\" v%x.%x (%04x/%02x/%02x)"),
+					DLLs[i].DI->Description,
+					(DLLs[i].DI->Version >> 16) & 0xFFFF, DLLs[i].DI->Version & 0xFFFF,
+					(DLLs[i].DI->Date >> 16) & 0xFFFF, (DLLs[i].DI->Date >> 8) & 0xFF, DLLs[i].DI->Date & 0xFF);
+
+				SetDlgItemText(hDlg, IDC_DLL_FILEDESC, desc);
+				delete[] desc;
+
+				desc = new TCHAR[_tcslen(DLLs[i].MI->Description) + _tcslen(CompatLevel[DLLs[i].MI->Compatibility]) + 4];
+				_stprintf(desc, _T("%s (%s)"), DLLs[i].MI->Description, CompatLevel[DLLs[i].MI->Compatibility]);
+				SetDlgItemText(hDlg, IDC_DLL_MAPPERDESC, desc);
+				delete[] desc;
+
+				return TRUE;
+			}
+			// have double-clicks fall through
 		case IDOK:
 			i = SendDlgItemMessage(hDlg, IDC_DLL_LIST, LB_GETCURSEL, 0, 0);
-			if (i == LB_ERR)
-				EndDialog(hDlg, (INT_PTR)NULL);
-			else	EndDialog(hDlg, (INT_PTR)DLLs[i]);
+			EndDialog(hDlg, (INT_PTR)i);
 			return TRUE;
 		case IDCANCEL:
-			EndDialog(hDlg, (INT_PTR)NULL);
+			EndDialog(hDlg, (INT_PTR)-1);
 			return TRUE;
 		}
 	}
@@ -649,18 +675,21 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 		num++;
 		ThisDLL = ThisDLL->Next;
 	}
-	// TODO - change this to keep track of the MapperInfo struct as well
-	// so we don't need to LoadMapper, then UnloadMapper, then finally LoadMapper again
-	DLLInfo **DLLs = new DLLInfo *[num];
+	MapperFindInfo *DLLs = new MapperFindInfo[num];
+	ZeroMemory(DLLs, sizeof(MapperFindInfo) * num);
 	num = 0;
 	ThisDLL = MapperDLLs;
 	while (ThisDLL)
 	{	// 2 - see how many DLLs support our mapper
-		DI = ThisDLL->DI;
-		if (DI->LoadMapper(ROM))
+		DLLs[num].filename = ThisDLL->filename;
+		DLLs[num].DI = ThisDLL->DI;
+		DLLs[num].MI = DLLs[num].DI->LoadMapper(ROM);
+		if (DLLs[num].MI)
+			num++;
+		else
 		{
-			DI->UnloadMapper();
-			DLLs[num++] = DI;
+			DLLs[num].filename = NULL;
+			DLLs[num].DI = NULL;
 		}
 		ThisDLL = ThisDLL->Next;
 	}
@@ -672,30 +701,38 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 	}
 	if (num == 1)
 	{	// 1 found
-		DI = DLLs[0];
+		DI = DLLs[0].DI;
+		MI = DLLs[0].MI;
 		delete[] DLLs;
-		MI = DI->LoadMapper(ROM);
-		// this should be impossible, since it worked just a moment ago
-		if (!MI)
-			return FALSE;
 		if (MI->Load)
 			return MI->Load();
 		else	return TRUE;
 	}
-	// else more than one found
-	DLLs[num] = NULL;
-	DI = (DLLInfo *)DialogBoxParam(hInst, (LPCTSTR)IDD_DLLSELECT, hMainWnd, DllSelect, (LPARAM)DLLs);
-	delete[] DLLs;
-	if (DI)
+	// else more than one found - ask which one to use
+	int choice = DialogBoxParam(hInst, (LPCTSTR)IDD_DLLSELECT, hMainWnd, DllSelect, (LPARAM)DLLs);
+	// -1 indicates that no mapper was chosen
+	if (choice >= 0)
 	{
-		MI = DI->LoadMapper(ROM);
-		if (!MI)
-			return FALSE;
-		if (MI->Load)
-			return MI->Load();
-		else	return TRUE;
+		DI = DLLs[choice].DI;
+		MI = DLLs[choice].MI;
 	}
-	return FALSE;
+
+	// unload whichever mappers weren't chosen
+	for (num = 0; DLLs[num].DI != NULL; num++)
+	{
+		// don't unload the one that was chosen
+		if (num == choice)
+			continue;
+		DLLs[num].DI->UnloadMapper();
+	}
+	delete[] DLLs;
+
+	if (choice < 0)
+		return FALSE;
+
+	if (MI->Load)
+		return MI->Load();
+	else	return TRUE;
 #else	/* NSFPLAYER */
 	if (!DI)
 		return FALSE;

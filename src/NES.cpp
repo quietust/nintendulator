@@ -43,8 +43,6 @@ unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
 unsigned char CHR_ROM[MAX_CHRROM_SIZE][0x400];
 unsigned char CHR_RAM[MAX_CHRRAM_SIZE][0x400];
 
-const TCHAR *CompatLevel[COMPAT_NUMTYPES] = {_T("Unsupported"), _T("Partially supported"), _T("Mostly supported"), _T("Fully supported!")};
-
 void	Init (void)
 {
 	MapperInterface::Init();
@@ -435,7 +433,7 @@ const TCHAR *	OpenFileiNES (FILE *in)
 		_stprintf(err, _T("Mapper %i not supported!"), RI.INES_MapperNum);
 		return err;
 	}
-	EI.DbgOut(_T("iNES ROM image loaded: mapper %i (%s) - %s"), RI.INES_MapperNum, MI->Description, CompatLevel[MI->Compatibility]);
+	EI.DbgOut(_T("iNES ROM image loaded: mapper %i (%s) - %s"), RI.INES_MapperNum, MI->Description, MapperInterface::CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"), RI.INES_PRGSize << 4, RI.INES_CHRSize << 3);
 	EI.DbgOut(_T("Flags: %s%s"), RI.INES_Flags & 0x02 ? _T("Battery-backed SRAM, ") : _T(""), RI.INES_Flags & 0x08 ? _T("Four-screen VRAM") : (RI.INES_Flags & 0x01 ? _T("Vertical mirroring") : _T("Horizontal mirroring")));
 
@@ -633,7 +631,7 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 	if ((RI.UNIF_NTSCPAL == 0) || (RI.UNIF_NTSCPAL == 1))
 		SetCPUMode(RI.UNIF_NTSCPAL);
 
-	EI.DbgOut(_T("UNIF file loaded: %hs (%s) - %s"), RI.UNIF_BoardName, MI->Description, CompatLevel[MI->Compatibility]);
+	EI.DbgOut(_T("UNIF file loaded: %hs (%s) - %s"), RI.UNIF_BoardName, MI->Description, MapperInterface::CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"), PRGsize >> 10, CHRsize >> 10);
 	EI.DbgOut(_T("Battery status: %s"), RI.UNIF_Battery ? _T("present") : _T("not present"));
 
@@ -673,7 +671,7 @@ const TCHAR *	OpenFileFDS (FILE *in)
 	if (!MapperInterface::LoadMapper(&RI))
 		return _T("Famicom Disk System support not found!");
 
-	EI.DbgOut(_T("FDS file loaded: %s - %s"), MI->Description, CompatLevel[MI->Compatibility]);
+	EI.DbgOut(_T("FDS file loaded: %s - %s"), MI->Description, MapperInterface::CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("Data length: %i disk side(s)"), RI.FDS_NumSides);
 	SRAM_Size = 1;	// special, so FDS always saves changes
 	return NULL;
@@ -741,7 +739,7 @@ const TCHAR *	OpenFileNSF (FILE *in)
 
 	if (!MapperInterface::LoadMapper(&RI))
 		return _T("NSF support not found!");
-	EI.DbgOut(_T("NSF loaded: %s - %s"), MI->Description, CompatLevel[MI->Compatibility]);
+	EI.DbgOut(_T("NSF loaded: %s - %s"), MI->Description, MapperInterface::CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("Data length: %iKB"), RI.NSF_DataSize >> 10);
 	return NULL;
 }

@@ -208,6 +208,8 @@ extern	const MapperInfo	*MI, *MI2;
 
 namespace MapperInterface
 {
+extern const TCHAR *CompatLevel[COMPAT_NUMTYPES];
+
 void	Init (void);
 void	Release (void);
 BOOL	LoadMapper (const ROMInfo *ROM);
