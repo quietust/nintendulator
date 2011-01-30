@@ -19,8 +19,7 @@ BOOL Mask = FALSE;		// whether we're in UpdateDialog() or not
 
 void	UpdateNum (HWND hDlg, int Control, int num)
 {
-	int oldnum = -1;
-	GetDlgItemInt(hDlg, Control, NULL, FALSE);
+	int oldnum = GetDlgItemInt(hDlg, Control, NULL, FALSE);
 	if (num == oldnum)
 		return;
 	SetDlgItemInt(hDlg, Control, num, FALSE);
