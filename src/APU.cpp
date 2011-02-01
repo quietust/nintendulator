@@ -19,10 +19,10 @@
 # include "CPU.h"
 # include "PPU.h"
 # include "AVI.h"
-#endif	/* NSFPLAYER */
 
-#pragma comment(lib, "dsound.lib")
-#pragma comment(lib, "dxguid.lib")
+# pragma comment(lib, "dsound.lib")
+# pragma comment(lib, "dxguid.lib")
+#endif	/* NSFPLAYER */
 
 #define	SOUND_FILTERING
 
