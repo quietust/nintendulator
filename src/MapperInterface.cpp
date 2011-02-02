@@ -30,6 +30,8 @@ const MapperInfo *MI;
 const MapperInfo *MI2;
 #endif	/* !NSFPLAYER */
 
+namespace MapperInterface
+{
 #ifdef	NSFPLAYER
 HINSTANCE		dInst;
 FLoadMapperDLL		LoadDLL;
@@ -48,36 +50,36 @@ struct	MapperDLL
 
 /******************************************************************************/
 
-static	void	MAPINT	SetCPUWriteHandler (int Page, FCPUWrite New)
+void	MAPINT	SetCPUWriteHandler (int Page, FCPUWrite New)
 {
 	CPU::WriteHandler[Page] = New;
 }
-static	void	MAPINT	SetCPUReadHandler (int Page, FCPURead New)
+void	MAPINT	SetCPUReadHandler (int Page, FCPURead New)
 {
 	CPU::ReadHandler[Page] = New;
 }
-static	FCPUWrite	MAPINT	GetCPUWriteHandler (int Page)
+FCPUWrite	MAPINT	GetCPUWriteHandler (int Page)
 {
 	return CPU::WriteHandler[Page];
 }
-static	FCPURead	MAPINT	GetCPUReadHandler (int Page)
+FCPURead	MAPINT	GetCPUReadHandler (int Page)
 {
 	return CPU::ReadHandler[Page];
 }
 
-static	void	MAPINT	SetPPUWriteHandler (int Page, FPPUWrite New)
+void	MAPINT	SetPPUWriteHandler (int Page, FPPUWrite New)
 {
 #ifndef	NSFPLAYER
 	PPU::WriteHandler[Page] = New;
 #endif	/* !NSFPLAYER */
 }
-static	void	MAPINT	SetPPUReadHandler (int Page, FPPURead New)
+void	MAPINT	SetPPUReadHandler (int Page, FPPURead New)
 {
 #ifndef	NSFPLAYER
 	PPU::ReadHandler[Page] = New;
 #endif	/* !NSFPLAYER */
 }
-static	FPPUWrite	MAPINT	GetPPUWriteHandler (int Page)
+FPPUWrite	MAPINT	GetPPUWriteHandler (int Page)
 {
 #ifndef	NSFPLAYER
 	return PPU::WriteHandler[Page];
@@ -85,7 +87,7 @@ static	FPPUWrite	MAPINT	GetPPUWriteHandler (int Page)
 	return NULL;
 #endif	/* !NSFPLAYER */
 }
-static	FPPURead	MAPINT	GetPPUReadHandler (int Page)
+FPPURead	MAPINT	GetPPUReadHandler (int Page)
 {
 #ifndef	NSFPLAYER
 	return PPU::ReadHandler[Page];
@@ -96,19 +98,19 @@ static	FPPURead	MAPINT	GetPPUReadHandler (int Page)
 
 /******************************************************************************/
 
-static	__inline void	MAPINT	SetPRG_ROM4 (int Bank, int Val)
+__inline void	MAPINT	SetPRG_ROM4 (int Bank, int Val)
 {
 	CPU::PRGPointer[Bank] = NES::PRG_ROM[Val & NES::PRGMask];
 	CPU::Readable[Bank] = TRUE;
 	CPU::Writable[Bank] = FALSE;
 }
-static	void	MAPINT	SetPRG_ROM8 (int Bank, int Val)
+void	MAPINT	SetPRG_ROM8 (int Bank, int Val)
 {
 	Val <<= 1;
 	SetPRG_ROM4(Bank+0, Val+0);
 	SetPRG_ROM4(Bank+1, Val+1);
 }
-static	void	MAPINT	SetPRG_ROM16 (int Bank, int Val)
+void	MAPINT	SetPRG_ROM16 (int Bank, int Val)
 {
 	Val <<= 2;
 	SetPRG_ROM4(Bank+0, Val+0);
@@ -116,7 +118,7 @@ static	void	MAPINT	SetPRG_ROM16 (int Bank, int Val)
 	SetPRG_ROM4(Bank+2, Val+2);
 	SetPRG_ROM4(Bank+3, Val+3);
 }
-static	void	MAPINT	SetPRG_ROM32 (int Bank, int Val)
+void	MAPINT	SetPRG_ROM32 (int Bank, int Val)
 {
 	Val <<= 3;
 	SetPRG_ROM4(Bank+0, Val+0);
@@ -128,7 +130,7 @@ static	void	MAPINT	SetPRG_ROM32 (int Bank, int Val)
 	SetPRG_ROM4(Bank+6, Val+6);
 	SetPRG_ROM4(Bank+7, Val+7);
 }
-static	int	MAPINT	GetPRG_ROM4 (int Bank)	// -1 if no ROM mapped
+int	MAPINT	GetPRG_ROM4 (int Bank)	// -1 if no ROM mapped
 {
 	int tpi = (int)((CPU::PRGPointer[Bank] - NES::PRG_ROM[0]) >> 12);
 	if ((tpi < 0) || (tpi > NES::PRGMask)) return -1;
@@ -137,19 +139,19 @@ static	int	MAPINT	GetPRG_ROM4 (int Bank)	// -1 if no ROM mapped
 
 /******************************************************************************/
 
-static	__inline void	MAPINT	SetPRG_RAM4 (int Bank, int Val)
+__inline void	MAPINT	SetPRG_RAM4 (int Bank, int Val)
 {
 	CPU::PRGPointer[Bank] = NES::PRG_RAM[Val & 0xF];
 	CPU::Readable[Bank] = TRUE;
 	CPU::Writable[Bank] = TRUE;
 }
-static	void	MAPINT	SetPRG_RAM8 (int Bank, int Val)
+void	MAPINT	SetPRG_RAM8 (int Bank, int Val)
 {
 	Val <<= 1;
 	SetPRG_RAM4(Bank+0, Val+0);
 	SetPRG_RAM4(Bank+1, Val+1);
 }
-static	void	MAPINT	SetPRG_RAM16 (int Bank, int Val)
+void	MAPINT	SetPRG_RAM16 (int Bank, int Val)
 {
 	Val <<= 2;
 	SetPRG_RAM4(Bank+0, Val+0);
@@ -157,7 +159,7 @@ static	void	MAPINT	SetPRG_RAM16 (int Bank, int Val)
 	SetPRG_RAM4(Bank+2, Val+2);
 	SetPRG_RAM4(Bank+3, Val+3);
 }
-static	void	MAPINT	SetPRG_RAM32 (int Bank, int Val)
+void	MAPINT	SetPRG_RAM32 (int Bank, int Val)
 {
 	Val <<= 3;
 	SetPRG_RAM4(Bank+0, Val+0);
@@ -169,7 +171,7 @@ static	void	MAPINT	SetPRG_RAM32 (int Bank, int Val)
 	SetPRG_RAM4(Bank+6, Val+6);
 	SetPRG_RAM4(Bank+7, Val+7);
 }
-static	int	MAPINT	GetPRG_RAM4 (int Bank)	// -1 if no RAM mapped
+int	MAPINT	GetPRG_RAM4 (int Bank)	// -1 if no RAM mapped
 {
 	int tpi = (int)((CPU::PRGPointer[Bank] - NES::PRG_RAM[0]) >> 12);
 	if ((tpi < 0) || (tpi > MAX_PRGRAM_MASK)) return -1;
@@ -178,17 +180,17 @@ static	int	MAPINT	GetPRG_RAM4 (int Bank)	// -1 if no RAM mapped
 
 /******************************************************************************/
 
-static	unsigned char *	MAPINT	GetPRG_Ptr4 (int Bank)
+unsigned char *	MAPINT	GetPRG_Ptr4 (int Bank)
 {
 	return CPU::PRGPointer[Bank];
 }
-static	void	MAPINT	SetPRG_Ptr4 (int Bank, unsigned char *Data, BOOL Writable)
+void	MAPINT	SetPRG_Ptr4 (int Bank, unsigned char *Data, BOOL Writable)
 {
 	CPU::PRGPointer[Bank] = Data;
 	CPU::Readable[Bank] = TRUE;
 	CPU::Writable[Bank] = Writable;
 }
-static	void	MAPINT	SetPRG_OB4 (int Bank)	// Open bus
+void	MAPINT	SetPRG_OB4 (int Bank)	// Open bus
 {
 	CPU::Readable[Bank] = FALSE;
 	CPU::Writable[Bank] = FALSE;
@@ -196,7 +198,7 @@ static	void	MAPINT	SetPRG_OB4 (int Bank)	// Open bus
 
 /******************************************************************************/
 
-static	__inline void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
+__inline void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
 	if (!NES::CHRMask)
@@ -210,13 +212,13 @@ static	__inline void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
 #endif	/* ENABLE_DEBUGGER */
 #endif	/* !NSFPLAYER */
 }
-static	void	MAPINT	SetCHR_ROM2 (int Bank, int Val)
+void	MAPINT	SetCHR_ROM2 (int Bank, int Val)
 {
 	Val <<= 1;
 	SetCHR_ROM1(Bank+0, Val+0);
 	SetCHR_ROM1(Bank+1, Val+1);
 }
-static	void	MAPINT	SetCHR_ROM4 (int Bank, int Val)
+void	MAPINT	SetCHR_ROM4 (int Bank, int Val)
 {
 	Val <<= 2;
 	SetCHR_ROM1(Bank+0, Val+0);
@@ -224,7 +226,7 @@ static	void	MAPINT	SetCHR_ROM4 (int Bank, int Val)
 	SetCHR_ROM1(Bank+2, Val+2);
 	SetCHR_ROM1(Bank+3, Val+3);
 }
-static	void	MAPINT	SetCHR_ROM8 (int Bank, int Val)
+void	MAPINT	SetCHR_ROM8 (int Bank, int Val)
 {
 	Val <<= 3;
 	SetCHR_ROM1(Bank+0, Val+0);
@@ -236,7 +238,7 @@ static	void	MAPINT	SetCHR_ROM8 (int Bank, int Val)
 	SetCHR_ROM1(Bank+6, Val+6);
 	SetCHR_ROM1(Bank+7, Val+7);
 }
-static	int	MAPINT	GetCHR_ROM1 (int Bank)	// -1 if no ROM mapped
+int	MAPINT	GetCHR_ROM1 (int Bank)	// -1 if no ROM mapped
 {
 #ifndef	NSFPLAYER
 	int tpi = (int)((PPU::CHRPointer[Bank] - NES::CHR_ROM[0]) >> 10);
@@ -249,7 +251,7 @@ static	int	MAPINT	GetCHR_ROM1 (int Bank)	// -1 if no ROM mapped
 
 /******************************************************************************/
 
-static	__inline void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
+__inline void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
 	PPU::CHRPointer[Bank] = NES::CHR_RAM[Val & 0x1F];
@@ -261,13 +263,13 @@ static	__inline void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
 #endif	/* ENABLE_DEBUGGER */
 #endif	/* !NSFPLAYER */
 }
-static	void	MAPINT	SetCHR_RAM2 (int Bank, int Val)
+void	MAPINT	SetCHR_RAM2 (int Bank, int Val)
 {
 	Val <<= 1;
 	SetCHR_RAM1(Bank+0, Val+0);
 	SetCHR_RAM1(Bank+1, Val+1);
 }
-static	void	MAPINT	SetCHR_RAM4 (int Bank, int Val)
+void	MAPINT	SetCHR_RAM4 (int Bank, int Val)
 {
 	Val <<= 2;
 	SetCHR_RAM1(Bank+0, Val+0);
@@ -275,7 +277,7 @@ static	void	MAPINT	SetCHR_RAM4 (int Bank, int Val)
 	SetCHR_RAM1(Bank+2, Val+2);
 	SetCHR_RAM1(Bank+3, Val+3);
 }
-static	void	MAPINT	SetCHR_RAM8 (int Bank, int Val)
+void	MAPINT	SetCHR_RAM8 (int Bank, int Val)
 {
 	Val <<= 3;
 	SetCHR_RAM1(Bank+0, Val+0);
@@ -287,7 +289,7 @@ static	void	MAPINT	SetCHR_RAM8 (int Bank, int Val)
 	SetCHR_RAM1(Bank+6, Val+6);
 	SetCHR_RAM1(Bank+7, Val+7);
 }
-static	int	MAPINT	GetCHR_RAM1 (int Bank)	// -1 if no ROM mapped
+int	MAPINT	GetCHR_RAM1 (int Bank)	// -1 if no ROM mapped
 {
 #ifndef	NSFPLAYER
 	int tpi = (int)((PPU::CHRPointer[Bank] - NES::CHR_RAM[0]) >> 10);
@@ -300,7 +302,7 @@ static	int	MAPINT	GetCHR_RAM1 (int Bank)	// -1 if no ROM mapped
 
 /******************************************************************************/
 
-static	__inline void	MAPINT	SetCHR_NT1 (int Bank, int Val)
+__inline void	MAPINT	SetCHR_NT1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
 	PPU::CHRPointer[Bank] = PPU::VRAM[Val & 3];
@@ -312,7 +314,7 @@ static	__inline void	MAPINT	SetCHR_NT1 (int Bank, int Val)
 #endif	/* ENABLE_DEBUGGER */
 #endif	/* !NSFPLAYER */
 }
-static	int	MAPINT	GetCHR_NT1 (int Bank)	// -1 if no ROM mapped
+int	MAPINT	GetCHR_NT1 (int Bank)	// -1 if no ROM mapped
 {
 #ifndef	NSFPLAYER
 	int tpi = (int)((PPU::CHRPointer[Bank] - PPU::VRAM[0]) >> 10);
@@ -325,7 +327,7 @@ static	int	MAPINT	GetCHR_NT1 (int Bank)	// -1 if no ROM mapped
 
 /******************************************************************************/
 
-static	unsigned char *	MAPINT	GetCHR_Ptr1 (int Bank)
+unsigned char *	MAPINT	GetCHR_Ptr1 (int Bank)
 {
 #ifndef	NSFPLAYER
 	return PPU::CHRPointer[Bank];
@@ -334,7 +336,7 @@ static	unsigned char *	MAPINT	GetCHR_Ptr1 (int Bank)
 #endif	/* !NSFPLAYER */
 }
 
-static	void	MAPINT	SetCHR_Ptr1 (int Bank, unsigned char *Data, BOOL Writable)
+void	MAPINT	SetCHR_Ptr1 (int Bank, unsigned char *Data, BOOL Writable)
 {
 #ifndef	NSFPLAYER
 	PPU::CHRPointer[Bank] = Data;
@@ -347,7 +349,7 @@ static	void	MAPINT	SetCHR_Ptr1 (int Bank, unsigned char *Data, BOOL Writable)
 #endif	/* !NSFPLAYER */
 }
 
-static	void	MAPINT	SetCHR_OB1 (int Bank)
+void	MAPINT	SetCHR_OB1 (int Bank)
 {
 #ifndef	NSFPLAYER
 	PPU::CHRPointer[Bank] = PPU::OpenBus;
@@ -362,7 +364,7 @@ static	void	MAPINT	SetCHR_OB1 (int Bank)
 
 /******************************************************************************/
 
-static	void	MAPINT	Mirror_H (void)
+void	MAPINT	Mirror_H (void)
 {
 #ifndef	NSFPLAYER
 	SetCHR_NT1(0x8, 0);	SetCHR_NT1(0xC, 0);
@@ -371,7 +373,7 @@ static	void	MAPINT	Mirror_H (void)
 	SetCHR_NT1(0xB, 1);	SetCHR_NT1(0xF, 1);
 #endif	/* !NSFPLAYER */
 }
-static	void	MAPINT	Mirror_V (void)
+void	MAPINT	Mirror_V (void)
 {
 #ifndef	NSFPLAYER
 	SetCHR_NT1(0x8, 0);	SetCHR_NT1(0xC, 0);
@@ -380,7 +382,7 @@ static	void	MAPINT	Mirror_V (void)
 	SetCHR_NT1(0xB, 1);	SetCHR_NT1(0xF, 1);
 #endif	/* !NSFPLAYER */
 }
-static	void	MAPINT	Mirror_4 (void)
+void	MAPINT	Mirror_4 (void)
 {
 #ifndef	NSFPLAYER
 	SetCHR_NT1(0x8, 0);	SetCHR_NT1(0xC, 0);
@@ -389,7 +391,7 @@ static	void	MAPINT	Mirror_4 (void)
 	SetCHR_NT1(0xB, 3);	SetCHR_NT1(0xF, 3);
 #endif	/* !NSFPLAYER */
 }
-static	void	MAPINT	Mirror_S0 (void)
+void	MAPINT	Mirror_S0 (void)
 {
 #ifndef	NSFPLAYER
 	SetCHR_NT1(0x8, 0);	SetCHR_NT1(0xC, 0);
@@ -398,7 +400,7 @@ static	void	MAPINT	Mirror_S0 (void)
 	SetCHR_NT1(0xB, 0);	SetCHR_NT1(0xF, 0);
 #endif	/* !NSFPLAYER */
 }
-static	void	MAPINT	Mirror_S1 (void)
+void	MAPINT	Mirror_S1 (void)
 {
 #ifndef	NSFPLAYER
 	SetCHR_NT1(0x8, 1);	SetCHR_NT1(0xC, 1);
@@ -407,7 +409,7 @@ static	void	MAPINT	Mirror_S1 (void)
 	SetCHR_NT1(0xB, 1);	SetCHR_NT1(0xF, 1);
 #endif	/* !NSFPLAYER */
 }
-static	void	MAPINT	Mirror_Custom (int M1, int M2, int M3, int M4)
+void	MAPINT	Mirror_Custom (int M1, int M2, int M3, int M4)
 {
 #ifndef	NSFPLAYER
 	SetCHR_NT1(0x8, M1);	SetCHR_NT1(0xC, M1);
@@ -419,7 +421,7 @@ static	void	MAPINT	Mirror_Custom (int M1, int M2, int M3, int M4)
 
 /******************************************************************************/
 
-static	void	MAPINT	Set_SRAMSize (int Size)	// Sets the size of the SRAM (in bytes) and clears PRG_RAM
+void	MAPINT	Set_SRAMSize (int Size)	// Sets the size of the SRAM (in bytes) and clears PRG_RAM
 {
 #ifndef	NSFPLAYER
 	NES::SRAM_Size = Size;
@@ -429,17 +431,17 @@ static	void	MAPINT	Set_SRAMSize (int Size)	// Sets the size of the SRAM (in byte
 
 /******************************************************************************/
 
-static	void	MAPINT	SetIRQ (int IRQstate)
+void	MAPINT	SetIRQ (int IRQstate)
 {
 	if (IRQstate)
 		CPU::WantIRQ &= ~IRQ_EXTERNAL;
 	else	CPU::WantIRQ |= IRQ_EXTERNAL;
 }
 
-static	void	MAPINT	DbgOut (TCHAR *text, ...)
+void	MAPINT	DbgOut (TCHAR *text, ...)
 {
 #ifndef	NSFPLAYER
-	static TCHAR txt[1024];
+	TCHAR txt[1024];
 	va_list marker;
 	va_start(marker, text);
 	_vstprintf(txt, text, marker);
@@ -448,10 +450,10 @@ static	void	MAPINT	DbgOut (TCHAR *text, ...)
 #endif	/* !NSFPLAYER */
 }
 
-static	void	MAPINT	StatusOut (TCHAR *text, ...)
+void	MAPINT	StatusOut (TCHAR *text, ...)
 {
 #ifndef	NSFPLAYER
-	static TCHAR txt[1024];
+	TCHAR txt[1024];
 	va_list marker;
 	va_start(marker, text);
 	_vstprintf(txt, text, marker);
@@ -462,8 +464,6 @@ static	void	MAPINT	StatusOut (TCHAR *text, ...)
 
 /******************************************************************************/
 
-namespace MapperInterface
-{
 const TCHAR *CompatLevel[COMPAT_NUMTYPES] = {_T("Unsupported"), _T("Partially supported"), _T("Mostly supported"), _T("Fully supported!")};
 
 void	Init (void)

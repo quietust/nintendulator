@@ -100,7 +100,7 @@ void	ExpPort_Tablet::Write (unsigned char Val)
 	}
 	State->Strobe = Val & 3;
 }
-static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	ExpPort_Tablet_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
@@ -115,7 +115,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	ExpPort_Tablet::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_TABLET, hWnd, ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_TABLET, hWnd, ExpPort_Tablet_ConfigProc, (LPARAM)this);
 }
 ExpPort_Tablet::~ExpPort_Tablet (void)
 {

@@ -114,7 +114,7 @@ void	StdPort_VSZapper::Write (unsigned char Val)
 			State->Bits |= 0x40;
 	}
 }
-static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	StdPort_VSZapper_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
@@ -129,7 +129,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	StdPort_VSZapper::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_VSZAPPER, hWnd, ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_VSZAPPER, hWnd, StdPort_VSZapper_ConfigProc, (LPARAM)this);
 }
 StdPort_VSZapper::~StdPort_VSZapper (void)
 {

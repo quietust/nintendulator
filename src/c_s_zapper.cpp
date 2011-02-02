@@ -92,7 +92,7 @@ unsigned char	StdPort_Zapper::Read (void)
 void	StdPort_Zapper::Write (unsigned char Val)
 {
 }
-static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	StdPort_Zapper_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
@@ -107,7 +107,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	StdPort_Zapper::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_ZAPPER, hWnd, ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_ZAPPER, hWnd, StdPort_Zapper_ConfigProc, (LPARAM)this);
 }
 StdPort_Zapper::~StdPort_Zapper (void)
 {

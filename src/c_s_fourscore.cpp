@@ -139,7 +139,7 @@ void	StdPort_FourScore2::Write (unsigned char Val)
 	FSPort4->Write(Val);
 }
 
-static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	StdPort_FourScore_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	switch (uMsg)
@@ -235,11 +235,11 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	StdPort_FourScore::Config (HWND hWnd)
 {
-	DialogBox(hInst, (LPCTSTR)IDD_STDPORT_FOURSCORE, hWnd, ConfigProc);
+	DialogBox(hInst, (LPCTSTR)IDD_STDPORT_FOURSCORE, hWnd, StdPort_FourScore_ConfigProc);
 }
 void	StdPort_FourScore2::Config (HWND hWnd)
 {
-	DialogBox(hInst, (LPCTSTR)IDD_STDPORT_FOURSCORE, hWnd, ConfigProc);
+	DialogBox(hInst, (LPCTSTR)IDD_STDPORT_FOURSCORE, hWnd, StdPort_FourScore_ConfigProc);
 }
 StdPort_FourScore::~StdPort_FourScore (void)
 {

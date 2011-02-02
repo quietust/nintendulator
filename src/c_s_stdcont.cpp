@@ -75,7 +75,7 @@ void	StdPort_StdController::Write (unsigned char Val)
 		State->BitPtr = 0;
 	}
 }
-static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	StdPort_StdController_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[8] = {IDC_CONT_D0,IDC_CONT_D1,IDC_CONT_D2,IDC_CONT_D3,IDC_CONT_D4,IDC_CONT_D5,IDC_CONT_D6,IDC_CONT_D7};
 	int dlgButtons[8] = {IDC_CONT_K0,IDC_CONT_K1,IDC_CONT_K2,IDC_CONT_K3,IDC_CONT_K4,IDC_CONT_K5,IDC_CONT_K6,IDC_CONT_K7};
@@ -90,7 +90,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	StdPort_StdController::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_STDCONTROLLER, hWnd, ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_STDCONTROLLER, hWnd, StdPort_StdController_ConfigProc, (LPARAM)this);
 }
 StdPort_StdController::~StdPort_StdController (void)
 {

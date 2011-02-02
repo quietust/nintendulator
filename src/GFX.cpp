@@ -332,10 +332,10 @@ void	Release (void)
 #endif
 }
 
+int TitleDelay = 0;
 void	DrawScreen (void)
 {
 	LARGE_INTEGER TmpClockVal;
-	static int TitleDelay = 0;
 	if (AVI::handle)
 		AVI::AddVideo();
 	if (SlowDown)
@@ -1264,6 +1264,9 @@ void	UpdatePalette (HWND hDlg, int pal)
 	RedrawWindow(hDlg, NULL, NULL, RDW_INVALIDATE);
 }
 
+BOOL inUpdate = FALSE;
+BOOL ispal;
+PALETTE pal;
 INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const int paltable[PALETTE_MAX] = {IDC_PAL_NTSC,IDC_PAL_PAL,IDC_PAL_PC10,IDC_PAL_VS1,IDC_PAL_VS2,IDC_PAL_VS3,IDC_PAL_VS4,IDC_PAL_EXT};
@@ -1273,16 +1276,13 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		IDC_PAL_20,IDC_PAL_21,IDC_PAL_22,IDC_PAL_23,IDC_PAL_24,IDC_PAL_25,IDC_PAL_26,IDC_PAL_27,IDC_PAL_28,IDC_PAL_29,IDC_PAL_2A,IDC_PAL_2B,IDC_PAL_2C,IDC_PAL_2D,IDC_PAL_2E,IDC_PAL_2F,
 		IDC_PAL_30,IDC_PAL_31,IDC_PAL_32,IDC_PAL_33,IDC_PAL_34,IDC_PAL_35,IDC_PAL_36,IDC_PAL_37,IDC_PAL_38,IDC_PAL_39,IDC_PAL_3A,IDC_PAL_3B,IDC_PAL_3C,IDC_PAL_3D,IDC_PAL_3E,IDC_PAL_3F
 	};
-	static BOOL inUpdate = FALSE;
 
 	int wmId, wmEvent;
 	OPENFILENAME ofn;
 	PAINTSTRUCT ps;
 	HDC hdc;
 
-	static BOOL ispal;
-	static PALETTE pal;
-	static int i;
+	int i;
 
 	switch (uMsg)
 	{

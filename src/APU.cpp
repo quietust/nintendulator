@@ -1284,10 +1284,10 @@ int	Load (FILE *in)
 short	sample_pos = 0;
 BOOL	sample_ok = FALSE;
 #endif	/* !NSFPLAYER */
+int sampcycles = 0, samppos = 0;
 
 void	Run (void)
 {
-	static int sampcycles = 0, samppos = 0;
 #ifndef	NSFPLAYER
 	int NewBufPos = FREQ * ++Cycles / MHz;
 	if (NewBufPos >= buflen)

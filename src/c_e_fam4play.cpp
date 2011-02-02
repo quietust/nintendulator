@@ -109,7 +109,7 @@ void	ExpPort_Fami4Play::Write (unsigned char Val)
 		State->BitPtr2 = 0;
 	}
 }
-static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	ExpPort_Fami4Play_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[16] = {IDC_CONT_D0,IDC_CONT_D1,IDC_CONT_D2,IDC_CONT_D3,IDC_CONT_D4,IDC_CONT_D5,IDC_CONT_D6,IDC_CONT_D7,IDC_CONT_D8,IDC_CONT_D9,IDC_CONT_D10,IDC_CONT_D11,IDC_CONT_D12,IDC_CONT_D13,IDC_CONT_D14,IDC_CONT_D15};
 	int dlgButtons[16] = {IDC_CONT_K0,IDC_CONT_K1,IDC_CONT_K2,IDC_CONT_K3,IDC_CONT_K4,IDC_CONT_K5,IDC_CONT_K6,IDC_CONT_K7,IDC_CONT_K8,IDC_CONT_K9,IDC_CONT_K10,IDC_CONT_K11,IDC_CONT_K12,IDC_CONT_K13,IDC_CONT_K14,IDC_CONT_K15};
@@ -124,7 +124,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	ExpPort_Fami4Play::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_FAMI4PLAY, hWnd, ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_FAMI4PLAY, hWnd, ExpPort_Fami4Play_ConfigProc, (LPARAM)this);
 }
 ExpPort_Fami4Play::~ExpPort_Fami4Play (void)
 {

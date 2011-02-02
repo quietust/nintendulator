@@ -257,9 +257,9 @@ void	GetHandlers (void)
 
 #ifdef	ACCURATE_SPRITES
 int	SpritePtr;
-__inline void	ProcessSprites (void)
+int sprpos, sprnum, spridx, sprsub, sprtmp, sprstate, sprtotal, sprzero;
+void	ProcessSprites (void)
 {
-	static int sprpos, sprnum, spridx, sprsub, sprtmp, sprstate, sprtotal, sprzero;
 	if (Clockticks < 64)
 		Sprite[SpritePtr = 0x100 | (Clockticks >> 1)] = 0xFF;
 	else if (Clockticks < 256)

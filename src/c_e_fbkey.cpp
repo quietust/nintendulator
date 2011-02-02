@@ -92,8 +92,8 @@ void	ExpPort_FamilyBasicKeyboard::Write (unsigned char Val)
 		// tape, not yet implemented
 	}
 }
-static	HWND	ConfigWindow = NULL;
-static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+HWND	ExpPort_FamilyBasicKeyboard_ConfigWindow = NULL;
+INT_PTR	CALLBACK	ExpPort_FamilyBasicKeyboard_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId = LOWORD(wParam);
 	if (uMsg != WM_COMMAND)
@@ -101,7 +101,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	if (wmId == IDOK)
 	{
 		EndDialog(hDlg, 1);
-		ConfigWindow = NULL;
+		ExpPort_FamilyBasicKeyboard_ConfigWindow = NULL;
 		return TRUE;
 	}
 	return FALSE;
@@ -109,11 +109,11 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 
 void	ExpPort_FamilyBasicKeyboard::Config (HWND hWnd)
 {
-	if (!ConfigWindow)
+	if (!ExpPort_FamilyBasicKeyboard_ConfigWindow)
 	{
 		// use hMainWnd instead of hWnd, so it stays open after closing Controller Config
-		ConfigWindow = CreateDialog(hInst, (LPCTSTR)IDD_EXPPORT_FBKEY, hMainWnd, ConfigProc);
-		SetWindowPos(ConfigWindow, hMainWnd, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+		ExpPort_FamilyBasicKeyboard_ConfigWindow = CreateDialog(hInst, (LPCTSTR)IDD_EXPPORT_FBKEY, hMainWnd, ExpPort_FamilyBasicKeyboard_ConfigProc);
+		SetWindowPos(ExpPort_FamilyBasicKeyboard_ConfigWindow, hMainWnd, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
 	}
 }
 
@@ -121,10 +121,10 @@ ExpPort_FamilyBasicKeyboard::~ExpPort_FamilyBasicKeyboard (void)
 {
 	delete Data;
 	delete[] MovData;
-	if (ConfigWindow)
+	if (ExpPort_FamilyBasicKeyboard_ConfigWindow)
 	{
-		DestroyWindow(ConfigWindow);
-		ConfigWindow = NULL;
+		DestroyWindow(ExpPort_FamilyBasicKeyboard_ConfigWindow);
+		ExpPort_FamilyBasicKeyboard_ConfigWindow = NULL;
 	}
 }
 ExpPort_FamilyBasicKeyboard::ExpPort_FamilyBasicKeyboard (int *buttons)

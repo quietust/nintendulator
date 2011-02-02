@@ -81,7 +81,7 @@ void	ExpPort_ArkanoidPaddle::Write (unsigned char Val)
 	}
 	State->Strobe = Val & 1;
 }
-static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	CALLBACK	ExpPort_ArkanoidPaddle_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int dlgLists[1] = {IDC_CONT_D0};
 	int dlgButtons[1] = {IDC_CONT_K0};
@@ -96,7 +96,7 @@ static	INT_PTR	CALLBACK	ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	ExpPort_ArkanoidPaddle::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE, hWnd, ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE, hWnd, ExpPort_ArkanoidPaddle_ConfigProc, (LPARAM)this);
 }
 ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 {
