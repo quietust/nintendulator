@@ -368,10 +368,10 @@ Supporting Features
 - 4 player support, and beyond
 - Ultra-accurate pixel-based rendering
 - Emulates all internal sound channels, as well as most of
-     the external Japanese ones (FDS, MMC5, VRC6, VRC7, FME-7,
-     Namco 106)
+     the external Japanese ones (FDS, MMC5, VRC6, VRC7, Sunsoft,
+     Namco)
 - Support for all DirectInput controllers
-- Built-in REAL Game Genie support
+- Built-in Game Genie support
 - External mapper plugins
 
 ------------
@@ -403,6 +403,9 @@ File:
    Causes the emulator to immediately start emulation after a ROM is
      loaded. Useful if you don't want to have to press F2 every time
      you load a game.
+- Browse Save Files
+   Opens an Explorer window to the directory where your saved games and
+     debug dump files are located.
 - Exit (Alt+F4)
    Closes the program.
 
@@ -412,7 +415,7 @@ CPU:
      running unless you have Auto-Run enabled.
 - Step (Shift+F2)
    Runs the CPU for exactly one instruction and then stops.
-   Only useful when the Debugger is open.
+   If the Debugger is not open, this will behave the same as 'Run'.
 - Stop (F3)
    Temporarily stops emulation. Use 'Run' to resume.
 - Soft Reset (F4)
@@ -433,6 +436,11 @@ CPU:
      screen, then enter the codes as you would on a real Game Genie.
      Press Ctrl+G while the game is running to enable/disable the
      currently entered codes.
+- Log Invalid Opcodes
+   Enables the logging of supported "undocumented opcodes" to the Debug
+     Information window. If you are running a program which makes heavy
+     use of such instructions, turning this option off can provide a
+     significant increase in emulation speed.
 - Frame Step
    Allows you to pause a game and advance it one frame at a time while
      updating your controls. Useful for recording movies.
@@ -491,7 +499,9 @@ Input Menu:
      configuring any controller button to use a POV hat will bind it as
      a horizontal or vertical axis with a 90 degree range of motion;
      if unchecked, it will instead be configured as one of the hat's 8
-     valid directions.
+     valid directions. This is not an actual configuration option, but
+     a toggle to alter the way in which subsequent controllers are
+     themselves configured.
 
 Debug:
 - Disassembly (Ctrl+F1)
@@ -504,7 +514,7 @@ Debug:
    From this window, the current nametables, sprites, pattern tables,
      and palette can be viewed and examined in detail.
 - Status Window
-   Opens the Debug Information window, where the emulator can display
+   Toggles the Debug Information window, where the emulator can display
      various status messages without having to pop up a dialog box.
 
 Game:
