@@ -53,6 +53,7 @@ LONGLONG aFPSnum;
 
 BOOL SlowDown;
 int SlowRate;
+int FullscreenBorder;
 
 PALETTE PaletteNTSC, PalettePAL;
 int NTSChue, NTSCsat, PALsat;
@@ -156,21 +157,50 @@ void	Create (void)
 			ShowWindow(hDebug, SW_MINIMIZE);
 		SetWindowLongPtr(hMainWnd, GWL_STYLE, WS_POPUP);
 		SetMenu(hMainWnd, NULL);
-		ShowWindow(hMainWnd, SW_MAXIMIZE);
-		if (FAILED(DirectDraw->SetCooperativeLevel( hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
+		if (FAILED(DirectDraw->SetCooperativeLevel(hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
 		{
 			Release();
 			MessageBox(hMainWnd, _T("Failed to set cooperative level!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
-		if (FAILED(DirectDraw->SetDisplayMode(640, 480, 32, 0, 0)))
+		// Examine the current screen resolution and try to figure out the current aspect ratio
+		// We'll support 4:3, 16:10, and 16:9
+		double ratio = (double)GetSystemMetrics(SM_CXSCREEN) / (double)GetSystemMetrics(SM_CYSCREEN);
+		// Not all of the widescreen resolutions will work
+		// The code below will try each resolution until it finds one that works
+		const int widths[] = {
+			640,		// 4:3 - last offset 0
+			720, 768,	// 16:10 - last offset 2
+			848, 856, 864	// 16:9 - last offset 5
+		};
+		int i;
+		if (ratio < 1.4)
+			i = 0;
+		else if (ratio < 1.7)
+			i = 2;
+		else	i = 5;
+		while (1)
 		{
-			Release();
-			MessageBox(hMainWnd, _T("Failed to set display mode!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-			return;
+			FullscreenBorder = (widths[i] - 512) / 2;
+			if (FAILED(DirectDraw->SetDisplayMode(widths[i], 480, 32, 0, 0)))
+			{
+				if (i == 0)
+				{
+					// not even 640x480 worked!
+					Release();
+					MessageBox(hMainWnd, _T("Failed to set display mode! Reverting to Windowed mode..."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+					Fullscreen = FALSE;
+					// drop to windowed
+					Create();
+					return;
+				}
+				else	i--;
+			}
+			else	break;
 		}
+		ShowWindow(hMainWnd, SW_MAXIMIZE);
 	}
-	else
+	else 
 	{
 		if (FAILED(DirectDraw->SetCooperativeLevel(hMainWnd, DDSCL_NORMAL)))
 		{
@@ -412,7 +442,7 @@ void	Draw2x (void)
 			dst = (unsigned long *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			if (Fullscreen)
 			{
-				for (x = 0; x < 64; x++)
+				for (x = 0; x < FullscreenBorder; x++)
 					*dst++ = 0x000000;
 			}
 			if (Scanlines && (y & 1))
@@ -435,7 +465,7 @@ void	Draw2x (void)
 			}
 			if (Fullscreen)
 			{
-				for (x = 0; x < 64; x++)
+				for (x = 0; x < FullscreenBorder; x++)
 					*dst++ = 0x000000;
 			}
 			if (!(y & 1))
@@ -450,7 +480,7 @@ void	Draw2x (void)
 			dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			if (Fullscreen)
 			{
-				for (x = 0; x < 64; x++)
+				for (x = 0; x < FullscreenBorder; x++)
 					*dst++ = 0x0000;
 			}
 			if (Scanlines && (y & 1))
@@ -473,7 +503,7 @@ void	Draw2x (void)
 			}
 			if (Fullscreen)
 			{
-				for (x = 0; x < 64; x++)
+				for (x = 0; x < FullscreenBorder; x++)
 					*dst++ = 0x0000;
 			}
 			if (!(y & 1))
@@ -488,7 +518,7 @@ void	Draw2x (void)
 			dst = (unsigned short *)((unsigned char *)SurfDesc.lpSurface + y*Pitch);
 			if (Fullscreen)
 			{
-				for (x = 0; x < 64; x++)
+				for (x = 0; x < FullscreenBorder; x++)
 					*dst++ = 0x0000;
 			}
 			if (Scanlines && (y & 1))
@@ -511,7 +541,7 @@ void	Draw2x (void)
 			}
 			if (Fullscreen)
 			{
-				for (x = 0; x < 64; x++)
+				for (x = 0; x < FullscreenBorder; x++)
 					*dst++ = 0x0000;
 			}
 			if (!(y & 1))
@@ -598,9 +628,9 @@ void	GetCursorPos (POINT *pos)
 	::GetCursorPos(pos);
 	if (Fullscreen)
 	{
+		pos->x -= FullscreenBorder;
 		pos->x /= 2;
 		pos->y /= 2;
-		pos->x -= 32;
 	}
 	else
 	{
@@ -622,7 +652,13 @@ void	SetCursorPos (int x, int y)
 	POINT pos;
 	pos.x = x;
 	pos.y = y;
-	if (!Fullscreen)
+	if (Fullscreen)
+	{
+		pos.x *= 2;
+		pos.y *= 2;
+		pos.x += FullscreenBorder;
+	}
+	else
 	{
 		RECT rect;
 		GetClientRect(hMainWnd, &rect);
@@ -630,7 +666,6 @@ void	SetCursorPos (int x, int y)
 		pos.y = pos.y * (rect.bottom - rect.top) / 240;
 		ClientToScreen(hMainWnd, &pos);
 	}
-	else	pos.x += 32;
 	::SetCursorPos(pos.x, pos.y);
 }
 
