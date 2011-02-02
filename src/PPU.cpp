@@ -542,7 +542,7 @@ int	Load (FILE *in)
 	IsRendering = OnScreen = FALSE;
 	ColorEmphasis = (Reg2001 & 0xE0) << 1;
 	GrayScale = (Reg2001 & 0x01) ? 0x30 : 0x3F;
-	NES::SetCPUMode(IsPAL);
+	NES::SetRegion(IsPAL ? NES::REGION_PAL : NES::REGION_NTSC);
 	return clen;
 }
 

@@ -37,6 +37,7 @@ BOOL SoundEnabled;
 BOOL AutoRun;
 BOOL FrameStep, GotStep;
 BOOL HasMenu;
+Region CurRegion = REGION_NONE;
 
 unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
 unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
@@ -456,7 +457,7 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	else	GFX::LoadPalette(PPU::IsPAL ? GFX::PalettePAL : GFX::PaletteNTSC);
 
 	if ((RI.INES_Version == 2) && !(RI.INES2_TVMode & 0x02))
-		SetCPUMode(RI.INES2_TVMode & 0x01);
+		SetRegion((RI.INES2_TVMode & 0x01) ? REGION_PAL : REGION_NTSC);
 	return NULL;
 }
 
@@ -628,8 +629,10 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 		return err;
 	}
 
-	if ((RI.UNIF_NTSCPAL == 0) || (RI.UNIF_NTSCPAL == 1))
-		SetCPUMode(RI.UNIF_NTSCPAL);
+	if (RI.UNIF_NTSCPAL == 0)
+		SetRegion(REGION_NTSC);
+	if (RI.UNIF_NTSCPAL == 1)
+		SetRegion(REGION_PAL);
 
 	EI.DbgOut(_T("UNIF file loaded: %hs (%s) - %s"), RI.UNIF_BoardName, MI->Description, MapperInterface::CompatLevel[MI->Compatibility]);
 	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"), PRGsize >> 10, CHRsize >> 10);
@@ -744,10 +747,16 @@ const TCHAR *	OpenFileNSF (FILE *in)
 	return NULL;
 }
 
-void	SetCPUMode (int NewMode)
+void	SetRegion (Region NewRegion)
 {
-	if (NewMode == 0)
+	if ((CurRegion == NewRegion) && (NewRegion != REGION_NONE))
+		return;
+	CurRegion = NewRegion;
+	switch (CurRegion)
 	{
+	default:
+		EI.DbgOut(_T("Invalid region selected!"));
+	case REGION_NTSC:
 		PPU::IsPAL = FALSE;
 		CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_PAL, ID_PPU_MODE_NTSC, MF_BYCOMMAND);
 		PPU::SLEndFrame = 262;
@@ -757,9 +766,8 @@ void	SetCPUMode (int NewMode)
 		GFX::LoadPalette(GFX::PaletteNTSC);
 		APU::SetFPS(60);
 		EI.DbgOut(_T("Emulation switched to NTSC"));
-	}
-	else
-	{
+		break;
+	case REGION_PAL:
 		PPU::IsPAL = TRUE;
 		CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_PAL, ID_PPU_MODE_PAL, MF_BYCOMMAND);
 		PPU::SLEndFrame = 312;
@@ -767,6 +775,7 @@ void	SetCPUMode (int NewMode)
 		GFX::LoadPalette(GFX::PalettePAL);
 		APU::SetFPS(50);
 		EI.DbgOut(_T("Emulation switched to PAL"));
+		break;
 	}
 }
 
@@ -1040,6 +1049,7 @@ void	LoadSettings (void)
 	unsigned long Size;
 	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
 	int PosX, PosY;
+	Region MyRegion = REGION_NTSC;
 
 	// set default window position to just right of the debug status window
 	RECT dbg;
@@ -1073,7 +1083,6 @@ void	LoadSettings (void)
 	RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("SoundEnabled"), 0, NULL, (LPBYTE)&SoundEnabled                , &Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("aFSkip")      , 0, NULL, (LPBYTE)&GFX::aFSkip                 , &Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("PPUMode")     , 0, NULL, (LPBYTE)&PPU::IsPAL                  , &Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("AutoRun")     , 0, NULL, (LPBYTE)&AutoRun                     , &Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("Scanlines")   , 0, NULL, (LPBYTE)&GFX::Scanlines              , &Size);
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("UDLR")        , 0, NULL, (LPBYTE)&Controllers::EnableOpposites, &Size);
@@ -1089,6 +1098,7 @@ void	LoadSettings (void)
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSChue")    , 0, NULL, (LPBYTE)&GFX::NTSChue    , &Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSCsat")    , 0, NULL, (LPBYTE)&GFX::NTSCsat    , &Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PALsat")     , 0, NULL, (LPBYTE)&GFX::PALsat     , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Region")     , 0, NULL, (LPBYTE)&MyRegion        , &Size);
 
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPaletteNTSC"), 0,NULL, (LPBYTE)&GFX::CustPaletteNTSC, &Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPalettePAL") , 0,NULL, (LPBYTE)&GFX::CustPalettePAL , &Size);
@@ -1158,9 +1168,7 @@ void	LoadSettings (void)
 	if (GFX::Scanlines)
 		CheckMenuItem(hMenu, ID_PPU_SCANLINES, MF_CHECKED);
 
-	if (PPU::IsPAL)
-		SetCPUMode(1);
-	else	SetCPUMode(0);
+	SetRegion(MyRegion);
 
 	SetWindowPos(hMainWnd, HWND_TOP, PosX, PosY, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
@@ -1182,7 +1190,6 @@ void	SaveSettings (void)
 		RegCreateKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, _T("NintendulatorClass"), REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &SettingsBase, NULL);
 	RegSetValueEx(SettingsBase, _T("SoundEnabled"), 0, REG_DWORD, (LPBYTE)&SoundEnabled                , sizeof(BOOL));
 	RegSetValueEx(SettingsBase, _T("aFSkip")      , 0, REG_DWORD, (LPBYTE)&GFX::aFSkip                 , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("PPUMode")     , 0, REG_DWORD, (LPBYTE)&PPU::IsPAL                  , sizeof(BOOL));
 	RegSetValueEx(SettingsBase, _T("AutoRun")     , 0, REG_DWORD, (LPBYTE)&AutoRun                     , sizeof(BOOL));
 	RegSetValueEx(SettingsBase, _T("Scanlines")   , 0, REG_DWORD, (LPBYTE)&GFX::Scanlines              , sizeof(BOOL));
 	RegSetValueEx(SettingsBase, _T("UDLR")        , 0, REG_DWORD, (LPBYTE)&Controllers::EnableOpposites, sizeof(BOOL));
@@ -1198,7 +1205,7 @@ void	SaveSettings (void)
 	RegSetValueEx(SettingsBase, _T("NTSChue")     , 0, REG_DWORD, (LPBYTE)&GFX::NTSChue    , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("NTSCsat")     , 0, REG_DWORD, (LPBYTE)&GFX::NTSCsat    , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("PALsat")      , 0, REG_DWORD, (LPBYTE)&GFX::PALsat     , sizeof(DWORD));
-
+	RegSetValueEx(SettingsBase, _T("Region")      , 0, REG_DWORD, (LPBYTE)&CurRegion       , sizeof(DWORD));
 
 	RegSetValueEx(SettingsBase, _T("CustPaletteNTSC"), 0, REG_SZ, (LPBYTE)GFX::CustPaletteNTSC, (DWORD)(sizeof(TCHAR) * _tcslen(GFX::CustPaletteNTSC)));
 	RegSetValueEx(SettingsBase, _T("CustPalettePAL") , 0, REG_SZ, (LPBYTE)GFX::CustPalettePAL , (DWORD)(sizeof(TCHAR) * _tcslen(GFX::CustPalettePAL)));

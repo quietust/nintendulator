@@ -22,6 +22,9 @@ extern BOOL AutoRun;
 extern BOOL FrameStep, GotStep;
 extern BOOL HasMenu;
 
+enum Region { REGION_NONE, REGION_NTSC, REGION_PAL };
+extern Region CurRegion;
+
 // Maximum supported data sizes, since it's far easier than dynamically allocating them
 
 // 8192KB PRG ROM
@@ -57,7 +60,7 @@ const TCHAR *	OpenFileiNES (FILE *);
 const TCHAR *	OpenFileUNIF (FILE *);
 const TCHAR *	OpenFileFDS (FILE *);
 const TCHAR *	OpenFileNSF (FILE *);
-void	SetCPUMode (int);
+void	SetRegion (Region);
 void	Reset (RESET_TYPE);
 
 void	Start (BOOL);

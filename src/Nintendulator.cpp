@@ -463,13 +463,13 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_PPU_MODE_NTSC:
 			NES::Stop();
-			NES::SetCPUMode(0);
+			NES::SetRegion(NES::REGION_NTSC);
 			CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_PAL, ID_PPU_MODE_NTSC, MF_BYCOMMAND);
 			if (running)	NES::Start(FALSE);
 			break;
 		case ID_PPU_MODE_PAL:
 			NES::Stop();
-			NES::SetCPUMode(1);
+			NES::SetRegion(NES::REGION_PAL);
 			CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_PAL, ID_PPU_MODE_PAL, MF_BYCOMMAND);
 			if (running)	NES::Start(FALSE);
 			break;

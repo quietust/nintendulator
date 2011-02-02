@@ -324,7 +324,7 @@ void	Play (void)
 		}
 		SET_EXPCONT(Controllers::PortExp, (Controllers::EXPCONT_TYPE)buf[2]);
 	}
-	NES::SetCPUMode(buf[3] >> 7);	// Set to NTSC or PAL
+	NES::SetRegion((buf[3] & 0x80) ? NES::REGION_PAL : NES::REGION_NTSC);
 
 	FrameLen = Controllers::Port1->MovLen + Controllers::Port2->MovLen + Controllers::PortExp->MovLen;
 	if (NES::HasMenu)
