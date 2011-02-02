@@ -32,7 +32,7 @@ enum	STDCONT_TYPE
 class StdPort
 {
 public:
-	virtual			~StdPort(void) {} \
+	virtual			~StdPort(void) {}
 	virtual unsigned char	Read	(void) = 0;
 	virtual void		Write	(unsigned char) = 0;
 	virtual void		Config	(HWND) = 0;
@@ -85,7 +85,7 @@ enum	EXPCONT_TYPE
 class ExpPort
 {
 public:
-	virtual			~ExpPort(void) {} \
+	virtual			~ExpPort(void) {}
 	virtual unsigned char	Read1	(void) = 0;
 	virtual unsigned char	Read2	(void) = 0;
 	virtual void		Write	(unsigned char) = 0;
