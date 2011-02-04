@@ -43,7 +43,7 @@ void	Reset		(void);
 void	Config		(HWND);
 #endif	/* !NSFPLAYER */
 void	Run		(void);
-void	SetFPS		(int);
+void	SetRegion	(void);
 void	WriteReg	(int, unsigned char);
 unsigned char	Read4015	(void);
 } // namespace APU

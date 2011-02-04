@@ -757,24 +757,25 @@ void	SetRegion (Region NewRegion)
 	default:
 		EI.DbgOut(_T("Invalid region selected!"));
 	case REGION_NTSC:
-		PPU::IsPAL = FALSE;
-		CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_PAL, ID_PPU_MODE_NTSC, MF_BYCOMMAND);
-		PPU::SLEndFrame = 262;
-		if (PPU::SLnum >= PPU::SLEndFrame - 1)	// if we switched from PAL, scanline number could be invalid
-			PPU::SLnum = PPU::SLEndFrame - 2;
-		GFX::WantFPS = 60;
-		GFX::LoadPalette(GFX::PaletteNTSC);
-		APU::SetFPS(60);
+		CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_DENDY, ID_PPU_MODE_NTSC, MF_BYCOMMAND);
+		PPU::SetRegion();
+		APU::SetRegion();
+		GFX::SetRegion();
 		EI.DbgOut(_T("Emulation switched to NTSC"));
 		break;
 	case REGION_PAL:
-		PPU::IsPAL = TRUE;
-		CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_PAL, ID_PPU_MODE_PAL, MF_BYCOMMAND);
-		PPU::SLEndFrame = 312;
-		GFX::WantFPS = 50;
-		GFX::LoadPalette(GFX::PalettePAL);
-		APU::SetFPS(50);
+		CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_DENDY, ID_PPU_MODE_PAL, MF_BYCOMMAND);
+		PPU::SetRegion();
+		APU::SetRegion();
+		GFX::SetRegion();
 		EI.DbgOut(_T("Emulation switched to PAL"));
+		break;
+	case REGION_DENDY:
+		CheckMenuRadioItem(hMenu, ID_PPU_MODE_NTSC, ID_PPU_MODE_DENDY, ID_PPU_MODE_DENDY, MF_BYCOMMAND);
+		PPU::SetRegion();
+		APU::SetRegion();
+		GFX::SetRegion();
+		EI.DbgOut(_T("Emulation switched to Hybrid"));
 		break;
 	}
 }

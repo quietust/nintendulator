@@ -131,6 +131,7 @@ BEGIN
         BEGIN
             MENUITEM "&NTSC",                       ID_PPU_MODE_NTSC
             MENUITEM "&PAL",                        ID_PPU_MODE_PAL
+            MENUITEM "&Hybrid",                     ID_PPU_MODE_DENDY
         END
         MENUITEM "P&alette...",                 ID_PPU_PALETTE
         POPUP "Sl&owdown"

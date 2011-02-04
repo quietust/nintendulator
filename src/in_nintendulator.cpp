@@ -67,6 +67,8 @@ BOOL ROMLoaded;
 unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
 unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
 
+Region CurRegion = REGION_NTSC;	// hardcoded to NTSC for now
+
 void	CloseFile (void)
 {
 	if (ROMLoaded)
@@ -124,6 +126,7 @@ void	init (void)
 	NES::ROMLoaded = FALSE;
 	APU::Init();
 	APU::Create();
+	APU::SetRegion();
 	MapperInterface::Init();
 }
 

@@ -18,6 +18,7 @@ namespace PPU
 {
 FPPURead	ReadHandler[0x10];
 FPPUWrite	WriteHandler[0x10];
+int SLStartNMI;
 int SLEndFrame;
 int Clockticks;
 int SLnum;
@@ -65,7 +66,7 @@ unsigned char SprData[8][10];
 unsigned char SprData[8][8];
 #endif	/* ACCURATE_SPRITES */
 unsigned short *GfxData;
-BOOL IsPAL;
+BOOL IsPAL;	// Use 3.2:1 clock divider, shorten pre-render scanline every other frame
 unsigned char PALsubticks;
 unsigned char	VRAM[0x4][0x400];
 unsigned short	DrawArray[256*240];
@@ -253,6 +254,33 @@ void	GetHandlers (void)
 		PPUCycle = MI->PPUCycle;
 	else	PPUCycle = NoPPUCycle;
 	GetGFXPtr();
+}
+
+void	SetRegion (void)
+{
+	switch (NES::CurRegion)
+	{
+	case NES::REGION_NTSC:
+		IsPAL = FALSE;
+		SLStartNMI = 241;
+		SLEndFrame = 262;
+		if (SLnum >= SLEndFrame - 1)	// if we switched from PAL, scanline number could be invalid
+			SLnum = SLEndFrame - 2;
+		break;
+	case NES::REGION_PAL:
+		IsPAL = TRUE;
+		SLStartNMI = 241;
+		SLEndFrame = 312;
+		break;
+	case NES::REGION_DENDY:
+		IsPAL = TRUE;
+		SLStartNMI = 291;
+		SLEndFrame = 312;
+		break;
+	default:
+		EI.DbgOut(_T("Invalid PPU region selected!"));
+		break;
+	}
 }
 
 #ifdef	ACCURATE_SPRITES
@@ -502,7 +530,14 @@ int	Save (FILE *out)
 	writeByte(IOVal);		//	IOVAL	uint8		External I/O Value
 	writeByte(IOMode);		//	IOMOD	uint8		External I/O Mode/Counter
 
-	writeByte(IsPAL);		//	NTSCP	uint8		0 for NTSC, 1 for PAL
+	unsigned char region = 0;
+	switch (NES::CurRegion)
+	{
+	case NES::REGION_NTSC:	region = 0;	break;
+	case NES::REGION_PAL:	region = 1;	break;
+	case NES::REGION_DENDY:	region = 2;	break;
+	}
+	writeByte(region);		//	NTSCP	uint8		0 for NTSC, 1 for PAL, 2 for Dendy
 	return clen;
 }
 
@@ -537,12 +572,19 @@ int	Load (FILE *in)
 	readByte(IOVal);		//	IOVAL	uint8		External I/O Value
 	readByte(IOMode);		//	IOMOD	uint8		External I/O Mode/Counter
 
-	readByte(IsPAL);		//	NTSCP	uint8		0 for NTSC, 1 for PAL
+	unsigned char region = 0;
+	readByte(region);		//	NTSCP	uint8		0 for NTSC, 1 for PAL, 2 for Dendy
 
 	IsRendering = OnScreen = FALSE;
 	ColorEmphasis = (Reg2001 & 0xE0) << 1;
 	GrayScale = (Reg2001 & 0x01) ? 0x30 : 0x3F;
-	NES::SetRegion(IsPAL ? NES::REGION_PAL : NES::REGION_NTSC);
+
+	switch (NES::CurRegion)
+	{
+	case 0: NES::SetRegion(NES::REGION_NTSC);	break;
+	case 1: NES::SetRegion(NES::REGION_PAL);	break;
+	case 2: NES::SetRegion(NES::REGION_DENDY);	break;
+	}
 	return clen;
 }
 
@@ -598,11 +640,13 @@ __inline void	RunNoSkip (int NumTicks)
 			if (SLnum < 240)
 				OnScreen = TRUE;
 			else if (SLnum == 240)
-				IsRendering = OnScreen = FALSE;
-			else if (SLnum == 241)
 			{
+				IsRendering = OnScreen = FALSE;
 				GetGFXPtr();
 				GFX::DrawScreen();
+			}
+			else if (SLnum == SLStartNMI)
+			{
 				Reg2002 |= 0x80;
 				if (Reg2000 & 0x80)
 					CPU::WantNMI = TRUE;
@@ -935,11 +979,13 @@ __inline void	RunSkip (int NumTicks)
 			if (SLnum < 240)
 				OnScreen = TRUE;
 			else if (SLnum == 240)
-				IsRendering = OnScreen = FALSE;
-			else if (SLnum == 241)
 			{
+				IsRendering = OnScreen = FALSE;
 				GetGFXPtr();
 				GFX::DrawScreen();
+			}
+			else if (SLnum == SLStartNMI)
+			{
 				Reg2002 |= 0x80;
 				if (Reg2000 & 0x80)
 					CPU::WantNMI = TRUE;
@@ -1212,7 +1258,7 @@ int	__fastcall	Read2 (void)
 	if (tmp & 0x80)
 		Reg2002 &= 0x60;
 	// race conditions
-	if (SLnum == 241)
+	if (SLnum == SLStartNMI)
 	{
 		if ((Clockticks == 0))
 			tmp &= ~0x80;
@@ -1230,7 +1276,7 @@ int	__fastcall	Read2Vs (void)
 	if (tmp & 0x80)
 		Reg2002 &= 0x60;
 	// race conditions
-	if (SLnum == 241)
+	if (SLnum == SLStartNMI)
 	{
 		if ((Clockticks == 0))
 			tmp &= ~0x80;
@@ -1312,7 +1358,7 @@ void	__fastcall	Write0 (int Val)
 	if ((Val & 0x80) && !(Reg2000 & 0x80) && (Reg2002 & 0x80))
 		CPU::WantNMI = TRUE;
 	// race condition
-	if ((SLnum == 241) && !(Val & 0x80) && (Clockticks < 3))
+	if ((SLnum == SLStartNMI) && !(Val & 0x80) && (Clockticks < 3))
 		CPU::WantNMI = FALSE;
 #ifdef	ENABLE_DEBUGGER
 	if ((Reg2000 ^ Val) & 0x28)

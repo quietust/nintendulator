@@ -12,7 +12,6 @@ namespace PPU
 {
 extern FPPURead	ReadHandler[0x10];
 extern FPPUWrite	WriteHandler[0x10];
-extern int SLEndFrame;
 extern int Clockticks;
 extern int SLnum;
 extern unsigned char *CHRPointer[0x10];
@@ -40,6 +39,7 @@ extern unsigned short	DrawArray[256*240];
 extern unsigned char VsSecurity;
 
 void	GetHandlers (void);
+void	SetRegion (void);
 void	PowerOn (void);
 void	Reset (void);
 int	Save (FILE *);

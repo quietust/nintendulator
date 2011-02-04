@@ -43,9 +43,7 @@ int			buflen;
 BYTE			Regs[0x18];
 #endif	/* !NSFPLAYER */
 
-int			WantFPS;
 unsigned long		MHz;
-BOOL			PAL;
 #ifndef	NSFPLAYER
 unsigned long		LockSize;
 #endif	/* !NSFPLAYER */
@@ -883,35 +881,46 @@ unsigned char	Read4015 (void)
 } while (false)
 #endif	/* !NSFPLAYER */
 
-void	SetFPSVars (int FPS)
+void	SetRegion (void)
 {
-	WantFPS = FPS;
-	if (WantFPS == 60)
+#ifndef	NSFPLAYER
+	BOOL Enabled = isEnabled;
+	BOOL Created = (DirectSound != NULL);
+	if (Enabled)
+		SoundOFF();
+	if (Created)
+		Release();
+#endif	/* !NSFPLAYER */
+	int WantFPS = 60;
+	switch (NES::CurRegion)
 	{
-		PAL = FALSE;
+	case NES::REGION_NTSC:
+		WantFPS = 60;
 		MHz = 1789773;
 		Noise::FreqTable = NoiseFreqNTSC;
 		DPCM::FreqTable = DPCMFreqNTSC;
 		Frame::CycleTable_0 = FrameCyclesNTSC_0;
 		Frame::CycleTable_1 = FrameCyclesNTSC_1;
-	}
-	else if (WantFPS == 50)
-	{
-		PAL = TRUE;
+		break;
+	case NES::REGION_PAL:
+		WantFPS = 50;
 		MHz = 1662607;
 		Noise::FreqTable = NoiseFreqPAL;
 		DPCM::FreqTable = DPCMFreqPAL;
 		Frame::CycleTable_0 = FrameCyclesPAL_0;
 		Frame::CycleTable_1 = FrameCyclesPAL_1;
-	}
-	else
-	{
-#ifndef	NSFPLAYER
-		MessageBox(hMainWnd, _T("Attempted to set indeterminate sound framerate!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-#else	/* NSFPLAYER */
-		MessageBox(mod.hMainWindow, _T("Attempted to set indeterminate sound framerate!"), _T("in_nintendulator"), MB_OK | MB_ICONERROR);
-#endif	/* !NSFPLAYER */
-		return;
+		break;
+	case NES::REGION_DENDY:
+		WantFPS = 50;
+		MHz = 1773447;
+		Noise::FreqTable = NoiseFreqNTSC;
+		DPCM::FreqTable = DPCMFreqNTSC;
+		Frame::CycleTable_0 = FrameCyclesNTSC_0;
+		Frame::CycleTable_1 = FrameCyclesNTSC_1;
+		break;
+	default:
+		EI.DbgOut(_T("Invalid APU region selected!"));
+		break;
 	}
 #ifndef	NSFPLAYER
 	LockSize = LOCK_SIZE / WantFPS;
@@ -919,18 +928,8 @@ void	SetFPSVars (int FPS)
 	if (buffer)
 		delete buffer;
 	buffer = new short[LockSize];
-#endif	/* !NSFPLAYER */
-}
-
-void	SetFPS (int FPS)
-{
-#ifndef	NSFPLAYER
-	BOOL Enabled = isEnabled;
-	Release();
-#endif	/* !NSFPLAYER */
-	SetFPSVars(FPS);
-#ifndef	NSFPLAYER
-	Create();
+	if (Created)
+		Create();
 	if (Enabled)
 		SoundON();
 #endif	/* !NSFPLAYER */
@@ -942,14 +941,12 @@ void	Init (void)
 	DirectSound	= NULL;
 	PrimaryBuffer	= NULL;
 	Buffer		= NULL;
-	buffer		= NULL;
+	buffer		= new short[1];
 	isEnabled	= FALSE;
 #endif	/* !NSFPLAYER */
-	WantFPS		= 0;
 	MHz		= 1;
-	PAL		= FALSE;
 #ifndef	NSFPLAYER
-	LockSize	= 0;
+	LockSize	= 1;
 	buflen		= 0;
 #endif	/* !NSFPLAYER */
 	BufPos		= 0;
@@ -963,12 +960,7 @@ void	Create (void)
 #ifndef	NSFPLAYER
 	DSBUFFERDESC DSBD;
 	WAVEFORMATEX WFX;
-#endif	/* !NSFPLAYER */
 
-	if (!WantFPS)
-		SetFPSVars(60);
-
-#ifndef	NSFPLAYER
 	if (FAILED(DirectSoundCreate(&DSDEVID_DefaultPlayback, &DirectSound, NULL)))
 	{
 		Release();
@@ -1092,6 +1084,8 @@ void	Reset  (void)
 #ifndef	NSFPLAYER
 void	SoundOFF (void)
 {
+	if (!isEnabled)
+		return;
 	isEnabled = FALSE;
 	if (Buffer)
 		Buffer->Stop();
@@ -1101,9 +1095,10 @@ void	SoundON (void)
 {
 	LPVOID bufPtr;
 	DWORD bufBytes;
+	if (isEnabled)
+		return;
 	if (!Buffer)
 	{
-		isEnabled = FALSE;
 		Create();
 		if (!Buffer)
 			return;

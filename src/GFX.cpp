@@ -120,6 +120,28 @@ void	Init (void)
 	Fullscreen = FALSE;
 }
 
+void	SetRegion (void)
+{
+	switch (NES::CurRegion)
+	{
+	case NES::REGION_NTSC:
+		GFX::WantFPS = 60;
+		GFX::LoadPalette(GFX::PaletteNTSC);
+		break;
+	case NES::REGION_PAL:
+		GFX::WantFPS = 50;
+		GFX::LoadPalette(GFX::PalettePAL);
+		break;
+	case NES::REGION_DENDY:
+		GFX::WantFPS = 50;
+		GFX::LoadPalette(GFX::PaletteNTSC);
+		break;
+	default:
+		EI.DbgOut(_T("Invalid GFX region selected!"));
+		break;
+	}
+}
+
 void	Create (void)
 {
 #if (_MSC_VER >= 1400)

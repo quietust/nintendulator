@@ -208,6 +208,9 @@ extern int PRGMask;
 
 extern unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
 extern unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
+
+enum Region { REGION_NONE, REGION_NTSC, REGION_PAL, REGION_DENDY };
+extern Region CurRegion;
 } // namespace NES
 
 extern	In_Module	mod;
