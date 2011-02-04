@@ -273,7 +273,7 @@ void	SetRegion (void)
 		SLEndFrame = 312;
 		break;
 	case NES::REGION_DENDY:
-		IsPAL = TRUE;
+		IsPAL = FALSE;
 		SLStartNMI = 291;
 		SLEndFrame = 312;
 		break;
