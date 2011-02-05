@@ -664,15 +664,11 @@ void	AddDebug (TCHAR *txt)
 	int dbglen = GetWindowTextLength(GetDlgItem(hDebug, IDC_DEBUGTEXT));
 //	if (!dbgVisible)
 //		return;
-	if (dbglen)
-	{
-		TCHAR *newline = _T("\r\n");
-		SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SETSEL, dbglen, dbglen);
-		SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_REPLACESEL, FALSE, (LPARAM)newline);
-		dbglen += 2;
-	}
 	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SETSEL, dbglen, dbglen);
 	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_REPLACESEL, FALSE, (LPARAM)txt);
+	dbglen += _tcslen(txt);
+	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SETSEL, dbglen, dbglen);
+	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_REPLACESEL, FALSE, (LPARAM)_T("\r\n"));
 }
 
 // Shortcut for browsing to folders (though it could be used to run anything else, it's only ever called with folder names)
