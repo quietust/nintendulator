@@ -125,16 +125,16 @@ void	SetRegion (void)
 	switch (NES::CurRegion)
 	{
 	case NES::REGION_NTSC:
-		GFX::WantFPS = 60;
-		GFX::LoadPalette(GFX::PaletteNTSC);
+		WantFPS = 60;
+		LoadPalette(PaletteNTSC);
 		break;
 	case NES::REGION_PAL:
-		GFX::WantFPS = 50;
-		GFX::LoadPalette(GFX::PalettePAL);
+		WantFPS = 50;
+		LoadPalette(PalettePAL);
 		break;
 	case NES::REGION_DENDY:
-		GFX::WantFPS = 50;
-		GFX::LoadPalette(GFX::PaletteNTSC);
+		WantFPS = 50;
+		LoadPalette(PaletteNTSC);
 		break;
 	default:
 		EI.DbgOut(_T("Invalid GFX region selected!"));
@@ -382,6 +382,61 @@ void	Release (void)
 		dDrawInst = NULL;
 	}
 #endif
+}
+
+void	SaveSettings (HKEY SettingsBase)
+{
+	RegSetValueEx(SettingsBase, _T("aFSkip")      , 0, REG_DWORD, (LPBYTE)&aFSkip     , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("Scanlines")   , 0, REG_DWORD, (LPBYTE)&Scanlines  , sizeof(BOOL));
+
+	RegSetValueEx(SettingsBase, _T("FSkip")       , 0, REG_DWORD, (LPBYTE)&FSkip      , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("PaletteNTSC") , 0, REG_DWORD, (LPBYTE)&PaletteNTSC, sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("PalettePAL")  , 0, REG_DWORD, (LPBYTE)&PalettePAL , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("NTSChue")     , 0, REG_DWORD, (LPBYTE)&NTSChue    , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("NTSCsat")     , 0, REG_DWORD, (LPBYTE)&NTSCsat    , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("PALsat")      , 0, REG_DWORD, (LPBYTE)&PALsat     , sizeof(DWORD));
+
+	RegSetValueEx(SettingsBase, _T("CustPaletteNTSC"), 0, REG_SZ, (LPBYTE)CustPaletteNTSC, (DWORD)(sizeof(TCHAR) * _tcslen(CustPaletteNTSC)));
+	RegSetValueEx(SettingsBase, _T("CustPalettePAL") , 0, REG_SZ, (LPBYTE)CustPalettePAL , (DWORD)(sizeof(TCHAR) * _tcslen(CustPalettePAL)));
+}
+
+void	LoadSettings (HKEY SettingsBase)
+{
+	unsigned long Size;
+
+	aFSkip = 1;
+	FSkip = 0;
+	PaletteNTSC = PALETTE_NTSC;
+	PalettePAL = PALETTE_PAL;
+	NTSChue = 0;
+	NTSCsat = 50;
+	PALsat = 50;
+	CustPaletteNTSC[0] = CustPalettePAL[0] = 0;
+
+	SlowDown = FALSE;
+	SlowRate = 2;
+	CheckMenuRadioItem(hMenu, ID_PPU_SLOWDOWN_2, ID_PPU_SLOWDOWN_20, ID_PPU_SLOWDOWN_2, MF_BYCOMMAND);
+
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("Scanlines")  , 0, NULL, (LPBYTE)&Scanlines  , &Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("aFSkip")     , 0, NULL, (LPBYTE)&aFSkip     , &Size);
+
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSkip")      , 0, NULL, (LPBYTE)&FSkip      , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PaletteNTSC"), 0, NULL, (LPBYTE)&PaletteNTSC, &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PalettePAL") , 0, NULL, (LPBYTE)&PalettePAL , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSChue")    , 0, NULL, (LPBYTE)&NTSChue    , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSCsat")    , 0, NULL, (LPBYTE)&NTSCsat    , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PALsat")     , 0, NULL, (LPBYTE)&PALsat     , &Size);
+
+	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPaletteNTSC"), 0,NULL, (LPBYTE)&CustPaletteNTSC, &Size);
+	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPalettePAL") , 0,NULL, (LPBYTE)&CustPalettePAL , &Size);
+
+	if (NTSChue >= 300)	// Old versions of Nintendulator used hue settings between 300 and 360
+		NTSChue -= 330;	// Current versions use values between -30 and +30, so convert them if necessary
+
+	SetFrameskip(-1);
+
+	if (Scanlines)
+		CheckMenuItem(hMenu, ID_PPU_SCANLINES, MF_CHECKED);
 }
 
 int TitleDelay = 0;

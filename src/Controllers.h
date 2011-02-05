@@ -146,6 +146,8 @@ extern DIMOUSESTATE2	MouseState;
 void	OpenConfig (void);
 void	Init (void);
 void	Release (void);
+void	SaveSettings (HKEY);
+void	LoadSettings (HKEY);
 void	Write (unsigned char);
 int	Save (FILE *);
 int	Load (FILE *);

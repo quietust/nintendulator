@@ -1044,11 +1044,38 @@ void	UpdateInterface (void)
 		SetWindowPos(hWnd, hWnd, window.left, window.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
+void	SaveSettings (void)
+{
+	HKEY SettingsBase;
+	RECT wRect;
+	GetWindowRect(hMainWnd, &wRect);
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase))
+		RegCreateKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, _T("NintendulatorClass"), REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &SettingsBase, NULL);
+	RegSetValueEx(SettingsBase, _T("SoundEnabled"), 0, REG_DWORD, (LPBYTE)&SoundEnabled    , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("AutoRun")     , 0, REG_DWORD, (LPBYTE)&AutoRun         , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("DebugWindow") , 0, REG_DWORD, (LPBYTE)&dbgVisible      , sizeof(BOOL));
+	RegSetValueEx(SettingsBase, _T("BadOpcodes")  , 0, REG_DWORD, (LPBYTE)&CPU::LogBadOps  , sizeof(BOOL));
+
+	RegSetValueEx(SettingsBase, _T("SizeMult")    , 0, REG_DWORD, (LPBYTE)&SizeMult        , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("PosX")        , 0, REG_DWORD, (LPBYTE)&wRect.left      , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("PosY")        , 0, REG_DWORD, (LPBYTE)&wRect.top       , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("Region")      , 0, REG_DWORD, (LPBYTE)&CurRegion       , sizeof(DWORD));
+
+	RegSetValueEx(SettingsBase, _T("Path_ROM"), 0, REG_SZ, (LPBYTE)Path_ROM, (DWORD)(sizeof(TCHAR) * _tcslen(Path_ROM)));
+	RegSetValueEx(SettingsBase, _T("Path_NMV"), 0, REG_SZ, (LPBYTE)Path_NMV, (DWORD)(sizeof(TCHAR) * _tcslen(Path_NMV)));
+	RegSetValueEx(SettingsBase, _T("Path_AVI"), 0, REG_SZ, (LPBYTE)Path_AVI, (DWORD)(sizeof(TCHAR) * _tcslen(Path_AVI)));
+	RegSetValueEx(SettingsBase, _T("Path_PAL"), 0, REG_SZ, (LPBYTE)Path_PAL, (DWORD)(sizeof(TCHAR) * _tcslen(Path_PAL)));
+
+	Controllers::SaveSettings(SettingsBase);
+	GFX::SaveSettings(SettingsBase);
+
+	RegCloseKey(SettingsBase);
+}
+
 void	LoadSettings (void)
 {
 	HKEY SettingsBase;
 	unsigned long Size;
-	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
 	int PosX, PosY;
 	Region MyRegion = REGION_NTSC;
 
@@ -1063,18 +1090,6 @@ void	LoadSettings (void)
 	SoundEnabled = TRUE;
 	dbgVisible = TRUE;
 	CPU::LogBadOps = FALSE;
-	GFX::aFSkip = 1;
-	GFX::FSkip = 0;
-	GFX::PaletteNTSC = GFX::PALETTE_NTSC;
-	GFX::PalettePAL = GFX::PALETTE_PAL;
-	GFX::NTSChue = 0;
-	GFX::NTSCsat = 50;
-	GFX::PALsat = 50;
-	GFX::CustPaletteNTSC[0] = GFX::CustPalettePAL[0] = 0;
-
-	GFX::SlowDown = FALSE;
-	GFX::SlowRate = 2;
-	CheckMenuRadioItem(hMenu, ID_PPU_SLOWDOWN_2, ID_PPU_SLOWDOWN_20, ID_PPU_SLOWDOWN_2, MF_BYCOMMAND);
 
 	FrameStep = FALSE;
 	Path_ROM[0] = Path_NMV[0] = Path_AVI[0] = Path_PAL[0] = 0;
@@ -1082,64 +1097,23 @@ void	LoadSettings (void)
 	// End Defaults
 
 	RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("SoundEnabled"), 0, NULL, (LPBYTE)&SoundEnabled                , &Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("aFSkip")      , 0, NULL, (LPBYTE)&GFX::aFSkip                 , &Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("AutoRun")     , 0, NULL, (LPBYTE)&AutoRun                     , &Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("Scanlines")   , 0, NULL, (LPBYTE)&GFX::Scanlines              , &Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("UDLR")        , 0, NULL, (LPBYTE)&Controllers::EnableOpposites, &Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("DebugWindow") , 0, NULL, (LPBYTE)&dbgVisible                  , &Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("BadOpcodes")  , 0, NULL, (LPBYTE)&CPU::LogBadOps              , &Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("SoundEnabled"), 0, NULL, (LPBYTE)&SoundEnabled   , &Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("AutoRun")     , 0, NULL, (LPBYTE)&AutoRun        , &Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("DebugWindow") , 0, NULL, (LPBYTE)&dbgVisible     , &Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("BadOpcodes")  , 0, NULL, (LPBYTE)&CPU::LogBadOps , &Size);
 
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("SizeMult")   , 0, NULL, (LPBYTE)&SizeMult        , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSkip")      , 0, NULL, (LPBYTE)&GFX::FSkip      , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PosX")       , 0, NULL, (LPBYTE)&PosX            , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PosY")       , 0, NULL, (LPBYTE)&PosY            , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PaletteNTSC"), 0, NULL, (LPBYTE)&GFX::PaletteNTSC, &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PalettePAL") , 0, NULL, (LPBYTE)&GFX::PalettePAL , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSChue")    , 0, NULL, (LPBYTE)&GFX::NTSChue    , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSCsat")    , 0, NULL, (LPBYTE)&GFX::NTSCsat    , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PALsat")     , 0, NULL, (LPBYTE)&GFX::PALsat     , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Region")     , 0, NULL, (LPBYTE)&MyRegion        , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("SizeMult")    , 0, NULL, (LPBYTE)&SizeMult       , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PosX")        , 0, NULL, (LPBYTE)&PosX           , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PosY")        , 0, NULL, (LPBYTE)&PosY           , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Region")      , 0, NULL, (LPBYTE)&MyRegion       , &Size);
 
-	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPaletteNTSC"), 0,NULL, (LPBYTE)&GFX::CustPaletteNTSC, &Size);
-	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPalettePAL") , 0,NULL, (LPBYTE)&GFX::CustPalettePAL , &Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("Path_ROM"), 0, NULL, (LPBYTE)&Path_ROM, &Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("Path_NMV"), 0, NULL, (LPBYTE)&Path_NMV, &Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("Path_AVI"), 0, NULL, (LPBYTE)&Path_AVI, &Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("Path_PAL"), 0, NULL, (LPBYTE)&Path_PAL, &Size);
 
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Port1T")  , 0, NULL, (LPBYTE)&Port1T  , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Port2T")  , 0, NULL, (LPBYTE)&Port2T  , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort1T"), 0, NULL, (LPBYTE)&FSPort1T, &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort2T"), 0, NULL, (LPBYTE)&FSPort2T, &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort3T"), 0, NULL, (LPBYTE)&FSPort3T, &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort4T"), 0, NULL, (LPBYTE)&FSPort4T, &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("ExpPortT"), 0, NULL, (LPBYTE)&ExpPortT, &Size);
-
-	if (Port1T == Controllers::STD_FOURSCORE)
-	{
-		SET_STDCONT(Controllers::Port1, Controllers::STD_FOURSCORE);
-		SET_STDCONT(Controllers::Port1, Controllers::STD_FOURSCORE2);
-	}
-	else
-	{
-		SET_STDCONT(Controllers::Port1, (Controllers::STDCONT_TYPE)Port1T);
-		SET_STDCONT(Controllers::Port2, (Controllers::STDCONT_TYPE)Port2T);
-	}
-	SET_STDCONT(Controllers::FSPort1, (Controllers::STDCONT_TYPE)FSPort1T);
-	SET_STDCONT(Controllers::FSPort2, (Controllers::STDCONT_TYPE)FSPort2T);
-	SET_STDCONT(Controllers::FSPort3, (Controllers::STDCONT_TYPE)FSPort3T);
-	SET_STDCONT(Controllers::FSPort4, (Controllers::STDCONT_TYPE)FSPort4T);
-	SET_EXPCONT(Controllers::PortExp, (Controllers::EXPCONT_TYPE)ExpPortT);
-
-	Size = sizeof(Controllers::Port1_Buttons);	RegQueryValueEx(SettingsBase, _T("Port1D")  , 0, NULL, (LPBYTE)Controllers::Port1_Buttons  , &Size);
-	Size = sizeof(Controllers::Port2_Buttons);	RegQueryValueEx(SettingsBase, _T("Port2D")  , 0, NULL, (LPBYTE)Controllers::Port2_Buttons  , &Size);
-	Size = sizeof(Controllers::FSPort1_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort1D"), 0, NULL, (LPBYTE)Controllers::FSPort1_Buttons, &Size);
-	Size = sizeof(Controllers::FSPort2_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort2D"), 0, NULL, (LPBYTE)Controllers::FSPort2_Buttons, &Size);
-	Size = sizeof(Controllers::FSPort3_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort3D"), 0, NULL, (LPBYTE)Controllers::FSPort3_Buttons, &Size);
-	Size = sizeof(Controllers::FSPort4_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort4D"), 0, NULL, (LPBYTE)Controllers::FSPort4_Buttons, &Size);
-	Size = sizeof(Controllers::PortExp_Buttons);	RegQueryValueEx(SettingsBase, _T("ExpPortD"), 0, NULL, (LPBYTE)Controllers::PortExp_Buttons, &Size);
-	Controllers::SetDeviceUsed();
+	Controllers::LoadSettings(SettingsBase);
+	GFX::LoadSettings(SettingsBase);
 
 	RegCloseKey(SettingsBase);
 
@@ -1152,11 +1126,6 @@ void	LoadSettings (void)
 	if (CPU::LogBadOps)
 		CheckMenuItem(hMenu, ID_CPU_BADOPS, MF_CHECKED);
 
-	if (GFX::NTSChue >= 300)	// Old versions of Nintendulator used hue settings between 300 and 360
-		GFX::NTSChue -= 330;	// Current versions use values between -30 and +30, so convert them if necessary
-
-	GFX::SetFrameskip(-1);
-
 	switch (SizeMult)
 	{
 	case 1:	CheckMenuRadioItem(hMenu, ID_PPU_SIZE_1X, ID_PPU_SIZE_4X, ID_PPU_SIZE_1X, MF_BYCOMMAND);	break;
@@ -1165,9 +1134,6 @@ void	LoadSettings (void)
 	case 3:	CheckMenuRadioItem(hMenu, ID_PPU_SIZE_1X, ID_PPU_SIZE_4X, ID_PPU_SIZE_3X, MF_BYCOMMAND);	break;
 	case 4:	CheckMenuRadioItem(hMenu, ID_PPU_SIZE_1X, ID_PPU_SIZE_4X, ID_PPU_SIZE_4X, MF_BYCOMMAND);	break;
 	}
-
-	if (GFX::Scanlines)
-		CheckMenuItem(hMenu, ID_PPU_SCANLINES, MF_CHECKED);
 
 	SetRegion(MyRegion);
 
@@ -1180,58 +1146,6 @@ void	LoadSettings (void)
 	}
 
 	UpdateInterface();
-}
-
-void	SaveSettings (void)
-{
-	HKEY SettingsBase;
-	RECT wRect;
-	GetWindowRect(hMainWnd, &wRect);
-	if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, KEY_ALL_ACCESS, &SettingsBase))
-		RegCreateKeyEx(HKEY_CURRENT_USER, _T("SOFTWARE\\Nintendulator\\"), 0, _T("NintendulatorClass"), REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &SettingsBase, NULL);
-	RegSetValueEx(SettingsBase, _T("SoundEnabled"), 0, REG_DWORD, (LPBYTE)&SoundEnabled                , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("aFSkip")      , 0, REG_DWORD, (LPBYTE)&GFX::aFSkip                 , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("AutoRun")     , 0, REG_DWORD, (LPBYTE)&AutoRun                     , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("Scanlines")   , 0, REG_DWORD, (LPBYTE)&GFX::Scanlines              , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("UDLR")        , 0, REG_DWORD, (LPBYTE)&Controllers::EnableOpposites, sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("DebugWindow") , 0, REG_DWORD, (LPBYTE)&dbgVisible                  , sizeof(BOOL));
-	RegSetValueEx(SettingsBase, _T("BadOpcodes")  , 0, REG_DWORD, (LPBYTE)&CPU::LogBadOps              , sizeof(BOOL));
-
-	RegSetValueEx(SettingsBase, _T("SizeMult")    , 0, REG_DWORD, (LPBYTE)&SizeMult        , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("FSkip")       , 0, REG_DWORD, (LPBYTE)&GFX::FSkip      , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("PosX")        , 0, REG_DWORD, (LPBYTE)&wRect.left      , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("PosY")        , 0, REG_DWORD, (LPBYTE)&wRect.top       , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("PaletteNTSC") , 0, REG_DWORD, (LPBYTE)&GFX::PaletteNTSC, sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("PalettePAL")  , 0, REG_DWORD, (LPBYTE)&GFX::PalettePAL , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("NTSChue")     , 0, REG_DWORD, (LPBYTE)&GFX::NTSChue    , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("NTSCsat")     , 0, REG_DWORD, (LPBYTE)&GFX::NTSCsat    , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("PALsat")      , 0, REG_DWORD, (LPBYTE)&GFX::PALsat     , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("Region")      , 0, REG_DWORD, (LPBYTE)&CurRegion       , sizeof(DWORD));
-
-	RegSetValueEx(SettingsBase, _T("CustPaletteNTSC"), 0, REG_SZ, (LPBYTE)GFX::CustPaletteNTSC, (DWORD)(sizeof(TCHAR) * _tcslen(GFX::CustPaletteNTSC)));
-	RegSetValueEx(SettingsBase, _T("CustPalettePAL") , 0, REG_SZ, (LPBYTE)GFX::CustPalettePAL , (DWORD)(sizeof(TCHAR) * _tcslen(GFX::CustPalettePAL)));
-	RegSetValueEx(SettingsBase, _T("Path_ROM")       , 0, REG_SZ, (LPBYTE)Path_ROM            , (DWORD)(sizeof(TCHAR) * _tcslen(Path_ROM)));
-	RegSetValueEx(SettingsBase, _T("Path_NMV")       , 0, REG_SZ, (LPBYTE)Path_NMV            , (DWORD)(sizeof(TCHAR) * _tcslen(Path_NMV)));
-	RegSetValueEx(SettingsBase, _T("Path_AVI")       , 0, REG_SZ, (LPBYTE)Path_AVI            , (DWORD)(sizeof(TCHAR) * _tcslen(Path_AVI)));
-	RegSetValueEx(SettingsBase, _T("Path_PAL")       , 0, REG_SZ, (LPBYTE)Path_PAL            , (DWORD)(sizeof(TCHAR) * _tcslen(Path_PAL)));
-
-	RegSetValueEx(SettingsBase, _T("Port1T")  , 0, REG_DWORD, (LPBYTE)&Controllers::Port1->Type  , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("Port2T")  , 0, REG_DWORD, (LPBYTE)&Controllers::Port2->Type  , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("FSPort1T"), 0, REG_DWORD, (LPBYTE)&Controllers::FSPort1->Type, sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("FSPort2T"), 0, REG_DWORD, (LPBYTE)&Controllers::FSPort2->Type, sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("FSPort3T"), 0, REG_DWORD, (LPBYTE)&Controllers::FSPort3->Type, sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("FSPort4T"), 0, REG_DWORD, (LPBYTE)&Controllers::FSPort4->Type, sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("ExpPortT"), 0, REG_DWORD, (LPBYTE)&Controllers::PortExp->Type, sizeof(DWORD));
-
-	RegSetValueEx(SettingsBase, _T("Port1D")  , 0, REG_BINARY, (LPBYTE)Controllers::Port1_Buttons  , sizeof(Controllers::Port1_Buttons));
-	RegSetValueEx(SettingsBase, _T("Port2D")  , 0, REG_BINARY, (LPBYTE)Controllers::Port2_Buttons  , sizeof(Controllers::Port2_Buttons));
-	RegSetValueEx(SettingsBase, _T("FSPort1D"), 0, REG_BINARY, (LPBYTE)Controllers::FSPort1_Buttons, sizeof(Controllers::FSPort1_Buttons));
-	RegSetValueEx(SettingsBase, _T("FSPort2D"), 0, REG_BINARY, (LPBYTE)Controllers::FSPort2_Buttons, sizeof(Controllers::FSPort2_Buttons));
-	RegSetValueEx(SettingsBase, _T("FSPort3D"), 0, REG_BINARY, (LPBYTE)Controllers::FSPort3_Buttons, sizeof(Controllers::FSPort3_Buttons));
-	RegSetValueEx(SettingsBase, _T("FSPort4D"), 0, REG_BINARY, (LPBYTE)Controllers::FSPort4_Buttons, sizeof(Controllers::FSPort4_Buttons));
-	RegSetValueEx(SettingsBase, _T("ExpPortD"), 0, REG_BINARY, (LPBYTE)Controllers::PortExp_Buttons, sizeof(Controllers::PortExp_Buttons));
-
-	RegCloseKey(SettingsBase);
 }
 
 void	RelocateSaveData_Progdir (void)

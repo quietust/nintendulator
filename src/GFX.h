@@ -37,6 +37,8 @@ void	Init (void);
 void	SetRegion (void);
 void	Create (void);
 void	Release (void);
+void	SaveSettings (HKEY);
+void	LoadSettings (HKEY);
 void	DrawScreen (void);
 void	Draw1x (void);
 void	Draw2x (void);

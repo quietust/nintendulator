@@ -690,6 +690,67 @@ int	Load (FILE *in)
 	return clen;
 }
 
+void	SaveSettings (HKEY SettingsBase)
+{
+	RegSetValueEx(SettingsBase, _T("UDLR")    , 0, REG_DWORD, (LPBYTE)&EnableOpposites, sizeof(BOOL));
+
+	RegSetValueEx(SettingsBase, _T("Port1T")  , 0, REG_DWORD, (LPBYTE)&Port1->Type  , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("Port2T")  , 0, REG_DWORD, (LPBYTE)&Port2->Type  , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FSPort1T"), 0, REG_DWORD, (LPBYTE)&FSPort1->Type, sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FSPort2T"), 0, REG_DWORD, (LPBYTE)&FSPort2->Type, sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FSPort3T"), 0, REG_DWORD, (LPBYTE)&FSPort3->Type, sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FSPort4T"), 0, REG_DWORD, (LPBYTE)&FSPort4->Type, sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("ExpPortT"), 0, REG_DWORD, (LPBYTE)&PortExp->Type, sizeof(DWORD));
+
+	RegSetValueEx(SettingsBase, _T("Port1D")  , 0, REG_BINARY, (LPBYTE)Port1_Buttons  , sizeof(Port1_Buttons));
+	RegSetValueEx(SettingsBase, _T("Port2D")  , 0, REG_BINARY, (LPBYTE)Port2_Buttons  , sizeof(Port2_Buttons));
+	RegSetValueEx(SettingsBase, _T("FSPort1D"), 0, REG_BINARY, (LPBYTE)FSPort1_Buttons, sizeof(FSPort1_Buttons));
+	RegSetValueEx(SettingsBase, _T("FSPort2D"), 0, REG_BINARY, (LPBYTE)FSPort2_Buttons, sizeof(FSPort2_Buttons));
+	RegSetValueEx(SettingsBase, _T("FSPort3D"), 0, REG_BINARY, (LPBYTE)FSPort3_Buttons, sizeof(FSPort3_Buttons));
+	RegSetValueEx(SettingsBase, _T("FSPort4D"), 0, REG_BINARY, (LPBYTE)FSPort4_Buttons, sizeof(FSPort4_Buttons));
+	RegSetValueEx(SettingsBase, _T("ExpPortD"), 0, REG_BINARY, (LPBYTE)PortExp_Buttons, sizeof(PortExp_Buttons));
+}
+
+void	LoadSettings (HKEY SettingsBase)
+{
+	unsigned long Size;
+	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("UDLR")    , 0, NULL, (LPBYTE)&EnableOpposites, &Size);
+
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Port1T")  , 0, NULL, (LPBYTE)&Port1T  , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Port2T")  , 0, NULL, (LPBYTE)&Port2T  , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort1T"), 0, NULL, (LPBYTE)&FSPort1T, &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort2T"), 0, NULL, (LPBYTE)&FSPort2T, &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort3T"), 0, NULL, (LPBYTE)&FSPort3T, &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort4T"), 0, NULL, (LPBYTE)&FSPort4T, &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("ExpPortT"), 0, NULL, (LPBYTE)&ExpPortT, &Size);
+
+	if (Port1T == STD_FOURSCORE)
+	{
+		SET_STDCONT(Port1, STD_FOURSCORE);
+		SET_STDCONT(Port1, STD_FOURSCORE2);
+	}
+	else
+	{
+		SET_STDCONT(Port1, (STDCONT_TYPE)Port1T);
+		SET_STDCONT(Port2, (STDCONT_TYPE)Port2T);
+	}
+	SET_STDCONT(FSPort1, (STDCONT_TYPE)FSPort1T);
+	SET_STDCONT(FSPort2, (STDCONT_TYPE)FSPort2T);
+	SET_STDCONT(FSPort3, (STDCONT_TYPE)FSPort3T);
+	SET_STDCONT(FSPort4, (STDCONT_TYPE)FSPort4T);
+	SET_EXPCONT(PortExp, (EXPCONT_TYPE)ExpPortT);
+
+	Size = sizeof(Port1_Buttons);	RegQueryValueEx(SettingsBase, _T("Port1D")  , 0, NULL, (LPBYTE)Port1_Buttons  , &Size);
+	Size = sizeof(Port2_Buttons);	RegQueryValueEx(SettingsBase, _T("Port2D")  , 0, NULL, (LPBYTE)Port2_Buttons  , &Size);
+	Size = sizeof(FSPort1_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort1D"), 0, NULL, (LPBYTE)FSPort1_Buttons, &Size);
+	Size = sizeof(FSPort2_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort2D"), 0, NULL, (LPBYTE)FSPort2_Buttons, &Size);
+	Size = sizeof(FSPort3_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort3D"), 0, NULL, (LPBYTE)FSPort3_Buttons, &Size);
+	Size = sizeof(FSPort4_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort4D"), 0, NULL, (LPBYTE)FSPort4_Buttons, &Size);
+	Size = sizeof(PortExp_Buttons);	RegQueryValueEx(SettingsBase, _T("ExpPortD"), 0, NULL, (LPBYTE)PortExp_Buttons, &Size);
+	SetDeviceUsed();
+}
+
 void	SetDeviceUsed (void)
 {
 	int i;
