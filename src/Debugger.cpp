@@ -486,7 +486,7 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 	return EffectiveAddr;
 }
 
-void	UpdateCPU (void)
+bool	UpdateCPU (void)
 {
 	TCHAR tps[64];
 	int i, TpVal;
@@ -530,7 +530,7 @@ void	UpdateCPU (void)
 	}
 	// if emulation wasn't stopped, don't bother updating the dialog
 	if (!NES::DoStop)
-		return;
+		return false;
 
 	inUpdate = TRUE;
 
@@ -778,6 +778,7 @@ void	UpdateCPU (void)
 	// re-enable redraw now that we're done drawing it
 	SendDlgItemMessage(CPUWnd, IDC_DEBUG_MEM_LIST, WM_SETREDRAW, TRUE, 0);
 	inUpdate = FALSE;
+	return true;
 }
 
 void	AddInst (void)
@@ -947,8 +948,8 @@ void	UpdatePPU (void)
 			for (x = 0; x < 32; x++)
 			{
 				AttribNum = (((x & 2) >> 1) | (y & 2)) << 1;
-				AttribVal = (PPU::CHRPointer[8 | NT][0x3C0 | ((y << 1) & 0x38) | (x >> 2)] >> AttribNum) & 3;
-				MemAddr = ((PPU::Reg2000 & 0x10) << 8) | (PPU::CHRPointer[8 | NT][x | (y << 5)] << 4);
+				AttribVal = (DebugMemPPU(0x23C0 | (NT << 10) | ((y << 1) & 0x38) | (x >> 2)) >> AttribNum) & 3;
+				MemAddr = ((PPU::Reg2000 & 0x10) << 8) | (DebugMemPPU(0x2000 | (NT << 10) | (y << 5) | x) << 4);
 				DrawTile(NameArray + y * 8 * D_NAM_W + x * 8, MemAddr, AttribVal, D_NAM_W);
 			}
 		}
@@ -1233,9 +1234,10 @@ void	UpdatePPU (void)
 
 void	Update (int UpdateMode)
 {
+	bool force = false;
 	if ((Mode & DEBUG_MODE_CPU) && (UpdateMode & DEBUG_MODE_CPU))
-		UpdateCPU();
-	if ((Mode & DEBUG_MODE_PPU) && (UpdateMode & DEBUG_MODE_PPU))
+		force = UpdateCPU();
+	if ((Mode & DEBUG_MODE_PPU) && ((UpdateMode & DEBUG_MODE_PPU) || force))
 		UpdatePPU();
 }
 
