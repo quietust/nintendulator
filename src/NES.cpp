@@ -168,13 +168,6 @@ void	OpenFile (TCHAR *filename)
 
 	DrawMenuBar(hMainWnd);
 
-#ifdef	ENABLE_DEBUGGER
-	Debugger::NTabChanged = TRUE;
-	Debugger::PalChanged = TRUE;
-	Debugger::PatChanged = TRUE;
-	Debugger::SprChanged = TRUE;
-#endif	/* ENABLE_DEBUGGER */
-
 	Reset(RESET_HARD);
 	if ((AutoRun) || (RI.ROMType == ROM_NSF))
 		Start(FALSE);
@@ -873,6 +866,10 @@ void	Reset (RESET_TYPE ResetType)
 	PPU::Reset();
 	CPU::WantNMI = FALSE;
 #ifdef	ENABLE_DEBUGGER
+	Debugger::PalChanged = TRUE;
+	Debugger::PatChanged = TRUE;
+	Debugger::NTabChanged = TRUE;
+	Debugger::SprChanged = TRUE;
 	if (Debugger::Enabled)
 		Debugger::Update(DEBUG_MODE_CPU | DEBUG_MODE_PPU);
 #endif	/* ENABLE_DEBUGGER */
