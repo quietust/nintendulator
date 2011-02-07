@@ -1082,7 +1082,7 @@ int	getPhase (double *wave)
 {
 	double max = -999, min = 999;
 	double amp, offset;
-	double angle = 0, base;
+	double angle = 180, base;
 	int i, j, k;
 	for (i = 0; i < 12; i++)
 	{
@@ -1094,18 +1094,18 @@ int	getPhase (double *wave)
 	amp = (max - min) / 2;
 	offset = (max + min) / 2;
 
-	for (k = 0; k < 3; k++)
+	for (k = 0; k < 4; k++)
 	{
 		double error[12], curerror = 0;
-		double segsize = 360;
+		double segsize = 180;
 		for (i = 0; i <= k; i++)
-			segsize /= 12.0;
+			segsize /= 6.0;
 
 		for (j = 0; j < 12; j++)
 		{
 			error[j] = 0;
 			for (i = 0; i < 12; i++)
-				error[j] += fabs((amp * sin((i * 30 + j * segsize + angle) * M_PI / 180.0) + offset) - wave[i]);
+				error[j] += fabs((amp * sin((i * 30 + (j - 6) * segsize + angle) * M_PI / 180.0) + offset) - wave[i]);
 			curerror += error[j];
 		}
 		base = 0;
@@ -1113,7 +1113,7 @@ int	getPhase (double *wave)
 		{
 			if (error[j] < curerror)
 			{
-				base = j * segsize;
+				base = (j - 6) * segsize;
 				curerror = error[j];
 			}
 		}
