@@ -1120,7 +1120,7 @@ int	getPhase (double *wave)
 		angle += base;
 	}
 
-	return (int)angle;
+	return (int)floor(angle + 0.5);
 }
 
 void	GenerateNTSC (int hue, int sat)
