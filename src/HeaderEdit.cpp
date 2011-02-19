@@ -89,9 +89,21 @@ void	UpdateDialog (HWND hDlg)
 	{
 		UpdateNum(hDlg, IDC_INES_SUBMAP, ((header[8] & 0xF0) >> 4));
 		SendDlgItemMessage(hDlg, IDC_INES_PRAM, CB_SETCURSEL, header[10] & 0x0F, 0);
-		SendDlgItemMessage(hDlg, IDC_INES_PSAV, CB_SETCURSEL, (header[10] & 0xF0) >> 4, 0);
 		SendDlgItemMessage(hDlg, IDC_INES_CRAM, CB_SETCURSEL, header[11] & 0x0F, 0);
-		SendDlgItemMessage(hDlg, IDC_INES_CSAV, CB_SETCURSEL, (header[11] & 0xF0) >> 4, 0);
+		if (header[6] & 0x02)
+		{
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_PSAV), TRUE);
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_CSAV), TRUE);
+			SendDlgItemMessage(hDlg, IDC_INES_PSAV, CB_SETCURSEL, (header[10] & 0xF0) >> 4, 0);
+			SendDlgItemMessage(hDlg, IDC_INES_CSAV, CB_SETCURSEL, (header[11] & 0xF0) >> 4, 0);
+		}
+		else
+		{
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_PSAV), FALSE);
+			EnableWindow(GetDlgItem(hDlg, IDC_INES_CSAV), FALSE);
+			SendDlgItemMessage(hDlg, IDC_INES_PSAV, CB_SETCURSEL, 0, 0);
+			SendDlgItemMessage(hDlg, IDC_INES_CSAV, CB_SETCURSEL, 0, 0);
+		}
 
 		if (header[12] & 0x02)
 			CheckRadioButton(hDlg, IDC_INES_NTSC, IDC_INES_DUAL, IDC_INES_DUAL);
@@ -126,6 +138,74 @@ void	UpdateDialog (HWND hDlg)
 	Mask = FALSE;
 }
 
+bool	CheckHeader (bool fix)
+{
+	bool needfix = false;
+	// Check for NES 2.0
+	if ((header[7] & 0x0C) == 0x08)
+	{
+		// If the SRAM flag is cleared, make sure the extended battery-RAM sizes are zero
+		if (!(header[6] & 0x02))
+		{
+			if ((header[10] & 0xF0) || (header[11] & 0xF0))
+			{
+				needfix = true;
+				if (fix)
+				{
+					header[10] &= 0x0F;
+					header[11] &= 0x0F;
+				}
+			}
+		}
+		// If the VS flag is cleared, make sure the Vs. PPU fields are zero
+		if (!(header[7] & 0x01))
+		{
+			if (header[13])
+			{
+				needfix = true;
+				if (fix)
+					header[13] = 0;
+			}
+		}
+		// Make sure no reserved bits are set in the TV system byte
+		if (header[12] & 0xFC)
+		{
+			needfix = true;
+			if (fix)
+				header[12] &= 0x03;
+		}
+		// Make sure other reserved bytes are cleared
+		if (header[14] || header[15])
+		{
+			needfix = true;
+			if (fix)
+			{
+				header[14] = 0;
+				header[15] = 0;
+			}
+		}
+	}
+	else
+	{
+		if (header[7] & 0x0C)
+		{
+			needfix = true;
+			if (fix)
+				header[7] = 0;
+		}
+		for (int i = 8; i < 16; i++)
+		{
+			if (header[i])
+			{
+				needfix = true;
+				if (fix)
+					header[i] = 0;
+			}
+		}
+	}
+	return needfix;
+}
+
 bool	SaveROM (HWND hDlg)
 {
 	FILE *ROM = _tfopen(filename, _T("r+b"));
@@ -135,8 +215,7 @@ bool	SaveROM (HWND hDlg)
 		return (result == IDYES);
 	}
 	// discard any NES 2.0 header data if we're saving as version 1.0
-	if ((header[7] & 0x0C) != 0x08)
-		memset(header+8, 0, 8);
+	CheckHeader(true);
 	fseek(ROM, 0, SEEK_SET);
 	fwrite(header, 1, 16, ROM);
 	fclose(ROM);
@@ -158,17 +237,15 @@ bool	OpenROM (void)
 		MessageBox(hMainWnd, _T("Selected file is not an iNES ROM image!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return false;
 	}
-	if ((header[7] & 0x0C) == 0x08)
-		;	// NES 2.0 detected and supported
-	else if ((header[7] & 0x0C) == 0x04)
+	if ((header[7] & 0x0C) == 0x04)
 	{
 		MessageBox(hMainWnd, _T("Selected ROM appears to have been corrupted by \"DiskDude!\" - cleaning..."), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 		memset(header+7, 0, 9);
 	}
-	else if (((header[8] || header[9] || header[10] || header[11] || header[12] || header[13] || header[14] || header[15])) && 
-		(MessageBox(hMainWnd, _T("Unrecognized data detected in ROM header! Do you wish to clean it?"), _T("Nintendulator"), MB_YESNO | MB_ICONQUESTION) == IDYES))
+	else if (CheckHeader(false) && 
+		(MessageBox(hMainWnd, _T("Unrecognized or inconsistent data detected in ROM header! Do you wish to clean it?"), _T("Nintendulator"), MB_YESNO | MB_ICONQUESTION) == IDYES))
 	{
-		memset(header+7, 0, 9);
+		CheckHeader(true);
 	}
 	return true;
 }
