@@ -214,7 +214,7 @@ bool	SaveROM (HWND hDlg)
 		int result = MessageBox(hDlg, _T("Unable to reopen file! Discard changes?"), _T("iNES Editor"), MB_YESNO | MB_ICONQUESTION);
 		return (result == IDYES);
 	}
-	// discard any NES 2.0 header data if we're saving as version 1.0
+	// ensure the header is in a consistent state - zero out all unused bits
 	CheckHeader(true);
 	fseek(ROM, 0, SEEK_SET);
 	fwrite(header, 1, 16, ROM);
