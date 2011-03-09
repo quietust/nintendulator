@@ -810,7 +810,7 @@ int	Load (FILE *in)
 		tpi = tpl;					// INFO
 		while (tpi > 0)
 		{
-			readLong(tpc);
+			readByte(tpc);
 			fwrite(&tpc, 1, 1, Data);
 			tpi--;
 		}
