@@ -579,7 +579,7 @@ int	Load (FILE *in)
 	ColorEmphasis = (Reg2001 & 0xE0) << 1;
 	GrayScale = (Reg2001 & 0x01) ? 0x30 : 0x3F;
 
-	switch (NES::CurRegion)
+	switch (region)
 	{
 	case 0: NES::SetRegion(NES::REGION_NTSC);	break;
 	case 1: NES::SetRegion(NES::REGION_PAL);	break;
