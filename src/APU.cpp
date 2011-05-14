@@ -19,6 +19,7 @@
 # include "CPU.h"
 # include "PPU.h"
 # include "AVI.h"
+# include "Controllers.h"
 
 # pragma comment(lib, "dsound.lib")
 # pragma comment(lib, "dxguid.lib")
@@ -808,7 +809,7 @@ void	Race::Run (void)
 	}
 }
 
-void	WriteReg (int Addr, unsigned char Val)
+void	MAPINT	IntWrite (int Bank, int Addr, int Val)
 {
 #ifndef	NSFPLAYER
 	if (Addr < 0x018)
@@ -825,23 +826,26 @@ void	WriteReg (int Addr, unsigned char Val)
 	case 0x006:	Square1::Write(2, Val);		break;
 	case 0x007:	Square1::Write(3, Val);		break;
 	case 0x008:	Triangle::Write(0, Val);	break;
-	case 0x009:	Triangle::Write(1, Val);	break;
 	case 0x00A:	Triangle::Write(2, Val);	break;
 	case 0x00B:	Triangle::Write(3, Val);	break;
 	case 0x00C:	Noise::Write(0, Val);		break;
-	case 0x00D:	Noise::Write(1, Val);		break;
 	case 0x00E:	Noise::Write(2, Val);		break;
 	case 0x00F:	Noise::Write(3, Val);		break;
 	case 0x010:	DPCM::Write(0, Val);		break;
 	case 0x011:	DPCM::Write(1, Val);		break;
 	case 0x012:	DPCM::Write(2, Val);		break;
 	case 0x013:	DPCM::Write(3, Val);		break;
+	case 0x014:	for (int i = 0; i < 0x100; i++)
+				CPU::MemSet(0x2004, CPU::MemGet((Val << 8) | i));
+			CPU::MemGet(CPU::PC);		break;
 	case 0x015:	Square0::Write(4, Val & 0x1);
 			Square1::Write(4, Val & 0x2);
 			Triangle::Write(4, Val & 0x4);
 			Noise::Write(4, Val & 0x8);
-			DPCM::Write(4, Val & 0x10);
-							break;
+			DPCM::Write(4, Val & 0x10);	break;
+#ifndef	NSFPLAYER
+	case 0x016:	Controllers::Write(Val);	break;
+#endif	/* !NSFPLAYER */
 	case 0x017:	Frame::Write(Val);		break;
 #ifndef	NSFPLAYER
 	default:	MessageBox(hMainWnd, _T("ERROR: Invalid sound write!"), _T("Nintendulator"), MB_OK);
@@ -851,17 +855,36 @@ void	WriteReg (int Addr, unsigned char Val)
 						break;
 	}
 }
-unsigned char	Read4015 (void)
+
+int	MAPINT	IntRead (int Bank, int Addr)
 {
-	unsigned char result =
-		((      Square0::LengthCtr) ? 0x01 : 0) |
-		((      Square1::LengthCtr) ? 0x02 : 0) |
-		((     Triangle::LengthCtr) ? 0x04 : 0) |
-		((        Noise::LengthCtr) ? 0x08 : 0) |
-		((         DPCM::LengthCtr) ? 0x10 : 0) |
-		((CPU::WantIRQ & IRQ_FRAME) ? 0x40 : 0) |
-		((CPU::WantIRQ &  IRQ_DPCM) ? 0x80 : 0);
-	CPU::WantIRQ &= ~IRQ_FRAME;	// DPCM flag doesn't get reset
+	int result = -1;
+	switch (Addr)
+	{
+	case 0x015:
+		result =
+			((      Square0::LengthCtr) ? 0x01 : 0) |
+			((      Square1::LengthCtr) ? 0x02 : 0) |
+			((     Triangle::LengthCtr) ? 0x04 : 0) |
+			((        Noise::LengthCtr) ? 0x08 : 0) |
+			((         DPCM::LengthCtr) ? 0x10 : 0) |
+			((CPU::WantIRQ & IRQ_FRAME) ? 0x40 : 0) |
+			((CPU::WantIRQ &  IRQ_DPCM) ? 0x80 : 0);
+			CPU::WantIRQ &= ~IRQ_FRAME;	// DPCM flag doesn't get reset
+		break;
+#ifndef	NSFPLAYER
+	case 0x016:
+		result = CPU::LastRead & 0xC0;
+		result |= Controllers::Port1->Read() & 0x19;
+		result |= Controllers::PortExp->Read1() & 0x1F;
+		break;
+	case 0x017:
+		result = CPU::LastRead & 0xC0;
+		result |= Controllers::Port2->Read() & 0x19;
+		result |= Controllers::PortExp->Read2() & 0x1F;
+		break;
+#endif	/* !NSFPLAYER */
+	}
 	return result;
 }
 
@@ -1193,10 +1216,10 @@ int	Load (FILE *in)
 	unsigned char tpc;
 
 	readByte(tpc);			//	uint8		Last value written to $4015, lower 4 bits
-	WriteReg(0x015, tpc);	// this will ACK any DPCM IRQ
+	IntWrite(0x4, 0x015, tpc);	// this will ACK any DPCM IRQ
 
 	readByte(tpc);			//	uint8		Last value written to $4001
-	WriteReg(0x001, tpc);
+	IntWrite(0x4, 0x001, tpc);
 	readWord(Square0::freq);	//	uint16		Square0 frequency
 	readByte(Square0::LengthCtr);	//	uint8		Square0 timer
 	readByte(Square0::CurD);	//	uint8		Square0 duty cycle pointer
@@ -1208,10 +1231,10 @@ int	Load (FILE *in)
 	readByte(Square0::BendCtr);	//	uint8		Square0 bend counter
 	readWord(Square0::Cycles);	//	uint16		Square0 cycles
 	readByte(tpc);			//	uint8		Last value written to $4000
-	WriteReg(0x000, tpc);
+	IntWrite(0x4, 0x000, tpc);
 
 	readByte(tpc);			//	uint8		Last value written to $4005
-	WriteReg(0x005, tpc);
+	IntWrite(0x4, 0x005, tpc);
 	readWord(Square1::freq);	//	uint16		Square1 frequency
 	readByte(Square1::LengthCtr);	//	uint8		Square1 timer
 	readByte(Square1::CurD);	//	uint8		Square1 duty cycle pointer
@@ -1223,7 +1246,7 @@ int	Load (FILE *in)
 	readByte(Square1::BendCtr);	//	uint8		Square1 bend counter
 	readWord(Square1::Cycles);	//	uint16		Square1 cycles
 	readByte(tpc);			//	uint8		Last value written to $4004
-	WriteReg(0x004, tpc);
+	IntWrite(0x4, 0x004, tpc);
 
 	readWord(Triangle::freq);	//	uint16		Triangle frequency
 	readByte(Triangle::LengthCtr);	//	uint8		Triangle timer
@@ -1232,10 +1255,10 @@ int	Load (FILE *in)
 	readByte(Triangle::LinCtr);	//	uint8		Triangle linear counter
 	readByte(Triangle::Cycles);	//	uint16		Triangle cycles
 	readByte(tpc);			//	uint8		Last value written to $4008
-	WriteReg(0x008, tpc);
+	IntWrite(0x4, 0x008, tpc);
 
 	readByte(tpc);			//	uint8		Last value written to $400E
-	WriteReg(0x00E, tpc);
+	IntWrite(0x4, 0x00E, tpc);
 	readByte(Noise::LengthCtr);	//	uint8		Noise timer
 	readWord(Noise::CurD);		//	uint16		Noise duty cycle pointer
 	readByte(Noise::EnvClk);	//	uint8		Boolean flag for whether Noise envelope needs a reload
@@ -1243,16 +1266,16 @@ int	Load (FILE *in)
 	readByte(Noise::Envelope);	//	uint8		Noise  envelope value
 	readWord(Noise::Cycles);	//	uint16		Noise cycles
 	readByte(tpc);			//	uint8		Last value written to $400C
-	WriteReg(0x00C, tpc);
+	IntWrite(0x4, 0x00C, tpc);
 
 	readByte(tpc);			//	uint8		Last value written to $4010
-	WriteReg(0x010, tpc);
+	IntWrite(0x4, 0x010, tpc);
 	readByte(tpc);			//	uint8		Last value written to $4011
-	WriteReg(0x011, tpc);
+	IntWrite(0x4, 0x011, tpc);
 	readByte(tpc);			//	uint8		Last value written to $4012
-	WriteReg(0x012, tpc);
+	IntWrite(0x4, 0x012, tpc);
 	readByte(tpc);			//	uint8		Last value written to $4013
-	WriteReg(0x013, tpc);
+	IntWrite(0x4, 0x013, tpc);
 	readWord(DPCM::CurAddr);	//	uint16		DPCM current address
 	readWord(DPCM::SampleLen);	//	uint16		DPCM current length
 	readByte(DPCM::shiftreg);	//	uint8		DPCM shift register
@@ -1266,7 +1289,7 @@ int	Load (FILE *in)
 	readWord(DPCM::LengthCtr);	//	uint16		DPCM length counter
 
 	readByte(tpc);			//	uint8		Frame counter bits (last write to $4017)
-	WriteReg(0x017, tpc);	// and this will ACK any frame IRQ
+	IntWrite(0x4, 0x017, tpc);	// and this will ACK any frame IRQ
 	readWord(Frame::Cycles);	//	uint16		Frame counter cycles
 	readByte(Frame::Num);		//	uint8		Frame counter phase
 

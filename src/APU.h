@@ -44,7 +44,7 @@ void	Config		(HWND);
 #endif	/* !NSFPLAYER */
 void	Run		(void);
 void	SetRegion	(void);
-void	WriteReg	(int, unsigned char);
-unsigned char	Read4015	(void);
+int	MAPINT	IntRead (int, int);
+void	MAPINT	IntWrite (int, int, int);
 } // namespace APU
 #endif	/* !APU_H */

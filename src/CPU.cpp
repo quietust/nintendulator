@@ -18,7 +18,6 @@
 # include "CPU.h"
 # include "PPU.h"
 # include "APU.h"
-# include "Controllers.h"
 #endif	/* NSFPLAYER */
 
 namespace CPU
@@ -286,47 +285,6 @@ int	MAPINT	ReadRAM (int Bank, int Addr)
 void	MAPINT	WriteRAM (int Bank, int Addr, int Val)
 {
 	RAM[Addr & 0x07FF] = (unsigned char)Val;
-}
-
-int	MAPINT	Read4k (int Bank, int Addr)
-{
-	switch (Addr)
-	{
-	case 0x015:	return APU::Read4015();			break;
-#ifndef	NSFPLAYER
-	case 0x016:	return (LastRead & 0xC0) |
-			(Controllers::Port1->Read() & 0x19) |
-			(Controllers::PortExp->Read1() & 0x1F);	break;
-	case 0x017:	return (LastRead & 0xC0) |
-			(Controllers::Port2->Read() & 0x19) |
-			(Controllers::PortExp->Read2() & 0x1F);	break;
-#else	/* NSFPLAYER */
-	case 0x016:
-	case 0x017:	return (LastRead & 0xC0);		break;
-#endif	/* !NSFPLAYER */
-	default:	return LastRead;			break;
-	}
-}
-
-void	MAPINT	Write4k (int Bank, int Addr, int Val)
-{
-	int i;
-	switch (Addr)
-	{
-	case 0x000:case 0x001:case 0x002:case 0x003:
-	case 0x004:case 0x005:case 0x006:case 0x007:
-	case 0x008:case 0x009:case 0x00A:case 0x00B:
-	case 0x00C:case 0x00D:case 0x00E:case 0x00F:
-	case 0x010:case 0x011:case 0x012:case 0x013:
-	case 0x015:case 0x017:
-			APU::WriteReg(Addr, (unsigned char)Val);	break;
-	case 0x014:	for (i = 0; i < 0x100; i++)
-				MemSet(0x2004, MemGet((Val << 8) | i));
-			MemGet(PC);	break;
-#ifndef	NSFPLAYER
-	case 0x016:	Controllers::Write((unsigned char)Val);		break;
-#endif	/* !NSFPLAYER */
-	}
 }
 
 int	MAPINT	ReadPRG (int Bank, int Addr)

@@ -101,7 +101,7 @@ void	Reset (void)
 	}
 	CPU::ReadHandler[0] = CPU::ReadRAM;	CPU::WriteHandler[0] = CPU::WriteRAM;
 	CPU::ReadHandler[1] = CPU::ReadRAM;	CPU::WriteHandler[1] = CPU::WriteRAM;
-	CPU::ReadHandler[4] = CPU::Read4k;	CPU::WriteHandler[4] = CPU::Write4k;
+	CPU::ReadHandler[4] = APU::IntRead;	CPU::WriteHandler[4] = APU::IntWrite;
 
 	CPU::PowerOn();
 	APU::PowerOn();

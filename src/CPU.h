@@ -67,8 +67,6 @@ int	Load (FILE *);
 void	ExecOp (void);
 int	MAPINT	ReadRAM (int, int);
 void	MAPINT	WriteRAM (int, int, int);
-int	MAPINT	Read4k (int, int);
-void	MAPINT	Write4k (int, int, int);
 int	MAPINT	ReadPRG (int, int);
 void	MAPINT	WritePRG (int, int, int);
 } // namespace CPU

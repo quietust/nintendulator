@@ -808,7 +808,7 @@ void	Reset (RESET_TYPE ResetType)
 		}
 	}
 
-	CPU::ReadHandler[4] = CPU::Read4k;	CPU::WriteHandler[4] = CPU::Write4k;
+	CPU::ReadHandler[4] = APU::IntRead;	CPU::WriteHandler[4] = APU::IntWrite;
 	if (!GameGenie)
 		Genie::CodeStat = 0;
 	for (i = 0x0; i < 0x8; i++)
