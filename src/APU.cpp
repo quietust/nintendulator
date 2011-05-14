@@ -76,10 +76,10 @@ const	unsigned char	LengthCounts[32] = {
 	0x20,0x1E
 };
 const	signed char	SquareDuty[4][8] = {
-	{-4,+4,-4,-4,-4,-4,-4,-4},
-	{-4,+4,+4,-4,-4,-4,-4,-4},
-	{-4,+4,+4,+4,+4,-4,-4,-4},
-	{+4,-4,-4,+4,+4,+4,+4,+4}
+	{-4,-4,-4,-4,-4,-4,-4,+4},
+	{-4,-4,-4,-4,-4,-4,+4,+4},
+	{-4,-4,-4,-4,+4,+4,+4,+4},
+	{+4,+4,+4,+4,+4,+4,-4,-4}
 };
 const	signed char	TriangleDuty[32] = {
 	-8,-7,-6,-5,-4,-3,-2,-1,
@@ -209,7 +209,7 @@ inline void	Run (void)
 	if (!--Cycles)
 	{
 		Cycles = (freq + 1) << 1;
-		CurD = (CurD + 1) & 0x7;
+		CurD = (CurD - 1) & 0x7;
 		if (Active)
 			Pos = SquareDuty[duty][CurD] * Vol;
 	}
@@ -333,7 +333,7 @@ inline void	Run (void)
 	if (!--Cycles)
 	{
 		Cycles = (freq + 1) << 1;
-		CurD = (CurD + 1) & 0x7;
+		CurD = (CurD - 1) & 0x7;
 		if (Active)
 			Pos = SquareDuty[duty][CurD] * Vol;
 	}
