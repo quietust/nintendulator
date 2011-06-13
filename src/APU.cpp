@@ -845,14 +845,9 @@ void	MAPINT	IntWrite (int Bank, int Addr, int Val)
 			DPCM::Write(4, Val & 0x10);	break;
 #ifndef	NSFPLAYER
 	case 0x016:	Controllers::Write(Val);	break;
+#else	/* NSFPLAYER */
 #endif	/* !NSFPLAYER */
 	case 0x017:	Frame::Write(Val);		break;
-#ifndef	NSFPLAYER
-	default:	MessageBox(hMainWnd, _T("ERROR: Invalid sound write!"), _T("Nintendulator"), MB_OK);
-#else	/* NSFPLAYER */
-	default:	MessageBox(mod.hMainWindow, _T("ERROR: Invalid sound write!"), _T("in_nintendulator"), MB_OK);
-#endif	/* !NSFPLAYER */
-						break;
 	}
 }
 
