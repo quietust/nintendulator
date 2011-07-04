@@ -716,6 +716,8 @@ inline void	Write (unsigned char Val)
 	if (Bits & 0x80)
 		Cycles = CycleTable_1[0];
 	else	Cycles = CycleTable_0[0];
+	// if the write happens before an odd clock, the action is delayed by 2 cycles
+	// otherwise, it's delayed by 1 cycle
 	if (InternalClock & 1)
 		Cycles += 2;
 	else	Cycles++;
@@ -835,9 +837,14 @@ void	MAPINT	IntWrite (int Bank, int Addr, int Val)
 	case 0x011:	DPCM::Write(1, Val);		break;
 	case 0x012:	DPCM::Write(2, Val);		break;
 	case 0x013:	DPCM::Write(3, Val);		break;
-	case 0x014:	for (int i = 0; i < 0x100; i++)
+	case 0x014:	// if the write happens before an even clock, the action is delayed by 2 cycles
+			// otherwise, it's delayed by 1 cycle
+			if (!(InternalClock & 1))
+				CPU::MemGet(CPU::PC);
+			CPU::MemGet(CPU::PC);
+			for (int i = 0; i < 0x100; i++)
 				CPU::MemSet(0x2004, CPU::MemGet((Val << 8) | i));
-			CPU::MemGet(CPU::PC);		break;
+							break;
 	case 0x015:	Square0::Write(4, Val & 0x1);
 			Square1::Write(4, Val & 0x2);
 			Triangle::Write(4, Val & 0x4);
