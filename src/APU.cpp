@@ -80,29 +80,29 @@ const	signed char	SquareDuty[4][8] = {
 	{-4,-4,-4,-4,-4,-4,-4,+4},
 	{-4,-4,-4,-4,-4,-4,+4,+4},
 	{-4,-4,-4,-4,+4,+4,+4,+4},
-	{+4,+4,+4,+4,+4,+4,-4,-4}
+	{+4,+4,+4,+4,+4,+4,-4,-4},
 };
 const	signed char	TriangleDuty[32] = {
+	+7,+6,+5,+4,+3,+2,+1,+0,
+	-1,-2,-3,-4,-5,-6,-7,-8,
 	-8,-7,-6,-5,-4,-3,-2,-1,
 	+0,+1,+2,+3,+4,+5,+6,+7,
-	+7,+6,+5,+4,+3,+2,+1,+0,
-	-1,-2,-3,-4,-5,-6,-7,-8
 };
 const	unsigned long	NoiseFreqNTSC[16] = {
 	0x004,0x008,0x010,0x020,0x040,0x060,0x080,0x0A0,
-	0x0CA,0x0FE,0x17C,0x1FC,0x2FA,0x3F8,0x7F2,0xFE4
+	0x0CA,0x0FE,0x17C,0x1FC,0x2FA,0x3F8,0x7F2,0xFE4,
 };
 const	unsigned long	NoiseFreqPAL[16] = {
 	0x004,0x007,0x00E,0x01E,0x03C,0x058,0x076,0x094,
-	0x0BC,0x0EC,0x162,0x1D8,0x2C4,0x3B0,0x762,0xEC2
+	0x0BC,0x0EC,0x162,0x1D8,0x2C4,0x3B0,0x762,0xEC2,
 };
 const	unsigned long	DPCMFreqNTSC[16] = {
 	0x1AC,0x17C,0x154,0x140,0x11E,0x0FE,0x0E2,0x0D6,
-	0x0BE,0x0A0,0x08E,0x080,0x06A,0x054,0x048,0x036
+	0x0BE,0x0A0,0x08E,0x080,0x06A,0x054,0x048,0x036,
 };
 const	unsigned long	DPCMFreqPAL[16] = {
 	0x18E,0x162,0x13C,0x12A,0x114,0x0EC,0x0D2,0x0C6,
-	0x0B0,0x094,0x084,0x076,0x062,0x04E,0x042,0x032
+	0x0B0,0x094,0x084,0x076,0x062,0x04E,0x042,0x032,
 };
 const	int	FrameCyclesNTSC_0[7] = { 7459,7456,7458,7457,1,1,7457 };
 const	int	FrameCyclesPAL_0[7] = { 8315,8314,8312,8313,1,1,8313 };
@@ -207,9 +207,9 @@ inline void	Write (int Reg, unsigned char Val)
 
 inline void	Run (void)
 {
-	if (!--Cycles)
+	if (!Cycles--)
 	{
-		Cycles = (freq + 1) << 1;
+		Cycles = freq << 1;
 		CurD = (CurD - 1) & 0x7;
 		if (Active)
 			Pos = SquareDuty[duty][CurD] * Vol;
@@ -221,11 +221,11 @@ inline void	QuarterFrame (void)
 	{
 		EnvClk = FALSE;
 		Envelope = 0xF;
-		EnvCtr = volume + 1;
+		EnvCtr = volume;
 	}
-	else if (!--EnvCtr)
+	else if (!EnvCtr--)
 	{
-		EnvCtr = volume + 1;
+		EnvCtr = volume;
 		if (Envelope)
 			Envelope--;
 		else	Envelope = wavehold ? 0xF : 0x0;
@@ -235,9 +235,9 @@ inline void	QuarterFrame (void)
 }
 inline void	HalfFrame (void)
 {
-	if (!--BendCtr)
+	if (!BendCtr--)
 	{
-		BendCtr = swpspeed + 1;
+		BendCtr = swpspeed;
 		if (swpenab && swpstep && ValidFreq)
 		{
 			int sweep = freq >> swpstep;
@@ -247,7 +247,7 @@ inline void	HalfFrame (void)
 	if (SwpClk)
 	{
 		SwpClk = FALSE;
-		BendCtr = swpspeed + 1;
+		BendCtr = swpspeed;
 	}
 	if (LengthCtr && !wavehold)
 		LengthCtr--;
@@ -331,9 +331,9 @@ inline void	Write (int Reg, unsigned char Val)
 }
 inline void	Run (void)
 {
-	if (!--Cycles)
+	if (!Cycles--)
 	{
-		Cycles = (freq + 1) << 1;
+		Cycles = freq << 1;
 		CurD = (CurD - 1) & 0x7;
 		if (Active)
 			Pos = SquareDuty[duty][CurD] * Vol;
@@ -345,11 +345,11 @@ inline void	QuarterFrame (void)
 	{
 		EnvClk = FALSE;
 		Envelope = 0xF;
-		EnvCtr = volume + 1;
+		EnvCtr = volume;
 	}
-	else if (!--EnvCtr)
+	else if (!EnvCtr--)
 	{
-		EnvCtr = volume + 1;
+		EnvCtr = volume;
 		if (Envelope)
 			Envelope--;
 		else	Envelope = wavehold ? 0xF : 0x0;
@@ -359,9 +359,9 @@ inline void	QuarterFrame (void)
 }
 inline void	HalfFrame (void)
 {
-	if (!--BendCtr)
+	if (!BendCtr--)
 	{
-		BendCtr = swpspeed + 1;
+		BendCtr = swpspeed;
 		if (swpenab && swpstep && ValidFreq)
 		{
 			int sweep = freq >> swpstep;
@@ -371,7 +371,7 @@ inline void	HalfFrame (void)
 	if (SwpClk)
 	{
 		SwpClk = FALSE;
-		BendCtr = swpspeed + 1;
+		BendCtr = swpspeed;
 	}
 	if (LengthCtr && !wavehold)
 		LengthCtr--;
@@ -440,9 +440,9 @@ inline void	Write (int Reg, unsigned char Val)
 }
 inline void	Run (void)
 {
-	if (!--Cycles)
+	if (!Cycles--)
 	{
-		Cycles = freq + 1;
+		Cycles = freq;
 		if (Active)
 		{
 			CurD++;
@@ -532,9 +532,10 @@ inline void	Write (int Reg, unsigned char Val)
 }
 inline void	Run (void)
 {
+	// this uses pre-decrement due to the lookup table
 	if (!--Cycles)
 	{
-		Cycles = FreqTable[freq];	// no + 1 here
+		Cycles = FreqTable[freq];
 		if (datatype)
 			CurD = (CurD << 1) | (((CurD >> 14) ^ (CurD >> 8)) & 0x1);
 		else	CurD = (CurD << 1) | (((CurD >> 14) ^ (CurD >> 13)) & 0x1);
@@ -548,11 +549,11 @@ inline void	QuarterFrame (void)
 	{
 		EnvClk = FALSE;
 		Envelope = 0xF;
-		EnvCtr = volume + 1;
+		EnvCtr = volume;
 	}
-	else if (!--EnvCtr)
+	else if (!EnvCtr--)
 	{
-		EnvCtr = volume + 1;
+		EnvCtr = volume;
 		if (Envelope)
 			Envelope--;
 		else	Envelope = wavehold ? 0xF : 0x0;
@@ -629,6 +630,7 @@ inline void	Write (int Reg, unsigned char Val)
 }
 inline void	Run (void)
 {
+	// this uses pre-decrement due to the lookup table
 	if (!--Cycles)
 	{
 		Cycles = FreqTable[freq];
@@ -726,6 +728,7 @@ inline void	Write (unsigned char Val)
 }
 inline void	Run (void)
 {
+	// this uses pre-decrement due to the lookup table
 	if (!--Cycles)
 	{
 		if (Bits & 0x80)
