@@ -104,10 +104,8 @@ const	unsigned long	DPCMFreqPAL[16] = {
 	0x18E,0x162,0x13C,0x12A,0x114,0x0EC,0x0D2,0x0C6,
 	0x0B0,0x094,0x084,0x076,0x062,0x04E,0x042,0x032,
 };
-const	int	FrameCyclesNTSC_0[7] = { 7459,7456,7458,7457,1,1,7457 };
-const	int	FrameCyclesPAL_0[7] = { 8315,8314,8312,8313,1,1,8313 };
-const	int	FrameCyclesNTSC_1[6] = { 1,7458,7456,7458,7456,7454 };
-const	int	FrameCyclesPAL_1[6] = { 1,8314,8314,8312,8314,8312 };
+const	int	FrameCyclesNTSC[5] = { 7456,14912,22370,29828,37280 };
+const	int	FrameCyclesPAL[5] = { 8312,16626,24938,33252,41560 };
 
 namespace Race
 {
@@ -693,88 +691,99 @@ void	Fetch (void)
 namespace Frame
 {
 	unsigned char Bits;
-	unsigned long Cycles;
-	int Num;
+	int Cycles;
+	int Quarter, Half, IRQ, Zero;
 
-const	int	*CycleTable_0;
-const	int	*CycleTable_1;
+const	int	*CycleTable;
 void	PowerOn (void)
 {
 	Bits = 0;
-	Num = 0;
-	Cycles = CycleTable_0[0];
+	Cycles = 0;
+	Quarter = Half = IRQ = Zero = 0;
 }
 void	Reset (void)
 {
-	Num = 0;
-	if (Bits & 0x80)
-		Cycles = CycleTable_1[0];
-	else	Cycles = CycleTable_0[0];
+	Cycles = 0;
+	Quarter = Half = IRQ = Zero = 0;
 }
 inline void	Write (unsigned char Val)
 {
 	Bits = Val & 0xC0;
-	Num = 0;
-	if (Bits & 0x80)
-		Cycles = CycleTable_1[0];
-	else	Cycles = CycleTable_0[0];
-	// if the write happens before an odd clock, the action is delayed by 2 cycles
-	// otherwise, it's delayed by 1 cycle
+	// if the write happens before an odd clock, the action is delayed by 3 cycles
+	// otherwise, it's delayed by 2 cycles
+	// it also takes an extra cycle for the loaded value to propagate into the decoder
 	if (InternalClock & 1)
-		Cycles += 2;
-	else	Cycles++;
+		Zero = 3;
+	else	Zero = 2;
 	if (Bits & 0x40)
 		CPU::WantIRQ &= ~IRQ_FRAME;
 }
 inline void	Run (void)
 {
-	// this uses pre-decrement due to the lookup table
-	if (!--Cycles)
+	// step A
+	if (Cycles == CycleTable[0])
+	{
+		Quarter = 2;
+	}
+	// step B
+	else if (Cycles == CycleTable[1])
+	{
+		Quarter = 2;
+		Half = 2;
+	}
+	// step C
+	else if (Cycles == CycleTable[2])
+	{
+		Quarter = 2;
+	}
+	// step D
+	else if (Cycles == CycleTable[3])
+	{
+		if (!(Bits & 0x80))
+		{
+			Quarter = 2;
+			Half = 2;
+			IRQ = 3;
+			Cycles = -2;
+		}
+	}
+	// step E
+	else if (Cycles == CycleTable[4])
+	{
+		Quarter = 2;
+		Half = 2;
+		Cycles = -2;
+	}
+	Cycles++;
+
+	if (Quarter && !--Quarter)
+	{
+		Square0::QuarterFrame();
+		Square1::QuarterFrame();
+		Triangle::QuarterFrame();
+		Noise::QuarterFrame();
+	}
+	if (Half && !--Half)
+	{
+		Square0::HalfFrame();
+		Square1::HalfFrame();
+		Triangle::HalfFrame();
+		Noise::HalfFrame();
+	}
+	if (IRQ)
+	{
+		if (!Bits)
+			CPU::WantIRQ |= IRQ_FRAME;
+		IRQ--;
+	}
+	if (Zero && !--Zero)
 	{
 		if (Bits & 0x80)
 		{
-			if (Num < 4)
-			{
-				Square0::QuarterFrame();
-				Square1::QuarterFrame();
-				Triangle::QuarterFrame();
-				Noise::QuarterFrame();
-				if ((Num == 0) || (Num == 2))
-				{
-					Square0::HalfFrame();
-					Square1::HalfFrame();
-					Triangle::HalfFrame();
-					Noise::HalfFrame();
-				}
-			}
-			Cycles = CycleTable_1[Num + 1];
-			Num++;
-			if (Num == 5)
-				Num = 0;
+			Quarter = 2;
+			Half = 2;
 		}
-		else
-		{
-			if ((Num == 0) || (Num == 1) || (Num == 2) || (Num == 4))
-			{
-				Square0::QuarterFrame();
-				Square1::QuarterFrame();
-				Triangle::QuarterFrame();
-				Noise::QuarterFrame();
-			}
-			if ((Num == 1) || (Num == 4))
-			{
-				Square0::HalfFrame();
-				Square1::HalfFrame();
-				Triangle::HalfFrame();
-				Noise::HalfFrame();
-			}
-			if (((Num == 3) || (Num == 4) || (Num == 5)) && !(Bits & 0x40))
-				CPU::WantIRQ |= IRQ_FRAME;
-			Cycles = CycleTable_0[Num + 1];
-			Num++;
-			if (Num == 6)
-				Num = 0;
-		}
+		Cycles = 0;
 	}
 }
 } // namespace Frame
@@ -927,24 +936,21 @@ void	SetRegion (void)
 		MHz = 1789773;
 		Noise::FreqTable = NoiseFreqNTSC;
 		DPCM::FreqTable = DPCMFreqNTSC;
-		Frame::CycleTable_0 = FrameCyclesNTSC_0;
-		Frame::CycleTable_1 = FrameCyclesNTSC_1;
+		Frame::CycleTable = FrameCyclesNTSC;
 		break;
 	case NES::REGION_PAL:
 		WantFPS = 50;
 		MHz = 1662607;
 		Noise::FreqTable = NoiseFreqPAL;
 		DPCM::FreqTable = DPCMFreqPAL;
-		Frame::CycleTable_0 = FrameCyclesPAL_0;
-		Frame::CycleTable_1 = FrameCyclesPAL_1;
+		Frame::CycleTable = FrameCyclesPAL;
 		break;
 	case NES::REGION_DENDY:
 		WantFPS = 50;
 		MHz = 1773447;
 		Noise::FreqTable = NoiseFreqNTSC;
 		DPCM::FreqTable = DPCMFreqNTSC;
-		Frame::CycleTable_0 = FrameCyclesNTSC_0;
-		Frame::CycleTable_1 = FrameCyclesNTSC_1;
+		Frame::CycleTable = FrameCyclesNTSC;
 		break;
 	default:
 		EI.DbgOut(_T("Invalid APU region selected!"));
@@ -1207,7 +1213,7 @@ int	Save (FILE *out)
 
 	writeByte(Regs[0x17]);		//	uint8		Last value written to $4017
 	writeWord(Frame::Cycles);	//	uint16		Frame counter cycles
-	writeByte(Frame::Num);		//	uint8		Frame counter phase
+	writeByte(0);			//	uint8		Frame counter phase - no longer used
 
 	tpc = CPU::WantIRQ & (IRQ_DPCM | IRQ_FRAME);
 	writeByte(tpc);			//	uint8		APU-related IRQs (PCM and FRAME, as-is)
@@ -1296,7 +1302,7 @@ int	Load (FILE *in)
 	readByte(tpc);			//	uint8		Frame counter bits (last write to $4017)
 	IntWrite(0x4, 0x017, tpc);	// and this will ACK any frame IRQ
 	readWord(Frame::Cycles);	//	uint16		Frame counter cycles
-	readByte(Frame::Num);		//	uint8		Frame counter phase
+	readByte(_val);			//	uint8		Frame counter phase - no longer used
 
 	readByte(tpc);			//	uint8		APU-related IRQs (PCM and FRAME, as-is)
 	CPU::WantIRQ |= tpc;	// so we can reload them here
