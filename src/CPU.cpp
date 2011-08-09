@@ -412,6 +412,10 @@ __forceinline	void	AM_INYW (void)
 	if (inc)
 		CalcAddrH++;
 }
+__forceinline	void	AM_NON (void)
+{
+	// placeholder for instructions that don't use any of the above addressing modes
+}
 __forceinline	void	IN_ADC (void)
 {
 	unsigned char Val = MemGet(CalcAddr);
@@ -438,7 +442,7 @@ __forceinline	void	IN_ASL (void)
 	FN = (TmpData >> 7) & 1;
 	MemSet(CalcAddr, TmpData);
 }
-__forceinline	void	IN_ASL_A (void)
+__forceinline	void	IN_ASLA (void)
 {
 	FC = (A >> 7) & 1;
 	A <<= 1;
@@ -608,7 +612,7 @@ __forceinline	void	IN_JMP (void)
 {
 	PC = CalcAddr;
 }
-__forceinline	void	IN_JMP_I (void)
+__forceinline	void	IN_JMPI (void)
 {
 	PCL = MemGet(CalcAddr);
 	CalcAddrL++;
@@ -651,7 +655,7 @@ __forceinline	void	IN_LSR (void)
 	FN = 0;
 	MemSet(CalcAddr, TmpData);
 }
-__forceinline	void	IN_LSR_A (void)
+__forceinline	void	IN_LSRA (void)
 {
 	FC = (A & 0x01);
 	A >>= 1;
@@ -700,7 +704,7 @@ __forceinline	void	IN_ROL (void)
 	FN = (TmpData >> 7) & 1;
 	MemSet(CalcAddr, TmpData);
 }
-__forceinline	void	IN_ROL_A (void)
+__forceinline	void	IN_ROLA (void)
 {
 	unsigned char carry = FC;
 	FC = (A >> 7) & 1;
@@ -719,7 +723,7 @@ __forceinline	void	IN_ROR (void)
 	FN = !!carry;
 	MemSet(CalcAddr, TmpData);
 }
-__forceinline	void	IN_ROR_A (void)
+__forceinline	void	IN_RORA (void)
 {
 	unsigned char carry = FC;
 	FC = (A & 0x01);
@@ -987,46 +991,51 @@ __forceinline	void	IV_AXS (void)
 	X = result & 0xFF;
 	FN = (result >> 7) & 1;
 }
+
 void	ExecOp (void)
 {
 	Opcode = MemGetCode(OpAddr = PC++);
 	switch (Opcode)
 	{
-case 0x00:AM_IMM();  IN_BRK();break;case 0x10:AM_REL();  IN_BPL();break;case 0x08:AM_IMP();  IN_PHP();break;case 0x18:AM_IMP();  IN_CLC();break;case 0x04:AM_ZPG();  IV_NOP();break;case 0x14:AM_ZPX();  IV_NOP();break;case 0x0C:AM_ABS();  IV_NOP();break;case 0x1C:AM_ABX();  IV_NOP();break;
-case 0x20:           IN_JSR();break;case 0x30:AM_REL();  IN_BMI();break;case 0x28:AM_IMP();  IN_PLP();break;case 0x38:AM_IMP();  IN_SEC();break;case 0x24:AM_ZPG();  IN_BIT();break;case 0x34:AM_ZPX();  IV_NOP();break;case 0x2C:AM_ABS();  IN_BIT();break;case 0x3C:AM_ABX();  IV_NOP();break;
-case 0x40:AM_IMP();  IN_RTI();break;case 0x50:AM_REL();  IN_BVC();break;case 0x48:AM_IMP();  IN_PHA();break;case 0x58:AM_IMP();  IN_CLI();break;case 0x44:AM_ZPG();  IV_NOP();break;case 0x54:AM_ZPX();  IV_NOP();break;case 0x4C:AM_ABS();  IN_JMP();break;case 0x5C:AM_ABX();  IV_NOP();break;
-case 0x60:AM_IMP();  IN_RTS();break;case 0x70:AM_REL();  IN_BVS();break;case 0x68:AM_IMP();  IN_PLA();break;case 0x78:AM_IMP();  IN_SEI();break;case 0x64:AM_ZPG();  IV_NOP();break;case 0x74:AM_ZPX();  IV_NOP();break;case 0x6C:AM_ABS();IN_JMP_I();break;case 0x7C:AM_ABX();  IV_NOP();break;
-case 0x80:AM_IMM();  IV_NOP();break;case 0x90:AM_REL();  IN_BCC();break;case 0x88:AM_IMP();  IN_DEY();break;case 0x98:AM_IMP();  IN_TYA();break;case 0x84:AM_ZPG();  IN_STY();break;case 0x94:AM_ZPX();  IN_STY();break;case 0x8C:AM_ABS();  IN_STY();break;case 0x9C:AM_ABXW(); IV_NOP();break;
-case 0xA0:AM_IMM();  IN_LDY();break;case 0xB0:AM_REL();  IN_BCS();break;case 0xA8:AM_IMP();  IN_TAY();break;case 0xB8:AM_IMP();  IN_CLV();break;case 0xA4:AM_ZPG();  IN_LDY();break;case 0xB4:AM_ZPX();  IN_LDY();break;case 0xAC:AM_ABS();  IN_LDY();break;case 0xBC:AM_ABX();  IN_LDY();break;
-case 0xC0:AM_IMM();  IN_CPY();break;case 0xD0:AM_REL();  IN_BNE();break;case 0xC8:AM_IMP();  IN_INY();break;case 0xD8:AM_IMP();  IN_CLD();break;case 0xC4:AM_ZPG();  IN_CPY();break;case 0xD4:AM_ZPX();  IV_NOP();break;case 0xCC:AM_ABS();  IN_CPY();break;case 0xDC:AM_ABX();  IV_NOP();break;
-case 0xE0:AM_IMM();  IN_CPX();break;case 0xF0:AM_REL();  IN_BEQ();break;case 0xE8:AM_IMP();  IN_INX();break;case 0xF8:AM_IMP();  IN_SED();break;case 0xE4:AM_ZPG();  IN_CPX();break;case 0xF4:AM_ZPX();  IV_NOP();break;case 0xEC:AM_ABS();  IN_CPX();break;case 0xFC:AM_ABX();  IV_NOP();break;
+#define OP(op,adr,ins) case 0x##op: AM_##adr(); ins(); break;
 
-case 0x02:           IV_HLT();break;case 0x12:           IV_HLT();break;case 0x0A:AM_IMP();IN_ASL_A();break;case 0x1A:AM_IMP(); IV_NOP2();break;case 0x06:AM_ZPG();  IN_ASL();break;case 0x16:AM_ZPX();  IN_ASL();break;case 0x0E:AM_ABS();  IN_ASL();break;case 0x1E:AM_ABXW(); IN_ASL();break;
-case 0x22:           IV_HLT();break;case 0x32:           IV_HLT();break;case 0x2A:AM_IMP();IN_ROL_A();break;case 0x3A:AM_IMP(); IV_NOP2();break;case 0x26:AM_ZPG();  IN_ROL();break;case 0x36:AM_ZPX();  IN_ROL();break;case 0x2E:AM_ABS();  IN_ROL();break;case 0x3E:AM_ABXW(); IN_ROL();break;
-case 0x42:           IV_HLT();break;case 0x52:           IV_HLT();break;case 0x4A:AM_IMP();IN_LSR_A();break;case 0x5A:AM_IMP(); IV_NOP2();break;case 0x46:AM_ZPG();  IN_LSR();break;case 0x56:AM_ZPX();  IN_LSR();break;case 0x4E:AM_ABS();  IN_LSR();break;case 0x5E:AM_ABXW(); IN_LSR();break;
-case 0x62:           IV_HLT();break;case 0x72:           IV_HLT();break;case 0x6A:AM_IMP();IN_ROR_A();break;case 0x7A:AM_IMP(); IV_NOP2();break;case 0x66:AM_ZPG();  IN_ROR();break;case 0x76:AM_ZPX();  IN_ROR();break;case 0x6E:AM_ABS();  IN_ROR();break;case 0x7E:AM_ABXW(); IN_ROR();break;
-case 0x82:AM_IMM();  IV_NOP();break;case 0x92:           IV_HLT();break;case 0x8A:AM_IMP();  IN_TXA();break;case 0x9A:AM_IMP();  IN_TXS();break;case 0x86:AM_ZPG();  IN_STX();break;case 0x96:AM_ZPY();  IN_STX();break;case 0x8E:AM_ABS();  IN_STX();break;case 0x9E:AM_ABYW(); IV_NOP();break;
-case 0xA2:AM_IMM();  IN_LDX();break;case 0xB2:           IV_HLT();break;case 0xAA:AM_IMP();  IN_TAX();break;case 0xBA:AM_IMP();  IN_TSX();break;case 0xA6:AM_ZPG();  IN_LDX();break;case 0xB6:AM_ZPY();  IN_LDX();break;case 0xAE:AM_ABS();  IN_LDX();break;case 0xBE:AM_ABY();  IN_LDX();break;
-case 0xC2:AM_IMM();  IV_NOP();break;case 0xD2:           IV_HLT();break;case 0xCA:AM_IMP();  IN_DEX();break;case 0xDA:AM_IMP(); IV_NOP2();break;case 0xC6:AM_ZPG();  IN_DEC();break;case 0xD6:AM_ZPX();  IN_DEC();break;case 0xCE:AM_ABS();  IN_DEC();break;case 0xDE:AM_ABXW(); IN_DEC();break;
-case 0xE2:AM_IMM();  IV_NOP();break;case 0xF2:           IV_HLT();break;case 0xEA:AM_IMP();  IN_NOP();break;case 0xFA:AM_IMP(); IV_NOP2();break;case 0xE6:AM_ZPG();  IN_INC();break;case 0xF6:AM_ZPX();  IN_INC();break;case 0xEE:AM_ABS();  IN_INC();break;case 0xFE:AM_ABXW(); IN_INC();break;
+OP(00, IMM, IN_BRK) OP(10, REL, IN_BPL) OP(08, IMP, IN_PHP) OP(18, IMP, IN_CLC) OP(04, ZPG, IV_NOP) OP(14, ZPX, IV_NOP) OP(0C, ABS, IV_NOP) OP(1C, ABX, IV_NOP)
+OP(20, NON, IN_JSR) OP(30, REL, IN_BMI) OP(28, IMP, IN_PLP) OP(38, IMP, IN_SEC) OP(24, ZPG, IN_BIT) OP(34, ZPX, IV_NOP) OP(2C, ABS, IN_BIT) OP(3C, ABX, IV_NOP)
+OP(40, IMP, IN_RTI) OP(50, REL, IN_BVC) OP(48, IMP, IN_PHA) OP(58, IMP, IN_CLI) OP(44, ZPG, IV_NOP) OP(54, ZPX, IV_NOP) OP(4C, ABS, IN_JMP) OP(5C, ABX, IV_NOP)
+OP(60, IMP, IN_RTS) OP(70, REL, IN_BVS) OP(68, IMP, IN_PLA) OP(78, IMP, IN_SEI) OP(64, ZPG, IV_NOP) OP(74, ZPX, IV_NOP) OP(6C, ABS,IN_JMPI) OP(7C, ABX, IV_NOP)
+OP(80, IMM, IV_NOP) OP(90, REL, IN_BCC) OP(88, IMP, IN_DEY) OP(98, IMP, IN_TYA) OP(84, ZPG, IN_STY) OP(94, ZPX, IN_STY) OP(8C, ABS, IN_STY) OP(9C,ABXW, IV_NOP)
+OP(A0, IMM, IN_LDY) OP(B0, REL, IN_BCS) OP(A8, IMP, IN_TAY) OP(B8, IMP, IN_CLV) OP(A4, ZPG, IN_LDY) OP(B4, ZPX, IN_LDY) OP(AC, ABS, IN_LDY) OP(BC, ABX, IN_LDY)
+OP(C0, IMM, IN_CPY) OP(D0, REL, IN_BNE) OP(C8, IMP, IN_INY) OP(D8, IMP, IN_CLD) OP(C4, ZPG, IN_CPY) OP(D4, ZPX, IV_NOP) OP(CC, ABS, IN_CPY) OP(DC, ABX, IV_NOP)
+OP(E0, IMM, IN_CPX) OP(F0, REL, IN_BEQ) OP(E8, IMP, IN_INX) OP(F8, IMP, IN_SED) OP(E4, ZPG, IN_CPX) OP(F4, ZPX, IV_NOP) OP(EC, ABS, IN_CPX) OP(FC, ABX, IV_NOP)
 
-case 0x01:AM_INX();  IN_ORA();break;case 0x11:AM_INY();  IN_ORA();break;case 0x09:AM_IMM();  IN_ORA();break;case 0x19:AM_ABY();  IN_ORA();break;case 0x05:AM_ZPG();  IN_ORA();break;case 0x15:AM_ZPX();  IN_ORA();break;case 0x0D:AM_ABS();  IN_ORA();break;case 0x1D:AM_ABX();  IN_ORA();break;
-case 0x21:AM_INX();  IN_AND();break;case 0x31:AM_INY();  IN_AND();break;case 0x29:AM_IMM();  IN_AND();break;case 0x39:AM_ABY();  IN_AND();break;case 0x25:AM_ZPG();  IN_AND();break;case 0x35:AM_ZPX();  IN_AND();break;case 0x2D:AM_ABS();  IN_AND();break;case 0x3D:AM_ABX();  IN_AND();break;
-case 0x41:AM_INX();  IN_EOR();break;case 0x51:AM_INY();  IN_EOR();break;case 0x49:AM_IMM();  IN_EOR();break;case 0x59:AM_ABY();  IN_EOR();break;case 0x45:AM_ZPG();  IN_EOR();break;case 0x55:AM_ZPX();  IN_EOR();break;case 0x4D:AM_ABS();  IN_EOR();break;case 0x5D:AM_ABX();  IN_EOR();break;
-case 0x61:AM_INX();  IN_ADC();break;case 0x71:AM_INY();  IN_ADC();break;case 0x69:AM_IMM();  IN_ADC();break;case 0x79:AM_ABY();  IN_ADC();break;case 0x65:AM_ZPG();  IN_ADC();break;case 0x75:AM_ZPX();  IN_ADC();break;case 0x6D:AM_ABS();  IN_ADC();break;case 0x7D:AM_ABX();  IN_ADC();break;
-case 0x81:AM_INX();  IN_STA();break;case 0x91:AM_INYW(); IN_STA();break;case 0x89:AM_IMM();  IV_NOP();break;case 0x99:AM_ABYW(); IN_STA();break;case 0x85:AM_ZPG();  IN_STA();break;case 0x95:AM_ZPX();  IN_STA();break;case 0x8D:AM_ABS();  IN_STA();break;case 0x9D:AM_ABXW(); IN_STA();break;
-case 0xA1:AM_INX();  IN_LDA();break;case 0xB1:AM_INY();  IN_LDA();break;case 0xA9:AM_IMM();  IN_LDA();break;case 0xB9:AM_ABY();  IN_LDA();break;case 0xA5:AM_ZPG();  IN_LDA();break;case 0xB5:AM_ZPX();  IN_LDA();break;case 0xAD:AM_ABS();  IN_LDA();break;case 0xBD:AM_ABX();  IN_LDA();break;
-case 0xC1:AM_INX();  IN_CMP();break;case 0xD1:AM_INY();  IN_CMP();break;case 0xC9:AM_IMM();  IN_CMP();break;case 0xD9:AM_ABY();  IN_CMP();break;case 0xC5:AM_ZPG();  IN_CMP();break;case 0xD5:AM_ZPX();  IN_CMP();break;case 0xCD:AM_ABS();  IN_CMP();break;case 0xDD:AM_ABX();  IN_CMP();break;
-case 0xE1:AM_INX();  IN_SBC();break;case 0xF1:AM_INY();  IN_SBC();break;case 0xE9:AM_IMM();  IN_SBC();break;case 0xF9:AM_ABY();  IN_SBC();break;case 0xE5:AM_ZPG();  IN_SBC();break;case 0xF5:AM_ZPX();  IN_SBC();break;case 0xED:AM_ABS();  IN_SBC();break;case 0xFD:AM_ABX();  IN_SBC();break;
+OP(02, NON, IV_HLT) OP(12, NON, IV_HLT) OP(0A, IMP,IN_ASLA) OP(1A, IMP,IV_NOP2) OP(06, ZPG, IN_ASL) OP(16, ZPX, IN_ASL) OP(0E, ABS, IN_ASL) OP(1E,ABXW, IN_ASL)
+OP(22, NON, IV_HLT) OP(32, NON, IV_HLT) OP(2A, IMP,IN_ROLA) OP(3A, IMP,IV_NOP2) OP(26, ZPG, IN_ROL) OP(36, ZPX, IN_ROL) OP(2E, ABS, IN_ROL) OP(3E,ABXW, IN_ROL)
+OP(42, NON, IV_HLT) OP(52, NON, IV_HLT) OP(4A, IMP,IN_LSRA) OP(5A, IMP,IV_NOP2) OP(46, ZPG, IN_LSR) OP(56, ZPX, IN_LSR) OP(4E, ABS, IN_LSR) OP(5E,ABXW, IN_LSR)
+OP(62, NON, IV_HLT) OP(72, NON, IV_HLT) OP(6A, IMP,IN_RORA) OP(7A, IMP,IV_NOP2) OP(66, ZPG, IN_ROR) OP(76, ZPX, IN_ROR) OP(6E, ABS, IN_ROR) OP(7E,ABXW, IN_ROR)
+OP(82, IMM, IV_NOP) OP(92, NON, IV_HLT) OP(8A, IMP, IN_TXA) OP(9A, IMP, IN_TXS) OP(86, ZPG, IN_STX) OP(96, ZPY, IN_STX) OP(8E, ABS, IN_STX) OP(9E,ABYW, IV_NOP)
+OP(A2, IMM, IN_LDX) OP(B2, NON, IV_HLT) OP(AA, IMP, IN_TAX) OP(BA, IMP, IN_TSX) OP(A6, ZPG, IN_LDX) OP(B6, ZPY, IN_LDX) OP(AE, ABS, IN_LDX) OP(BE, ABY, IN_LDX)
+OP(C2, IMM, IV_NOP) OP(D2, NON, IV_HLT) OP(CA, IMP, IN_DEX) OP(DA, IMP,IV_NOP2) OP(C6, ZPG, IN_DEC) OP(D6, ZPX, IN_DEC) OP(CE, ABS, IN_DEC) OP(DE,ABXW, IN_DEC)
+OP(E2, IMM, IV_NOP) OP(F2, NON, IV_HLT) OP(EA, IMP, IN_NOP) OP(FA, IMP,IV_NOP2) OP(E6, ZPG, IN_INC) OP(F6, ZPX, IN_INC) OP(EE, ABS, IN_INC) OP(FE,ABXW, IN_INC)
 
-case 0x03:AM_INX();  IV_SLO();break;case 0x13:AM_INYW(); IV_SLO();break;case 0x0B:AM_IMM();  IV_AAC();break;case 0x1B:AM_ABYW(); IV_SLO();break;case 0x07:AM_ZPG();  IV_SLO();break;case 0x17:AM_ZPX();  IV_SLO();break;case 0x0F:AM_ABS();  IV_SLO();break;case 0x1F:AM_ABXW(); IV_SLO();break;
-case 0x23:AM_INX();  IV_RLA();break;case 0x33:AM_INYW(); IV_RLA();break;case 0x2B:AM_IMM();  IV_AAC();break;case 0x3B:AM_ABYW(); IV_RLA();break;case 0x27:AM_ZPG();  IV_RLA();break;case 0x37:AM_ZPX();  IV_RLA();break;case 0x2F:AM_ABS();  IV_RLA();break;case 0x3F:AM_ABXW(); IV_RLA();break;
-case 0x43:AM_INX();  IV_SRE();break;case 0x53:AM_INYW(); IV_SRE();break;case 0x4B:AM_IMM();  IV_ASR();break;case 0x5B:AM_ABYW(); IV_SRE();break;case 0x47:AM_ZPG();  IV_SRE();break;case 0x57:AM_ZPX();  IV_SRE();break;case 0x4F:AM_ABS();  IV_SRE();break;case 0x5F:AM_ABXW(); IV_SRE();break;
-case 0x63:AM_INX();  IV_RRA();break;case 0x73:AM_INYW(); IV_RRA();break;case 0x6B:AM_IMM();  IV_ARR();break;case 0x7B:AM_ABYW(); IV_RRA();break;case 0x67:AM_ZPG();  IV_RRA();break;case 0x77:AM_ZPX();  IV_RRA();break;case 0x6F:AM_ABS();  IV_RRA();break;case 0x7F:AM_ABXW(); IV_RRA();break;
-case 0x83:AM_INX();  IV_SAX();break;case 0x93:AM_INY();  IV_UNK();break;case 0x8B:AM_IMM();  IV_UNK();break;case 0x9B:AM_ABY();  IV_UNK();break;case 0x87:AM_ZPG();  IV_SAX();break;case 0x97:AM_ZPY();  IV_SAX();break;case 0x8F:AM_ABS();  IV_SAX();break;case 0x9F:AM_ABY();  IV_UNK();break;
-case 0xA3:AM_INX();  IV_LAX();break;case 0xB3:AM_INY();  IV_LAX();break;case 0xAB:AM_IMM();  IV_ATX();break;case 0xBB:AM_ABY();  IV_UNK();break;case 0xA7:AM_ZPG();  IV_LAX();break;case 0xB7:AM_ZPY();  IV_LAX();break;case 0xAF:AM_ABS();  IV_LAX();break;case 0xBF:AM_ABY();  IV_LAX();break;
-case 0xC3:AM_INX();  IV_DCP();break;case 0xD3:AM_INYW(); IV_DCP();break;case 0xCB:AM_IMM();  IV_AXS();break;case 0xDB:AM_ABYW(); IV_DCP();break;case 0xC7:AM_ZPG();  IV_DCP();break;case 0xD7:AM_ZPX();  IV_DCP();break;case 0xCF:AM_ABS();  IV_DCP();break;case 0xDF:AM_ABXW(); IV_DCP();break;
-case 0xE3:AM_INX();  IV_ISB();break;case 0xF3:AM_INYW(); IV_ISB();break;case 0xEB:AM_IMM();  IV_SBC();break;case 0xFB:AM_ABYW(); IV_ISB();break;case 0xE7:AM_ZPG();  IV_ISB();break;case 0xF7:AM_ZPX();  IV_ISB();break;case 0xEF:AM_ABS();  IV_ISB();break;case 0xFF:AM_ABXW(); IV_ISB();break;
+OP(01, INX, IN_ORA) OP(11, INY, IN_ORA) OP(09, IMM, IN_ORA) OP(19, ABY, IN_ORA) OP(05, ZPG, IN_ORA) OP(15, ZPX, IN_ORA) OP(0D, ABS, IN_ORA) OP(1D, ABX, IN_ORA)
+OP(21, INX, IN_AND) OP(31, INY, IN_AND) OP(29, IMM, IN_AND) OP(39, ABY, IN_AND) OP(25, ZPG, IN_AND) OP(35, ZPX, IN_AND) OP(2D, ABS, IN_AND) OP(3D, ABX, IN_AND)
+OP(41, INX, IN_EOR) OP(51, INY, IN_EOR) OP(49, IMM, IN_EOR) OP(59, ABY, IN_EOR) OP(45, ZPG, IN_EOR) OP(55, ZPX, IN_EOR) OP(4D, ABS, IN_EOR) OP(5D, ABX, IN_EOR)
+OP(61, INX, IN_ADC) OP(71, INY, IN_ADC) OP(69, IMM, IN_ADC) OP(79, ABY, IN_ADC) OP(65, ZPG, IN_ADC) OP(75, ZPX, IN_ADC) OP(6D, ABS, IN_ADC) OP(7D, ABX, IN_ADC)
+OP(81, INX, IN_STA) OP(91,INYW, IN_STA) OP(89, IMM, IV_NOP) OP(99,ABYW, IN_STA) OP(85, ZPG, IN_STA) OP(95, ZPX, IN_STA) OP(8D, ABS, IN_STA) OP(9D,ABXW, IN_STA)
+OP(A1, INX, IN_LDA) OP(B1, INY, IN_LDA) OP(A9, IMM, IN_LDA) OP(B9, ABY, IN_LDA) OP(A5, ZPG, IN_LDA) OP(B5, ZPX, IN_LDA) OP(AD, ABS, IN_LDA) OP(BD, ABX, IN_LDA)
+OP(C1, INX, IN_CMP) OP(D1, INY, IN_CMP) OP(C9, IMM, IN_CMP) OP(D9, ABY, IN_CMP) OP(C5, ZPG, IN_CMP) OP(D5, ZPX, IN_CMP) OP(CD, ABS, IN_CMP) OP(DD, ABX, IN_CMP)
+OP(E1, INX, IN_SBC) OP(F1, INY, IN_SBC) OP(E9, IMM, IN_SBC) OP(F9, ABY, IN_SBC) OP(E5, ZPG, IN_SBC) OP(F5, ZPX, IN_SBC) OP(ED, ABS, IN_SBC) OP(FD, ABX, IN_SBC)
+
+OP(03, INX, IV_SLO) OP(13,INYW, IV_SLO) OP(0B, IMM, IV_AAC) OP(1B,ABYW, IV_SLO) OP(07, ZPG, IV_SLO) OP(17, ZPX, IV_SLO) OP(0F, ABS, IV_SLO) OP(1F,ABXW, IV_SLO)
+OP(23, INX, IV_RLA) OP(33,INYW, IV_RLA) OP(2B, IMM, IV_AAC) OP(3B,ABYW, IV_RLA) OP(27, ZPG, IV_RLA) OP(37, ZPX, IV_RLA) OP(2F, ABS, IV_RLA) OP(3F,ABXW, IV_RLA)
+OP(43, INX, IV_SRE) OP(53,INYW, IV_SRE) OP(4B, IMM, IV_ASR) OP(5B,ABYW, IV_SRE) OP(47, ZPG, IV_SRE) OP(57, ZPX, IV_SRE) OP(4F, ABS, IV_SRE) OP(5F,ABXW, IV_SRE)
+OP(63, INX, IV_RRA) OP(73,INYW, IV_RRA) OP(6B, IMM, IV_ARR) OP(7B,ABYW, IV_RRA) OP(67, ZPG, IV_RRA) OP(77, ZPX, IV_RRA) OP(6F, ABS, IV_RRA) OP(7F,ABXW, IV_RRA)
+OP(83, INX, IV_SAX) OP(93, INY, IV_UNK) OP(8B, IMM, IV_UNK) OP(9B, ABY, IV_UNK) OP(87, ZPG, IV_SAX) OP(97, ZPY, IV_SAX) OP(8F, ABS, IV_SAX) OP(9F, ABY, IV_UNK)
+OP(A3, INX, IV_LAX) OP(B3, INY, IV_LAX) OP(AB, IMM, IV_ATX) OP(BB, ABY, IV_UNK) OP(A7, ZPG, IV_LAX) OP(B7, ZPY, IV_LAX) OP(AF, ABS, IV_LAX) OP(BF, ABY, IV_LAX)
+OP(C3, INX, IV_DCP) OP(D3,INYW, IV_DCP) OP(CB, IMM, IV_AXS) OP(DB,ABYW, IV_DCP) OP(C7, ZPG, IV_DCP) OP(D7, ZPX, IV_DCP) OP(CF, ABS, IV_DCP) OP(DF,ABXW, IV_DCP)
+OP(E3, INX, IV_ISB) OP(F3,INYW, IV_ISB) OP(EB, IMM, IV_SBC) OP(FB,ABYW, IV_ISB) OP(E7, ZPG, IV_ISB) OP(F7, ZPX, IV_ISB) OP(EF, ABS, IV_ISB) OP(FF,ABXW, IV_ISB)
+
+#undef OP
 	}
 
 #ifndef	NSFPLAYER
