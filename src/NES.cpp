@@ -450,6 +450,8 @@ const TCHAR *	OpenFileiNES (FILE *in)
 		if (CHRSizeRAM > MAX_CHRRAM_SIZE * 0x400)
 			return _T("CHR RAM is too large! Increase MAX_CHRRAM_SIZE and recompile!");
 		CHRSizeRAM = (CHRSizeRAM / 0x400) + ((CHRSizeRAM % 0x400) ? 1 : 0);
+		if ((CHRSizeROM == 0) && (CHRSizeRAM == 0))
+			return _T("Selected ROM has no CHR ROM or CHR RAM!");
 	}
 	else
 	{
