@@ -100,7 +100,9 @@ FPPURead	MAPINT	GetPPUReadHandler (int Page)
 
 __inline void	MAPINT	SetPRG_ROM4 (int Bank, int Val)
 {
-	CPU::PRGPointer[Bank] = NES::PRG_ROM[Val & NES::PRGMask];
+//	if (!NES::PRGSizeROM)
+//		return;
+	CPU::PRGPointer[Bank] = NES::PRG_ROM[Val & NES::PRGMaskROM];
 	CPU::Readable[Bank] = TRUE;
 	CPU::Writable[Bank] = FALSE;
 }
@@ -133,15 +135,18 @@ void	MAPINT	SetPRG_ROM32 (int Bank, int Val)
 int	MAPINT	GetPRG_ROM4 (int Bank)	// -1 if no ROM mapped
 {
 	int tpi = (int)((CPU::PRGPointer[Bank] - NES::PRG_ROM[0]) >> 12);
-	if ((tpi < 0) || (tpi > NES::PRGMask)) return -1;
-	else return tpi;
+	if ((tpi >= 0) && (tpi < NES::PRGSizeROM))
+		return tpi;
+	else	return -1;
 }
 
 /******************************************************************************/
 
 __inline void	MAPINT	SetPRG_RAM4 (int Bank, int Val)
 {
-	CPU::PRGPointer[Bank] = NES::PRG_RAM[Val & 0xF];
+	if (!NES::PRGSizeRAM)
+		return;
+	CPU::PRGPointer[Bank] = NES::PRG_RAM[Val & NES::PRGMaskRAM];
 	CPU::Readable[Bank] = TRUE;
 	CPU::Writable[Bank] = TRUE;
 }
@@ -174,8 +179,9 @@ void	MAPINT	SetPRG_RAM32 (int Bank, int Val)
 int	MAPINT	GetPRG_RAM4 (int Bank)	// -1 if no RAM mapped
 {
 	int tpi = (int)((CPU::PRGPointer[Bank] - NES::PRG_RAM[0]) >> 12);
-	if ((tpi < 0) || (tpi > MAX_PRGRAM_MASK)) return -1;
-	else return tpi;
+	if ((tpi >= 0) && (tpi < NES::PRGSizeRAM))
+		return tpi;
+	else	return -1;
 }
 
 /******************************************************************************/
@@ -201,9 +207,9 @@ void	MAPINT	SetPRG_OB4 (int Bank)	// Open bus
 __inline void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
-	if (!NES::CHRMask)
+	if (!NES::CHRSizeROM)
 		return;
-	PPU::CHRPointer[Bank] = NES::CHR_ROM[Val & NES::CHRMask];
+	PPU::CHRPointer[Bank] = NES::CHR_ROM[Val & NES::CHRMaskROM];
 	PPU::Writable[Bank] = FALSE;
 #ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
@@ -242,8 +248,9 @@ int	MAPINT	GetCHR_ROM1 (int Bank)	// -1 if no ROM mapped
 {
 #ifndef	NSFPLAYER
 	int tpi = (int)((PPU::CHRPointer[Bank] - NES::CHR_ROM[0]) >> 10);
-	if ((tpi < 0) || (tpi > NES::CHRMask)) return -1;
-	else return tpi;
+	if ((tpi >= 0) && (tpi < NES::CHRSizeROM))
+		return tpi;
+	else	return -1;
 #else	/* NSFPLAYER */
 	return -1;
 #endif	/* !NSFPLAYER */
@@ -254,7 +261,9 @@ int	MAPINT	GetCHR_ROM1 (int Bank)	// -1 if no ROM mapped
 __inline void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
-	PPU::CHRPointer[Bank] = NES::CHR_RAM[Val & 0x1F];
+	if (!NES::CHRSizeRAM)
+		return;
+	PPU::CHRPointer[Bank] = NES::CHR_RAM[Val & NES::CHRMaskRAM];
 	PPU::Writable[Bank] = TRUE;
 #ifdef	ENABLE_DEBUGGER
 	if (Bank & 8)
@@ -293,8 +302,9 @@ int	MAPINT	GetCHR_RAM1 (int Bank)	// -1 if no ROM mapped
 {
 #ifndef	NSFPLAYER
 	int tpi = (int)((PPU::CHRPointer[Bank] - NES::CHR_RAM[0]) >> 10);
-	if ((tpi < 0) || (tpi > MAX_CHRRAM_MASK)) return -1;
-	else return tpi;
+	if ((tpi >= 0) && (tpi < NES::CHRSizeRAM))
+		return tpi;
+	else	return -1;
 #else	/* NSFPLAYER */
 	return -1;
 #endif	/* !NSFPLAYER */

@@ -28,7 +28,8 @@ namespace NES
 {
 int SRAM_Size;
 
-int PRGMask, CHRMask;
+int PRGSizeROM, PRGSizeRAM, CHRSizeROM, CHRSizeRAM;
+int PRGMaskROM, PRGMaskRAM, CHRMaskROM, CHRMaskRAM;
 
 BOOL ROMLoaded;
 BOOL DoStop, Running, Scanline;
@@ -124,6 +125,13 @@ void	OpenFile (TCHAR *filename)
 		CloseFile();
 		return;
 	}
+
+	// initialize bank masks based on returned bank sizes
+	PRGMaskROM = getMask(PRGSizeROM - 1) & MAX_PRGROM_MASK;
+	PRGMaskRAM = getMask(PRGSizeRAM - 1) & MAX_PRGRAM_MASK;
+	CHRMaskROM = getMask(CHRSizeROM - 1) & MAX_CHRROM_MASK;
+	CHRMaskRAM = getMask(CHRSizeRAM - 1) & MAX_CHRRAM_MASK;
+
 	// if the ROM loaded without errors, drop the filename into ROMInfo
 	RI.Filename = _tcsdup(filename);
 	ROMLoaded = TRUE;
@@ -341,12 +349,22 @@ void	CloseFile (void)
 		(((a) <<  8) & 0x00FF0000) | \
 		(((a) << 24) & 0xFF000000))
 
+// Generates a bit mask sufficient to fit the specified value
+DWORD	getMask (unsigned int maxval)
+{
+	DWORD result = 0;
+	while (maxval > 0)
+	{
+		result = (result << 1) | 1;
+		maxval >>= 1;
+	}
+	return result;
+}
+
 const TCHAR *	OpenFileiNES (FILE *in)
 {
 	int i;
 	unsigned char Header[16];
-	BOOL p2Found;
-	DWORD p2;
 
 	fread(Header, 1, 16, in);
 	if (*(unsigned long *)Header != MKID('NES\x1A'))
@@ -380,6 +398,13 @@ const TCHAR *	OpenFileiNES (FILE *in)
 		RI.INES2_CHRRAM = Header[11];
 		RI.INES2_TVMode = Header[12];
 		RI.INES2_VSDATA = Header[13];
+
+		if (((RI.INES2_PRGRAM & 0xF) == 0xF) || ((RI.INES2_PRGRAM & 0xF0) == 0xF0))
+			return _T("Invalid PRG RAM size specified!");
+		if (((RI.INES2_CHRRAM & 0xF) == 0xF) || ((RI.INES2_CHRRAM & 0xF0) == 0xF0))
+			return _T("Invalid CHR RAM size specified!");
+		if (RI.INES2_CHRRAM & 0xF0)
+			EI.DbgOut(_T("This ROM uses battery-backed CHR RAM, which is not yet supported!"));
 	}
 	else
 	{
@@ -403,24 +428,35 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	fread(PRG_ROM, 1, RI.INES_PRGSize * 0x4000, in);
 	fread(CHR_ROM, 1, RI.INES_CHRSize * 0x2000, in);
 
-	PRGMask = ((RI.INES_PRGSize << 2) - 1) & MAX_PRGROM_MASK;
-	CHRMask = ((RI.INES_CHRSize << 3) - 1) & MAX_CHRROM_MASK;
+	PRGSizeROM = RI.INES_PRGSize * 0x4;
+	CHRSizeROM = RI.INES_CHRSize * 0x8;
 
-	p2Found = FALSE;
-	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
-		if (p2 == RI.INES_PRGSize)
-			p2Found = TRUE;
-	if (!p2Found)
-		PRGMask = MAX_PRGROM_MASK;
+	if (RI.INES_Version == 2)
+	{
+		PRGSizeRAM = 0;
+		if (RI.INES2_PRGRAM & 0xF)
+			PRGSizeRAM += 64 << (RI.INES2_PRGRAM & 0xF);
+		if (RI.INES2_PRGRAM & 0xF0)
+			PRGSizeRAM += 64 << ((RI.INES2_PRGRAM & 0xF0) >> 4);
+		if (PRGSizeRAM > MAX_PRGRAM_SIZE * 0x1000)
+			return _T("PRG RAM is too large! Increase MAX_PRGRAM_SIZE and recompile!");
+		PRGSizeRAM = (PRGSizeRAM / 0x1000) + ((PRGSizeRAM % 0x1000) ? 1 : 0);
 
-	p2Found = FALSE;
-	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
-		if (p2 == RI.INES_CHRSize)
-			p2Found = TRUE;
-	if (!p2Found)
-		CHRMask = MAX_CHRROM_MASK;
+		CHRSizeRAM = 0;
+		if (RI.INES2_CHRRAM & 0xF)
+			CHRSizeRAM += 64 << (RI.INES2_CHRRAM & 0xF);
+		if (RI.INES2_CHRRAM & 0xF0)
+			CHRSizeRAM += 64 << ((RI.INES2_CHRRAM & 0xF0) >> 4);
+		if (CHRSizeRAM > MAX_CHRRAM_SIZE * 0x400)
+			return _T("CHR RAM is too large! Increase MAX_CHRRAM_SIZE and recompile!");
+		CHRSizeRAM = (CHRSizeRAM / 0x400) + ((CHRSizeRAM % 0x400) ? 1 : 0);
+	}
+	else
+	{
+		PRGSizeRAM = 0x10;	// default to 64KB (for MMC5)
+		CHRSizeRAM = 0x20;	// default to 32KB (for Namcot 106)
+	}
 
-	
 	if (!MapperInterface::LoadMapper(&RI))
 	{
 		static TCHAR err[256];
@@ -463,8 +499,6 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 	const TCHAR *error = NULL;
 	int i;
 	unsigned char tp;
-	BOOL p2Found;
-	DWORD p2;
 
 	fread(&Signature, 4, 1, in);
 	if (Signature != MKID('UNIF'))
@@ -574,8 +608,11 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 	if (CHRsize > MAX_CHRROM_SIZE * 0x400)
 		error = _T("CHR ROM is too large! Increase MAX_CHRROM_SIZE and recompile!");
 
-	PRGMask = ((PRGsize / 0x1000) - 1) & MAX_PRGROM_MASK;
-	CHRMask = ((CHRsize / 0x400) - 1) & MAX_CHRROM_MASK;
+	PRGSizeROM = PRGsize / 0x1000;
+	CHRSizeROM = CHRsize / 0x400;
+	// allow unlimited RAM sizes for UNIF
+	PRGSizeRAM = MAX_PRGRAM_SIZE;
+	CHRSizeRAM = MAX_CHRRAM_SIZE;
 
 	for (i = 0; i < 0x10; i++)
 	{
@@ -600,20 +637,6 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 	}
 	if (error)
 		return error;
-
-	p2Found = FALSE;
-	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
-		if (p2 == PRGsize)
-			p2Found = TRUE;
-	if (!p2Found)
-		PRGMask = MAX_PRGROM_MASK;
-
-	p2Found = FALSE;
-	for (p2 = 1; p2 < 0x40000000; p2 <<= 1)
-		if (p2 == CHRsize)
-			p2Found = TRUE;
-	if (!p2Found)
-		CHRMask = MAX_CHRROM_MASK;
 
 	if (!MapperInterface::LoadMapper(&RI))
 	{
@@ -654,6 +677,7 @@ const TCHAR *	OpenFileFDS (FILE *in)
 	RI.ROMType = ROM_FDS;
 	RI.FDS_NumSides = numSides;
 
+	// pre-divide by 2, because the upper half of PRG ROM is used to store the backup copy for saving changes
 	if (RI.FDS_NumSides > (MAX_PRGROM_SIZE >> 1) / 16)
 		return _T("FDS image is too large! Increase MAX_PRGROM_SIZE and recompile!");
 
@@ -662,7 +686,10 @@ const TCHAR *	OpenFileFDS (FILE *in)
 
 	memcpy(PRG_ROM[MAX_PRGROM_SIZE >> 1], PRG_ROM[0x000], numSides << 16);
 
-	PRGMask = ((RI.FDS_NumSides << 4) - 1) & MAX_PRGROM_MASK;
+	PRGSizeROM = RI.FDS_NumSides * 16;
+	CHRSizeROM = 0;
+	PRGSizeRAM = 0x8; // FDS only has 32KB of PRG RAM
+	CHRSizeRAM = 0x8; // and 8KB of CHR RAM
 
 	if (!MapperInterface::LoadMapper(&RI))
 		return _T("Famicom Disk System support not found!");
@@ -677,6 +704,7 @@ const TCHAR *	OpenFileNSF (FILE *in)
 {
 	unsigned char Header[128];	// Header Bytes
 	int ROMlen;
+	int LoadAddr;
 
 	fseek(in, 0, SEEK_END);
 	ROMlen = ftell(in) - 128;
@@ -696,6 +724,7 @@ const TCHAR *	OpenFileNSF (FILE *in)
 	RI.NSF_PALSpeed = Header[0x78] | (Header[0x79] << 8);
 	memcpy(RI.NSF_InitBanks, &Header[0x70], 8);
 	RI.NSF_InitSong = Header[0x07];
+	LoadAddr = Header[0x08] | (Header[0x09] << 8);
 	RI.NSF_InitAddr = Header[0x0A] | (Header[0x0B] << 8);
 	RI.NSF_PlayAddr = Header[0x0C] | (Header[0x0D] << 8);
 	RI.NSF_Title = new char[32];
@@ -712,15 +741,22 @@ const TCHAR *	OpenFileNSF (FILE *in)
 		return _T("NSF is too large! Increase MAX_PRGROM_SIZE and recompile!");
 
 	if (memcmp(RI.NSF_InitBanks, "\0\0\0\0\0\0\0\0", 8))
-		fread(&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF), 1, ROMlen, in);
+	{
+		fread(&PRG_ROM[0][0] + (LoadAddr & 0x0FFF), 1, ROMlen, in);
+		PRGSizeROM = ROMlen + (LoadAddr & 0xFFF);
+	}
 	else
 	{
 		memcpy(RI.NSF_InitBanks, "\x00\x01\x02\x03\x04\x05\x06\x07", 8);
-		fread(&PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF), 1, ROMlen, in);
+		fread(&PRG_ROM[0][0] + (LoadAddr & 0x7FFF), 1, ROMlen, in);
+		PRGSizeROM = ROMlen + (LoadAddr & 0x7FFF);
 	}
 
-	// don't bother trying to figure out the maximum value
-	PRGMask = MAX_PRGROM_MASK;
+	PRGSizeROM = (PRGSizeROM / 0x1000) + ((PRGSizeROM % 0x1000) ? 1 : 0);
+	PRGSizeRAM = 0x2;	// 8KB at $6000-$7FFF
+	// no CHR at all
+	CHRSizeROM = 0;
+	CHRSizeRAM = 0;
 
 	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
 	{

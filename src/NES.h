@@ -12,7 +12,8 @@ namespace NES
 {
 extern int SRAM_Size;
 
-extern int PRGMask, CHRMask;
+extern int PRGSizeROM, PRGSizeRAM, CHRSizeROM, CHRSizeRAM;
+extern int PRGMaskROM, PRGMaskRAM, CHRMaskROM, CHRMaskRAM;
 
 extern BOOL ROMLoaded;
 extern BOOL DoStop, Running, Scanline;
@@ -31,16 +32,16 @@ extern Region CurRegion;
 #define	MAX_PRGROM_SIZE	0x800
 #define	MAX_PRGROM_MASK	(MAX_PRGROM_SIZE - 1)
 
-// 64KB PRG RAM
-#define	MAX_PRGRAM_SIZE	0x10
+// 1024KB PRG RAM
+#define	MAX_PRGRAM_SIZE	0x100
 #define	MAX_PRGRAM_MASK	(MAX_PRGRAM_SIZE - 1)
 
 // 4096KB CHR ROM
 #define	MAX_CHRROM_SIZE	0x1000
 #define	MAX_CHRROM_MASK	(MAX_CHRROM_SIZE - 1)
 
-// 32KB CHR RAM
-#define	MAX_CHRRAM_SIZE	0x20
+// 256KB CHR RAM
+#define	MAX_CHRRAM_SIZE	0x100
 #define	MAX_CHRRAM_MASK	(MAX_CHRRAM_SIZE - 1)
 
 extern unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
@@ -56,6 +57,7 @@ int	FDSSave (FILE *);
 int	FDSLoad (FILE *);
 void	SaveSRAM (void);
 void	LoadSRAM (void);
+DWORD	getMask (unsigned int);
 const TCHAR *	OpenFileiNES (FILE *);
 const TCHAR *	OpenFileUNIF (FILE *);
 const TCHAR *	OpenFileFDS (FILE *);

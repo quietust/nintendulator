@@ -60,12 +60,25 @@ DWORD WINAPI PlayThread(void *b);	// the decode thread procedure
 
 namespace NES
 {
-int PRGMask;
+int PRGSizeROM, PRGSizeRAM;
+int PRGMaskROM, PRGMaskRAM;
 
 BOOL ROMLoaded;
 
 unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
 unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
+
+// Generates a bit mask sufficient to fit the specified value
+DWORD	getMask (unsigned int maxval)
+{
+	DWORD result = 0;
+	while (maxval > 0)
+	{
+		result = (result << 1) | 1;
+		maxval >>= 1;
+	}
+	return result;
+}
 
 Region CurRegion = REGION_NTSC;	// hardcoded to NTSC for now
 
@@ -146,6 +159,7 @@ int play(const TCHAR *fn)
 	int thread_id;
 	unsigned char Header[128];	// NSF header bytes
 	DWORD numBytesRead;	// so ReadFile() won't crash under Windows 9x
+	int LoadAddr;
 
 	if (NES::ROMLoaded)
 	{
@@ -200,6 +214,7 @@ int play(const TCHAR *fn)
 	RI.NSF_PALSpeed = Header[0x78] | (Header[0x79] << 8);
 	memcpy(RI.NSF_InitBanks, &Header[0x70], 8);
 	RI.NSF_InitSong = Header[0x07];
+	LoadAddr = Header[0x08] | (Header[0x09] << 8);
 	RI.NSF_InitAddr = Header[0x0A] | (Header[0x0B] << 8);
 	RI.NSF_PlayAddr = Header[0x0C] | (Header[0x0D] << 8);
 	RI.NSF_Title = new char[32];
@@ -212,19 +227,26 @@ int play(const TCHAR *fn)
 	memcpy(RI.NSF_Copyright, &Header[0x4E], 32);
 	RI.NSF_Copyright[31] = 0;
 	if (memcmp(RI.NSF_InitBanks, "\0\0\0\0\0\0\0\0", 8))
-		ReadFile(input_file, &NES::PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x0FFF), file_length, &numBytesRead, NULL);
+	{
+		ReadFile(input_file, &NES::PRG_ROM[0][0] + (LoadAddr & 0x0FFF), file_length, &numBytesRead, NULL);
+		NES::PRGSizeROM = file_length + (LoadAddr & 0xFFF);
+	}
 	else
 	{
 		memcpy(RI.NSF_InitBanks, "\x00\x01\x02\x03\x04\x05\x06\x07", 8);
-		ReadFile(input_file, &NES::PRG_ROM[0][0] + ((Header[0x8] | (Header[0x9] << 8)) & 0x7FFF), file_length, &numBytesRead, NULL);
+		ReadFile(input_file, &NES::PRG_ROM[0][0] + (LoadAddr & 0x7FFF), file_length, &numBytesRead, NULL);
+		NES::PRGSizeROM = file_length + (LoadAddr & 0x7FFF);
 	}
+	NES::PRGSizeROM = (NES::PRGSizeROM / 0x1000) + ((NES::PRGSizeROM % 0x1000) ? 1 : 0);
+	NES::PRGSizeRAM = 0x2;	// 8KB at $6000-$7FFF
 
 	if ((RI.NSF_NTSCSpeed == 16666) || (RI.NSF_NTSCSpeed == 16667))
 		RI.NSF_NTSCSpeed = 16639;	// adjust NSF playback speed to match actual NTSC NES framerate
 	if (RI.NSF_PALSpeed == 20000)
 		RI.NSF_PALSpeed = 19997;	// same for PAL NSFs (though we don't really support those right now)
 
-	NES::PRGMask = MAX_PRGROM_MASK;
+	NES::PRGMaskROM = NES::getMask(NES::PRGSizeROM - 1) & MAX_PRGROM_MASK;
+	NES::PRGMaskRAM = NES::getMask(NES::PRGSizeRAM - 1) & MAX_PRGRAM_MASK;
 
 	if (!MapperInterface::LoadMapper(&RI))
 	{

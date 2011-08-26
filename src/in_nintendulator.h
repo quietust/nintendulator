@@ -194,7 +194,8 @@ typedef struct
 
 namespace NES
 {
-extern int PRGMask;
+extern int PRGSizeROM, PRGSizeRAM;
+extern int PRGMaskROM, PRGMaskRAM;
 
 // Maximum supported data sizes, since it's far easier than dynamically allocating them
 
