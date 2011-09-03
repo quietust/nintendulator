@@ -811,7 +811,7 @@ void	SetRegion (Region NewRegion)
 	}
 }
 
-void	Reset (RESET_TYPE ResetType)
+void	InitHandlers (void)
 {
 	int i;
 	for (i = 0x0; i < 0x10; i++)
@@ -863,6 +863,11 @@ void	Reset (RESET_TYPE ResetType)
 		PPU::CHRPointer[i] = PPU::OpenBus;
 		PPU::Writable[i] = FALSE;
 	}
+}
+
+void	Reset (RESET_TYPE ResetType)
+{
+	InitHandlers();
 	switch (ResetType)
 	{
 	case RESET_HARD:

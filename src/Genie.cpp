@@ -410,9 +410,14 @@ int	Load (FILE *in)
 		CheckMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_CHECKED);
 	else	CheckMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_UNCHECKED);
 
-	Init();		// reset the I/O handlers
+	// reset all I/O handlers
+	NES::InitHandlers();
+	// then bind the Game Genie
+	Init();
+	// and soft reset the mapper again (so it can set up any special handlers)
 	if ((MI) && (MI->Reset))
-		MI->Reset(RESET_SOFT);	// and then (soft) reset the mapper again; we'll load its state momentarily
+		MI->Reset(RESET_SOFT);
+	// The 'genie' state block MUST come before the 'mapper' block, otherwise this won't work
 	return clen;
 }
 } // namespace Genie

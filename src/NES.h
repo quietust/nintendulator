@@ -63,6 +63,7 @@ const TCHAR *	OpenFileUNIF (FILE *);
 const TCHAR *	OpenFileFDS (FILE *);
 const TCHAR *	OpenFileNSF (FILE *);
 void	SetRegion (Region);
+void	InitHandlers (void);
 void	Reset (RESET_TYPE);
 
 void	Start (BOOL);
