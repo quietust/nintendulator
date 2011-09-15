@@ -3,6 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="Nintendulator"
+	ProjectGUID="{99EC6D26-8C8B-45E1-9DCE-789208CE6E6F}"
 	SccProjectName=""
 	SccAuxPath=""
 	SccLocalPath=""
