@@ -42,7 +42,7 @@ void	StdPort_VSZapper::Frame (unsigned char mode)
 	else
 	{
 		GFX::GetCursorPos(&pos);
-		if (pos.x >= 0) && (pos.x <= 255) && (pos.y >= 0) && (pos.y <= 239))
+		if ((pos.x >= 0) && (pos.x <= 255) && (pos.y >= 0) && (pos.y <= 239))
 		{
 			State->PosX = pos.x;
 			State->PosY = pos.y;
