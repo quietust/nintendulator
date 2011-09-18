@@ -98,13 +98,15 @@ void	StdPort_VSZapper::Write (unsigned char Val)
 				Y = 0;
 			if (Y < PPU::SLnum - 32)
 				continue;
-			if (Y >= PPU::SLnum)
+			if (Y > PPU::SLnum)
 				break;
 			for (X = x - 8; X < x + 8; X++)
 			{
 				if (X < 0)
 					X = 0;
 				if (X > 255)
+					break;
+				if ((Y == PPU::SLnum) && (X >= PPU::Clockticks))
 					break;
 				if (GFX::ZapperHit(PPU::DrawArray[Y * 256 + X]))
 					WhiteCount++;
