@@ -42,10 +42,12 @@ void	ExpPort_Tablet::Frame (unsigned char mode)
 	else
 	{
 		GFX::GetCursorPos(&pos);
-		State->PosX = pos.x;
-		State->PosY = pos.y;
-		if ((State->PosX < 0) || (State->PosX > 255) || (State->PosY < 0) || (State->PosY > 239))
-			State->PosX = State->PosY = 0;
+		if ((pos.x >= 0) && (pos.x <= 255) && (pos.y >= 0) && (pos.y <= 239))
+		{
+			State->PosX = pos.x;
+			State->PosY = pos.y;
+		}
+		else	State->PosX = State->PosY = 0;
 		State->Button = IsPressed(Buttons[0]);
 	}
 	if (mode & MOV_RECORD)
