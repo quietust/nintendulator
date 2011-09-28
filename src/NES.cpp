@@ -47,6 +47,7 @@ unsigned char CHR_RAM[MAX_CHRRAM_SIZE][0x400];
 
 void	Init (void)
 {
+	SetupDataPath();
 	MapperInterface::Init();
 	Controllers::Init();
 	APU::Init();
@@ -60,7 +61,6 @@ void	Init (void)
 	Debugger::SetMode(0);
 #endif	/* ENABLE_DEBUGGER */
 	LoadSettings();
-	SetupDataPath();
 
 	GFX::Create();
 
@@ -1106,11 +1106,16 @@ void	SaveSettings (void)
 	RegSetValueEx(SettingsBase, _T("Path_AVI"), 0, REG_SZ, (LPBYTE)Path_AVI, (DWORD)(sizeof(TCHAR) * _tcslen(Path_AVI)));
 	RegSetValueEx(SettingsBase, _T("Path_PAL"), 0, REG_SZ, (LPBYTE)Path_PAL, (DWORD)(sizeof(TCHAR) * _tcslen(Path_PAL)));
 
+	RegSetValueEx(SettingsBase, _T("ConfigVersion"), 0, REG_DWORD, (LPBYTE)&ConfigVersion, sizeof(DWORD));
+
 	Controllers::SaveSettings(SettingsBase);
 	GFX::SaveSettings(SettingsBase);
 
 	RegCloseKey(SettingsBase);
 }
+
+void	RelocateSaveData_Mydocs (void);
+void	RelocateSaveData_Progdir (void);
 
 void	LoadSettings (void)
 {
@@ -1154,6 +1159,18 @@ void	LoadSettings (void)
 
 	Controllers::LoadSettings(SettingsBase);
 	GFX::LoadSettings(SettingsBase);
+
+	ConfigVersion = 0;
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("ConfigVersion"), 0, NULL, (LPBYTE)&ConfigVersion, &Size);
+	switch (ConfigVersion)
+	{
+	case 0:	// check if we need to relocate save data from the program's "Saves" subfolder
+		RelocateSaveData_Progdir();
+		// and the same for My Documents, for people who used 0.975 builds between October 29, 2010 and January 18, 2011
+		RelocateSaveData_Mydocs();
+		ConfigVersion++;
+		break;
+	}
 
 	RegCloseKey(SettingsBase);
 
@@ -1447,10 +1464,5 @@ void	SetupDataPath (void)
 	PathAppend(path, _T("Dumps"));
 	if (GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES)
 		CreateDirectory(path, NULL);
-
-	// check if we need to relocate save data from the program's "Saves" subfolder
-	RelocateSaveData_Progdir();
-	// and the same for My Documents, for people who used 0.975 builds between October 29, 2010 and January 18, 2011
-	RelocateSaveData_Mydocs();
 }
 } // namespace NES

@@ -29,6 +29,8 @@
 #define	ACCURATE_SPRITES	// Enable cycle-accurate sprite evaluation logic
 //#define	SHORQ	// Enable ShoRQ(tm) technology - enable green color emphasis whenever there's an active IRQ
 
+extern	int		ConfigVersion;	// Configuration version - used if files get moved around or settings change meaning
+
 extern	HINSTANCE	hInst;	/* current instance */
 extern	HWND		hMainWnd;	/* main window */
 extern	HMENU		hMenu;	/* main window menu */

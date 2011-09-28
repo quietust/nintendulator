@@ -44,6 +44,7 @@
 #define MAX_LOADSTRING 100
 
 // Global Variables:
+int		ConfigVersion;	// current version of configuration data
 HINSTANCE	hInst;		// current instance
 HWND		hMainWnd;		// main window
 HMENU		hMenu;		// main window menu
