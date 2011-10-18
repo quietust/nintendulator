@@ -1335,9 +1335,10 @@ int	__fastcall	Read7 (void)
 	}
 	if ((IOAddr & 0x3F00) == 0x3F00)
 	{
+		readLatch &= 0xC0;
 		if (Reg2001 & 0x01)
-			return readLatch = Palette[IOAddr & 0x1F] & 0x30;
-		else	return readLatch = Palette[IOAddr & 0x1F];
+			return readLatch |= Palette[IOAddr & 0x1F] & 0x30;
+		else	return readLatch |= Palette[IOAddr & 0x1F];
 	}
 	else	return readLatch = buf2007;
 }
