@@ -498,6 +498,12 @@ void	Record (void)
 		return;
 	}
 
+	if ((NES::CurRegion != NES::REGION_NTSC) && (NES::CurRegion != NES::REGION_PAL))
+	{
+		MessageBox(hMainWnd, _T("Invalid region selected - movies currently support only NTSC and PAL timing"), _T("Nintendulator"), MB_OK);
+		return;
+	}
+
 	NES::Stop();
 
 	ret = DialogBox(hInst, (LPCTSTR)IDD_MOVIE_RECORD, hMainWnd, MovieRecordProc);
