@@ -419,17 +419,17 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	if (RI.INES_Flags & 0x04)
 		return _T("Trained ROMs are unsupported!");
 
-	if (RI.INES_PRGSize > MAX_PRGROM_SIZE / 4)
+	PRGSizeROM = RI.INES_PRGSize * 0x4;
+	CHRSizeROM = RI.INES_CHRSize * 0x8;
+
+	if (PRGSizeROM > MAX_PRGROM_SIZE)
 		return _T("PRG ROM is too large! Increase MAX_PRGROM_SIZE and recompile!");
 
-	if (RI.INES_CHRSize > MAX_CHRROM_SIZE / 8)
+	if (CHRSizeROM > MAX_CHRROM_SIZE)
 		return _T("CHR ROM is too large! Increase MAX_CHRROM_SIZE and recompile!");
 
 	fread(PRG_ROM, 1, RI.INES_PRGSize * 0x4000, in);
 	fread(CHR_ROM, 1, RI.INES_CHRSize * 0x2000, in);
-
-	PRGSizeROM = RI.INES_PRGSize * 0x4;
-	CHRSizeROM = RI.INES_CHRSize * 0x8;
 
 	if (RI.INES_Version == 2)
 	{
