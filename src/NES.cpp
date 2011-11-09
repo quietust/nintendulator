@@ -219,7 +219,7 @@ int	FDSLoad (FILE *in)
 			clen -= 4;
 			break;
 		}
-		PRG_ROM[(data >> 12) & 0x3FF][data & 0xFFF] = (unsigned char)(data >> 24);
+		PRG_ROM[(data >> 12) & (MAX_PRGROM_MASK >> 1)][data & 0xFFF] = (unsigned char)(data >> 24);
 	}
 	return clen;
 }
