@@ -1164,7 +1164,12 @@ void	LoadSettings (void)
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("ConfigVersion"), 0, NULL, (LPBYTE)&ConfigVersion, &Size);
 	switch (ConfigVersion)
 	{
-	case 0:	// check if we need to relocate save data from the program's "Saves" subfolder
+	case 0:
+		// Old versions used hue settings 300 to 360; current version uses -30 to +30
+		if (NTSChue >= 300)
+			NTSChue -= 330;
+
+		// check if we need to relocate save data from the program's "Saves" subfolder
 		RelocateSaveData_Progdir();
 		// and the same for My Documents, for people who used 0.975 builds between October 29, 2010 and January 18, 2011
 		RelocateSaveData_Mydocs();

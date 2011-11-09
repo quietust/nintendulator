@@ -430,9 +430,6 @@ void	LoadSettings (HKEY SettingsBase)
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPaletteNTSC"), 0,NULL, (LPBYTE)&CustPaletteNTSC, &Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPalettePAL") , 0,NULL, (LPBYTE)&CustPalettePAL , &Size);
 
-	if (NTSChue >= 300)	// Old versions of Nintendulator used hue settings between 300 and 360
-		NTSChue -= 330;	// Current versions use values between -30 and +30, so convert them if necessary
-
 	SetFrameskip(-1);
 
 	if (Scanlines)
