@@ -610,8 +610,8 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 	if (CHRsize > MAX_CHRROM_SIZE * 0x400)
 		error = _T("CHR ROM is too large! Increase MAX_CHRROM_SIZE and recompile!");
 
-	PRGSizeROM = PRGsize / 0x1000;
-	CHRSizeROM = CHRsize / 0x400;
+	PRGSizeROM = (PRGsize / 0x1000) + ((PRGsize % 0x1000) ? 1 : 0);
+	CHRSizeROM = (CHRsize / 0x400) + ((CHRsize % 0x400) ? 1 : 0);
 	// allow unlimited RAM sizes for UNIF
 	PRGSizeRAM = MAX_PRGRAM_SIZE;
 	CHRSizeRAM = MAX_CHRRAM_SIZE;
