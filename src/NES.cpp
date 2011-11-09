@@ -1166,8 +1166,8 @@ void	LoadSettings (void)
 	{
 	case 0:
 		// Old versions used hue settings 300 to 360; current version uses -30 to +30
-		if (NTSChue >= 300)
-			NTSChue -= 330;
+		if (GFX::NTSChue >= 300)
+			GFX::NTSChue -= 330;
 
 		// check if we need to relocate save data from the program's "Saves" subfolder
 		RelocateSaveData_Progdir();
