@@ -265,7 +265,7 @@ void	Play (void)
 	NES::SRAM_Size = 0;		// when messing with movies, don't save SRAM
 
 	if (RI.ROMType == ROM_FDS)	// when playing FDS movies, discard savedata; if there is savestate data, we'll be reloading it
-		memcpy(NES::PRG_ROM[0x000], NES::PRG_ROM[0x400], RI.FDS_NumSides << 16);
+		memcpy(NES::PRG_ROM[0], NES::PRG_ROM[MAX_PRGROM_SIZE >> 1], RI.FDS_NumSides << 16);
 
 	FindBlock();		// SPECIAL - seek to NMOV block
 	fread(buf, 4, 1, Data);	// to see if Game Genie is used or not
@@ -540,7 +540,7 @@ void	Record (void)
 		if (MI->Load)
 			MI->Load();
 		if (RI.ROMType == ROM_FDS)	// if recording an FDS movie from reset, discard all savedata
-			memcpy(NES::PRG_ROM[0x000], NES::PRG_ROM[0x400], RI.FDS_NumSides << 16);
+			memcpy(NES::PRG_ROM[0], NES::PRG_ROM[MAX_PRGROM_SIZE >> 1], RI.FDS_NumSides << 16);
 		NES::Reset(RESET_HARD);
 	}
 	// save savestate BEFORE enabling recording, so we don't try to re-save the NMOV block
