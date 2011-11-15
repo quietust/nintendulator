@@ -388,12 +388,12 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 	case ABX:
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);Operand = OpData[1] | (OpData[2] << 8);
-		EffectiveAddr = Operand + CPU::X;
+		EffectiveAddr = (Operand + CPU::X) & 0xFFFF;
 		break;
 	case ABY:
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);Operand = OpData[1] | (OpData[2] << 8);
-		EffectiveAddr = Operand + CPU::Y;
+		EffectiveAddr = (Operand + CPU::Y) & 0xFFFF;
 		break;
 	case IMM:
 		OpData[1] = DebugMemCPU(Addr+1);
@@ -424,7 +424,7 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
 		MidAddr = DebugMemCPU(Operand) | (DebugMemCPU((Operand+1) & 0xFF) << 8);
-		EffectiveAddr = MidAddr + CPU::Y;
+		EffectiveAddr = (MidAddr + CPU::Y) & 0xFFFF;
 		break;
 	case IMP:
 		break;
