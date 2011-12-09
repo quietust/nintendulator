@@ -802,7 +802,20 @@ void	Acquire (void)
 
 	if (MaskMouse)
 	{
+		RECT rect;
+		POINT point = {0, 0};
+
+		GetClientRect(hMainWnd, &rect);
+		ClientToScreen(hMainWnd, &point);
+
+		rect.left += point.x;
+		rect.right += point.x;
+		rect.top += point.y;
+		rect.bottom += point.y;
+
+		ClipCursor(&rect);
 		ShowCursor(FALSE);
+
 		// do not allow both keyboard and mouse to be masked at the same time!
 		MaskKeyboard = FALSE;
 	}
@@ -814,7 +827,10 @@ void	UnAcquire (void)
 		if (DeviceUsed[i])
 			DIDevices[i]->Unacquire();
 	if (MaskMouse)
+	{
+		ClipCursor(NULL);
 		ShowCursor(TRUE);
+	}
 	MaskKeyboard = FALSE;
 	MaskMouse = FALSE;
 }
