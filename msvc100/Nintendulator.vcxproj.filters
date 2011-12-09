@@ -74,6 +74,9 @@
     <ClCompile Include="..\src\c_s_snescont.cpp">
       <Filter>Source Files\Std Controllers</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\c_s_snesmouse.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\c_s_stdcont.cpp">
       <Filter>Source Files\Std Controllers</Filter>
     </ClCompile>

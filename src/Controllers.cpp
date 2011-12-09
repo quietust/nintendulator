@@ -71,6 +71,7 @@ void	StdPort_SetControllerType (StdPort *&Port, STDCONT_TYPE Type, int *buttons)
 	case STD_FOURSCORE:		Port = new StdPort_FourScore(buttons);		break;
 	case STD_SNESCONTROLLER:	Port = new StdPort_SnesController(buttons);	break;
 	case STD_VSZAPPER:		Port = new StdPort_VSZapper(buttons);		break;
+	case STD_SNESMOUSE:		Port = new StdPort_SnesMouse(buttons);		break;
 	case STD_FOURSCORE2:		Port = new StdPort_FourScore2(buttons);		break;
 	default:MessageBox(hMainWnd, _T("Error: selected invalid controller type for standard port!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);	break;
 	}
@@ -86,6 +87,7 @@ void	StdPort_SetMappings (void)
 	StdPort_Mappings[STD_FOURSCORE] = _T("Four Score (port 1 only)");
 	StdPort_Mappings[STD_SNESCONTROLLER] = _T("SNES Controller");
 	StdPort_Mappings[STD_VSZAPPER] = _T("VS Unisystem Zapper");
+	StdPort_Mappings[STD_SNESMOUSE] = _T("SNES Mouse");
 	StdPort_Mappings[STD_FOURSCORE2] = _T("Four Score (port 2 only)");
 }
 
@@ -794,8 +796,16 @@ void	Acquire (void)
 	for (i = 0; i < NumDevices; i++)
 		if (DeviceUsed[i])
 			DIDevices[i]->Acquire();
-	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_SUBORKEYBOARD))
-		MaskKeyboard = 1;
+	Port1->SetMasks();
+	Port2->SetMasks();
+	PortExp->SetMasks();
+
+	if (MaskMouse)
+	{
+		ShowCursor(FALSE);
+		// do not allow both keyboard and mouse to be masked at the same time!
+		MaskKeyboard = FALSE;
+	}
 }
 void	UnAcquire (void)
 {
@@ -803,7 +813,10 @@ void	UnAcquire (void)
 	for (i = 0; i < NumDevices; i++)
 		if (DeviceUsed[i])
 			DIDevices[i]->Unacquire();
-	MaskKeyboard = 0;
+	if (MaskMouse)
+		ShowCursor(TRUE);
+	MaskKeyboard = FALSE;
+	MaskMouse = FALSE;
 }
 
 void	ClearKeyState (void)

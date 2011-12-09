@@ -26,6 +26,7 @@ enum	STDCONT_TYPE
 	STD_FOURSCORE,
 	STD_SNESCONTROLLER,
 	STD_VSZAPPER,
+	STD_SNESMOUSE,
 	STD_FOURSCORE2,		// This must always be the 2nd-last entry
 	STD_MAX
 };
@@ -37,6 +38,7 @@ public:
 	virtual void		Write	(unsigned char) = 0;
 	virtual void		Config	(HWND) = 0;
 	virtual void		Frame	(unsigned char) = 0;
+	virtual void		SetMasks(void) = 0;
 	STDCONT_TYPE	Type;
 	int		*Buttons;
 	int		NumButtons;
@@ -49,12 +51,13 @@ public:
 class StdPort_##NAME : public StdPort \
 { \
 public: \
-				StdPort_##NAME (int *); \
-	virtual			~StdPort_##NAME(void); \
-	virtual unsigned char	Read	(void); \
-	virtual void		Write	(unsigned char); \
-	virtual void		Config	(HWND); \
-	virtual void		Frame	(unsigned char); \
+			StdPort_##NAME (int *); \
+			~StdPort_##NAME(void); \
+	unsigned char	Read	(void); \
+	void		Write	(unsigned char); \
+	void		Config	(HWND); \
+	void		Frame	(unsigned char); \
+	void		SetMasks(void); \
 };
 DEF_STDCONT(Unconnected)
 DEF_STDCONT(StdController)
@@ -64,6 +67,7 @@ DEF_STDCONT(PowerPad)
 DEF_STDCONT(FourScore)
 DEF_STDCONT(SnesController)
 DEF_STDCONT(VSZapper)
+DEF_STDCONT(SnesMouse)
 DEF_STDCONT(FourScore2)
 #undef DEF_STDCONT
 
@@ -91,6 +95,7 @@ public:
 	virtual void		Write	(unsigned char) = 0;
 	virtual void		Config	(HWND) = 0;
 	virtual void		Frame	(unsigned char) = 0;
+	virtual void		SetMasks(void) = 0;
 	EXPCONT_TYPE	Type;
 	int		*Buttons;
 	int		NumButtons;
@@ -103,13 +108,14 @@ public:
 class ExpPort_##NAME : public ExpPort \
 { \
 public: \
-				ExpPort_##NAME (int *); \
-	virtual			~ExpPort_##NAME(void); \
-	virtual unsigned char	Read1	(void); \
-	virtual unsigned char	Read2	(void); \
-	virtual void		Write	(unsigned char); \
-	virtual void		Config	(HWND); \
-	virtual void		Frame	(unsigned char); \
+			ExpPort_##NAME (int *); \
+			~ExpPort_##NAME(void); \
+	unsigned char	Read1	(void); \
+	unsigned char	Read2	(void); \
+	void		Write	(unsigned char); \
+	void		Config	(HWND); \
+	void		Frame	(unsigned char); \
+	void		SetMasks(void); \
 };
 DEF_EXPCONT(Unconnected)
 DEF_EXPCONT(Fami4Play)

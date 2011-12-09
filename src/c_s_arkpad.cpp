@@ -27,7 +27,7 @@ struct StdPort_ArkanoidPaddle_State
 #include <poppack.h>
 #define State ((StdPort_ArkanoidPaddle_State *)Data)
 
-void StdPort_ArkanoidPaddle::Frame (unsigned char mode)
+void	StdPort_ArkanoidPaddle::Frame (unsigned char mode)
 {
 	int x, i, bits;
 	if (mode & MOV_PLAY)
@@ -60,7 +60,7 @@ void StdPort_ArkanoidPaddle::Frame (unsigned char mode)
 	}
 	State->NewBits = bits;
 }
-unsigned char StdPort_ArkanoidPaddle::Read (void)
+unsigned char	StdPort_ArkanoidPaddle::Read (void)
 {
 	unsigned char result;
 	if (State->BitPtr < 8)
@@ -70,7 +70,7 @@ unsigned char StdPort_ArkanoidPaddle::Read (void)
 		result |= 0x08;
 	return result;
 }
-void StdPort_ArkanoidPaddle::Write (unsigned char Val)
+void	StdPort_ArkanoidPaddle::Write (unsigned char Val)
 {
 	if ((!State->Strobe) && (Val & 1))
 	{
@@ -92,9 +92,13 @@ INT_PTR	CALLBACK	StdPort_ArkanoidPaddle_ConfigProc (HWND hDlg, UINT uMsg, WPARAM
 	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 	return ParseConfigMessages(hDlg, 1, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
 }
-void StdPort_ArkanoidPaddle::Config (HWND hWnd)
+void	StdPort_ArkanoidPaddle::Config (HWND hWnd)
 {
 	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_ARKANOIDPADDLE, hWnd, StdPort_ArkanoidPaddle_ConfigProc, (LPARAM)this);
+}
+void	StdPort_ArkanoidPaddle::SetMasks (void)
+{
+	MaskMouse = TRUE;
 }
 StdPort_ArkanoidPaddle::~StdPort_ArkanoidPaddle (void)
 {

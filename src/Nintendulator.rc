@@ -1341,6 +1341,23 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,204,68,48,16
 END
 
+IDD_STDPORT_SNESMOUSE DIALOGEX 0, 0, 244, 81
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "SNES Mouse Config"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    RTEXT           "&Left",IDC_STATIC,8,16,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D0,40,16,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "",IDC_CONT_K0,172,16,64,12
+    DEFPUSHBUTTON   "OK",IDOK,96,60,52,16
+    RTEXT           "&Right",IDC_STATIC,8,32,28,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONT_D1,40,32,128,64,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    PUSHBUTTON      "",IDC_CONT_K1,172,32,64,12
+    GROUPBOX        "Buttons",IDC_STATIC,4,4,236,48
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1794,6 +1811,7 @@ BEGIN
         HORZGUIDE, 236
         HORZGUIDE, 240
         HORZGUIDE, 252
+        HORZGUIDE, 260
         HORZGUIDE, 268
     END
 
@@ -2117,6 +2135,28 @@ BEGIN
         HORZGUIDE, 64
         HORZGUIDE, 68
         HORZGUIDE, 72
+    END
+
+    IDD_STDPORT_SNESMOUSE, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 240
+        VERTGUIDE, 8
+        VERTGUIDE, 36
+        VERTGUIDE, 40
+        VERTGUIDE, 96
+        VERTGUIDE, 148
+        VERTGUIDE, 168
+        VERTGUIDE, 172
+        VERTGUIDE, 236
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 77
+        HORZGUIDE, 16
+        HORZGUIDE, 28
+        HORZGUIDE, 32
+        HORZGUIDE, 44
+        HORZGUIDE, 52
+        HORZGUIDE, 60
     END
 END
 #endif    // APSTUDIO_INVOKED

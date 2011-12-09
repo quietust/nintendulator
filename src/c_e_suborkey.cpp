@@ -107,6 +107,10 @@ void	ExpPort_SuborKeyboard::Config (HWND hWnd)
 {
 	MessageBox(hWnd, _T("No configuration necessary!"), _T("Nintendulator"), MB_OK);
 }
+void	ExpPort_SuborKeyboard::SetMasks (void)
+{
+	MaskKeyboard = TRUE;
+}
 ExpPort_SuborKeyboard::~ExpPort_SuborKeyboard (void)
 {
 	delete Data;

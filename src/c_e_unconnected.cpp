@@ -28,6 +28,9 @@ void	ExpPort_Unconnected::Config (HWND hWnd)
 {
 	MessageBox(hWnd, _T("No configuration necessary!"), _T("Nintendulator"), MB_OK);
 }
+void	ExpPort_Unconnected::SetMasks (void)
+{
+}
 ExpPort_Unconnected::~ExpPort_Unconnected (void)
 {
 }

@@ -102,6 +102,9 @@ void	ExpPort_FamTrainer::Config (HWND hWnd)
 {
 	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_FAMTRAIN, hWnd, ExpPort_FamTrainer_ConfigProc, (LPARAM)this);
 }
+void	ExpPort_FamTrainer::SetMasks (void)
+{
+}
 ExpPort_FamTrainer::~ExpPort_FamTrainer (void)
 {
 	delete Data;

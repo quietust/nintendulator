@@ -241,6 +241,16 @@ void	StdPort_FourScore2::Config (HWND hWnd)
 {
 	DialogBox(hInst, (LPCTSTR)IDD_STDPORT_FOURSCORE, hWnd, StdPort_FourScore_ConfigProc);
 }
+void	StdPort_FourScore::SetMasks (void)
+{
+	FSPort1->SetMasks();
+	FSPort2->SetMasks();
+}
+void	StdPort_FourScore2::SetMasks (void)
+{
+	FSPort3->SetMasks();
+	FSPort4->SetMasks();
+}
 StdPort_FourScore::~StdPort_FourScore (void)
 {
 	delete Data;

@@ -93,6 +93,7 @@
     <ClCompile Include="..\src\c_s_fourscore.cpp" />
     <ClCompile Include="..\src\c_s_powpad.cpp" />
     <ClCompile Include="..\src\c_s_snescont.cpp" />
+    <ClCompile Include="..\src\c_s_snesmouse.cpp" />
     <ClCompile Include="..\src\c_s_stdcont.cpp" />
     <ClCompile Include="..\src\c_s_unconnected.cpp" />
     <ClCompile Include="..\src\c_s_vszapper.cpp" />

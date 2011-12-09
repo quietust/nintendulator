@@ -116,6 +116,10 @@ void	ExpPort_FamilyBasicKeyboard::Config (HWND hWnd)
 		SetWindowPos(ExpPort_FamilyBasicKeyboard_ConfigWindow, hMainWnd, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
 	}
 }
+void	ExpPort_FamilyBasicKeyboard::SetMasks (void)
+{
+	MaskKeyboard = TRUE;
+}
 
 ExpPort_FamilyBasicKeyboard::~ExpPort_FamilyBasicKeyboard (void)
 {

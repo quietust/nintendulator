@@ -261,6 +261,9 @@
 					RelativePath="..\src\c_s_snescont.cpp">
 				</File>
 				<File
+					RelativePath="..\src\c_s_snesmouse.cpp">
+				</File>
+				<File
 					RelativePath="..\src\c_s_stdcont.cpp">
 				</File>
 				<File

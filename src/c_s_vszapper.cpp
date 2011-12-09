@@ -135,6 +135,9 @@ void	StdPort_VSZapper::Config (HWND hWnd)
 {
 	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_VSZAPPER, hWnd, StdPort_VSZapper_ConfigProc, (LPARAM)this);
 }
+void	StdPort_VSZapper::SetMasks (void)
+{
+}
 StdPort_VSZapper::~StdPort_VSZapper (void)
 {
 	delete Data;

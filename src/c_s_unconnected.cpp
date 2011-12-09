@@ -24,6 +24,9 @@ void	StdPort_Unconnected::Config (HWND hWnd)
 {
 	MessageBox(hWnd, _T("No configuration necessary!"), _T("Nintendulator"), MB_OK);
 }
+void	StdPort_Unconnected::SetMasks (void)
+{
+}
 StdPort_Unconnected::~StdPort_Unconnected (void)
 {
 }

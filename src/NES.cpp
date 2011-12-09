@@ -947,8 +947,6 @@ DWORD	WINAPI	Thread (void *param)
 	EI.DbgOut(_T("1 minute emulated in %lu milliseconds"), (unsigned long)((ClockVal2.QuadPart - ClockVal1.QuadPart) * 1000 / ClockFreq.QuadPart));
 #else	/* !CPU_BENCHMARK */
 
-	Controllers::Acquire();
-
 	if ((!DoStop) && (SoundEnabled))
 		APU::SoundON();	// don't turn on sound if we're only stepping 1 instruction
 
@@ -995,7 +993,6 @@ DWORD	WINAPI	Thread (void *param)
 	}
 
 	APU::SoundOFF();
-	Controllers::UnAcquire();
 	Movie::ShowFrame();
 
 #endif	/* CPU_BENCHMARK */
@@ -1013,6 +1010,7 @@ void	Start (BOOL step)
 	Debugger::Step = step;
 #endif	/* ENABLE_DEBUGGER */
 	DoStop = FALSE;
+	Controllers::Acquire();
 	CloseHandle(CreateThread(NULL, 0, Thread, NULL, 0, &ThreadID));
 }
 void	Stop (void)
@@ -1025,6 +1023,7 @@ void	Stop (void)
 		ProcessMessages();
 		Sleep(1);
 	}
+	Controllers::UnAcquire();
 }
 
 void	MapperConfig (void)

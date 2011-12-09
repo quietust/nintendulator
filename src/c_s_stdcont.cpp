@@ -92,6 +92,9 @@ void	StdPort_StdController::Config (HWND hWnd)
 {
 	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_STDCONTROLLER, hWnd, StdPort_StdController_ConfigProc, (LPARAM)this);
 }
+void	StdPort_StdController::SetMasks (void)
+{
+}
 StdPort_StdController::~StdPort_StdController (void)
 {
 	delete Data;

@@ -98,6 +98,10 @@ void	ExpPort_ArkanoidPaddle::Config (HWND hWnd)
 {
 	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE, hWnd, ExpPort_ArkanoidPaddle_ConfigProc, (LPARAM)this);
 }
+void	ExpPort_ArkanoidPaddle::SetMasks (void)
+{
+	MaskMouse = TRUE;
+}
 ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 {
 	delete Data;

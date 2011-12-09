@@ -32,6 +32,7 @@
 #define IDD_BREAKPOINT                  149
 #define IDD_MOVIE_RECORD                150
 #define IDD_MOVIE_PLAY                  151
+#define IDD_STDPORT_SNESMOUSE           152
 #define IDC_ABOUTICON                   1001
 #define IDC_CONT_SPORT1                 1002
 #define IDC_CONT_SPORT2                 1003

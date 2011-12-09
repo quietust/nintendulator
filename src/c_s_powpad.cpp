@@ -125,6 +125,9 @@ void	StdPort_PowerPad::Config (HWND hWnd)
 {
 	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_POWERPAD, hWnd, StdPort_PowerPad_ConfigProc, (LPARAM)this);
 }
+void	StdPort_PowerPad::SetMasks (void)
+{
+}
 StdPort_PowerPad::~StdPort_PowerPad (void)
 {
 	delete Data;

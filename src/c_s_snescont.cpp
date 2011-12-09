@@ -106,6 +106,9 @@ void	StdPort_SnesController::Config (HWND hWnd)
 {
 	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_SNESCONTROLLER, hWnd, StdPort_SnesController_ConfigProc, (LPARAM)this);
 }
+void	StdPort_SnesController::SetMasks (void)
+{
+}
 StdPort_SnesController::~StdPort_SnesController (void)
 {
 	delete Data;

@@ -57,6 +57,7 @@ TCHAR		Path_AVI[MAX_PATH];	// current AVI directory
 TCHAR		Path_PAL[MAX_PATH];	// current palette directory
 TCHAR		DataPath[MAX_PATH];	// user data path
 BOOL		MaskKeyboard = FALSE;	// mask keyboard accelerators (for when Family Basic Keyboard is active)
+BOOL		MaskMouse = FALSE;	// hide mouse cursor (for Arkanoid paddle and SNES Mouse)
 HWND		hDebug;		// Debug Info window
 BOOL		dbgVisible;	// whether or not the Debug window is open
 

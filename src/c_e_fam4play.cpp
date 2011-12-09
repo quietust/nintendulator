@@ -126,6 +126,9 @@ void	ExpPort_Fami4Play::Config (HWND hWnd)
 {
 	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_FAMI4PLAY, hWnd, ExpPort_Fami4Play_ConfigProc, (LPARAM)this);
 }
+void	ExpPort_Fami4Play::SetMasks (void)
+{
+}
 ExpPort_Fami4Play::~ExpPort_Fami4Play (void)
 {
 	delete Data;
