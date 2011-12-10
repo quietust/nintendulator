@@ -38,7 +38,6 @@ void	StdPort_SnesMouse::Frame (unsigned char mode)
 	}
 	else
 	{
-		GFX::SetCursorPos(128, 120);
 		State->Buttons = 0;
 		if (IsPressed(Buttons[0]))
 			State->Buttons |= 0x1;

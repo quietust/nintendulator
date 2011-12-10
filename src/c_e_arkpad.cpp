@@ -37,7 +37,6 @@ void	ExpPort_ArkanoidPaddle::Frame (unsigned char mode)
 	}
 	else
 	{
-		GFX::SetCursorPos(128, 220);
 		State->Button = IsPressed(Buttons[0]);
 		State->Pos += MouseState.lX;
 		if (State->Pos < 196)
