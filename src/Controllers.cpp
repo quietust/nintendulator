@@ -735,6 +735,8 @@ void	LoadSettings (HKEY SettingsBase)
 	else
 	{
 		SET_STDCONT(Port1, (STDCONT_TYPE)Port1T);
+		if ((Port2T == STD_FOURSCORE) || (Port2T == STD_FOURSCORE2))
+			Port2T = STD_UNCONNECTED;
 		SET_STDCONT(Port2, (STDCONT_TYPE)Port2T);
 	}
 	SET_STDCONT(FSPort1, (STDCONT_TYPE)FSPort1T);
