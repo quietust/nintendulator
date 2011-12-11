@@ -57,7 +57,6 @@ void	StdPort_VSZapper::Frame (unsigned char mode)
 		MovData[2] = State->Button;
 	}
 }
-
 unsigned char	StdPort_VSZapper::Read (void)
 {
 	unsigned char result;

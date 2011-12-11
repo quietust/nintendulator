@@ -55,7 +55,6 @@ void	StdPort_PowerPad::Frame (unsigned char mode)
 		MovData[1] = State->NewBit2;
 	}
 }
-
 unsigned char	StdPort_PowerPad::Read (void)
 {
 	unsigned char result = 0;

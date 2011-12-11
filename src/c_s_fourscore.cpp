@@ -78,7 +78,6 @@ void	StdPort_FourScore2::Frame (unsigned char mode)
 			FSPort4->MovData[y] = MovData[x];
 	}
 }
-
 unsigned char	StdPort_FourScore::Read (void)
 {
 	unsigned char result = 0;
@@ -121,7 +120,6 @@ unsigned char	StdPort_FourScore2::Read (void)
 		State->BitPtr++;
 	return result;
 }
-
 void	StdPort_FourScore::Write (unsigned char Val)
 {
 	State->Strobe = Val & 1;
@@ -138,7 +136,6 @@ void	StdPort_FourScore2::Write (unsigned char Val)
 	FSPort2->Write(Val);
 	FSPort4->Write(Val);
 }
-
 INT_PTR	CALLBACK	StdPort_FourScore_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;

@@ -59,7 +59,6 @@ void	StdPort_SnesController::Frame (unsigned char mode)
 		MovData[1] = State->NewBit2;
 	}
 }
-
 unsigned char	StdPort_SnesController::Read (void)
 {
 	unsigned char result = 1;

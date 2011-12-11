@@ -106,7 +106,6 @@ INT_PTR	CALLBACK	ExpPort_FamilyBasicKeyboard_ConfigProc (HWND hDlg, UINT uMsg, W
 	}
 	return FALSE;
 }
-
 void	ExpPort_FamilyBasicKeyboard::Config (HWND hWnd)
 {
 	if (!ExpPort_FamilyBasicKeyboard_ConfigWindow)
@@ -120,7 +119,6 @@ void	ExpPort_FamilyBasicKeyboard::SetMasks (void)
 {
 	MaskKeyboard = TRUE;
 }
-
 ExpPort_FamilyBasicKeyboard::~ExpPort_FamilyBasicKeyboard (void)
 {
 	delete Data;

@@ -48,7 +48,6 @@ void	StdPort_StdController::Frame (unsigned char mode)
 	if (mode & MOV_RECORD)
 		MovData[0] = State->NewBits;
 }
-
 unsigned char	StdPort_StdController::Read (void)
 {
 	unsigned char result;

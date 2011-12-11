@@ -84,7 +84,6 @@ unsigned char	ExpPort_SuborKeyboard::Read2 (void)
 	}
 	return result ^ 0x1E;
 }
-
 void	ExpPort_SuborKeyboard::Write (unsigned char Val)
 {
 	BOOL ResetKB = Val & 1;

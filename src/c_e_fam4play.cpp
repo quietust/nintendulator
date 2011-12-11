@@ -65,7 +65,6 @@ void	ExpPort_Fami4Play::Frame (unsigned char mode)
 		MovData[1] = State->NewBit2;
 	}
 }
-
 unsigned char	ExpPort_Fami4Play::Read1 (void)
 {
 	unsigned char result = 1;
