@@ -27,8 +27,26 @@ struct StdPort_VSZapper_State
 	unsigned char Button;
 };
 #include <poppack.h>
-#define State ((StdPort_VSZapper_State *)Data)
+int	StdPort_VSZapper::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	StdPort_VSZapper::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	StdPort_VSZapper::Frame (unsigned char mode)
 {
 	POINT pos;
@@ -139,7 +157,7 @@ void	StdPort_VSZapper::SetMasks (void)
 }
 StdPort_VSZapper::~StdPort_VSZapper (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 StdPort_VSZapper::StdPort_VSZapper (int *buttons)
@@ -147,8 +165,7 @@ StdPort_VSZapper::StdPort_VSZapper (int *buttons)
 	Type = STD_VSZAPPER;
 	NumButtons = 1;
 	Buttons = buttons;
-	DataLen = sizeof(StdPort_VSZapper_State);
-	Data = new StdPort_VSZapper_State;
+	State = new StdPort_VSZapper_State;
 	MovLen = 3;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

@@ -25,8 +25,26 @@ struct StdPort_ArkanoidPaddle_State
 	unsigned char NewBits;
 };
 #include <poppack.h>
-#define State ((StdPort_ArkanoidPaddle_State *)Data)
+int	StdPort_ArkanoidPaddle::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	StdPort_ArkanoidPaddle::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	StdPort_ArkanoidPaddle::Frame (unsigned char mode)
 {
 	int x, i, bits;
@@ -101,7 +119,7 @@ void	StdPort_ArkanoidPaddle::SetMasks (void)
 }
 StdPort_ArkanoidPaddle::~StdPort_ArkanoidPaddle (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 StdPort_ArkanoidPaddle::StdPort_ArkanoidPaddle (int *buttons)
@@ -109,8 +127,7 @@ StdPort_ArkanoidPaddle::StdPort_ArkanoidPaddle (int *buttons)
 	Type = STD_ARKANOIDPADDLE;
 	NumButtons = 1;
 	Buttons = buttons;
-	DataLen = sizeof(StdPort_ArkanoidPaddle_State);
-	Data = new StdPort_ArkanoidPaddle_State;
+	State = new StdPort_ArkanoidPaddle_State;
 	MovLen = 2;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

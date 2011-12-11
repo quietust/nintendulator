@@ -21,8 +21,26 @@ struct ExpPort_SuborKeyboard_State
 	unsigned char Keys[13];
 };
 #include <poppack.h>
-#define State ((ExpPort_SuborKeyboard_State *)Data)
+int	ExpPort_SuborKeyboard::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	ExpPort_SuborKeyboard::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	ExpPort_SuborKeyboard::Frame (unsigned char mode)
 {
 	int row, col;
@@ -112,7 +130,7 @@ void	ExpPort_SuborKeyboard::SetMasks (void)
 }
 ExpPort_SuborKeyboard::~ExpPort_SuborKeyboard (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 ExpPort_SuborKeyboard::ExpPort_SuborKeyboard (int *buttons)
@@ -120,8 +138,7 @@ ExpPort_SuborKeyboard::ExpPort_SuborKeyboard (int *buttons)
 	Type = EXP_SUBORKEYBOARD;
 	NumButtons = 0;
 	Buttons = buttons;
-	DataLen = sizeof(ExpPort_SuborKeyboard_State);
-	Data = new ExpPort_SuborKeyboard_State;
+	State = new ExpPort_SuborKeyboard_State;
 	MovLen = 13;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

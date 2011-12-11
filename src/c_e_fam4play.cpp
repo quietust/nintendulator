@@ -25,8 +25,26 @@ struct ExpPort_Fami4Play_State
 	unsigned char NewBit2;
 };
 #include <poppack.h>
-#define State ((ExpPort_Fami4Play_State *)Data)
+int	ExpPort_Fami4Play::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	ExpPort_Fami4Play::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	ExpPort_Fami4Play::Frame (unsigned char mode)
 {
 	int i;
@@ -130,7 +148,7 @@ void	ExpPort_Fami4Play::SetMasks (void)
 }
 ExpPort_Fami4Play::~ExpPort_Fami4Play (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 ExpPort_Fami4Play::ExpPort_Fami4Play (int *buttons)
@@ -138,8 +156,7 @@ ExpPort_Fami4Play::ExpPort_Fami4Play (int *buttons)
 	Type = EXP_FAMI4PLAY;
 	NumButtons = 16;
 	Buttons = buttons;
-	DataLen = sizeof(ExpPort_Fami4Play_State);
-	Data = new ExpPort_Fami4Play_State;
+	State = new ExpPort_Fami4Play_State;
 	MovLen = 2;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

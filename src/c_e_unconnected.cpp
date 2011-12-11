@@ -6,10 +6,29 @@
  */
 
 #include "stdafx.h"
+#include "Nintendulator.h"
 #include "Controllers.h"
 
 namespace Controllers
 {
+int	ExpPort_Unconnected::Save (FILE *out)
+{
+	int clen = 0;
+
+	writeWord(0);
+
+	return clen;
+}
+int	ExpPort_Unconnected::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	fseek(in, len, SEEK_CUR);
+
+	return clen;
+}
 void	ExpPort_Unconnected::Frame (unsigned char mode)
 {
 }
@@ -39,8 +58,7 @@ ExpPort_Unconnected::ExpPort_Unconnected (int *buttons)
 	Type = EXP_UNCONNECTED;
 	NumButtons = 0;
 	Buttons = buttons;
-	DataLen = 0;
-	Data = NULL;
+	State = NULL;
 	MovLen = 0;
 	MovData = NULL;
 }

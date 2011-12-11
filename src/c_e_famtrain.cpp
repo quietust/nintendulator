@@ -21,8 +21,26 @@ struct ExpPort_FamTrainer_State
 	unsigned short NewBits;
 };
 #include <poppack.h>
-#define State ((ExpPort_FamTrainer_State *)Data)
+int	ExpPort_FamTrainer::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	ExpPort_FamTrainer::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	ExpPort_FamTrainer::Frame (unsigned char mode)
 {
 	int i;
@@ -107,7 +125,7 @@ void	ExpPort_FamTrainer::SetMasks (void)
 }
 ExpPort_FamTrainer::~ExpPort_FamTrainer (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 ExpPort_FamTrainer::ExpPort_FamTrainer (int *buttons)
@@ -115,8 +133,7 @@ ExpPort_FamTrainer::ExpPort_FamTrainer (int *buttons)
 	Type = EXP_FAMTRAINER;
 	NumButtons = 12;
 	Buttons = buttons;
-	DataLen = sizeof(ExpPort_FamTrainer_State);
-	Data = new ExpPort_FamTrainer_State;
+	State = new ExpPort_FamTrainer_State;
 	MovLen = 2;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

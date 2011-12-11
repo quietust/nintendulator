@@ -25,8 +25,26 @@ struct ExpPort_ArkanoidPaddle_State
 	unsigned char NewBits;
 };
 #include <poppack.h>
-#define State ((ExpPort_ArkanoidPaddle_State *)Data)
+int	ExpPort_ArkanoidPaddle::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	ExpPort_ArkanoidPaddle::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	ExpPort_ArkanoidPaddle::Frame (unsigned char mode)
 {
 	int x, i, bits;
@@ -103,7 +121,7 @@ void	ExpPort_ArkanoidPaddle::SetMasks (void)
 }
 ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 ExpPort_ArkanoidPaddle::ExpPort_ArkanoidPaddle (int *buttons)
@@ -111,8 +129,7 @@ ExpPort_ArkanoidPaddle::ExpPort_ArkanoidPaddle (int *buttons)
 	Type = EXP_ARKANOIDPADDLE;
 	NumButtons = 1;
 	Buttons = buttons;
-	DataLen = sizeof(ExpPort_ArkanoidPaddle_State);
-	Data = new ExpPort_ArkanoidPaddle_State;
+	State = new ExpPort_ArkanoidPaddle_State;
 	MovLen = 2;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

@@ -604,35 +604,27 @@ int	Save (FILE *out)
 {
 	int clen = 0;
 	unsigned char type;
-	unsigned short len;
 
 	type = (unsigned char)Port1->Type;	writeByte(type);
-	len = (unsigned short)Port1->DataLen;	writeWord(len);
-	writeArray(Port1->Data, len);
+	clen += Port1->Save(out);
 
 	type = (unsigned char)Port2->Type;	writeByte(type);
-	len = (unsigned short)Port2->DataLen;	writeWord(len);
-	writeArray(Port2->Data, len);
+	clen += Port2->Save(out);
 
 	type = (unsigned char)PortExp->Type;	writeByte(type);
-	len = (unsigned short)PortExp->DataLen;	writeWord(len);
-	writeArray(PortExp->Data, len);
+	clen += PortExp->Save(out);
 
 	type = (unsigned char)FSPort1->Type;	writeByte(type);
-	len = (unsigned short)FSPort1->DataLen;	writeWord(len);
-	writeArray(FSPort1->Data, len);
+	clen += FSPort1->Save(out);
 
 	type = (unsigned char)FSPort2->Type;	writeByte(type);
-	len = (unsigned short)FSPort2->DataLen;	writeWord(len);
-	writeArray(FSPort2->Data, len);
+	clen += FSPort2->Save(out);
 
 	type = (unsigned char)FSPort3->Type;	writeByte(type);
-	len = (unsigned short)FSPort3->DataLen;	writeWord(len);
-	writeArray(FSPort3->Data, len);
+	clen += FSPort3->Save(out);
 
 	type = (unsigned char)FSPort4->Type;	writeByte(type);
-	len = (unsigned short)FSPort4->DataLen;	writeWord(len);
-	writeArray(FSPort4->Data, len);
+	clen += FSPort4->Save(out);
 
 	return clen;
 }
@@ -641,53 +633,43 @@ int	Load (FILE *in)
 {
 	int clen = 0;
 	unsigned char type;
-	unsigned short len;
 	Movie::ControllerTypes[3] = 1;	// denotes that controller state has been loaded
 					// if we're playing a movie, this means we should
 					// SKIP the controller info in the movie block
 
 	readByte(type);
-	readWord(len);
 	SET_STDCONT(Port1, (STDCONT_TYPE)type);
-	readArraySkip(Port1->Data, len, Port1->DataLen);
+	clen += Port1->Load(in);
 
-	if ((STDCONT_TYPE)type == STD_FOURSCORE)
-	{
-		readByte(type);
+	readByte(type);
+	// if there's a Four Score on the first port, then assume the same for port 2
+	if (Port1->Type == STD_FOURSCORE)
 		SET_STDCONT(Port2, STD_FOURSCORE2);
-	}
-	else
-	{
-		readByte(type);
-		SET_STDCONT(Port2, (STDCONT_TYPE)type);
-	}
-	readWord(len);
-	readArraySkip(Port2->Data, len, Port2->DataLen);
+	// If not, however, make sure that the right half of a four-score doesn't end up here
+	else if ((STDCONT_TYPE)type == STD_FOURSCORE2)
+		SET_STDCONT(Port2, STD_UNCONNECTED);
+	else	SET_STDCONT(Port2, (STDCONT_TYPE)type);
+	clen += Port2->Load(in);
 
 	readByte(type);
 	SET_EXPCONT(PortExp, (EXPCONT_TYPE)type);
-	readWord(len);
-	readArraySkip(PortExp->Data, len, PortExp->DataLen);
+	clen += PortExp->Load(in);
 
 	readByte(type);
 	SET_STDCONT(FSPort1, (STDCONT_TYPE)type);
-	readWord(len);
-	readArraySkip(FSPort1->Data, len, FSPort1->DataLen);
+	clen += FSPort1->Load(in);
 
 	readByte(type);
 	SET_STDCONT(FSPort2, (STDCONT_TYPE)type);
-	readWord(len);
-	readArraySkip(FSPort2->Data, len, FSPort2->DataLen);
+	clen += FSPort2->Load(in);
 
 	readByte(type);
 	SET_STDCONT(FSPort3, (STDCONT_TYPE)type);
-	readWord(len);
-	readArraySkip(FSPort3->Data, len, FSPort3->DataLen);
+	clen += FSPort3->Load(in);
 
 	readByte(type);
 	SET_STDCONT(FSPort4, (STDCONT_TYPE)type);
-	readWord(len);
-	readArraySkip(FSPort4->Data, len, FSPort4->DataLen);
+	clen += FSPort4->Load(in);
 
 	return clen;
 }

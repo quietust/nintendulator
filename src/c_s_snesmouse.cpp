@@ -26,8 +26,26 @@ struct StdPort_SnesMouse_State
 	unsigned char Sensitivity;
 };
 #include <poppack.h>
-#define State ((StdPort_SnesMouse_State *)Data)
+int	StdPort_SnesMouse::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	StdPort_SnesMouse::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	StdPort_SnesMouse::Frame (unsigned char mode)
 {
 	if (mode & MOV_PLAY)
@@ -117,7 +135,7 @@ void	StdPort_SnesMouse::SetMasks (void)
 }
 StdPort_SnesMouse::~StdPort_SnesMouse (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 StdPort_SnesMouse::StdPort_SnesMouse (int *buttons)
@@ -125,8 +143,7 @@ StdPort_SnesMouse::StdPort_SnesMouse (int *buttons)
 	Type = STD_SNESMOUSE;
 	NumButtons = 2;
 	Buttons = buttons;
-	DataLen = sizeof(StdPort_SnesMouse_State);
-	Data = new StdPort_SnesMouse_State;
+	State = new StdPort_SnesMouse_State;
 	MovLen = 3;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

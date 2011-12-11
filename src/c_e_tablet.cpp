@@ -26,8 +26,26 @@ struct ExpPort_Tablet_State
 	unsigned long NewBits;
 };
 #include <poppack.h>
-#define State ((ExpPort_Tablet_State *)Data)
+int	ExpPort_Tablet::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	ExpPort_Tablet::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	ExpPort_Tablet::Frame (unsigned char mode)
 {
 	int x, y;
@@ -124,7 +142,7 @@ void	ExpPort_Tablet::SetMasks (void)
 }
 ExpPort_Tablet::~ExpPort_Tablet (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 ExpPort_Tablet::ExpPort_Tablet (int *buttons)
@@ -132,8 +150,7 @@ ExpPort_Tablet::ExpPort_Tablet (int *buttons)
 	Type = EXP_TABLET;
 	NumButtons = 1;
 	Buttons = buttons;
-	DataLen = sizeof(ExpPort_Tablet_State);
-	Data = new ExpPort_Tablet_State;
+	State = new ExpPort_Tablet_State;
 	MovLen = 3;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

@@ -22,8 +22,26 @@ struct StdPort_StdController_State
 	unsigned char NewBits;
 };
 #include <poppack.h>
-#define State ((StdPort_StdController_State *)Data)
+int	StdPort_StdController::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	StdPort_StdController::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	StdPort_StdController::Frame (unsigned char mode)
 {
 	int i;
@@ -96,7 +114,7 @@ void	StdPort_StdController::SetMasks (void)
 }
 StdPort_StdController::~StdPort_StdController (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 StdPort_StdController::StdPort_StdController (int *buttons)
@@ -104,8 +122,7 @@ StdPort_StdController::StdPort_StdController (int *buttons)
 	Type = STD_STDCONTROLLER;
 	NumButtons = 8;
 	Buttons = buttons;
-	DataLen = sizeof(StdPort_StdController_State);
-	Data = new StdPort_StdController_State;
+	State = new StdPort_StdController_State;
 	MovLen = 1;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

@@ -39,15 +39,17 @@ public:
 	virtual void		Config	(HWND) = 0;
 	virtual void		Frame	(unsigned char) = 0;
 	virtual void		SetMasks(void) = 0;
+	virtual int		Save	(FILE *) = 0;
+	virtual int		Load	(FILE *) = 0;
+
 	STDCONT_TYPE	Type;
 	int		*Buttons;
 	int		NumButtons;
-	int		DataLen;
-	void		*Data;
 	int		MovLen;
 	unsigned char	*MovData;
 };
 #define DEF_STDCONT(NAME) \
+struct StdPort_##NAME##_State; \
 class StdPort_##NAME : public StdPort \
 { \
 public: \
@@ -58,6 +60,9 @@ public: \
 	void		Config	(HWND); \
 	void		Frame	(unsigned char); \
 	void		SetMasks(void); \
+	int		Save	(FILE *); \
+	int		Load	(FILE *); \
+	StdPort_##NAME##_State	*State; \
 };
 DEF_STDCONT(Unconnected)
 DEF_STDCONT(StdController)
@@ -96,15 +101,16 @@ public:
 	virtual void		Config	(HWND) = 0;
 	virtual void		Frame	(unsigned char) = 0;
 	virtual void		SetMasks(void) = 0;
+	virtual int		Save	(FILE *) = 0;
+	virtual int		Load	(FILE *) = 0;
 	EXPCONT_TYPE	Type;
 	int		*Buttons;
 	int		NumButtons;
-	int		DataLen;
-	void		*Data;
 	int		MovLen;
 	unsigned char	*MovData;
 };
 #define DEF_EXPCONT(NAME) \
+struct ExpPort_##NAME##_State; \
 class ExpPort_##NAME : public ExpPort \
 { \
 public: \
@@ -116,6 +122,9 @@ public: \
 	void		Config	(HWND); \
 	void		Frame	(unsigned char); \
 	void		SetMasks(void); \
+	int		Save	(FILE *); \
+	int		Load	(FILE *); \
+	ExpPort_##NAME##_State	*State; \
 };
 DEF_EXPCONT(Unconnected)
 DEF_EXPCONT(Fami4Play)

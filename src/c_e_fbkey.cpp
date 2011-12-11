@@ -21,8 +21,26 @@ struct ExpPort_FamilyBasicKeyboard_State
 	unsigned char Keys[9];
 };
 #include <poppack.h>
-#define State ((ExpPort_FamilyBasicKeyboard_State *)Data)
+int	ExpPort_FamilyBasicKeyboard::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	ExpPort_FamilyBasicKeyboard::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	ExpPort_FamilyBasicKeyboard::Frame (unsigned char mode)
 {
 	int row, col;
@@ -121,7 +139,7 @@ void	ExpPort_FamilyBasicKeyboard::SetMasks (void)
 }
 ExpPort_FamilyBasicKeyboard::~ExpPort_FamilyBasicKeyboard (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 	if (ExpPort_FamilyBasicKeyboard_ConfigWindow)
 	{
@@ -134,8 +152,7 @@ ExpPort_FamilyBasicKeyboard::ExpPort_FamilyBasicKeyboard (int *buttons)
 	Type = EXP_FAMILYBASICKEYBOARD;
 	NumButtons = 0;
 	Buttons = buttons;
-	DataLen = sizeof(ExpPort_FamilyBasicKeyboard_State);
-	Data = new ExpPort_FamilyBasicKeyboard_State;
+	State = new ExpPort_FamilyBasicKeyboard_State;
 	MovLen = 9;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

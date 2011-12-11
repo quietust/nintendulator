@@ -24,8 +24,26 @@ struct StdPort_PowerPad_State
 	unsigned char NewBit2;
 };
 #include <poppack.h>
-#define State ((StdPort_PowerPad_State *)Data)
+int	StdPort_PowerPad::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	StdPort_PowerPad::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	StdPort_PowerPad::Frame (unsigned char mode)
 {
 	int i;
@@ -129,7 +147,7 @@ void	StdPort_PowerPad::SetMasks (void)
 }
 StdPort_PowerPad::~StdPort_PowerPad (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 StdPort_PowerPad::StdPort_PowerPad (int *buttons)
@@ -137,8 +155,7 @@ StdPort_PowerPad::StdPort_PowerPad (int *buttons)
 	Type = STD_POWERPAD;
 	NumButtons = 12;
 	Buttons = buttons;
-	DataLen = sizeof(StdPort_PowerPad_State);
-	Data = new StdPort_PowerPad_State;
+	State = new StdPort_PowerPad_State;
 	MovLen = 2;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);

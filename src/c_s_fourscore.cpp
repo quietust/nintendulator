@@ -19,9 +19,52 @@ struct StdPort_FourScore_State
 	unsigned char BitPtr;
 	unsigned char Strobe;
 };
+struct StdPort_FourScore2_State
+{
+	unsigned char BitPtr;
+	unsigned char Strobe;
+};
 #include <poppack.h>
-#define State ((StdPort_FourScore_State *)Data)
+int	StdPort_FourScore::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	StdPort_FourScore2::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
+
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	StdPort_FourScore::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
+int	StdPort_FourScore2::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	AllocMov1 (StdPort *Cont)
 {
 	if (Cont->MovData)
@@ -40,42 +83,42 @@ void	AllocMov2 (StdPort *Cont)
 }
 void	StdPort_FourScore::Frame (unsigned char mode)
 {
-	int x = 0, y;
+	int x, y = 0;
 	if (mode & MOV_PLAY)
 	{
-		for (y = 0; x < FSPort1->MovLen; x++, y++)
-			MovData[x] = FSPort1->MovData[y];
-		for (y = 0; x < FSPort3->MovLen; x++, y++)
-			MovData[x] = FSPort3->MovData[y];
+		for (x = 0; x < FSPort1->MovLen; x++, y++)
+			MovData[y] = FSPort1->MovData[x];
+		for (x = 0; x < FSPort3->MovLen; x++, y++)
+			MovData[y] = FSPort3->MovData[x];
 	}
 	FSPort1->Frame(mode);
 	FSPort3->Frame(mode);
 	if (mode & MOV_RECORD)
 	{
-		for (y = 0; x < FSPort1->MovLen; x++, y++)
-			FSPort1->MovData[y] = MovData[x];
-		for (y = 0; x < FSPort3->MovLen; x++, y++)
-			FSPort3->MovData[y] = MovData[x];
+		for (x = 0; x < FSPort1->MovLen; x++, y++)
+			FSPort1->MovData[x] = MovData[y];
+		for (x = 0; x < FSPort3->MovLen; x++, y++)
+			FSPort3->MovData[x] = MovData[y];
 	}
 }
 void	StdPort_FourScore2::Frame (unsigned char mode)
 {
-	int x = 0, y;
+	int x, y = 0;
 	if (mode & MOV_PLAY)
 	{
-		for (y = 0; x < FSPort2->MovLen; x++, y++)
-			MovData[x] = FSPort2->MovData[y];
-		for (y = 0; x < FSPort4->MovLen; x++, y++)
-			MovData[x] = FSPort4->MovData[y];
+		for (x = 0; x < FSPort2->MovLen; x++, y++)
+			MovData[y] = FSPort2->MovData[x];
+		for (x = 0; x < FSPort4->MovLen; x++, y++)
+			MovData[y] = FSPort4->MovData[x];
 	}
 	FSPort2->Frame(mode);
 	FSPort4->Frame(mode);
 	if (mode & MOV_RECORD)
 	{
-		for (y = 0; x < FSPort2->MovLen; x++, y++)
-			FSPort2->MovData[y] = MovData[x];
-		for (y = 0; x < FSPort4->MovLen; x++, y++)
-			FSPort4->MovData[y] = MovData[x];
+		for (x = 0; x < FSPort2->MovLen; x++, y++)
+			FSPort2->MovData[x] = MovData[y];
+		for (x = 0; x < FSPort4->MovLen; x++, y++)
+			FSPort4->MovData[x] = MovData[y];
 	}
 }
 unsigned char	StdPort_FourScore::Read (void)
@@ -250,12 +293,12 @@ void	StdPort_FourScore2::SetMasks (void)
 }
 StdPort_FourScore::~StdPort_FourScore (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 StdPort_FourScore2::~StdPort_FourScore2 (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 StdPort_FourScore::StdPort_FourScore (int *buttons)
@@ -263,8 +306,7 @@ StdPort_FourScore::StdPort_FourScore (int *buttons)
 	Type = STD_FOURSCORE;
 	NumButtons = 0;
 	Buttons = buttons;
-	DataLen = sizeof(StdPort_FourScore_State);
-	Data = new StdPort_FourScore_State;
+	State = new StdPort_FourScore_State;
 	State->BitPtr = 0;
 	State->Strobe = 0;
 	MovData = NULL;
@@ -275,8 +317,7 @@ StdPort_FourScore2::StdPort_FourScore2 (int *buttons)
 	Type = STD_FOURSCORE2;
 	NumButtons = 0;
 	Buttons = buttons;
-	DataLen = sizeof(StdPort_FourScore_State);
-	Data = new StdPort_FourScore_State;
+	State = new StdPort_FourScore2_State;
 	State->BitPtr = 0;
 	State->Strobe = 0;
 	MovData = NULL;

@@ -24,8 +24,26 @@ struct StdPort_SnesController_State
 	unsigned char NewBit2;
 };
 #include <poppack.h>
-#define State ((StdPort_SnesController_State *)Data)
+int	StdPort_SnesController::Save (FILE *out)
+{
+	int clen = 0;
+	unsigned short len = sizeof(*State);
 
+	writeWord(len);
+	writeArray(State, len);
+
+	return clen;
+}
+int	StdPort_SnesController::Load (FILE *in)
+{
+	int clen = 0;
+	unsigned short len;
+
+	readWord(len);
+	readArraySkip(State, len, sizeof(*State));
+
+	return clen;
+}
 void	StdPort_SnesController::Frame (unsigned char mode)
 {
 	int i;
@@ -110,7 +128,7 @@ void	StdPort_SnesController::SetMasks (void)
 }
 StdPort_SnesController::~StdPort_SnesController (void)
 {
-	delete Data;
+	delete State;
 	delete[] MovData;
 }
 StdPort_SnesController::StdPort_SnesController (int *buttons)
@@ -118,8 +136,7 @@ StdPort_SnesController::StdPort_SnesController (int *buttons)
 	Type = STD_SNESCONTROLLER;
 	NumButtons = 12;
 	Buttons = buttons;
-	DataLen = sizeof(StdPort_SnesController_State);
-	Data = new StdPort_SnesController_State;
+	State = new StdPort_SnesController_State;
 	MovLen = 2;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
