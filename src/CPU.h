@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef	CPU_H
-#define CPU_H
+#pragma once
 
 #define	IRQ_FRAME	0x01
 #define	IRQ_DPCM	0x02
@@ -70,4 +69,3 @@ void	MAPINT	WriteRAM (int, int, int);
 int	MAPINT	ReadPRG (int, int);
 void	MAPINT	WritePRG (int, int, int);
 } // namespace CPU
-#endif	/* !CPU_H */

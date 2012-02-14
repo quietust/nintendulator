@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef GFX_H
-#define GFX_H
+#pragma once
 
 #define	DIRECTDRAW_VERSION 0x0700
 #include <ddraw.h>
@@ -51,4 +50,3 @@ void	GetCursorPos (POINT *);
 void	SetCursorPos (int, int);
 BOOL	ZapperHit (int);
 } // namespace GFX
-#endif	/* !GFX_H */

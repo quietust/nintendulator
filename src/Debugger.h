@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef DEBUGGER_H
-#define DEBUGGER_H
+#pragma once
 
 #ifdef	ENABLE_DEBUGGER
 
@@ -47,5 +46,3 @@ void	Update (int UpdateMode);
 void	AddInst (void);
 } // namespace Debugger
 #endif	/* !ENABLE_DEBUGGER */
-
-#endif	/* !DEBUGGER_H */

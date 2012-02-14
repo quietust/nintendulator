@@ -5,11 +5,9 @@
  * $Id$
  */
 
-#ifndef HEADEREDIT_H
-#define HEADEREDIT_H
+#pragma once
 
 namespace HeaderEdit
 {
 extern	void	Open (TCHAR *);
 } // namespace HeaderEdit
-#endif	/* !HEADEREDIT_H */

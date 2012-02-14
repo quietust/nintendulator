@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef PPU_H
-#define PPU_H
+#pragma once
 
 namespace PPU
 {
@@ -55,4 +54,3 @@ int	MAPINT	BusRead (int, int);
 void	MAPINT	BusWriteCHR (int, int, int);
 void	MAPINT	BusWriteNT (int, int, int);
 } // namespace PPU
-#endif	/* !PPU_H */

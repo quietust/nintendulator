@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef NES_H
-#define NES_H
+#pragma once
 
 namespace NES
 {
@@ -75,4 +74,3 @@ void	SaveSettings (void);
 void	SetupDataPath (void);
 void	MapperConfig (void);
 } // namespace NES
-#endif	/* !NES_H */

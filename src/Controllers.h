@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef CONTROLLERS_H
-#define CONTROLLERS_H
+#pragma once
 
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
@@ -175,4 +174,3 @@ void	ConfigButton (int *, int, HWND, BOOL);
 BOOL	IsPressed (int);
 INT_PTR	ParseConfigMessages (HWND, int, int *, int *, int *, UINT, WPARAM, LPARAM);
 } // namespace Controllers
-#endif	/* !CONTROLLERS_H */

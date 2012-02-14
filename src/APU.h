@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef	APU_H
-#define APU_H
+#pragma once
 
 #ifndef	NSFPLAYER
 #include <mmsystem.h>
@@ -47,4 +46,3 @@ void	SetRegion	(void);
 int	MAPINT	IntRead (int, int);
 void	MAPINT	IntWrite (int, int, int);
 } // namespace APU
-#endif	/* !APU_H */

@@ -21,8 +21,7 @@
  * $Id$
  */
 
-#ifndef	IN_NINTENDULATOR_H
-#define	IN_NINTENDULATOR_H
+#pragma once
 
 #include <windows.h>
 #include <stddef.h>
@@ -226,5 +225,3 @@ extern	In_Module	mod;
 
 extern	In_Module mod;
 extern	char sample_buffer[576*NCH*(BPS/8)*2]; // sample buffer
-
-#endif /* IN_NINTENDULATOR_H */

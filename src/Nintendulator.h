@@ -21,8 +21,7 @@
  * $Id$
  */
 
-#ifndef NINTENDULATOR_H
-#define NINTENDULATOR_H
+#pragma once
 
 #define	ENABLE_DEBUGGER	// Enable the debugger - emulation is faster without it
 //#define	CPU_BENCHMARK	// Run cyctest.nes for 4542110 cycles (10 seconds), then report how long it took
@@ -71,5 +70,3 @@ extern	void		AddDebug (TCHAR *txt);
 #define	readLong(val) { register unsigned long _val; fread(&_val, 4, 1, in); val = _val; clen += 4; }
 #define	readArray(val,len) { register int _len = len; fread(val, 1, _len, in); clen += _len; }
 #define	readArraySkip(val,inlen,outlen) { register int readLen = min(inlen, outlen); fread(val, 1, readLen, in); if (inlen > readLen) fseek(in, inlen - readLen, SEEK_CUR); if (outlen > readLen) ZeroMemory((unsigned char *)val + readLen, outlen - readLen); clen += inlen; }
-
-#endif	/* !NINTENDULATOR_H */

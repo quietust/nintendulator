@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef GENIE_H
-#define GENIE_H
+#pragma once
 
 namespace Genie
 {
@@ -22,4 +21,3 @@ void	Init (void);
 int	Save (FILE *);
 int	Load (FILE *);
 } // namespace Genie
-#endif	/* !GENIE_H */

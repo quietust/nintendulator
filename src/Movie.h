@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef MOVIE_H
-#define MOVIE_H
+#pragma once
 
 #define	MOV_PLAY	0x01
 #define	MOV_RECORD	0x02
@@ -26,4 +25,3 @@ void		SaveInput	(unsigned char);
 int		Save		(FILE *);
 int		Load		(FILE *);
 } // namespace Movie
-#endif	/* !MOVIE_H */

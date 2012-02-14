@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef AVI_H
-#define AVI_H
+#pragma once
 
 DECLARE_HANDLE(HAVI);
 
@@ -20,4 +19,3 @@ void	AddVideo	(void);
 void	AddAudio	(void);
 void	End		(void);
 } // namespace AVI
-#endif	/* !AVI_H */

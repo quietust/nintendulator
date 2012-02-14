@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef STATES_H
-#define STATES_H
+#pragma once
 
 #define	STATES_VERSION	"0975"	// current version, release or beta
 #define	STATES_PREV	"0970"	// last release
@@ -25,4 +24,3 @@ BOOL	LoadData (FILE *, int);
 void	SaveState (void);
 void	LoadState (void);
 } // namespace States
-#endif	/* !STATES_H */

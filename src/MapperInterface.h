@@ -5,8 +5,7 @@
  * $Id$
  */
 
-#ifndef	MAPPERINTERFACE_H
-#define	MAPPERINTERFACE_H
+#pragma once
 
 /* Mapper Interface version (3.8) */
 
@@ -215,4 +214,3 @@ void	Release (void);
 BOOL	LoadMapper (const ROMInfo *ROM);
 void	UnloadMapper (void);
 } // namespace MapperInterface
-#endif	/* !MAPPERINTERFACE_H */
