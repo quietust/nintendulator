@@ -82,6 +82,7 @@ void	Release (void)
 	SaveSettings();
 	APU::Release();
 	GFX::Release();
+	GFX::Shutdown();	// in case we had to load DirectDraw explicitly
 	Controllers::Release();
 	MapperInterface::Release();
 

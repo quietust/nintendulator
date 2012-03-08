@@ -55,6 +55,8 @@ BOOL SlowDown;
 int SlowRate;
 int FullscreenBorder;
 
+BOOL InError;
+
 PALETTE PaletteNTSC, PalettePAL;
 int NTSChue, NTSCsat, PALsat;
 TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
@@ -74,11 +76,12 @@ LPDIRECTDRAWCREATEEX DirectDrawCreateEx;
 #define	Try(action,errormsg) do {\
 	if (FAILED(action))\
 	{\
+		InError = TRUE;\
 		Release();\
 		MessageBox(hMainWnd, errormsg _T(", retrying"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);\
 		Fullscreen = FALSE;\
 		Create();\
-		PPU::GetGFXPtr();\
+		InError = FALSE;\
 		if (FAILED(action))\
 		{\
 			MessageBox(hMainWnd, _T("Error: ") errormsg, _T("Nintendulator"), MB_OK | MB_ICONERROR);\
@@ -118,6 +121,35 @@ void	Init (void)
 	NTSCsat = 50;
 	PALsat = 50;
 	Fullscreen = FALSE;
+	InError = FALSE;
+
+#if (_MSC_VER >= 1400)
+	dDrawInst = LoadLibrary(_T("ddraw.dll"));
+	if (!dDrawInst)
+	{
+		MessageBox(hMainWnd, _T("Fatal error: unable to load DirectDraw DLL!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		return;
+	}
+	DirectDrawCreateEx = (LPDIRECTDRAWCREATEEX)GetProcAddress(dDrawInst, "DirectDrawCreateEx");
+	if (!DirectDrawCreateEx)
+	{
+		MessageBox(hMainWnd, _T("Fatal error: unable to locate entry point for DirectDrawCreateEx!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		Shutdown();
+		return;
+	}
+#endif
+}
+
+void	Shutdown (void)
+{
+#if (_MSC_VER >= 1400)
+	DirectDrawCreateEx = NULL;
+	if (dDrawInst)
+	{
+		FreeLibrary(dDrawInst);
+		dDrawInst = NULL;
+	}
+#endif
 }
 
 void	SetRegion (void)
@@ -144,21 +176,6 @@ void	SetRegion (void)
 
 void	Create (void)
 {
-#if (_MSC_VER >= 1400)
-	dDrawInst = LoadLibrary(_T("ddraw.dll"));
-	if (!dDrawInst)
-	{
-		MessageBox(hMainWnd, _T("Fatal error: unable to load DirectDraw DLL!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-		return;
-	}
-	DirectDrawCreateEx = (LPDIRECTDRAWCREATEEX)GetProcAddress(dDrawInst, "DirectDrawCreateEx");
-	if (!DirectDrawCreateEx)
-	{
-		MessageBox(hMainWnd, _T("Fatal error: unable to locate entry point for DirectDrawCreateEx!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-		Release();
-		return;
-	}
-#endif
 	if (!QueryPerformanceFrequency(&ClockFreq))
 	{
 		MessageBox(hMainWnd, _T("Failed to determine performance counter frequency!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
@@ -374,14 +391,6 @@ void	Release (void)
 			ShowWindow(hDebug, SW_RESTORE);
 		NES::UpdateInterface();
 	}
-#if (_MSC_VER >= 1400)
-	DirectDrawCreateEx = NULL;
-	if (dDrawInst)
-	{
-		FreeLibrary(dDrawInst);
-		dDrawInst = NULL;
-	}
-#endif
 }
 
 void	SaveSettings (HKEY SettingsBase)
@@ -664,6 +673,8 @@ void	Update (void)
 {
 	if (!DirectDraw)
 		return;
+	if (InError)
+		return;
 	Try(SecondarySurf->Lock(NULL, &SurfDesc, DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY, NULL), _T("Failed to lock secondary surface"));
 
 	if (Fullscreen || Scanlines)
@@ -678,23 +689,30 @@ void	Repaint (void)
 {
 	if (!DirectDraw)
 		return;
+	if (InError)
+		return;
 
 	if (Fullscreen)
-		Try(PrimarySurf->Flip(NULL, DDFLIP_WAIT), _T("Failed to flip to primary surface"));
-	else
 	{
-		RECT rect;
-		POINT pt = {0, 0};
-		GetClientRect(hMainWnd, &rect);
-		if ((rect.right == 0) || (rect.bottom == 0))
+		// can't use Try() here, because a failure will revert it to Windowed mode and just make it fail again
+		if (SUCCEEDED(PrimarySurf->Flip(NULL, DDFLIP_WAIT)))
 			return;
-		ClientToScreen(hMainWnd, &pt);
-		rect.left += pt.x;
-		rect.right += pt.x;
-		rect.top += pt.y;
-		rect.bottom += pt.y;
-		Try(PrimarySurf->Blt(&rect, SecondarySurf, NULL, DDBLT_WAIT, NULL), _T("Failed to blit to primary surface"));
+		Release();
+		MessageBox(hMainWnd, _T("Failed to flip to primary surface! Reverting to Windowed mode..."), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
+		Fullscreen = FALSE;
+		Create();
 	}
+	RECT rect;
+	POINT pt = {0, 0};
+	GetClientRect(hMainWnd, &rect);
+	if ((rect.right == 0) || (rect.bottom == 0))
+		return;
+	ClientToScreen(hMainWnd, &pt);
+	rect.left += pt.x;
+	rect.right += pt.x;
+	rect.top += pt.y;
+	rect.bottom += pt.y;
+	Try(PrimarySurf->Blt(&rect, SecondarySurf, NULL, DDBLT_WAIT, NULL), _T("Failed to blit to primary surface"));
 }
 
 void	GetCursorPos (POINT *pos)
