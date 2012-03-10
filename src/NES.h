@@ -49,7 +49,7 @@ extern unsigned char CHR_ROM[MAX_CHRROM_SIZE][0x400];
 extern unsigned char CHR_RAM[MAX_CHRRAM_SIZE][0x400];
 
 void	Init (void);
-void	Release (void);
+void	Destroy (void);
 void	OpenFile (TCHAR *);
 void	CloseFile (void);
 int	FDSSave (FILE *);

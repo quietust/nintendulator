@@ -75,13 +75,16 @@ void	Init (void)
 	UpdateTitlebar();
 }
 
-void	Release (void)
+void	Destroy (void)
 {
 	if (ROMLoaded)
 		CloseFile();
 	SaveSettings();
-	APU::Destroy();
+#ifdef	ENABLE_DEBUGGER
+	Debugger::Destroy();
+#endif	/* ENABLE_DEBUGGER */
 	GFX::Destroy();
+	APU::Destroy();
 	Controllers::Destroy();
 	MapperInterface::Destroy();
 

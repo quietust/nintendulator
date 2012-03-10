@@ -604,7 +604,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_CLOSE:
 		NES::Stop();
-		NES::Release();
+		NES::Destroy();
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
