@@ -513,17 +513,17 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_PPU_FULLSCREEN:
 			NES::Stop();
-			GFX::Release();
+			GFX::Stop();
 			GFX::Fullscreen = !GFX::Fullscreen;
-			GFX::Create();
+			GFX::Start();
 			if (running)
 				NES::Start(FALSE);
 			break;
 		case ID_PPU_SCANLINES:
 			NES::Stop();
-			GFX::Release();
+			GFX::Stop();
 			GFX::Scanlines = !GFX::Scanlines;
-			GFX::Create();
+			GFX::Start();
 			if (running)
 				NES::Start(FALSE);
 			if (GFX::Scanlines)

@@ -62,7 +62,7 @@ void	Init (void)
 #endif	/* ENABLE_DEBUGGER */
 	LoadSettings();
 
-	GFX::Create();
+	GFX::Start();
 
 	CloseFile();
 
@@ -80,11 +80,10 @@ void	Release (void)
 	if (ROMLoaded)
 		CloseFile();
 	SaveSettings();
-	APU::Release();
-	GFX::Release();
-	GFX::Shutdown();	// in case we had to load DirectDraw explicitly
-	Controllers::Release();
-	MapperInterface::Release();
+	APU::Destroy();
+	GFX::Destroy();
+	Controllers::Destroy();
+	MapperInterface::Destroy();
 
 	DestroyWindow(hMainWnd);
 }

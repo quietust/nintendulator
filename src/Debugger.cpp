@@ -261,7 +261,7 @@ void	Init (void)
 	CacheBreakpoints();
 }
 
-void	Release (void)
+void	Destroy (void)
 {
 	StopLogging();
 	SetMode(0);

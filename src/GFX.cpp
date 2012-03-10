@@ -77,10 +77,10 @@ LPDIRECTDRAWCREATEEX DirectDrawCreateEx;
 	if (FAILED(action))\
 	{\
 		InError = TRUE;\
-		Release();\
+		Stop();\
 		MessageBox(hMainWnd, errormsg _T(", retrying"), _T("Nintendulator"), MB_OK | MB_ICONWARNING);\
 		Fullscreen = FALSE;\
-		Create();\
+		Start();\
 		InError = FALSE;\
 		if (FAILED(action))\
 		{\
@@ -123,6 +123,13 @@ void	Init (void)
 	Fullscreen = FALSE;
 	InError = FALSE;
 
+	if (!QueryPerformanceFrequency(&ClockFreq))
+	{
+		MessageBox(hMainWnd, _T("Failed to determine performance counter frequency!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		Stop();
+		return;
+	}
+
 #if (_MSC_VER >= 1400)
 	dDrawInst = LoadLibrary(_T("ddraw.dll"));
 	if (!dDrawInst)
@@ -134,14 +141,26 @@ void	Init (void)
 	if (!DirectDrawCreateEx)
 	{
 		MessageBox(hMainWnd, _T("Fatal error: unable to locate entry point for DirectDrawCreateEx!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-		Shutdown();
+		Destroy();
 		return;
 	}
 #endif
+	if (FAILED(DirectDrawCreateEx(NULL, (LPVOID *)&DirectDraw, IID_IDirectDraw7, NULL)))
+	{
+		Destroy();
+		MessageBox(hMainWnd, _T("Failed to initialize DirectDraw 7"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		return;
+	}
 }
 
-void	Shutdown (void)
+void	Destroy (void)
 {
+	Stop();
+	if (DirectDraw)
+	{
+		DirectDraw->Release();
+		DirectDraw = NULL;
+	}
 #if (_MSC_VER >= 1400)
 	DirectDrawCreateEx = NULL;
 	if (dDrawInst)
@@ -174,22 +193,10 @@ void	SetRegion (void)
 	}
 }
 
-void	Create (void)
+void	Start (void)
 {
-	if (!QueryPerformanceFrequency(&ClockFreq))
-	{
-		MessageBox(hMainWnd, _T("Failed to determine performance counter frequency!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-		Release();
+	if (!DirectDraw)
 		return;
-	}
-
-	if (FAILED(DirectDrawCreateEx(NULL, (LPVOID *)&DirectDraw, IID_IDirectDraw7, NULL)))
-	{
-		Release();
-		MessageBox(hMainWnd, _T("Failed to initialize DirectDraw 7"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-		return;
-	}
-
 	if (Fullscreen)
 	{
 		if (dbgVisible)
@@ -198,7 +205,7 @@ void	Create (void)
 		SetMenu(hMainWnd, NULL);
 		if (FAILED(DirectDraw->SetCooperativeLevel(hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
 		{
-			Release();
+			Stop();
 			MessageBox(hMainWnd, _T("Failed to set cooperative level!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
@@ -226,11 +233,11 @@ void	Create (void)
 				if (i == 0)
 				{
 					// not even 640x480 worked!
-					Release();
+					Stop();
 					MessageBox(hMainWnd, _T("Failed to set display mode! Reverting to Windowed mode..."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 					Fullscreen = FALSE;
 					// drop to windowed
-					Create();
+					Start();
 					return;
 				}
 				else	i--;
@@ -243,7 +250,7 @@ void	Create (void)
 	{
 		if (FAILED(DirectDraw->SetCooperativeLevel(hMainWnd, DDSCL_NORMAL)))
 		{
-			Release();
+			Stop();
 			MessageBox(hMainWnd, _T("Failed to set DirectDraw cooperative level"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
@@ -260,7 +267,7 @@ void	Create (void)
 
 		if (FAILED(DirectDraw->CreateSurface(&SurfDesc, &PrimarySurf, NULL)))
 		{
-			Release();
+			Stop();
 			MessageBox(hMainWnd, _T("Failed to create primary surface"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
@@ -268,7 +275,7 @@ void	Create (void)
 		SurfDesc.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
 		if (FAILED(PrimarySurf->GetAttachedSurface(&SurfDesc.ddsCaps, &SecondarySurf)))
 		{
-			Release();
+			Stop();
 			MessageBox(hMainWnd, _T("Failed to get secondary surface"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
@@ -280,7 +287,7 @@ void	Create (void)
 
 		if (FAILED(DirectDraw->CreateSurface(&SurfDesc, &PrimarySurf, NULL)))
 		{
-			Release();
+			Stop();
 			MessageBox(hMainWnd, _T("Failed to create primary surface"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
@@ -300,7 +307,7 @@ void	Create (void)
 
 		if (FAILED(DirectDraw->CreateSurface(&SurfDesc, &SecondarySurf, NULL)))
 		{
-			Release();
+			Stop();
 			MessageBox(hMainWnd, _T("Failed to create secondary surface"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
@@ -310,21 +317,21 @@ void	Create (void)
 	{
 		if (FAILED(DirectDraw->CreateClipper(0, &Clipper, NULL)))
 		{
-			Release();
+			Stop();
 			MessageBox(hMainWnd, _T("Failed to create clipper"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
 
 		if (FAILED(Clipper->SetHWnd(0, hMainWnd)))
 		{
-			Release();
+			Stop();
 			MessageBox(hMainWnd, _T("Failed to set clipper window"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
 
 		if (FAILED(PrimarySurf->SetClipper(Clipper)))
 		{
-			Release();
+			Stop();
 			MessageBox(hMainWnd, _T("Failed to assign clipper to primary surface"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 			return;
 		}
@@ -335,7 +342,7 @@ void	Create (void)
 
 	if (FAILED(SecondarySurf->GetSurfaceDesc(&SurfDesc)))
 	{
-		Release();
+		Stop();
 		MessageBox(hMainWnd, _T("Failed to retrieve surface description"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return;
 	}
@@ -350,7 +357,7 @@ void	Create (void)
 		else	Depth = 15;	break;
 	case 32:Depth = 32;		break;
 	default:
-		Release();
+		Stop();
 		MessageBox(hMainWnd, _T("Invalid bit depth detected!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return;			break;
 	}
@@ -360,7 +367,7 @@ void	Create (void)
 	EI.DbgOut(_T("Created %ix%i %i-bit display surface (%s)"), SurfDesc.dwWidth, SurfDesc.dwHeight, Depth, Fullscreen ? _T("fullscreen") : _T("windowed"));
 }
 
-void	Release (void)
+void	Stop (void)
 {
 	if (Clipper)
 	{
@@ -376,11 +383,6 @@ void	Release (void)
 	{
 		PrimarySurf->Release();
 		PrimarySurf = NULL;
-	}
-	if (DirectDraw)
-	{
-		DirectDraw->Release();
-		DirectDraw = NULL;
 	}
 	if (Fullscreen)
 	{
@@ -671,7 +673,7 @@ void	Draw1x (void)
 
 void	Update (void)
 {
-	if (!DirectDraw)
+	if (!SecondarySurf)
 		return;
 	if (InError)
 		return;
@@ -687,7 +689,7 @@ void	Update (void)
 
 void	Repaint (void)
 {
-	if (!DirectDraw)
+	if (!SecondarySurf)
 		return;
 	if (InError)
 		return;
@@ -697,10 +699,10 @@ void	Repaint (void)
 		// can't use Try() here, because a failure will revert it to Windowed mode and just make it fail again
 		if (SUCCEEDED(PrimarySurf->Flip(NULL, DDFLIP_WAIT)))
 			return;
-		Release();
+		Stop();
 		MessageBox(hMainWnd, _T("Failed to flip to primary surface! Reverting to Windowed mode..."), _T("Nintendulator"), MB_OK | MB_ICONWARNING);
 		Fullscreen = FALSE;
-		Create();
+		Start();
 	}
 	RECT rect;
 	POINT pt = {0, 0};

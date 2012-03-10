@@ -906,8 +906,8 @@ int	MAPINT	IntRead (int Bank, int Addr)
 #define	Try(action, errormsg) do {\
 	if (FAILED(action))\
 	{\
-		Release();\
-		Create();\
+		Stop();\
+		Start();\
 		if (FAILED(action))\
 		{\
 			SoundOFF();\
@@ -922,11 +922,11 @@ void	SetRegion (void)
 {
 #ifndef	NSFPLAYER
 	BOOL Enabled = isEnabled;
-	BOOL Created = (DirectSound != NULL);
+	BOOL Started = (Buffer != NULL);
 	if (Enabled)
 		SoundOFF();
-	if (Created)
-		Release();
+	if (Started)
+		Stop();
 #endif	/* !NSFPLAYER */
 	int WantFPS = 60;
 	switch (NES::CurRegion)
@@ -962,8 +962,8 @@ void	SetRegion (void)
 	if (buffer)
 		delete buffer;
 	buffer = new short[LockSize];
-	if (Created)
-		Create();
+	if (Started)
+		Start();
 	if (Enabled)
 		SoundON();
 #endif	/* !NSFPLAYER */
@@ -986,27 +986,42 @@ void	Init (void)
 	BufPos		= 0;
 #ifndef	NSFPLAYER
 	next_pos	= 0;
-#endif	/* !NSFPLAYER */
-}
 
-void	Create (void)
-{
-#ifndef	NSFPLAYER
-	DSBUFFERDESC DSBD;
-	WAVEFORMATEX WFX;
 
 	if (FAILED(DirectSoundCreate(&DSDEVID_DefaultPlayback, &DirectSound, NULL)))
 	{
-		Release();
+		Destroy();
 		MessageBox(hMainWnd, _T("Failed to create DirectSound interface!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
 	if (FAILED(DirectSound->SetCooperativeLevel(hMainWnd, DSSCL_PRIORITY)))
 	{
-		Release();
+		Destroy();
 		MessageBox(hMainWnd, _T("Failed to set cooperative level!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
+#endif	/* !NSFPLAYER */
+}
+
+void	Destroy (void)
+{
+	Stop();
+#ifndef	NSFPLAYER
+	if (DirectSound)
+	{
+		DirectSound->Release();
+		DirectSound = NULL;
+	}
+#endif	/* !NSFPLAYER */
+}
+
+void	Start (void)
+{
+#ifndef	NSFPLAYER
+	WAVEFORMATEX WFX;
+	DSBUFFERDESC DSBD;
+	if (!DirectSound)
+		return;
 
 	ZeroMemory(&DSBD, sizeof(DSBUFFERDESC));
 	DSBD.dwSize = sizeof(DSBUFFERDESC);
@@ -1015,7 +1030,7 @@ void	Create (void)
 	DSBD.lpwfxFormat = NULL;
 	if (FAILED(DirectSound->CreateSoundBuffer(&DSBD, &PrimaryBuffer, NULL)))
 	{
-		Release();
+		Stop();
 		MessageBox(hMainWnd, _T("Failed to create primary buffer!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
@@ -1029,13 +1044,13 @@ void	Create (void)
 	WFX.nAvgBytesPerSec = WFX.nSamplesPerSec * WFX.nBlockAlign;
 	if (FAILED(PrimaryBuffer->SetFormat(&WFX)))
 	{
-		Release();
+		Stop();
 		MessageBox(hMainWnd, _T("Failed to set output format!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
 	if (FAILED(PrimaryBuffer->Play(0, 0, DSBPLAY_LOOPING)))
 	{
-		Release();
+		Stop();
 		MessageBox(hMainWnd, _T("Failed to start playing primary buffer!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
@@ -1046,7 +1061,7 @@ void	Create (void)
 
 	if (FAILED(DirectSound->CreateSoundBuffer(&DSBD, &Buffer, NULL)))
 	{
-		Release();
+		Stop();
 		MessageBox(hMainWnd, _T("Failed to create secondary buffer!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
@@ -1054,7 +1069,7 @@ void	Create (void)
 #endif	/* !NSFPLAYER */
 }
 
-void	Release (void)
+void	Stop (void)
 {
 #ifndef	NSFPLAYER
 	if (Buffer)
@@ -1068,11 +1083,6 @@ void	Release (void)
 		PrimaryBuffer->Stop();
 		PrimaryBuffer->Release();
 		PrimaryBuffer = NULL;
-	}
-	if (DirectSound)
-	{
-		DirectSound->Release();
-		DirectSound = NULL;
 	}
 	if (buffer)
 	{
@@ -1133,7 +1143,7 @@ void	SoundON (void)
 		return;
 	if (!Buffer)
 	{
-		Create();
+		Start();
 		if (!Buffer)
 			return;
 	}

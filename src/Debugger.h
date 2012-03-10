@@ -40,7 +40,7 @@ extern BOOL	NTabChanged, PalChanged, PatChanged, SprChanged;
 extern BOOL	Step;
 
 void	Init (void);
-void	Release (void);
+void	Destroy (void);
 void	SetMode(int NewMode);
 void	Update (int UpdateMode);
 void	AddInst (void);

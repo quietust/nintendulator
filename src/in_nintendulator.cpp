@@ -138,7 +138,7 @@ void	init (void)
 {
 	NES::ROMLoaded = FALSE;
 	APU::Init();
-	APU::Create();
+	APU::Start();
 	APU::SetRegion();
 	MapperInterface::Init();
 }
@@ -147,8 +147,8 @@ void	quit (void)
 {
 	if (NES::ROMLoaded)
 		NES::CloseFile();
-	APU::Release();
-	MapperInterface::Release();
+	APU::Destroy();
+	MapperInterface::Destroy();
 }
 
 int isourfile(const TCHAR *fn) { return 0; }	// used for detecting URL streams.. unused here. strncmp(fn,"http://",7) to detect HTTP streams, etc

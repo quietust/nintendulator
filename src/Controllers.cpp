@@ -543,7 +543,7 @@ void	Init (void)
 	Movie::Mode = 0;
 }
 
-void	Release (void)
+void	Destroy (void)
 {
 	int i, j;
 	delete Port1;	Port1 = NULL;

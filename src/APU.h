@@ -28,8 +28,9 @@ namespace DPCM
 }
 
 void	Init		(void);
-void	Create		(void);
-void	Release		(void);
+void	Destroy		(void);
+void	Start		(void);
+void	Stop		(void);
 #ifndef	NSFPLAYER
 int	Save		(FILE *);
 int	Load		(FILE *);

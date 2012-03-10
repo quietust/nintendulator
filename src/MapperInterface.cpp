@@ -773,7 +773,7 @@ void	UnloadMapper (void)
 	}
 }
 
-void	Release (void)
+void	Destroy (void)
 {
 #ifndef	NSFPLAYER
 	MapperDLL *ThisDLL = MapperDLLs;

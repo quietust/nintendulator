@@ -33,10 +33,10 @@ extern TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
 extern LPDIRECTDRAW7 DirectDraw;
 
 void	Init (void);
-void	Shutdown (void);
+void	Destroy (void);
 void	SetRegion (void);
-void	Create (void);
-void	Release (void);
+void	Start (void);
+void	Stop (void);
 void	SaveSettings (HKEY);
 void	LoadSettings (HKEY);
 void	DrawScreen (void);

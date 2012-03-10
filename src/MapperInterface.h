@@ -210,7 +210,7 @@ namespace MapperInterface
 extern const TCHAR *CompatLevel[COMPAT_NUMTYPES];
 
 void	Init (void);
-void	Release (void);
+void	Destroy (void);
 BOOL	LoadMapper (const ROMInfo *ROM);
 void	UnloadMapper (void);
 } // namespace MapperInterface
