@@ -242,7 +242,7 @@ void	Reset (void)
 	IOMode = 0;
 	Clockticks = 0;
 	PALsubticks = 0;
-	SLnum = 241;
+	SLnum = 0;
 #ifdef	ACCURATE_SPRITES
 	SprBuff = &Sprite[256];
 #endif	/* ACCURATE_SPRITES */
