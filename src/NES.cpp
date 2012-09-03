@@ -475,15 +475,25 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	// Special checks for Playchoice-10 and Vs. Unisystem ROMs to auto-select palette
 	if ((RI.INES_Flags & 0x10) && (RI.INES_Version == 2))
 	{
-		switch (RI.INES2_VSDATA & 0x0F)
-		{
-		case 2:	GFX::LoadPalette(GFX::PALETTE_VS1);	break;
-		case 3:	GFX::LoadPalette(GFX::PALETTE_VS2);	break;
-		case 4:	GFX::LoadPalette(GFX::PALETTE_VS3);	break;
-		case 5:	GFX::LoadPalette(GFX::PALETTE_VS4);	break;
-		default:
-			GFX::LoadPalette(GFX::PALETTE_PC10);	break;
-		}
+		GFX::PALETTE pals[16] = {
+			GFX::PALETTE_PC10, // RP2C03B
+			GFX::PALETTE_PC10, // RP2C03G - no dump available, assuming identical to RP2C03B
+			GFX::PALETTE_VS1, // RP2C04-0001
+			GFX::PALETTE_VS2, // RP2C04-0002
+			GFX::PALETTE_VS3, // RP2C04-0003
+			GFX::PALETTE_VS4, // RP2C04-0004
+			GFX::PALETTE_PC10_ALT, // RC2C03B
+			GFX::PALETTE_PC10, // RC2C03C
+			GFX::PALETTE_PC10, // RC2C05C-01 - no dump available, assuming identical to RC2C05C-03
+			GFX::PALETTE_PC10, // RC2C05C-02 - no dump available, assuming identical to RC2C05C-03
+			GFX::PALETTE_PC10, // RC2C05C-03
+			GFX::PALETTE_PC10, // RC2C05C-04 - no dump available, assuming identical to RC2C05C-03
+			GFX::PALETTE_PC10, // RC2C05C-05 - no dump available, assuming identical to RC2C05C-03
+			GFX::PALETTE_NTSC, // unused
+			GFX::PALETTE_NTSC, // unused
+			GFX::PALETTE_NTSC // unused
+		};
+		GFX::LoadPalette(pals[RI.INES2_VSDATA & 0x0F]);
 	}
 	else if (RI.INES_Flags & 0x20)
 		GFX::LoadPalette(GFX::PALETTE_PC10);

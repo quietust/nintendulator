@@ -749,28 +749,30 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,96,268,52,16
 END
 
-IDD_PALETTE DIALOGEX 0, 0, 216, 190
+IDD_PALETTE DIALOGEX 0, 0, 216, 206
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Palette Configuration"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Palette",IDC_STATIC,4,4,208,76
+    GROUPBOX        "Palette",IDC_STATIC,4,4,208,92
     CONTROL         "&NTSC",IDC_PAL_NTSC,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP,12,16,44,12
     CONTROL         "&PAL",IDC_PAL_PAL,"Button",BS_AUTORADIOBUTTON,12,32,44,
                     12
-    CONTROL         "&RGB",IDC_PAL_PC10,"Button",BS_AUTORADIOBUTTON,12,48,44,
-                    12
-    CONTROL         "VS (&1)",IDC_PAL_VS1,"Button",BS_AUTORADIOBUTTON,60,48,
-                    36,12
-    CONTROL         "VS (&2)",IDC_PAL_VS2,"Button",BS_AUTORADIOBUTTON,96,48,
-                    36,12
-    CONTROL         "VS (&3)",IDC_PAL_VS3,"Button",BS_AUTORADIOBUTTON,132,48,
-                    36,12
-    CONTROL         "VS (&4)",IDC_PAL_VS4,"Button",BS_AUTORADIOBUTTON,168,48,
-                    36,12
+    CONTROL         "VS (&1)",IDC_PAL_VS1,"Button",BS_AUTORADIOBUTTON,12,48,
+                    44,12
+    CONTROL         "VS (&2)",IDC_PAL_VS2,"Button",BS_AUTORADIOBUTTON,60,48,
+                    44,12
+    CONTROL         "VS (&3)",IDC_PAL_VS3,"Button",BS_AUTORADIOBUTTON,108,48,
+                    44,12
+    CONTROL         "VS (&4)",IDC_PAL_VS4,"Button",BS_AUTORADIOBUTTON,156,48,
+                    44,12
+    CONTROL         "PC1&0",IDC_PAL_PC10,"Button",BS_AUTORADIOBUTTON,12,64,
+                    44,12
+    CONTROL         "Al&t PC10",IDC_PAL_PC10_ALT,"Button",BS_AUTORADIOBUTTON,
+                    58,64,44,12
     CONTROL         "&Custom...",IDC_PAL_EXT,"Button",BS_AUTORADIOBUTTON,12,
-                    64,44,12
+                    80,44,12
     RTEXT           "&Hue:",IDC_STATIC,60,16,20,12,SS_CENTERIMAGE
     CONTROL         "Hue",IDC_PAL_HUESLIDER,"msctls_trackbar32",
                     TBS_AUTOTICKS | WS_TABSTOP,84,16,96,12
@@ -779,146 +781,148 @@ BEGIN
     CONTROL         "Saturation",IDC_PAL_SATSLIDER,"msctls_trackbar32",
                     TBS_AUTOTICKS | WS_TABSTOP,84,32,96,12
     EDITTEXT        IDC_PAL_SAT,184,32,20,12,ES_READONLY | ES_NUMBER
-    EDITTEXT        IDC_PAL_EXTFILE,60,64,104,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "&Browse",IDC_PAL_BROWSE,168,64,36,12
-    GROUPBOX        "Preview",IDC_STATIC,4,84,208,80
+    CONTROL         "Extra gra&ys (compatibility)",IDC_PAL_PC10_COMPAT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,64,96,12
+    EDITTEXT        IDC_PAL_EXTFILE,60,80,104,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "B&rowse",IDC_PAL_BROWSE,168,80,36,12
+    GROUPBOX        "Preview",IDC_STATIC,4,100,208,80
     CONTROL         "",IDC_PAL_00,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,12,
-                    96,12,12
+                    112,12,12
     CONTROL         "",IDC_PAL_01,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,24,
-                    96,12,12
+                    112,12,12
     CONTROL         "",IDC_PAL_02,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,36,
-                    96,12,12
+                    112,12,12
     CONTROL         "",IDC_PAL_03,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,48,
-                    96,12,12
+                    112,12,12
     CONTROL         "",IDC_PAL_04,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,60,
-                    96,12,12
+                    112,12,12
     CONTROL         "",IDC_PAL_05,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,72,
-                    96,12,12
+                    112,12,12
     CONTROL         "",IDC_PAL_06,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,84,
-                    96,12,12
+                    112,12,12
     CONTROL         "",IDC_PAL_07,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,96,
-                    96,12,12
+                    112,12,12
     CONTROL         "",IDC_PAL_08,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    108,96,12,12
+                    108,112,12,12
     CONTROL         "",IDC_PAL_09,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    120,96,12,12
+                    120,112,12,12
     CONTROL         "",IDC_PAL_0A,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    132,96,12,12
+                    132,112,12,12
     CONTROL         "",IDC_PAL_0B,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    144,96,12,12
+                    144,112,12,12
     CONTROL         "",IDC_PAL_0C,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    156,96,12,12
+                    156,112,12,12
     CONTROL         "",IDC_PAL_0D,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    168,96,12,12
+                    168,112,12,12
     CONTROL         "",IDC_PAL_0E,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    180,96,12,12
+                    180,112,12,12
     CONTROL         "",IDC_PAL_0F,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    192,96,12,12
+                    192,112,12,12
     CONTROL         "",IDC_PAL_10,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,12,
-                    108,12,12
+                    124,12,12
     CONTROL         "",IDC_PAL_11,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,24,
-                    108,12,12
+                    124,12,12
     CONTROL         "",IDC_PAL_12,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,36,
-                    108,12,12
+                    124,12,12
     CONTROL         "",IDC_PAL_13,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,48,
-                    108,12,12
+                    124,12,12
     CONTROL         "",IDC_PAL_14,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,60,
-                    108,12,12
+                    124,12,12
     CONTROL         "",IDC_PAL_15,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,72,
-                    108,12,12
+                    124,12,12
     CONTROL         "",IDC_PAL_16,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,84,
-                    108,12,12
+                    124,12,12
     CONTROL         "",IDC_PAL_17,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,96,
-                    108,12,12
+                    124,12,12
     CONTROL         "",IDC_PAL_18,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    108,108,12,12
+                    108,124,12,12
     CONTROL         "",IDC_PAL_19,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    120,108,12,12
+                    120,124,12,12
     CONTROL         "",IDC_PAL_1A,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    132,108,12,12
+                    132,124,12,12
     CONTROL         "",IDC_PAL_1B,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    144,108,12,12
+                    144,124,12,12
     CONTROL         "",IDC_PAL_1C,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    156,108,12,12
+                    156,124,12,12
     CONTROL         "",IDC_PAL_1D,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    168,108,12,12
+                    168,124,12,12
     CONTROL         "",IDC_PAL_1E,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    180,108,12,12
+                    180,124,12,12
     CONTROL         "",IDC_PAL_1F,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    192,108,12,12
+                    192,124,12,12
     CONTROL         "",IDC_PAL_20,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,12,
-                    120,12,12
+                    136,12,12
     CONTROL         "",IDC_PAL_21,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,24,
-                    120,12,12
+                    136,12,12
     CONTROL         "",IDC_PAL_22,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,36,
-                    120,12,12
+                    136,12,12
     CONTROL         "",IDC_PAL_23,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,48,
-                    120,12,12
+                    136,12,12
     CONTROL         "",IDC_PAL_24,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,60,
-                    120,12,12
+                    136,12,12
     CONTROL         "",IDC_PAL_25,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,72,
-                    120,12,12
+                    136,12,12
     CONTROL         "",IDC_PAL_26,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,84,
-                    120,12,12
+                    136,12,12
     CONTROL         "",IDC_PAL_27,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,96,
-                    120,12,12
+                    136,12,12
     CONTROL         "",IDC_PAL_28,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    108,120,12,12
+                    108,136,12,12
     CONTROL         "",IDC_PAL_29,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    120,120,12,12
+                    120,136,12,12
     CONTROL         "",IDC_PAL_2A,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    132,120,12,12
+                    132,136,12,12
     CONTROL         "",IDC_PAL_2B,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    144,120,12,12
+                    144,136,12,12
     CONTROL         "",IDC_PAL_2C,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    156,120,12,12
+                    156,136,12,12
     CONTROL         "",IDC_PAL_2D,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    168,120,12,12
+                    168,136,12,12
     CONTROL         "",IDC_PAL_2E,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    180,120,12,12
+                    180,136,12,12
     CONTROL         "",IDC_PAL_2F,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    192,120,12,12
+                    192,136,12,12
     CONTROL         "",IDC_PAL_30,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,12,
-                    132,12,12
+                    148,12,13
     CONTROL         "",IDC_PAL_31,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,24,
-                    132,12,12
+                    148,12,13
     CONTROL         "",IDC_PAL_32,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,36,
-                    132,12,12
+                    148,12,13
     CONTROL         "",IDC_PAL_33,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,48,
-                    132,12,12
+                    148,12,13
     CONTROL         "",IDC_PAL_34,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,60,
-                    132,12,12
+                    148,12,13
     CONTROL         "",IDC_PAL_35,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,72,
-                    132,12,12
+                    148,12,13
     CONTROL         "",IDC_PAL_36,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,84,
-                    132,12,12
+                    148,12,13
     CONTROL         "",IDC_PAL_37,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,96,
-                    132,12,12
+                    148,12,13
     CONTROL         "",IDC_PAL_38,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    108,132,12,12
+                    108,148,12,13
     CONTROL         "",IDC_PAL_39,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    120,132,12,12
+                    120,148,12,13
     CONTROL         "",IDC_PAL_3A,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    132,132,12,12
+                    132,148,12,13
     CONTROL         "",IDC_PAL_3B,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    144,132,12,12
+                    144,148,12,13
     CONTROL         "",IDC_PAL_3C,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    156,132,12,12
+                    156,148,12,13
     CONTROL         "",IDC_PAL_3D,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    168,132,12,12
+                    168,148,12,13
     CONTROL         "",IDC_PAL_3E,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    180,132,12,12
+                    180,148,12,13
     CONTROL         "",IDC_PAL_3F,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,
-                    192,132,12,12
-    LTEXT           "Emphasis:",IDC_STATIC,12,148,48,8
+                    192,148,12,13
+    LTEXT           "Emphasis:",IDC_STATIC,12,165,48,8
     CONTROL         "R&ed",IDC_PAL_ER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    72,148,36,8
+                    72,165,36,8
     CONTROL         "&Green",IDC_PAL_EG,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,120,148,36,8
+                    WS_TABSTOP,120,165,36,8
     CONTROL         "Bl&ue",IDC_PAL_EB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    168,148,36,8
-    DEFPUSHBUTTON   "OK",IDOK,36,168,48,17
-    PUSHBUTTON      "Cancel",IDCANCEL,132,168,48,17
+                    168,165,36,8
+    DEFPUSHBUTTON   "OK",IDOK,36,184,48,17
+    PUSHBUTTON      "Cancel",IDCANCEL,132,184,48,17
 END
 
 IDD_EXPPORT_TABLET DIALOGEX 0, 0, 244, 60
@@ -1829,10 +1833,12 @@ BEGIN
         VERTGUIDE, 80
         VERTGUIDE, 84
         VERTGUIDE, 96
+        VERTGUIDE, 104
         VERTGUIDE, 108
         VERTGUIDE, 120
         VERTGUIDE, 132
         VERTGUIDE, 144
+        VERTGUIDE, 152
         VERTGUIDE, 156
         VERTGUIDE, 164
         VERTGUIDE, 168
@@ -1841,7 +1847,7 @@ BEGIN
         VERTGUIDE, 192
         VERTGUIDE, 204
         TOPMARGIN, 4
-        BOTTOMMARGIN, 186
+        BOTTOMMARGIN, 202
         HORZGUIDE, 16
         HORZGUIDE, 28
         HORZGUIDE, 32
@@ -1851,16 +1857,18 @@ BEGIN
         HORZGUIDE, 64
         HORZGUIDE, 76
         HORZGUIDE, 80
-        HORZGUIDE, 84
+        HORZGUIDE, 92
         HORZGUIDE, 96
-        HORZGUIDE, 108
-        HORZGUIDE, 120
-        HORZGUIDE, 132
-        HORZGUIDE, 144
+        HORZGUIDE, 100
+        HORZGUIDE, 112
+        HORZGUIDE, 124
+        HORZGUIDE, 136
         HORZGUIDE, 148
-        HORZGUIDE, 156
-        HORZGUIDE, 164
-        HORZGUIDE, 168
+        HORZGUIDE, 161
+        HORZGUIDE, 165
+        HORZGUIDE, 173
+        HORZGUIDE, 180
+        HORZGUIDE, 184
     END
 
     IDD_EXPPORT_TABLET, DIALOG
