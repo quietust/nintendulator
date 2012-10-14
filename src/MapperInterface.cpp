@@ -448,7 +448,7 @@ void	MAPINT	SetIRQ (int IRQstate)
 	else	CPU::WantIRQ |= IRQ_EXTERNAL;
 }
 
-void	MAPINT	DbgOut (TCHAR *text, ...)
+void	MAPINT	DbgOut (const TCHAR *text, ...)
 {
 #ifndef	NSFPLAYER
 	TCHAR txt[1024];
@@ -460,7 +460,7 @@ void	MAPINT	DbgOut (TCHAR *text, ...)
 #endif	/* !NSFPLAYER */
 }
 
-void	MAPINT	StatusOut (TCHAR *text, ...)
+void	MAPINT	StatusOut (const TCHAR *text, ...)
 {
 #ifndef	NSFPLAYER
 	TCHAR txt[1024];

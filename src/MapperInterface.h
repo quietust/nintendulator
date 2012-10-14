@@ -91,8 +91,8 @@ struct	EmulatorInterface
 	void		(MAPINT *Set_SRAMSize)		(int);		/* Sets the size of the SRAM (in bytes) */
 
 /* Misc Callbacks */
-	void		(MAPINT *DbgOut)		(TCHAR *,...);	/* Echo text to debug window */
-	void		(MAPINT *StatusOut)		(TCHAR *,...);	/* Echo text on status bar */
+	void		(MAPINT *DbgOut)		(const TCHAR *,...);	/* Echo text to debug window */
+	void		(MAPINT *StatusOut)		(const TCHAR *,...);	/* Echo text on status bar */
 /* Data fields */
 	unsigned char *	OpenBus;			/* pointer to last value on the CPU data bus */
 };
