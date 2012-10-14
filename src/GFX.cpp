@@ -1343,7 +1343,7 @@ void	GenerateRGB (int pal, BOOL compat)
 	else	MessageBox(hMainWnd, _T("Illegal palette selected!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 }
 
-BOOL	ImportPalette (TCHAR *filename, BOOL load)
+BOOL	ImportPalette (const TCHAR *filename, BOOL load)
 {
 	int i, j;
 	FILE *pal;

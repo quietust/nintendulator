@@ -12,7 +12,7 @@
 
 namespace HeaderEdit
 {
-TCHAR *filename = NULL;		// name of ROM being edited
+const TCHAR *filename = NULL;	// name of ROM being edited
 unsigned char header[16];	// ROM's header data
 BOOL isExtended;		// whether or not the editor is in NES 2.0 mode
 BOOL Mask = FALSE;		// whether we're in UpdateDialog() or not
@@ -489,7 +489,7 @@ INT_PTR CALLBACK	dlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-void	Open (TCHAR *file)
+void	Open (const TCHAR *file)
 {
 	// not re-entrant
 	if (filename)

@@ -49,15 +49,15 @@ extern	TCHAR		Path_NMV[MAX_PATH];
 extern	TCHAR		Path_AVI[MAX_PATH];
 extern	TCHAR		Path_PAL[MAX_PATH];
 
-extern	void		BrowseFolder (TCHAR *dir);
+extern	void		BrowseFolder (const TCHAR *dir);
 
 extern	BOOL		ProcessMessages	(void);
 
 extern	TCHAR		TitlebarBuffer[256];
 extern	int		TitlebarDelay;
 extern	void		UpdateTitlebar (void);
-extern	void	__cdecl	PrintTitlebar (TCHAR *Text, ...);
-extern	void		AddDebug (TCHAR *txt);
+extern	void	__cdecl	PrintTitlebar (const TCHAR *Text, ...);
+extern	void		AddDebug (const TCHAR *txt);
 
 // Shortcut macros for use in savestate code
 #define	writeByte(val) { register unsigned char _val = val; fwrite(&_val, 1, 1, out); clen++; }

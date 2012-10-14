@@ -584,7 +584,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Movie::Stop();
 			break;
 		case ID_HELP_ABOUT:
-			DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
+			DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, About);
 			break;
 		default:return DefWindowProc(hWnd, message, wParam, lParam);
 			break;
@@ -661,7 +661,7 @@ INT_PTR CALLBACK	DebugWnd (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	}
 	return FALSE;
 }
-void	AddDebug (TCHAR *txt)
+void	AddDebug (const TCHAR *txt)
 {
 	int dbglen = GetWindowTextLength(GetDlgItem(hDebug, IDC_DEBUGTEXT));
 //	if (!dbgVisible)
@@ -674,7 +674,7 @@ void	AddDebug (TCHAR *txt)
 }
 
 // Shortcut for browsing to folders (though it could be used to run anything else, it's only ever called with folder names)
-void	BrowseFolder (TCHAR *dir)
+void	BrowseFolder (const TCHAR *dir)
 {
 	ShellExecute(hMainWnd, NULL, dir, NULL, NULL, SW_SHOWNORMAL);
 }
@@ -708,7 +708,7 @@ void	UpdateTitlebar (void)
 	}
 	SetWindowText(hMainWnd, titlebar);
 }
-void	__cdecl	PrintTitlebar (TCHAR *Text, ...)
+void	__cdecl	PrintTitlebar (const TCHAR *Text, ...)
 {
 	va_list marker;
 	va_start(marker, Text);

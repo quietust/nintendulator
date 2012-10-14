@@ -1016,7 +1016,7 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 	return Key;
 }
 
-TCHAR *	GetButtonLabel (int DevNum, int Button)
+const TCHAR *	GetButtonLabel (int DevNum, int Button)
 {
 	static TCHAR str[256];
 	_tcscpy(str, _T("???"));
@@ -1089,7 +1089,7 @@ void	ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 		DestroyWindow(key);	// close the little window
 		key = NULL;
 	}
-	SetWindowText(hDlg, (LPCTSTR)GetButtonLabel(Device, *Button));
+	SetWindowText(hDlg, GetButtonLabel(Device, *Button));
 	*Button |= Device << 16;	// add the device ID
 }
 

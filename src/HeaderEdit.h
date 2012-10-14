@@ -9,5 +9,5 @@
 
 namespace HeaderEdit
 {
-extern	void	Open (TCHAR *);
+extern	void	Open (const TCHAR *);
 } // namespace HeaderEdit
