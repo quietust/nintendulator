@@ -267,8 +267,9 @@ void	Destroy (void)
 	SetMode(0);
 	while (Breakpoints != NULL)
 	{
+		tBreakpoint *ptr = Breakpoints;
 		Breakpoints = Breakpoints->next;
-		delete Breakpoints->prev;
+		delete ptr;
 	}
 }
 
