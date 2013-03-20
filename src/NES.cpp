@@ -408,6 +408,10 @@ const TCHAR *	OpenFileiNES (FILE *in)
 			return _T("Invalid CHR RAM size specified!");
 		if (RI.INES2_CHRRAM & 0xF0)
 			EI.DbgOut(_T("This ROM uses battery-backed CHR RAM, which is not yet supported!"));
+		if (Header[14])
+			return _T("Unrecognized data found at header offset 14 - this ROM may make use of features not supported by this emulator!");
+		if (Header[15])
+			return _T("Unrecognized data found at header offset 15 - this ROM may make use of features not supported by this emulator!");
 	}
 	else
 	{
