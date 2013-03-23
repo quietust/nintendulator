@@ -961,7 +961,7 @@ void	SetRegion (void)
 	buflen = LockSize / (BITS / 8);
 	if (buffer)
 		delete buffer;
-	buffer = new short[LockSize];
+	buffer = new short[buflen];
 	if (Started)
 		Start();
 	if (Enabled)
