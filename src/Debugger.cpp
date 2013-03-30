@@ -375,7 +375,8 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);
 		Operand = OpData[1] | (OpData[2] << 8);
-		EffectiveAddr = DebugMemCPU(Operand) | (DebugMemCPU(Operand+1) << 8);
+		// Used only by JMP indirect, which does NOT handle page crossing correctly
+		EffectiveAddr = DebugMemCPU(Operand) | (DebugMemCPU((Operand & 0xFF00) | ((Operand+1) & 0xFF)) << 8);
 		break;
 	case ADR:
 		OpData[1] = DebugMemCPU(Addr+1);
