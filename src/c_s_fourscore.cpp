@@ -45,7 +45,7 @@ int	StdPort_FourScore2::Save (FILE *out)
 
 	return clen;
 }
-int	StdPort_FourScore::Load (FILE *in)
+int	StdPort_FourScore::Load (FILE *in, int version_id)
 {
 	int clen = 0;
 	unsigned short len;
@@ -55,7 +55,7 @@ int	StdPort_FourScore::Load (FILE *in)
 
 	return clen;
 }
-int	StdPort_FourScore2::Load (FILE *in)
+int	StdPort_FourScore2::Load (FILE *in, int version_id)
 {
 	int clen = 0;
 	unsigned short len;

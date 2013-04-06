@@ -37,7 +37,7 @@ int	StdPort_VSZapper::Save (FILE *out)
 
 	return clen;
 }
-int	StdPort_VSZapper::Load (FILE *in)
+int	StdPort_VSZapper::Load (FILE *in, int version_id)
 {
 	int clen = 0;
 	unsigned short len;

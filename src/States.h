@@ -7,9 +7,8 @@
 
 #pragma once
 
-#define	STATES_VERSION	"0975"	// current version, release or beta
-#define	STATES_PREV	"0970"	// last release
-#define	STATES_BETA	"0965"	// last beta
+#define	STATES_CUR_VERSION	975	// current savestate version
+#define	STATES_MIN_VERSION	950	// minimum supported savestate version
 
 namespace States
 {
@@ -17,10 +16,12 @@ extern TCHAR BaseFilename[MAX_PATH];
 extern int SelSlot;
 
 void	Init (void);
-void	SetFilename (TCHAR *);
+void	SetFilename (TCHAR *name);
 void	SetSlot (int Slot);
 int	SaveData (FILE *);
-BOOL	LoadData (FILE *, int);
+BOOL	LoadData (FILE *, int len, int ver);
 void	SaveState (void);
 void	LoadState (void);
+void	SaveVersion (FILE *, int ver);
+int	LoadVersion (FILE *);
 } // namespace States

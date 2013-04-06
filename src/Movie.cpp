@@ -61,6 +61,7 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 	OPENFILENAME ofn;
 	TCHAR filename[MAX_PATH] = {0};
 	int len;
+	int version_id = 0;
 	int wmId, wmEvent;
 	BOOL resume;
 	unsigned char tvmode;
@@ -114,10 +115,10 @@ INT_PTR	CALLBACK	MoviePlayProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 				break;
 			}
 
-			fread(buf, 1, 4, Data);
-			if ((memcmp(buf, STATES_VERSION, 4)) && (memcmp(buf, STATES_BETA, 4)) && (memcmp(buf, STATES_PREV, 4)))
+			version_id = States::LoadVersion(Data);
+			if ((version_id < STATES_MIN_VERSION) || (version_id > STATES_CUR_VERSION))
 			{
-				MessageBox(hDlg, _T("Incorrect movie version!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+				MessageBox(hDlg, _T("Invalid or unsupported movie version!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 				fclose(Data);
 				break;
 			}
@@ -228,10 +229,10 @@ void	Play (void)
 		return;
 	}
 
-	fread(buf, 1, 4, Data);
-	if ((memcmp(buf, STATES_VERSION, 4)) && (memcmp(buf, STATES_BETA, 4)) && (memcmp(buf, STATES_PREV, 4)))
+	int version_id = States::LoadVersion(Data);
+	if ((version_id < STATES_MIN_VERSION) || (version_id > STATES_CUR_VERSION))
 	{
-		MessageBox(hMainWnd, _T("Incorrect movie version!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+		MessageBox(hMainWnd, _T("Invalid or unsupported movie version!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		fclose(Data);
 		return;
 	}
@@ -283,7 +284,7 @@ void	Play (void)
 		MI->Load();
 	NES::Reset(RESET_HARD);
 	// load savestate BEFORE enabling playback, so we don't try to load the NMOV block
-	if (!States::LoadData(Data, len))
+	if (!States::LoadData(Data, len, version_id))
 	{
 		MessageBox(hMainWnd, _T("Failed to load movie!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		fclose(Data);
@@ -526,7 +527,7 @@ void	Record (void)
 	NES::SRAM_Size = 0;		// when messing with movies, don't save SRAM
 
 	fwrite("NSS\x1A", 1, 4, Data);
-	fwrite(STATES_VERSION, 1, 4, Data);
+	States::SaveVersion(Data, STATES_CUR_VERSION);
 	fwrite(&len, 1, 4, Data);
 	fwrite("NMOV", 1, 4, Data);
 
@@ -794,7 +795,7 @@ int	Save (FILE *out)
 	return clen;
 }
 
-int	Load (FILE *in)
+int	Load (FILE *in, int version_id)
 {
 	int clen = 0;
 

@@ -208,7 +208,7 @@ int	FDSSave (FILE *out)
 	return clen;
 }
 
-int	FDSLoad (FILE *in)
+int	FDSLoad (FILE *in, int version_id)
 {
 	int clen = 0;
 	int n;
@@ -230,56 +230,96 @@ int	FDSLoad (FILE *in)
 void	SaveSRAM (void)
 {
 	TCHAR Filename[MAX_PATH];
-	FILE *SRAMFile;
 	if (!SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
-		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States::BaseFilename);
-	else	_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States::BaseFilename);
-	SRAMFile = _tfopen(Filename, _T("wb"));
-	if (RI.ROMType == ROM_FDS)
 	{
-		FDSSave(SRAMFile);
+		_stprintf(Filename, _T("%s\\FDS\\%s.fsav"), DataPath, States::BaseFilename);
+		FILE *FSAVFile = _tfopen(Filename, _T("wb"));
+		if (!FSAVFile)
+		{
+			EI.DbgOut(_T("Failed to save disk changes!"));
+			return;
+		}
+		States::SaveVersion(FSAVFile, STATES_CUR_VERSION);
+		FDSSave(FSAVFile);
 		EI.DbgOut(_T("Saved disk changes"));
+		fclose(FSAVFile);
+
+		// check if there's an old-format FSV present
+		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States::BaseFilename);
+		FSAVFile = _tfopen(Filename, _T("rb"));
+		if (FSAVFile)
+		{
+			// if so, delete it - we're not going to use it
+			fclose(FSAVFile);
+			_tunlink(Filename);
+		}
 	}
 	else
 	{
+		_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States::BaseFilename);
+		FILE *SRAMFile = _tfopen(Filename, _T("wb"));
+		if (!SRAMFile)
+		{
+			EI.DbgOut(_T("Failed to save SRAM!"));
+			return;
+		}
 		fwrite(PRG_RAM, 1, SRAM_Size, SRAMFile);
 		EI.DbgOut(_T("Saved SRAM."));
+		fclose(SRAMFile);
 	}
-	fclose(SRAMFile);
 }
 void	LoadSRAM (void)
 {
 	TCHAR Filename[MAX_PATH];
-	FILE *SRAMFile;
 	int len;
 	if (!SRAM_Size)
 		return;
 	if (RI.ROMType == ROM_FDS)
-		_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States::BaseFilename);
-	else	_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States::BaseFilename);
-	SRAMFile = _tfopen(Filename, _T("rb"));
-	if (!SRAMFile)
-		return;
-	fseek(SRAMFile, 0, SEEK_END);
-	len = ftell(SRAMFile);
-	fseek(SRAMFile, 0, SEEK_SET);
-	if (RI.ROMType == ROM_FDS)
 	{
-		if (len == FDSLoad(SRAMFile))
+		_stprintf(Filename, _T("%s\\FDS\\%s.fsav"), DataPath, States::BaseFilename);
+		FILE *FSAVFile = _tfopen(Filename, _T("rb"));
+		int version_id;
+		if (FSAVFile)
+		{
+			version_id = States::LoadVersion(FSAVFile);
+			fseek(FSAVFile, 0, SEEK_END);
+			len = ftell(FSAVFile);
+			fseek(FSAVFile, 4, SEEK_SET);
+		}
+		else
+		{
+			_stprintf(Filename, _T("%s\\FDS\\%s.fsv"), DataPath, States::BaseFilename);
+			FSAVFile = _tfopen(Filename, _T("rb"));
+			if (!FSAVFile)
+				return;
+			version_id = 975;
+			fseek(FSAVFile, 0, SEEK_END);
+			len = ftell(FSAVFile);
+			fseek(FSAVFile, 0, SEEK_SET);
+		}
+		if (len == FDSLoad(FSAVFile, version_id))
 			EI.DbgOut(_T("Loaded disk changes"));
 		else	EI.DbgOut(_T("File length mismatch while loading disk data!"));
+		fclose(FSAVFile);
 	}
 	else
 	{
+		_stprintf(Filename, _T("%s\\SRAM\\%s.sav"), DataPath, States::BaseFilename);
+		FILE *SRAMFile = _tfopen(Filename, _T("rb"));
+		if (!SRAMFile)
+			return;
+		fseek(SRAMFile, 0, SEEK_END);
+		len = ftell(SRAMFile);
+		fseek(SRAMFile, 0, SEEK_SET);
 		ZeroMemory(PRG_RAM, SRAM_Size);
 		fread(PRG_RAM, 1, SRAM_Size, SRAMFile);
 		if (len == SRAM_Size)
 			EI.DbgOut(_T("Loaded SRAM (%i bytes)."), SRAM_Size);
 		else	EI.DbgOut(_T("File length mismatch while loading SRAM!"));
+		fclose(SRAMFile);
 	}
-	fclose(SRAMFile);
 }
 
 void	CloseFile (void)

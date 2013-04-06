@@ -23,5 +23,5 @@ void		Stop		(void);
 unsigned char	LoadInput	(void);
 void		SaveInput	(unsigned char);
 int		Save		(FILE *);
-int		Load		(FILE *);
+int		Load		(FILE *, int ver);
 } // namespace Movie

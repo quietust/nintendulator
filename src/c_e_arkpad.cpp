@@ -35,7 +35,7 @@ int	ExpPort_ArkanoidPaddle::Save (FILE *out)
 
 	return clen;
 }
-int	ExpPort_ArkanoidPaddle::Load (FILE *in)
+int	ExpPort_ArkanoidPaddle::Load (FILE *in, int version_id)
 {
 	int clen = 0;
 	unsigned short len;

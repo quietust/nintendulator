@@ -39,7 +39,7 @@ public:
 	virtual void		Frame	(unsigned char) = 0;
 	virtual void		SetMasks(void) = 0;
 	virtual int		Save	(FILE *) = 0;
-	virtual int		Load	(FILE *) = 0;
+	virtual int		Load	(FILE *, int ver) = 0;
 
 	STDCONT_TYPE	Type;
 	int		*Buttons;
@@ -60,7 +60,7 @@ public: \
 	void		Frame	(unsigned char); \
 	void		SetMasks(void); \
 	int		Save	(FILE *); \
-	int		Load	(FILE *); \
+	int		Load	(FILE *, int ver); \
 	StdPort_##NAME##_State	*State; \
 };
 DEF_STDCONT(Unconnected)
@@ -101,7 +101,7 @@ public:
 	virtual void		Frame	(unsigned char) = 0;
 	virtual void		SetMasks(void) = 0;
 	virtual int		Save	(FILE *) = 0;
-	virtual int		Load	(FILE *) = 0;
+	virtual int		Load	(FILE *, int ver) = 0;
 	EXPCONT_TYPE	Type;
 	int		*Buttons;
 	int		NumButtons;
@@ -122,7 +122,7 @@ public: \
 	void		Frame	(unsigned char); \
 	void		SetMasks(void); \
 	int		Save	(FILE *); \
-	int		Load	(FILE *); \
+	int		Load	(FILE *, int ver); \
 	ExpPort_##NAME##_State	*State; \
 };
 DEF_EXPCONT(Unconnected)
@@ -164,7 +164,7 @@ void	SaveSettings (HKEY);
 void	LoadSettings (HKEY);
 void	Write (unsigned char);
 int	Save (FILE *);
-int	Load (FILE *);
+int	Load (FILE *, int ver);
 void	SetDeviceUsed (void);
 void	Acquire (void);
 void	UnAcquire (void);

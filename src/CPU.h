@@ -61,7 +61,7 @@ void	Reset (void);
 void	PowerOn (void);
 #ifndef	NSFPLAYER
 int	Save (FILE *);
-int	Load (FILE *);
+int	Load (FILE *, int ver);
 #endif	/* !NSFPLAYER */
 void	ExecOp (void);
 int	MAPINT	ReadRAM (int, int);

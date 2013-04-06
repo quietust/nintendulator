@@ -36,7 +36,7 @@ int	ExpPort_Tablet::Save (FILE *out)
 
 	return clen;
 }
-int	ExpPort_Tablet::Load (FILE *in)
+int	ExpPort_Tablet::Load (FILE *in, int version_id)
 {
 	int clen = 0;
 	unsigned short len;

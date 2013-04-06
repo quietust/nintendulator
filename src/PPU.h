@@ -42,7 +42,7 @@ void	SetRegion (void);
 void	PowerOn (void);
 void	Reset (void);
 int	Save (FILE *);
-int	Load (FILE *);
+int	Load (FILE *, int ver);
 int	MAPINT	IntRead (int, int);
 int	MAPINT	IntReadVs (int, int);
 void	MAPINT	IntWrite (int, int, int);

@@ -31,7 +31,7 @@ int	ExpPort_FamilyBasicKeyboard::Save (FILE *out)
 
 	return clen;
 }
-int	ExpPort_FamilyBasicKeyboard::Load (FILE *in)
+int	ExpPort_FamilyBasicKeyboard::Load (FILE *in, int version_id)
 {
 	int clen = 0;
 	unsigned short len;

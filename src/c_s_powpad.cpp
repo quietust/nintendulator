@@ -34,7 +34,7 @@ int	StdPort_PowerPad::Save (FILE *out)
 
 	return clen;
 }
-int	StdPort_PowerPad::Load (FILE *in)
+int	StdPort_PowerPad::Load (FILE *in, int version_id)
 {
 	int clen = 0;
 	unsigned short len;

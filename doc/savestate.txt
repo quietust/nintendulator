@@ -1,5 +1,5 @@
 Nintendulator Save State Format
- Updated:  June 22, 2010
+ Updated:  April 6, 2013
 ---------------------------------------
 
 For simplicity, savestates should only be saved during VBLANK; otherwise,
@@ -22,10 +22,22 @@ Data types:
 -- Main File Header:
 
 	Identification	- <char[4] = "NSS",0x1A>
-	Version string	- <char[4] = "0970">
+	Version		- <char[4], see below>
 	Filesize	- <uint32 = filesize, not including this header>
 	Type		- <char[4] = "NSAV" for normal savestate, "NREC"
 			   for movie savestate, "NMOV" for finished movie>
+
+For versions prior to 0.980, the version was a 4-character ASCII number:
+
+	"0950" - 0.950
+	"0955" - 0.955 Beta
+	"0960" - 0.960
+	"0965" - 0.965 Beta
+	"0970" - 0.970
+	"0975" - 0.975 Beta
+
+Subsequent versions will start at "1001" and count upward each time the
+actual data format changes.
 
 -- Section blocks:
 
@@ -71,7 +83,8 @@ including the header).
 	uint8		VRAM Read Buffer
 	uint8		PPU I/O bus last contents
 
-	uint16		Clock Ticks (0..340) and PAL sub-cycles (upper 4 bits)
+0950:	uint16		Clock Ticks (0..340)
+0960:	uint16		Clock Ticks (0..340) and PAL sub-cycles (upper 4 bits)
 	uint16		Scanline number
 	uint8		Short frame (first scanline 1 tick shorter, NTSC only)
 
@@ -79,7 +92,8 @@ including the header).
 	uint8		External I/O Value
 	uint8		External I/O Counter (6/4/2 for read, 5/3/1 for write)
 
-	uint8		0 for NTSC, 1 for PAL
+0950:	uint8		0 for NTSC, 1 for PAL
+0975:	uint8		0 for NTSC, 1 for PAL, 2 for Dendy
 
 ---- Section "APUS" - APU State - Required
 
@@ -133,7 +147,8 @@ including the header).
 	uint16		DPCM current address
 	uint16		DPCM current length
 	uint8		DPCM shift register
-	uint8		DPCM fetching(D2)/!silenced(D1)/!empty(D0)
+0950:	uint8		DPCM output mode(D1)/buffer full(D0)
+0975:	uint8		DPCM fetching(D2)/!silenced(D1)/!empty(D0)
 	uint8		DPCM shift count
 	uint8		DPCM read buffer
 	uint16		DPCM cycles
@@ -141,11 +156,30 @@ including the header).
 
 	uint8		Last value written to $4017
 	uint16		Frame counter cycles
-	uint8		Frame counter phase
+0950:	uint8		Frame counter phase
+0975:	uint8		Zero, unused
 
 	uint8		APU-related IRQs (PCM and FRAME, as-is)
 
----- Section "CONT" - Controller Data - Optional
+---- Section "CTRL" - Controller Data - OBSOLETE, dropped in version 0970
+
+	uint32		Four-Score port 1 controller type
+	uint32		Four-Score port 1 controller type
+	uint32		Four-Score port 1 controller type
+	uint32		Four-Score port 1 controller type
+	uint32		Controller port 1 controller type
+	uint32		Controller port 2 controller type (ignored if Port 1 type is STD_FOURSCORE)
+	uint32		Expansion port controller type
+
+	uint8[...]	Controller port 1 state data
+	uint8[...]	Controller port 2 state data
+	uint8[...]	Four-Score port 1 state data
+	uint8[...]	Four-Score port 2 state data
+	uint8[...]	Four-Score port 3 state data
+	uint8[...]	Four-Score port 4 state data
+	uint8[...]	Expansion port state data
+
+---- Section "CONT" - Controller Data - Optional, added in version 0970
 
         Type:		Description:
 

@@ -19,5 +19,5 @@ int	MAPINT	Read3 (int, int);
 void	Reset (void);
 void	Init (void);
 int	Save (FILE *);
-int	Load (FILE *);
+int	Load (FILE *, int ver);
 } // namespace Genie

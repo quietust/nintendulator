@@ -53,7 +53,7 @@ void	Destroy (void);
 void	OpenFile (TCHAR *);
 void	CloseFile (void);
 int	FDSSave (FILE *);
-int	FDSLoad (FILE *);
+int	FDSLoad (FILE *, int ver);
 void	SaveSRAM (void);
 void	LoadSRAM (void);
 DWORD	getMask (unsigned int);

@@ -34,7 +34,7 @@ int	StdPort_SnesController::Save (FILE *out)
 
 	return clen;
 }
-int	StdPort_SnesController::Load (FILE *in)
+int	StdPort_SnesController::Load (FILE *in, int version_id)
 {
 	int clen = 0;
 	unsigned short len;

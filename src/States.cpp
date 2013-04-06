@@ -170,7 +170,7 @@ void	SaveState (void)
 	flen = 0;
 
 	fwrite("NSS\x1A", 1, 4, out);
-	fwrite(STATES_VERSION, 1, 4, out);
+	SaveVersion(out, STATES_CUR_VERSION);
 	fwrite(&flen, 4, 1, out);
 	if (Movie::Mode)	// save NREC during playback as well
 		fwrite("NREC", 1, 4, out);
@@ -187,7 +187,7 @@ void	SaveState (void)
 	Movie::ShowFrame();
 }
 
-BOOL	LoadData (FILE *in, int flen)
+BOOL	LoadData (FILE *in, int flen, int version_id)
 {
 	char csig[4];
 	int clen;
@@ -198,15 +198,15 @@ BOOL	LoadData (FILE *in, int flen)
 	{
 		flen -= clen;
 		if (!memcmp(csig, "CPUS", 4))
-			clen -= CPU::Load(in);
+			clen -= CPU::Load(in, version_id);
 		else if (!memcmp(csig, "PPUS", 4))
-			clen -= PPU::Load(in);
+			clen -= PPU::Load(in, version_id);
 		else if (!memcmp(csig, "APUS", 4))
-			clen -= APU::Load(in);
+			clen -= APU::Load(in, version_id);
 		else if (!memcmp(csig, "CONT", 4))
-			clen -= Controllers::Load(in);
+			clen -= Controllers::Load(in, version_id);
 		else if (!memcmp(csig, "GENI", 4))
-			clen -= Genie::Load(in);
+			clen -= Genie::Load(in, version_id);
 		else if (!memcmp(csig, "NPRA", 4))
 		{
 			memset(NES::PRG_RAM, 0, sizeof(NES::PRG_RAM));
@@ -220,7 +220,7 @@ BOOL	LoadData (FILE *in, int flen)
 		else if (!memcmp(csig, "DISK", 4))
 		{
 			if (RI.ROMType == ROM_FDS)
-				clen -= NES::FDSLoad(in);
+				clen -= NES::FDSLoad(in, version_id);
 			else	EI.DbgOut(_T("Error - DISK save block found for non-FDS game!"));
 		}
 		else if (!memcmp(csig, "MAPR", 4))
@@ -236,7 +236,7 @@ BOOL	LoadData (FILE *in, int flen)
 			}
 		}
 		else if (!memcmp(csig, "NMOV", 4))
-			clen -= Movie::Load(in);
+			clen -= Movie::Load(in, version_id);
 		if (clen != 0)
 		{
 			SSOK = FALSE;			// too much, or too little
@@ -255,6 +255,7 @@ void	LoadState (void)
 {
 	TCHAR tps[MAX_PATH];
 	char tpc[5];
+	int version_id;
 	FILE *in;
 	int flen;
 
@@ -273,12 +274,12 @@ void	LoadState (void)
 		PrintTitlebar(_T("Not a valid savestate file: %i"), SelSlot);
 		return;
 	}
-	fread(tpc, 1, 4, in);
-	if ((memcmp(tpc, STATES_VERSION, 4)) && (memcmp(tpc, STATES_BETA, 4)) && (memcmp(tpc, STATES_PREV, 4)))
+	version_id = LoadVersion(in);
+	if ((version_id < STATES_MIN_VERSION) || (version_id > STATES_CUR_VERSION))
 	{
 		fclose(in);
 		tpc[4] = 0;
-		PrintTitlebar(_T("Incorrect savestate version (%hs): %i"), tpc, SelSlot);
+		PrintTitlebar(_T("Invalid or unsupported savestate version (%i): %i"), version_id, SelSlot);
 		return;
 	}
 	fread(&flen, 4, 1, in);
@@ -321,10 +322,28 @@ void	LoadState (void)
 	NES::GameGenie = FALSE;			// If the savestate uses it, it'll turn back on shortly
 	CheckMenuItem(hMenu, ID_CPU_GAMEGENIE, MF_UNCHECKED);
 
-	if (LoadData(in, flen))
-		PrintTitlebar(_T("State loaded: %i"), SelSlot);
-	else	PrintTitlebar(_T("State loaded with errors: %i"), SelSlot);
+	if (LoadData(in, flen, version_id))
+		PrintTitlebar(_T("%s loaded: %i"), (version_id == STATES_CUR_VERSION) ? _T("State") : _T("Old state"), SelSlot);
+	else	PrintTitlebar(_T("%s loaded with errors: %i"), (version_id == STATES_CUR_VERSION) ? _T("State") : _T("Old state"), SelSlot);
 	Movie::ShowFrame();
 	fclose(in);
+}
+
+void	SaveVersion (FILE *out, int version_id)
+{
+	BYTE buf[4];
+	buf[0] = (version_id / 1000) % 10 + '0';
+	buf[1] = (version_id /  100) % 10 + '0';
+	buf[2] = (version_id /   10) % 10 + '0';
+	buf[3] = (version_id /    1) % 10 + '0';
+	fwrite(buf, 1, 4, out);
+}
+
+int	LoadVersion (FILE *in)
+{
+	BYTE buf[4];
+	fread(buf, 1, 4, in);
+	int version_id = (buf[0] - '0') * 1000 + (buf[1] - '0') * 100 + (buf[2] - '0') * 10 + (buf[3] - '0');
+	return version_id;
 }
 } // namespace States

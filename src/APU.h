@@ -35,7 +35,7 @@ void	Start		(void);
 void	Stop		(void);
 #ifndef	NSFPLAYER
 int	Save		(FILE *);
-int	Load		(FILE *);
+int	Load		(FILE *, int ver);
 void	SoundOFF	(void);
 void	SoundON		(void);
 #endif	/* !NSFPLAYER */

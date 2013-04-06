@@ -629,7 +629,7 @@ int	Save (FILE *out)
 	return clen;
 }
 
-int	Load (FILE *in)
+int	Load (FILE *in, int version_id)
 {
 	int clen = 0;
 	unsigned char type;
@@ -639,7 +639,7 @@ int	Load (FILE *in)
 
 	readByte(type);
 	SET_STDCONT(Port1, (STDCONT_TYPE)type);
-	clen += Port1->Load(in);
+	clen += Port1->Load(in, version_id);
 
 	readByte(type);
 	// if there's a Four Score on the first port, then assume the same for port 2
@@ -649,27 +649,27 @@ int	Load (FILE *in)
 	else if ((STDCONT_TYPE)type == STD_FOURSCORE2)
 		SET_STDCONT(Port2, STD_UNCONNECTED);
 	else	SET_STDCONT(Port2, (STDCONT_TYPE)type);
-	clen += Port2->Load(in);
+	clen += Port2->Load(in, version_id);
 
 	readByte(type);
 	SET_EXPCONT(PortExp, (EXPCONT_TYPE)type);
-	clen += PortExp->Load(in);
+	clen += PortExp->Load(in, version_id);
 
 	readByte(type);
 	SET_STDCONT(FSPort1, (STDCONT_TYPE)type);
-	clen += FSPort1->Load(in);
+	clen += FSPort1->Load(in, version_id);
 
 	readByte(type);
 	SET_STDCONT(FSPort2, (STDCONT_TYPE)type);
-	clen += FSPort2->Load(in);
+	clen += FSPort2->Load(in, version_id);
 
 	readByte(type);
 	SET_STDCONT(FSPort3, (STDCONT_TYPE)type);
-	clen += FSPort3->Load(in);
+	clen += FSPort3->Load(in, version_id);
 
 	readByte(type);
 	SET_STDCONT(FSPort4, (STDCONT_TYPE)type);
-	clen += FSPort4->Load(in);
+	clen += FSPort4->Load(in, version_id);
 
 	return clen;
 }
