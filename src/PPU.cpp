@@ -25,11 +25,7 @@ int SLnum;
 unsigned char *CHRPointer[0x10];
 BOOL Writable[0x10];
 
-#ifdef	ACCURATE_SPRITES
-unsigned char Sprite[0x120];
-#else	/* !ACCURATE_SPRITES */
-unsigned char Sprite[0x100];
-#endif	/* ACCURATE_SPRITES */
+unsigned char Sprite[0x121];
 unsigned char SprAddr;
 
 unsigned char Palette[0x20];
@@ -53,18 +49,10 @@ unsigned char IOVal;
 unsigned char IOMode;	// Start at 6 for writes, 5 for reads - counts down and eventually hits zero
 unsigned char buf2007;
 
-#ifdef	ACCURATE_SPRITES
 unsigned char *SprBuff;
-#else	/* !ACCURATE_SPRITES */
-unsigned char SprBuff[32];
-#endif	/* ACCURATE_SPRITES */
 BOOL Spr0InLine;
 int SprCount;
-#ifdef	ACCURATE_SPRITES
 unsigned char SprData[8][10];
-#else	/* !ACCURATE_SPRITES */
-unsigned char SprData[8][8];
-#endif	/* ACCURATE_SPRITES */
 unsigned short *GfxData;
 BOOL IsPAL;	// Use 3.2:1 clock divider, shorten pre-render scanline every other frame
 unsigned char PALsubticks;
@@ -213,9 +201,8 @@ void	Reset (void)
 	Clockticks = 0;
 	PALsubticks = 0;
 	SLnum = 0;
-#ifdef	ACCURATE_SPRITES
 	SprBuff = &Sprite[256];
-#endif	/* ACCURATE_SPRITES */
+	Sprite[0x120] = 0xFF;
 	GetHandlers();
 }
 void	GetHandlers (void)
@@ -253,201 +240,156 @@ void	SetRegion (void)
 	}
 }
 
-#ifdef	ACCURATE_SPRITES
-int	SpritePtr;
-int sprpos, sprnum, spridx, sprsub, sprtmp, sprstate, sprtotal, sprzero;
+int	SprAddrH, SpritePtr;
+int sprstate, sprcount, sprzero;
+unsigned char sprtmp;
 void	ProcessSprites (void)
 {
-	if (Clockticks < 64)
-		Sprite[SpritePtr = 0x100 | (Clockticks >> 1)] = 0xFF;
-	else if (Clockticks < 256)
+	if (Clockticks == 0)
 	{
-		if (Clockticks == 64)
+		// if Sprite address is not zero at the beginning of the pre-render scanline
+		// then copy the contents of its 8-byte page into the first 8 bytes
+		if ((SLnum == -1) && (SprAddr & 0xF8) != 0)
+			memcpy(Sprite, Sprite + (SprAddr & 0xF8), 8);
+		SpritePtr = SprAddr = SprAddrH = 0;
+	}
+	else if (Clockticks <= 64)
+	{
+		if (Clockticks & 1)
+			sprtmp = Sprite[SpritePtr = 0x120]; // dummy byte, always 0xFF
+		else
 		{
-			sprpos = 0x100;
-			sprnum = 0;
-			spridx = (SprAddr & 0xF8) >> 2;
-			sprsub = 0;
+			Sprite[SpritePtr = 0x100 | SprAddrH] = sprtmp;
+			SprAddrH = (SprAddrH + 1) & 0x1F;
+		}
+	}
+	else if (Clockticks <= 256)
+	{
+		if (Clockticks == 65)
+		{
 			sprstate = 0;
-			sprtotal = 0;
 			sprzero = FALSE;
+			sprcount = 0; // shortcut used for sprite rendering logic later on
 		}
 		switch (sprstate)
 		{
 		case 0:	// evaluate current Y coordinate
 			if (Clockticks & 1)
+				sprtmp = Sprite[SpritePtr = SprAddr];
+			else
 			{
-				Sprite[SpritePtr = sprpos] = (unsigned char)sprtmp;
+				Sprite[SpritePtr = 0x100 | SprAddrH] = sprtmp;
 				if ((SLnum >= sprtmp) && (SLnum <= sprtmp + ((Reg2000 & 0x20) ? 0xF : 0x7)))
 				{
-					if (sprnum == 0)
+					sprcount++;
+					// sprite is in range
+					if (SprAddr == 0)
 						sprzero = TRUE;
-					sprstate = 1;	// sprite is in range, fetch the rest of it
-					sprsub = 1;
-					sprpos++;
-					sprtotal++;
+					// start fetching data bytes
+					sprstate = 1;
+					SprAddr = (SprAddr + 1) & 0xFF;
+					SprAddrH = (SprAddrH + 1) & 0x1F;
 				}
 				else
 				{
-					if (++spridx, ++sprnum == 64)
-					{
-						spridx = 0;
+					// checked all 64 sprites? skip to state 4
+					SprAddr = (SprAddr + 4) & 0xFC;
+					// wrapped around? skip to state 4
+					if (!SprAddr)
 						sprstate = 4;
-					}
-					else if (sprpos == 0x120)
-						sprstate = 2;
 				}
-			}
-			else
-			{
-				if (sprnum == 2)
-					spridx = sprnum;
-				sprtmp = Sprite[SpritePtr = (spridx << 2)];
 			}
 			break;
 		case 1:	// Y-coordinate is in range, copy remaining bytes
 			if (Clockticks & 1)
+				sprtmp = Sprite[SpritePtr = SprAddr];
+			else
 			{
-				Sprite[SpritePtr = sprpos++] = (unsigned char)sprtmp;
-				if (sprsub++ == 3)
+				Sprite[SpritePtr = 0x100 | SprAddrH] = sprtmp;
+				SprAddr = (SprAddr + 1) & 0xFF;
+				SprAddrH = (SprAddrH + 1) & 0x1F;
+				// copied 4 bytes
+				if (!(SprAddrH & 0x3))
 				{
-					sprsub = 0;
-					if (++spridx, ++sprnum == 64)
-					{
-						spridx = 0;
+					// checked all 64 sprites? skip to state 4
+					if (SprAddr < 0x4)
 						sprstate = 4;
-					}
-					else if (sprpos == 0x120)
+					// found 8 sprites? go to state 2
+					else if (SprAddrH == 0)
 						sprstate = 2;
 					else	sprstate = 0;
 				}
 			}
-			else	sprtmp = Sprite[SpritePtr = (spridx << 2) | sprsub];
 			break;
 		case 2:	// exactly 8 sprites detected, go through 'weird' evaluation
 			if (Clockticks & 1)
+				sprtmp = Sprite[SpritePtr = SprAddr];
+			else
 			{
-				SpritePtr = 0x100;	// failed write
+				SpritePtr = 0x100 | SprAddrH;	// write suppressed
 				if ((SLnum >= sprtmp) && (SLnum <= sprtmp + ((Reg2000 & 0x20) ? 0xF : 0x7)))
-				{	// 9th sprite found "in range"
+				{
+					// 9th sprite found "in range"
 					sprstate = 3;
-					sprsub = (sprsub + 1) & 3;
-					if (!sprsub)
-						spridx = (spridx + 1) & 63;
-					sprpos = 1;
 					Reg2002 |= 0x20;	// set sprite overflow flag
+					SprAddr = (SprAddr + 1) & 0xFF;
+					SprAddrH = 1; // this doesn't actually happen, but it's simpler to track this way
 				}
 				else
 				{
-					sprsub = (sprsub + 1) & 3;
-					if (++spridx, ++sprnum == 64)
-					{
-						spridx = 0;
+					if ((SprAddr & 0x3) == 0x3)
+						SprAddr = (SprAddr + 1) & 0xFF;
+					else	SprAddr = (SprAddr + 5) & 0xFF;
+					if (SprAddr < 0x4)
 						sprstate = 4;
-					}
 				}
 			}
-			else	sprtmp = Sprite[SpritePtr = (spridx << 2) | sprsub];
 			break;
 		case 3:	// 9th sprite detected, fetch next 3 bytes
 			if (Clockticks & 1)
+				sprtmp = Sprite[SpritePtr = SprAddr];
+			else
 			{
-				SpritePtr = 0x100;
-				sprsub = (sprsub + 1) & 3;
-				if (!sprsub)
-					spridx = (spridx + 1) & 63;
-				if (sprpos++ == 3)
+				SpritePtr = 0x100;	// write suppressed
+				SprAddr = (SprAddr + 1) & 0xFF;
+				SprAddrH++;
+				// fetched 4 bytes
+				if (SprAddrH == 4)
 				{
-					if (sprsub == 3)
-						spridx = (spridx + 1) & 63;
+					// if we're misaligned, go back to the beginning of the sprite
+					if (SprAddr & 0x3)
+						SprAddr = (SprAddr & 0xFC);
+					else	SprAddr = (SprAddr + 4) & 0xFC;
+					SprAddrH = 0;
 					sprstate = 4;
 				}
 			}
-			else	sprtmp = Sprite[SpritePtr = (spridx << 2) | sprsub];
 			break;
 		case 4:	// no more sprites to evaluate, thrash until HBLANK
 			if (Clockticks & 1)
+				sprtmp = Sprite[SpritePtr = SprAddr];
+			else
 			{
-				SpritePtr = sprpos;
-				spridx = (spridx + 1) & 63;
+				SpritePtr = 0x100 | SprAddrH;
+				SprAddr = (SprAddr + 4) & 0xFC;
 			}
-			else	sprtmp = Sprite[SpritePtr = spridx << 2];
 			break;
 		}
 	}
-	else if (Clockticks < 320)
+	else if (Clockticks <= 320)
 	{
-		if (Clockticks == 256)
+		if (Clockticks == 257)
 		{
-			SprCount = sprtotal * 4;
+			SprCount = sprcount * 4;
 			Spr0InLine = sprzero;
+			SprAddr = SprAddrH = 0;
 		}
-		if ((Clockticks & 7) < 4)
-			SpritePtr = 0x100 | (Clockticks & 3) | (((Clockticks - 256) & 0x38) >> 1);
-		else	SpritePtr = 0x103 | (((Clockticks - 256) & 0x38) >> 1);
+		SpritePtr = 0x100 | SprAddrH;
+		if (((Clockticks - 1) & 4) < 4)
+			SprAddrH = (SprAddrH + 1) & 0x1F;
 	}
-	else
-	{
-		SpritePtr = 0x100;
-	}
-
-//*** Cycles 0-63: Secondary OAM (32-byte buffer for current sprites on scanline) is initialized to $FF - attempting to read $2004 will return $FF
-//*** Cycles 64-255: Sprite evaluation
-//* On even cycles, data is read from (primary) OAM
-//* On odd cycles, data is written to secondary OAM (unless writes are inhibited, in which case it will read the value in secondary OAM instead)
-//1. Starting at n = 0, read a sprite's Y-coordinate (OAM[n][0], copying it to the next open slot in secondary OAM (unless 8 sprites have been found, in which case the write is ignored).
-//1a. If Y-coordinate is in range, copy remaining bytes of sprite data (OAM[n][1] thru OAM[n][3]) into secondary OAM.
-//2. Increment n
-//2a. If n has overflowed back to zero (all 64 sprites evaluated), go to 4
-//2b. If less than 8 sprites have been found, go to 1
-//2c. If exactly 8 sprites have been found, disable writes to secondary OAM
-//3. Starting at m = 0, evaluate OAM[n][m] as a Y-coordinate.
-//3a. If the value is in range, set the sprite overflow flag in $2002 and read the next 3 entries of OAM (incrementing 'm' after each byte and incrementing 'n' when 'm' overflows); if m = 3, increment n
-//3b. If the value is not in range, increment n AND m (without carry). If n overflows to 0, go to 4; otherwise go to 3
-//4. Attempt (and fail) to copy OAM[n][0] into the next free slot in secondary OAM, and increment n (repeat until HBLANK is reached)
-//*** Cycles 256-319: Sprite fetches (8 sprites total, 8 cycles per sprite)
-//1-4: Read the Y-coordinate, tile number, attributes, and X-coordinate of the selected sprite
-//5-8: Read the X-coordinate of the selected sprite 4 times.
-//* On the first empty sprite slot, read the Y-coordinate of sprite #63 followed by $FF for the remaining 7 cycles
-//* On all subsequent empty sprite slots, read $FF for all 8 reads
-//*** Cycles 320-340: Background render pipeline initialization
-//* Read the first byte in secondary OAM (the Y-coordinate of the first sprite found, sprite #63 if no sprites were found)
+	else	SpritePtr = 0x100;
 }
-#else	/* !ACCURATE_SPRITES */
-__inline void	DiscoverSprites (void)
-{
-	int SprHeight = 7 | ((Reg2000 & 0x20) >> 2);
-	int SL = SLnum;
-	int spt;
-	SprCount = 0;
-	Spr0InLine = FALSE;
-	if (!IsRendering)
-		return;
-	for (spt = 0; spt < 32; spt += 4)
-		SprBuff[spt+1] = 0xFF;	// pre-init sprite buffer tile indices
-	for (spt = 0; spt < 256; spt += 4)
-	{
-		unsigned char off;
-		if (spt < 8)
-			off = spt + (SprAddr & 0xF8);
-		else	off = spt;
-		if ((SL - Sprite[off]) & ~SprHeight)
-			continue;
-		if (SprCount == 32)
-		{
-			Reg2002 |= 0x20;
-			break;
-		}
-		SprBuff[SprCount] = SL - Sprite[off];
-		SprBuff[SprCount+1] = Sprite[off | 1];
-		SprBuff[SprCount+2] = Sprite[off | 2];
-		SprBuff[SprCount+3] = Sprite[off | 3];
-		SprCount += 4;
-		if (!spt)
-			Spr0InLine = TRUE;
-	}
-}
-#endif	/* ACCURATE_SPRITES */
 void	GetGFXPtr (void)
 {
 	GfxData = DrawArray;
@@ -568,9 +510,7 @@ __inline void	RunNoSkip (int NumTicks)
 	register unsigned char TC;
 
 	register int SprNum;
-#ifdef	ACCURATE_SPRITES
 	register unsigned char SprSL;
-#endif	/* ACCURATE_SPRITES */
 	register unsigned char *CurTileData;
 
 	register int i, y;
@@ -580,12 +520,7 @@ __inline void	RunNoSkip (int NumTicks)
 		if (Clockticks == 256)
 		{
 			if (SLnum < 240)
-			{
-#ifndef	ACCURATE_SPRITES
-				DiscoverSprites();
-#endif	/* !ACCURATE_SPRITES */
 				ZeroMemory(TileData, sizeof(TileData));
-			}
 		}
 		else if (Clockticks == 304)
 		{
@@ -620,7 +555,6 @@ __inline void	RunNoSkip (int NumTicks)
 				Reg2002 |= 0x80;
 				if (Reg2000 & 0x80)
 					CPU::WantNMI = TRUE;
-//				SprAddr = 0;
 			}
 			else if (SLnum == SLEndFrame - 1)
 			{
@@ -635,9 +569,7 @@ __inline void	RunNoSkip (int NumTicks)
 			Reg2002 = 0;
 		if (IsRendering)
 		{
-#ifdef	ACCURATE_SPRITES
 			ProcessSprites();
-#endif	/* ACCURATE_SPRITES */
 			if (Clockticks & 1)
 			{
 				if (IOMode)
@@ -775,16 +707,10 @@ __inline void	RunNoSkip (int NumTicks)
 			case 259:	case 267:	case 275:	case 283:	case 291:	case 299:	case 307:	case 315:
 				SprNum = (Clockticks >> 1) & 0x1C;
 				TC = SprBuff[SprNum | 1];
-#ifdef	ACCURATE_SPRITES
 				SprSL = (unsigned char)(SLnum - SprBuff[SprNum]);
  				if (Reg2000 & 0x20)
 					PatAddr = ((TC & 0xFE) << 4) | ((TC & 0x01) << 12) | ((SprSL & 7) ^ ((SprBuff[SprNum | 2] & 0x80) ? 0x17 : 0x00) ^ ((SprSL & 0x8) << 1));
 				else	PatAddr = (TC << 4) | ((SprSL & 7) ^ ((SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((Reg2000 & 0x08) << 9);
-#else	/* !ACCURATE_SPRITES */
- 				if (Reg2000 & 0x20)
-					PatAddr = ((TC & 0xFE) << 4) | ((TC & 0x01) << 12) | ((SprBuff[SprNum] & 7) ^ ((SprBuff[SprNum | 2] & 0x80) ? 0x17 : 0x00) ^ ((SprBuff[SprNum] & 0x8) << 1));
-				else	PatAddr = (TC << 4) | (SprBuff[SprNum] ^ ((SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((Reg2000 & 0x08) << 9);
-#endif	/* ACCURATE_SPRITES */
 				break;
 			case 260:	case 268:	case 276:	case 284:	case 292:	case 300:	case 308:	case 316:
 				RenderAddr = PatAddr;
@@ -810,10 +736,8 @@ __inline void	RunNoSkip (int NumTicks)
 				CurTileData = SprData[SprNum >> 2];
 				((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 				((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
-#ifdef	ACCURATE_SPRITES
 				CurTileData[8] = SprBuff[SprNum];
 				CurTileData[9] = SprBuff[SprNum | 1];
-#endif	/* ACCURATE_SPRITES */
 				break;
 				// END SPRITES
 			case 336:	case 338:
@@ -863,11 +787,7 @@ __inline void	RunNoSkip (int NumTicks)
 			if ((Reg2001 & 0x10) && ((Clockticks >= 8) || (Reg2001 & 0x04)))
 				for (y = 0; y < SprCount; y += 4)
 				{
-#ifdef	ACCURATE_SPRITES
 					register int SprPixel = Clockticks - SprData[y >> 2][9];
-#else	/* !ACCURATE_SPRITES */
-					register int SprPixel = Clockticks - SprBuff[y | 3];
-#endif	/* ACCURATE_SPRITES */
 					register unsigned char SprDat;
 					if (SprPixel & ~7)
 						continue;
@@ -879,11 +799,7 @@ __inline void	RunNoSkip (int NumTicks)
 							Reg2002 |= 0x40;	// Sprite 0 hit
 							Spr0InLine = FALSE;
 						}
-#ifdef	ACCURATE_SPRITES
 						if (!((TC & 0x3) && (SprData[y >> 2][8] & 0x20)))
-#else	/* !ACCURATE_SPRITES */
-						if (!((TC & 0x3) && (SprBuff[y | 2] & 0x20)))
-#endif	/* ACCURATE_SPRITES */
 							TC = SprDat | 0x10;
 						break;
 					}
@@ -919,9 +835,6 @@ __inline void	RunSkip (int NumTicks)
 		{
 			if (SLnum < 240)
 			{
-#ifndef	ACCURATE_SPRITES
-				DiscoverSprites();
-#endif	/* !ACCURATE_SPRITES */
 				if (Spr0InLine)
 					ZeroMemory(TileData, sizeof(TileData));
 			}
@@ -959,7 +872,6 @@ __inline void	RunSkip (int NumTicks)
 				Reg2002 |= 0x80;
 				if (Reg2000 & 0x80)
 					CPU::WantNMI = TRUE;
-//				SprAddr = 0;
 			}
 			else if (SLnum == SLEndFrame - 1)
 			{
@@ -974,9 +886,7 @@ __inline void	RunSkip (int NumTicks)
 			Reg2002 = 0;
 		if (IsRendering)
 		{
-#ifdef	ACCURATE_SPRITES
 			ProcessSprites();
-#endif	/* ACCURATE_SPRITES */
 			if (Clockticks & 1)
 			{
 				if (IOMode)
@@ -1258,21 +1168,7 @@ int	__fastcall	Read2Vs (void)
 int	__fastcall	Read4 (void)
 {
 	if (IsRendering)
-#ifdef	ACCURATE_SPRITES
 		readLatch = Sprite[SpritePtr];
-#else	/* !ACCURATE_SPRITES */
-	{
-		if (Clockticks < 64)
-			readLatch = 0xFF;
-		else if (Clockticks < 192)
-			readLatch = Sprite[((Clockticks - 64) << 1) & 0xFC];
-		else if (Clockticks < 256)
-			readLatch = (Clockticks & 1) ? Sprite[0xFC] : Sprite[((Clockticks - 192) << 1) & 0xFC];
-		else if (Clockticks < 320)
-			readLatch = 0xFF;
-		else	readLatch = Sprite[0];
-	}
-#endif	/* ACCURATE_SPRITES */
 	else	readLatch = Sprite[SprAddr];
 	return readLatch;
 }
@@ -1367,7 +1263,8 @@ void	__fastcall	Write4 (int Val)
 		Val = 0xFF;
 	if ((SprAddr & 0x03) == 0x02)
 		Val &= 0xE3;
-	Sprite[SprAddr++] = (unsigned char)Val;
+	Sprite[SprAddr] = (unsigned char)Val;
+	SprAddr = (SprAddr + 1) & 0xFF;
 #ifdef	ENABLE_DEBUGGER
 	Debugger::SprChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */

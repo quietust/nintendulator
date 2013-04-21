@@ -16,11 +16,7 @@ extern int SLnum;
 extern unsigned char *CHRPointer[0x10];
 extern BOOL Writable[0x10];
 
-#ifdef	ACCURATE_SPRITES
-extern unsigned char Sprite[0x120];
-#else	/* !ACCURATE_SPRITES */
-extern unsigned char Sprite[0x100];
-#endif	/* ACCURATE_SPRITES */
+extern unsigned char Sprite[0x121];
 
 extern unsigned char Palette[0x20];
 
