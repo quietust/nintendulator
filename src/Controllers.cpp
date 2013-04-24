@@ -928,8 +928,13 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 	}
 
 	dev->Acquire();
+	DWORD ticks;
+	ticks = GetTickCount();
 	while (Key == -1)
 	{
+		// abort after 5 seconds
+		if (GetTickCount() - ticks > 5000)
+			break;
 		if (DevNum == 0)
 			hr = dev->GetDeviceState(256, KeyState);
 		else if (DevNum == 1)
@@ -968,8 +973,17 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 			}
 		}
 	}
+
+	ticks = GetTickCount();
 	while (1)
 	{
+		// if we timed out above, then skip this
+		if (Key == -1)
+			break;
+		// wait 3 seconds to release key
+		if (GetTickCount() - ticks > 3000)
+			break;
+
 		bool held = false;
 		if (DevNum == 0)
 			hr = dev->GetDeviceState(256, KeyState);
@@ -1084,7 +1098,9 @@ void	ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 		key = CreateDialog(hInst, (LPCTSTR)IDD_KEYCONFIG, hDlg, NULL);
 		ShowWindow(key, TRUE);	// FIXME - center this window properly
 		ProcessMessages();	// let the "Press a key..." dialog display itself
-		*Button = GetConfigButton(key, Device);
+		int newKey = GetConfigButton(key, Device);
+		if (newKey != -1)
+			*Button = newKey;
 		ProcessMessages();	// flush all keypresses - don't want them going back to the parent dialog
 		DestroyWindow(key);	// close the little window
 		key = NULL;
