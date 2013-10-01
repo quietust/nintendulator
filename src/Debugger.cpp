@@ -283,7 +283,7 @@ void	SetMode (int NewMode)
 
 	if ((Mode & DEBUG_MODE_CPU) && !CPUWnd)
 	{
-		CPUWnd = CreateDialog(hInst, (LPCTSTR)IDD_DEBUGGER_CPU, hMainWnd, CPUProc);
+		CPUWnd = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DEBUGGER_CPU), hMainWnd, CPUProc);
 		SetWindowPos(CPUWnd, hMainWnd, wRect.right, wRect.top, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
 	}
 	else if (!(Mode & DEBUG_MODE_CPU) && CPUWnd)
@@ -293,7 +293,7 @@ void	SetMode (int NewMode)
 	}
 	if ((Mode & DEBUG_MODE_PPU) && !PPUWnd)
 	{
-		PPUWnd = CreateDialog(hInst, (LPCTSTR)IDD_DEBUGGER_PPU, hMainWnd, PPUProc);
+		PPUWnd = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DEBUGGER_PPU), hMainWnd, PPUProc);
 		SetWindowPos(PPUWnd, hMainWnd, wRect.left, wRect.bottom, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER);
 		NTabChanged = TRUE;
 		PalChanged = TRUE;
@@ -1818,7 +1818,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else	GetBreakpoint(hwndDlg, NULL);	// enable the add/remove buttons
 			return TRUE;
 		case IDC_DEBUG_BREAK_ADD:
-			bp = (struct tBreakpoint *)DialogBoxParam(hInst, (LPCTSTR)IDD_BREAKPOINT, hwndDlg, BreakpointProc, (LPARAM)NULL);
+			bp = (struct tBreakpoint *)DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BREAKPOINT), hwndDlg, BreakpointProc, (LPARAM)NULL);
 			// if user cancels, nothing was added
 			if (bp == NULL)
 				break;
@@ -1836,7 +1836,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 
 			// then open the editor on it
-			bp = (struct tBreakpoint *)DialogBoxParam(hInst, (LPCTSTR)IDD_BREAKPOINT, hwndDlg, BreakpointProc, (LPARAM)bp);
+			bp = (struct tBreakpoint *)DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BREAKPOINT), hwndDlg, BreakpointProc, (LPARAM)bp);
 			// if user cancels, nothing was changed
 			if (bp == NULL)
 				break;
@@ -1938,7 +1938,7 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_DEBUG_TRACE_LIST:
 			if (wmEvent == LBN_DBLCLK)
 			{
-				bp = (struct tBreakpoint *)DialogBoxParam(hInst, (LPCTSTR)IDD_BREAKPOINT, hwndDlg, BreakpointProc, (LPARAM)0xFFFFFFFF);
+				bp = (struct tBreakpoint *)DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BREAKPOINT), hwndDlg, BreakpointProc, (LPARAM)0xFFFFFFFF);
 				// if user cancels, nothing was added
 				if (bp == NULL)
 					break;

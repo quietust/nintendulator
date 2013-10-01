@@ -135,7 +135,7 @@ INT_PTR	CALLBACK	ExpPort_Tablet_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam,
 }
 void	ExpPort_Tablet::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_TABLET, hWnd, ExpPort_Tablet_ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_EXPPORT_TABLET), hWnd, ExpPort_Tablet_ConfigProc, (LPARAM)this);
 }
 void	ExpPort_Tablet::SetMasks (void)
 {

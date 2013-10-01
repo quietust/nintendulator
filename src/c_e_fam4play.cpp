@@ -141,7 +141,7 @@ INT_PTR	CALLBACK	ExpPort_Fami4Play_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wPar
 }
 void	ExpPort_Fami4Play::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_FAMI4PLAY, hWnd, ExpPort_Fami4Play_ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_EXPPORT_FAMI4PLAY), hWnd, ExpPort_Fami4Play_ConfigProc, (LPARAM)this);
 }
 void	ExpPort_Fami4Play::SetMasks (void)
 {

@@ -719,7 +719,7 @@ BOOL	LoadMapper (const ROMInfo *ROM)
 		else	return TRUE;
 	}
 	// else more than one found - ask which one to use
-	int choice = DialogBoxParam(hInst, (LPCTSTR)IDD_DLLSELECT, hMainWnd, DllSelect, (LPARAM)DLLs);
+	int choice = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_DLLSELECT), hMainWnd, DllSelect, (LPARAM)DLLs);
 	// -1 indicates that no mapper was chosen
 	if (choice >= 0)
 	{

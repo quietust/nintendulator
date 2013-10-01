@@ -128,7 +128,7 @@ INT_PTR	CALLBACK	StdPort_Zapper_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam,
 }
 void	StdPort_Zapper::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_ZAPPER, hWnd, StdPort_Zapper_ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_STDPORT_ZAPPER), hWnd, StdPort_Zapper_ConfigProc, (LPARAM)this);
 }
 void	StdPort_Zapper::SetMasks (void)
 {

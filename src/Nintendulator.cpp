@@ -104,7 +104,7 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	if (!InitInstance (hInstance, nCmdShow)) 
 		return FALSE;
 
-	hAccelTable = LoadAccelerators(hInstance, (LPCTSTR)IDC_NINTENDULATOR);
+	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_NINTENDULATOR));
 
 	timeBeginPeriod(1);
 
@@ -181,12 +181,12 @@ ATOM	MyRegisterClass (HINSTANCE hInstance)
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
-	wcex.hIcon		= LoadIcon(hInstance, (LPCTSTR)IDI_NINTENDULATOR);
+	wcex.hIcon		= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_NINTENDULATOR));
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName	= (LPCTSTR)IDC_NINTENDULATOR;
+	wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_NINTENDULATOR);
 	wcex.lpszClassName	= szWindowClass;
-	wcex.hIconSm		= LoadIcon(wcex.hInstance, (LPCTSTR)IDI_SMALL);
+	wcex.hIconSm		= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
 	return RegisterClassEx(&wcex);
 }
@@ -205,14 +205,14 @@ BOOL	InitInstance (HINSTANCE hInstance, int nCmdShow)
 {
 	GFX::DirectDraw = NULL;	// gotta do this so we don't paint from nothing
 	hInst = hInstance;
-	hMenu = LoadMenu(hInst, (LPCTSTR)IDR_NINTENDULATOR);
+	hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_NINTENDULATOR));
 	hMainWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, NULL, hMenu, hInstance, NULL);
 	if (!hMainWnd)
 		return FALSE;
 	ShowWindow(hMainWnd, nCmdShow);
 	DragAcceptFiles(hMainWnd, TRUE);
 
-	hDebug = CreateDialog(hInst, (LPCTSTR)IDD_DEBUG, hMainWnd, DebugWnd);
+	hDebug = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DEBUG), hMainWnd, DebugWnd);
 
 	NES::Init();
 	return TRUE;
@@ -584,7 +584,7 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Movie::Stop();
 			break;
 		case ID_HELP_ABOUT:
-			DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, About);
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
 		default:return DefWindowProc(hWnd, message, wParam, lParam);
 			break;

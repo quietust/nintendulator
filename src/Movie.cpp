@@ -211,7 +211,7 @@ void	Play (void)
 
 	NES::Stop();
 
-	ret = DialogBox(hInst, (LPCTSTR)IDD_MOVIE_PLAY, hMainWnd, MoviePlayProc);
+	ret = DialogBox(hInst, MAKEINTRESOURCE(IDD_MOVIE_PLAY), hMainWnd, MoviePlayProc);
 	if (ret == 0)
 	{
 		if (running)
@@ -507,7 +507,7 @@ void	Record (void)
 
 	NES::Stop();
 
-	ret = DialogBox(hInst, (LPCTSTR)IDD_MOVIE_RECORD, hMainWnd, MovieRecordProc);
+	ret = DialogBox(hInst, MAKEINTRESOURCE(IDD_MOVIE_RECORD), hMainWnd, MovieRecordProc);
 	if (ret == 0)
 	{
 		if (running)

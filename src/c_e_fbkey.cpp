@@ -129,7 +129,7 @@ void	ExpPort_FamilyBasicKeyboard::Config (HWND hWnd)
 	if (!ExpPort_FamilyBasicKeyboard_ConfigWindow)
 	{
 		// use hMainWnd instead of hWnd, so it stays open after closing Controller Config
-		ExpPort_FamilyBasicKeyboard_ConfigWindow = CreateDialog(hInst, (LPCTSTR)IDD_EXPPORT_FBKEY, hMainWnd, ExpPort_FamilyBasicKeyboard_ConfigProc);
+		ExpPort_FamilyBasicKeyboard_ConfigWindow = CreateDialog(hInst, MAKEINTRESOURCE(IDD_EXPPORT_FBKEY), hMainWnd, ExpPort_FamilyBasicKeyboard_ConfigProc);
 		SetWindowPos(ExpPort_FamilyBasicKeyboard_ConfigWindow, hMainWnd, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
 	}
 }

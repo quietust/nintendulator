@@ -127,7 +127,7 @@ INT_PTR	CALLBACK	StdPort_SnesMouse_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wPar
 }
 void	StdPort_SnesMouse::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_SNESMOUSE, hWnd, StdPort_SnesMouse_ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_STDPORT_SNESMOUSE), hWnd, StdPort_SnesMouse_ConfigProc, (LPARAM)this);
 }
 void	StdPort_SnesMouse::SetMasks (void)
 {

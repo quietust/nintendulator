@@ -1743,6 +1743,6 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 }
 void	PaletteConfig (void)
 {
-	DialogBox(hInst, (LPCTSTR)IDD_PALETTE, hMainWnd, PaletteConfigProc);
+	DialogBox(hInst, MAKEINTRESOURCE(IDD_PALETTE), hMainWnd, PaletteConfigProc);
 }
 } // namespace GFX

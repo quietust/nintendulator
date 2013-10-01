@@ -275,11 +275,11 @@ INT_PTR	CALLBACK	StdPort_FourScore_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wPar
 }
 void	StdPort_FourScore::Config (HWND hWnd)
 {
-	DialogBox(hInst, (LPCTSTR)IDD_STDPORT_FOURSCORE, hWnd, StdPort_FourScore_ConfigProc);
+	DialogBox(hInst, MAKEINTRESOURCE(IDD_STDPORT_FOURSCORE), hWnd, StdPort_FourScore_ConfigProc);
 }
 void	StdPort_FourScore2::Config (HWND hWnd)
 {
-	DialogBox(hInst, (LPCTSTR)IDD_STDPORT_FOURSCORE, hWnd, StdPort_FourScore_ConfigProc);
+	DialogBox(hInst, MAKEINTRESOURCE(IDD_STDPORT_FOURSCORE), hWnd, StdPort_FourScore_ConfigProc);
 }
 void	StdPort_FourScore::SetMasks (void)
 {

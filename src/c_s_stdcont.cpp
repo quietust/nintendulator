@@ -107,7 +107,7 @@ INT_PTR	CALLBACK	StdPort_StdController_ConfigProc (HWND hDlg, UINT uMsg, WPARAM 
 }
 void	StdPort_StdController::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_STDCONTROLLER, hWnd, StdPort_StdController_ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_STDPORT_STDCONTROLLER), hWnd, StdPort_StdController_ConfigProc, (LPARAM)this);
 }
 void	StdPort_StdController::SetMasks (void)
 {

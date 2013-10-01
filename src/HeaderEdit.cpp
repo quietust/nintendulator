@@ -496,7 +496,7 @@ void	Open (const TCHAR *file)
 		return;
 	filename = file;
 	if (OpenROM())
-		DialogBox(hInst, (LPCTSTR)IDD_INESHEADER, hMainWnd, dlgProc);
+		DialogBox(hInst, MAKEINTRESOURCE(IDD_INESHEADER), hMainWnd, dlgProc);
 	filename = NULL;
 }
 }

@@ -140,7 +140,7 @@ INT_PTR	CALLBACK	StdPort_PowerPad_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wPara
 }
 void	StdPort_PowerPad::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_POWERPAD, hWnd, StdPort_PowerPad_ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_STDPORT_POWERPAD), hWnd, StdPort_PowerPad_ConfigProc, (LPARAM)this);
 }
 void	StdPort_PowerPad::SetMasks (void)
 {

@@ -113,7 +113,7 @@ INT_PTR	CALLBACK	ExpPort_ArkanoidPaddle_ConfigProc (HWND hDlg, UINT uMsg, WPARAM
 }
 void	ExpPort_ArkanoidPaddle::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_EXPPORT_ARKANOIDPADDLE, hWnd, ExpPort_ArkanoidPaddle_ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_EXPPORT_ARKANOIDPADDLE), hWnd, ExpPort_ArkanoidPaddle_ConfigProc, (LPARAM)this);
 }
 void	ExpPort_ArkanoidPaddle::SetMasks (void)
 {

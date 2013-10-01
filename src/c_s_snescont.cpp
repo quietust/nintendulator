@@ -121,7 +121,7 @@ INT_PTR	CALLBACK	StdPort_SnesController_ConfigProc (HWND hDlg, UINT uMsg, WPARAM
 }
 void	StdPort_SnesController::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_SNESCONTROLLER, hWnd, StdPort_SnesController_ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_STDPORT_SNESCONTROLLER), hWnd, StdPort_SnesController_ConfigProc, (LPARAM)this);
 }
 void	StdPort_SnesController::SetMasks (void)
 {

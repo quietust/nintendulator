@@ -111,7 +111,7 @@ INT_PTR	CALLBACK	StdPort_ArkanoidPaddle_ConfigProc (HWND hDlg, UINT uMsg, WPARAM
 }
 void	StdPort_ArkanoidPaddle::Config (HWND hWnd)
 {
-	DialogBoxParam(hInst, (LPCTSTR)IDD_STDPORT_ARKANOIDPADDLE, hWnd, StdPort_ArkanoidPaddle_ConfigProc, (LPARAM)this);
+	DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_STDPORT_ARKANOIDPADDLE), hWnd, StdPort_ArkanoidPaddle_ConfigProc, (LPARAM)this);
 }
 void	StdPort_ArkanoidPaddle::SetMasks (void)
 {

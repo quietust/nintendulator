@@ -265,7 +265,7 @@ INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 }
 void	OpenConfig (void)
 {
-	DialogBox(hInst, (LPCTSTR)IDD_CONTROLLERS, hMainWnd, ControllerProc);
+	DialogBox(hInst, MAKEINTRESOURCE(IDD_CONTROLLERS), hMainWnd, ControllerProc);
 	SetDeviceUsed();
 }
 
@@ -1095,7 +1095,7 @@ void	ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
 	*Button &= 0xFFFF;
 	if (getKey)	// this way, we can just re-label the button
 	{
-		key = CreateDialog(hInst, (LPCTSTR)IDD_KEYCONFIG, hDlg, NULL);
+		key = CreateDialog(hInst, MAKEINTRESOURCE(IDD_KEYCONFIG), hDlg, NULL);
 		ShowWindow(key, TRUE);	// FIXME - center this window properly
 		ProcessMessages();	// let the "Press a key..." dialog display itself
 		int newKey = GetConfigButton(key, Device);
