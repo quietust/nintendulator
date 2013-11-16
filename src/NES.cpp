@@ -188,8 +188,8 @@ int	FDSSave (FILE *out)
 {
 	int clen = 0;
 	int x, y, n = 0;
-	unsigned long data = 0;
-	writeLong(data);
+	unsigned long data;
+	writeLong(n);
 	for (x = 0; x < RI.FDS_NumSides << 4; x++)
 	{
 		for (y = 0; y < 4096; y++)
@@ -214,15 +214,11 @@ int	FDSLoad (FILE *in, int version_id)
 	int n;
 	unsigned long data;
 	readLong(n);
-	for (; n >= 0; n--)
+	while (n > 0)
 	{
 		readLong(data);
-		if (feof(in))
-		{
-			clen -= 4;
-			break;
-		}
 		PRG_ROM[(data >> 12) & (MAX_PRGROM_MASK >> 1)][data & 0xFFF] = (unsigned char)(data >> 24);
+		n--;
 	}
 	return clen;
 }
@@ -285,7 +281,7 @@ void	LoadSRAM (void)
 		{
 			version_id = States::LoadVersion(FSAVFile);
 			fseek(FSAVFile, 0, SEEK_END);
-			len = ftell(FSAVFile);
+			len = ftell(FSAVFile) - 4;
 			fseek(FSAVFile, 4, SEEK_SET);
 		}
 		else
