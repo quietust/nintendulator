@@ -138,8 +138,9 @@ unsigned char	StdPort_FourScore::Read (void)
 		result = 1;
 		break;
 	}
-	if (State->BitPtr < 20)
-		State->BitPtr++;
+	if (State->BitPtr == 24)
+		result = 1;
+	else	State->BitPtr++;
 	return result;
 }
 unsigned char	StdPort_FourScore2::Read (void)
@@ -159,8 +160,9 @@ unsigned char	StdPort_FourScore2::Read (void)
 		result = 1;
 		break;
 	}
-	if (State->BitPtr < 20)
-		State->BitPtr++;
+	if (State->BitPtr == 24)
+		result = 1;
+	else	State->BitPtr++;
 	return result;
 }
 void	StdPort_FourScore::Write (unsigned char Val)
