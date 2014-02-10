@@ -1159,9 +1159,11 @@ BOOL	IsPressed (int Button)
 			if (POVAxis)
 				return FALSE;
 			int povNum = (Button >> 3) & 0x3;
+			if (JoyState[DevNum].rgdwPOV[povNum] != -1)
+				return FALSE;
 			switch (Button & 0x7)
 			{
-			case 0x00:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 33750) || (JoyState[DevNum].rgdwPOV[povNum] <  2250)) && (JoyState[DevNum].rgdwPOV[povNum] != -1)) ? TRUE : FALSE;	break;
+			case 0x00:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 33750) || (JoyState[DevNum].rgdwPOV[povNum] <  2250))) ? TRUE : FALSE;	break;
 			case 0x01:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] >  2250) && (JoyState[DevNum].rgdwPOV[povNum] <  6750))) ? TRUE : FALSE;	break;
 			case 0x02:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] >  6750) && (JoyState[DevNum].rgdwPOV[povNum] < 11250))) ? TRUE : FALSE;	break;
 			case 0x03:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 11250) && (JoyState[DevNum].rgdwPOV[povNum] < 15750))) ? TRUE : FALSE;	break;
@@ -1174,9 +1176,11 @@ BOOL	IsPressed (int Button)
 		else if ((Button & 0xE0) == 0xE0)
 		{	// POV trigger (axis mode)
 			int povNum = (Button >> 2) & 0x3;
+			if (JoyState[DevNum].rgdwPOV[povNum] != -1)
+				return FALSE;
 			switch (Button & 0x03)
 			{
-			case 0x0:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 29250) || (JoyState[DevNum].rgdwPOV[povNum] <  6750)) && (JoyState[DevNum].rgdwPOV[povNum] != -1)) ? TRUE : FALSE;	break;
+			case 0x0:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 29250) || (JoyState[DevNum].rgdwPOV[povNum] <  6750))) ? TRUE : FALSE;	break;
 			case 0x1:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] >  2250) && (JoyState[DevNum].rgdwPOV[povNum] < 15750))) ? TRUE : FALSE;	break;
 			case 0x2:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 11250) && (JoyState[DevNum].rgdwPOV[povNum] < 24750))) ? TRUE : FALSE;	break;
 			case 0x3:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 20250) && (JoyState[DevNum].rgdwPOV[povNum] < 33750))) ? TRUE : FALSE;	break;
