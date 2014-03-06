@@ -825,6 +825,7 @@ __inline void	RunSkip (int NumTicks)
 	register unsigned char TC;
 
 	register int SprNum;
+	register unsigned char SprSL;
 	register unsigned char *CurTileData;
 
 	register int i;
@@ -1020,9 +1021,10 @@ __inline void	RunSkip (int NumTicks)
 			case 259:	case 267:	case 275:	case 283:	case 291:	case 299:	case 307:	case 315:
 				SprNum = (Clockticks >> 1) & 0x1C;
 				TC = SprBuff[SprNum | 1];
-				if (Reg2000 & 0x20)
-					PatAddr = ((TC & 0xFE) << 4) | ((TC & 0x01) << 12) | ((SprBuff[SprNum] & 7) ^ ((SprBuff[SprNum | 2] & 0x80) ? 0x17 : 0x00) ^ ((SprBuff[SprNum] & 0x8) << 1));
-				else	PatAddr = (TC << 4) | (SprBuff[SprNum] ^ ((SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((Reg2000 & 0x08) << 9);
+				SprSL = (unsigned char)(SLnum - SprBuff[SprNum]);
+ 				if (Reg2000 & 0x20)
+					PatAddr = ((TC & 0xFE) << 4) | ((TC & 0x01) << 12) | ((SprSL & 7) ^ ((SprBuff[SprNum | 2] & 0x80) ? 0x17 : 0x00) ^ ((SprSL & 0x8) << 1));
+				else	PatAddr = (TC << 4) | ((SprSL & 7) ^ ((SprBuff[SprNum | 2] & 0x80) ? 0x7 : 0x0)) | ((Reg2000 & 0x08) << 9);
 				break;
 			case 260:	case 268:	case 276:	case 284:	case 292:	case 300:	case 308:	case 316:
 				RenderAddr = PatAddr;
@@ -1045,7 +1047,6 @@ __inline void	RunSkip (int NumTicks)
 			case 263:
 				if (Spr0InLine)
 				{
-					SprNum = (Clockticks >> 1) & 0x1E;
 					if (SprBuff[2] & 0x40)
 						TC = RenderData[3];
 					else	TC = ReverseCHR[RenderData[3]];
