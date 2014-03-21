@@ -1223,7 +1223,6 @@ int	Save (FILE *out)
 
 	writeByte(Regs[0x17]);		//	uint8		Last value written to $4017
 	writeWord(Frame::Cycles);	//	uint16		Frame counter cycles
-	writeByte(0);			//	uint8		Frame counter phase - no longer used
 
 	tpc = CPU::WantIRQ & (IRQ_DPCM | IRQ_FRAME);
 	writeByte(tpc);			//	uint8		APU-related IRQs (PCM and FRAME, as-is)
@@ -1312,7 +1311,8 @@ int	Load (FILE *in, int version_id)
 	readByte(tpc);			//	uint8		Frame counter bits (last write to $4017)
 	IntWrite(0x4, 0x017, tpc);	// and this will ACK any frame IRQ
 	readWord(Frame::Cycles);	//	uint16		Frame counter cycles
-	readByte(_val);			//	uint8		Frame counter phase - no longer used
+	if (version_id < 1001)
+		readByte(_val);		//	uint8		Frame counter phase
 
 	readByte(tpc);			//	uint8		APU-related IRQs (PCM and FRAME, as-is)
 	CPU::WantIRQ |= tpc;	// so we can reload them here

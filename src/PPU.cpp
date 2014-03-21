@@ -44,7 +44,6 @@ unsigned long GrayScale;	// ANDed with palette index (0x30 if grayscale, 0x3F if
 unsigned long ColorEmphasis;	// ORed with palette index (upper 8 bits of $2001 shifted left 1 bit)
 
 unsigned long RenderAddr;
-unsigned long IOAddr;
 unsigned char IOVal;
 unsigned char IOMode;	// Start at 6 for writes, 5 for reads - counts down and eventually hits zero
 unsigned char buf2007;
@@ -195,7 +194,6 @@ void	Reset (void)
 	SprAddr = 0;
 	IsRendering = FALSE;
 	OnScreen = FALSE;
-	IOAddr = 0;
 	IOVal = 0;
 	IOMode = 0;
 	Clockticks = 0;
@@ -438,7 +436,6 @@ int	Save (FILE *out)
 	writeWord(SLnum);		//	SLNUM	uint16		Scanline number
 	writeByte(ShortSL);		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
 
-	writeWord(IOAddr);		//	IOADD	uint16		External I/O Address
 	writeByte(IOVal);		//	IOVAL	uint8		External I/O Value
 	writeByte(IOMode);		//	IOMOD	uint8		External I/O Mode/Counter
 
@@ -480,7 +477,8 @@ int	Load (FILE *in, int version_id)
 	readWord(SLnum);		//	SLNUM	uint16		Scanline number
 	readByte(ShortSL);		//	SHORT	uint8		Short frame (last scanline 1 clock tick shorter)
 
-	readWord(IOAddr);		//	IOADD	uint16		External I/O Address
+	if (version_id < 1001)
+		readWord(tps);		//	IOADD	uint16		External I/O Address
 	readByte(IOVal);		//	IOVAL	uint8		External I/O Value
 	readByte(IOMode);		//	IOMOD	uint8		External I/O Mode/Counter
 
@@ -498,6 +496,34 @@ int	Load (FILE *in, int version_id)
 	case 2: NES::SetRegion(NES::REGION_DENDY);	break;
 	}
 	return clen;
+}
+
+inline void IncrementH ()
+{
+	if ((VRAMAddr & 0x1F) == 0x1F)
+		VRAMAddr ^= 0x41F;
+	else	VRAMAddr++;
+}
+inline void IncrementV ()
+{
+	if ((VRAMAddr & 0x7000) == 0x7000)
+	{
+		register int YScroll = VRAMAddr & 0x3E0;
+		VRAMAddr &= 0xFFF;
+		if (YScroll == 0x3A0)
+			VRAMAddr ^= 0xBA0;
+		else if (YScroll == 0x3E0)
+			VRAMAddr ^= 0x3E0;
+		else	VRAMAddr += 0x20;
+	}
+	else	VRAMAddr += 0x1000;
+}
+inline void IncrementAddr ()
+{
+	if (Reg2000 & 0x04)
+		VRAMAddr += 32;
+	else	VRAMAddr++;
+	VRAMAddr &= 0x7FFF;
 }
 
 int EndSLTicks = 341;
@@ -522,10 +548,13 @@ __inline void	RunNoSkip (int NumTicks)
 			if (SLnum < 240)
 				ZeroMemory(TileData, sizeof(TileData));
 		}
-		else if (Clockticks == 304)
+		else if (Clockticks >= 279 && Clockticks <= 303)
 		{
 			if ((IsRendering) && (SLnum == -1))
-				VRAMAddr = IntReg;
+			{
+				VRAMAddr &= ~0x7BE0;
+				VRAMAddr |= IntReg & 0x7BE0;
+			}
 		}
 		else if (Clockticks == 338)
 		{
@@ -609,43 +638,17 @@ __inline void	RunNoSkip (int NumTicks)
 			case   3:	case  11:	case  19:	case  27:	case  35:	case  43:	case  51:	case  59:
 			case  67:	case  75:	case  83:	case  91:	case  99:	case 107:	case 115:	case 123:
 			case 131:	case 139:	case 147:	case 155:	case 163:	case 171:	case 179:	case 187:
-			case 195:	case 203:	case 211:	case 219:	case 227:	case 235:	case 243:
+			case 195:	case 203:	case 211:	case 219:	case 227:	case 235:	case 243:	case 251:
 				CurTileData = &TileData[Clockticks + 13];
 				TL = ((RenderData[1] >> (((VRAMAddr & 0x40) >> 4) | (VRAMAddr & 0x2))) & 3) * 0x04040404;
 				((unsigned long *)CurTileData)[0] = TL;
 				((unsigned long *)CurTileData)[1] = TL;
-				if ((VRAMAddr & 0x1F) == 0x1F)
-					VRAMAddr ^= 0x41F;
-				else	VRAMAddr++;
-				break;
-			case 251:
-				CurTileData = &TileData[Clockticks + 13];
-				TL = ((RenderData[1] >> (((VRAMAddr & 0x40) >> 4) | (VRAMAddr & 0x2))) & 3) * 0x04040404;
-				((unsigned long *)CurTileData)[0] = TL;
-				((unsigned long *)CurTileData)[1] = TL;
-				if ((VRAMAddr & 0x1F) == 0x1F)
-					VRAMAddr ^= 0x41F;
-				else	VRAMAddr++;
-				if ((VRAMAddr & 0x7000) == 0x7000)
-				{
-					register int YScroll = VRAMAddr & 0x3E0;
-					VRAMAddr &= 0xFFF;
-					if (YScroll == 0x3A0)
-						VRAMAddr ^= 0xBA0;
-					else if (YScroll == 0x3E0)
-						VRAMAddr ^= 0x3E0;
-					else	VRAMAddr += 0x20;
-				}
-				else	VRAMAddr += 0x1000;
 				break;
 			case 323:	case 331:
 				CurTileData = &TileData[Clockticks - 323];
 				TL = ((RenderData[1] >> (((VRAMAddr & 0x40) >> 4) | (VRAMAddr & 0x2))) & 3) * 0x04040404;
 				((unsigned long *)CurTileData)[0] = TL;
 				((unsigned long *)CurTileData)[1] = TL;
-				if ((VRAMAddr & 0x1F) == 0x1F)
-					VRAMAddr ^= 0x41F;
-				else	VRAMAddr++;
 				break;
 			case   4:	case  12:	case  20:	case  28:	case  36:	case  44:	case  52:	case  60:
 			case  68:	case  76:	case  84:	case  92:	case 100:	case 108:	case 116:	case 124:
@@ -684,22 +687,26 @@ __inline void	RunNoSkip (int NumTicks)
 				CurTileData = &TileData[Clockticks + 9];
 				((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 				((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
+				IncrementH();
+				if (Clockticks == 255)
+					IncrementV();
 				break;
 			case 327:	case 335:
 				TC = ReverseCHR[RenderData[3]];
 				CurTileData = &TileData[Clockticks - 327];
 				((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 				((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
+				IncrementH();
 				break;
 				// END BACKGROUND
 				// BEGIN SPRITES
-			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
-				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
-				break;
-			case 257:
+			case 256:
 				VRAMAddr &= ~0x41F;
 				VRAMAddr |= IntReg & 0x41F;
-					case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
+					case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
+				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
+				break;
+			case 257:	case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
 				break;
 			case 258:	case 266:	case 274:	case 282:	case 290:	case 298:	case 306:	case 314:
 				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
@@ -756,7 +763,7 @@ __inline void	RunNoSkip (int NumTicks)
 		}
 		if (IOMode)
 		{
-			unsigned short addr = (unsigned short)(IOAddr & 0x3FFF);
+			unsigned short addr = (unsigned short)(VRAMAddr & 0x3FFF);
 			if ((IOMode >= 5) && (!IsRendering))
 				PPUCycle(addr, SLnum, Clockticks, IsRendering);
 			else if (IOMode == 2)
@@ -775,6 +782,20 @@ __inline void	RunNoSkip (int NumTicks)
 				}
 			}
 			IOMode -= 2;
+			if (!IOMode)
+			{
+				if (IsRendering)
+				{
+					// while rendering, perform H and V increment, but only if not already done above
+					// vertical increment done at cycle 255
+					if (!(Clockticks == 255))
+						IncrementV();
+					// horizontal increments done at 7/15/23/31/.../247 (but not 255) and 327/335
+					if (!(((Clockticks & 7) == 7) && !(255 <= Clockticks && Clockticks <= 319)))
+						IncrementH();
+				}
+				else	IncrementAddr();
+			}
 		}
 		if (!IsRendering && !IOMode)
 			PPUCycle(VRAMAddr, SLnum, Clockticks, 0);
@@ -840,10 +861,13 @@ __inline void	RunSkip (int NumTicks)
 					ZeroMemory(TileData, sizeof(TileData));
 			}
 		}
-		else if (Clockticks == 304)
+		else if (Clockticks >= 279 && Clockticks <= 303)
 		{
 			if ((IsRendering) && (SLnum == -1))
-				VRAMAddr = IntReg;
+			{
+				VRAMAddr &= ~0x7BE0;
+				VRAMAddr |= IntReg & 0x7BE0;
+			}
 		}
 		else if (Clockticks == 338)
 		{
@@ -927,27 +951,8 @@ __inline void	RunSkip (int NumTicks)
 			case   3:	case  11:	case  19:	case  27:	case  35:	case  43:	case  51:	case  59:
 			case  67:	case  75:	case  83:	case  91:	case  99:	case 107:	case 115:	case 123:
 			case 131:	case 139:	case 147:	case 155:	case 163:	case 171:	case 179:	case 187:
-			case 195:	case 203:	case 211:	case 219:	case 227:	case 235:	case 243:
+			case 195:	case 203:	case 211:	case 219:	case 227:	case 235:	case 243:	case 251:
 			case 323:	case 331:
-				if ((VRAMAddr & 0x1F) == 0x1F)
-					VRAMAddr ^= 0x41F;
-				else	VRAMAddr++;
-				break;
-			case 251:
-				if ((VRAMAddr & 0x1F) == 0x1F)
-					VRAMAddr ^= 0x41F;
-				else	VRAMAddr++;
-				if ((VRAMAddr & 0x7000) == 0x7000)
-				{
-					register int YScroll = VRAMAddr & 0x3E0;
-					VRAMAddr &= 0xFFF;
-					if (YScroll == 0x3A0)
-						VRAMAddr ^= 0xBA0;
-					else if (YScroll == 0x3E0)
-						VRAMAddr ^= 0x3E0;
-					else	VRAMAddr += 0x20;
-				}
-				else	VRAMAddr += 0x1000;
 				break;
 			case   4:	case  12:	case  20:	case  28:	case  36:	case  44:	case  52:	case  60:
 			case  68:	case  76:	case  84:	case  92:	case 100:	case 108:	case 116:	case 124:
@@ -995,6 +1000,9 @@ __inline void	RunSkip (int NumTicks)
 					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				}
+				IncrementH();
+				if (Clockticks == 255)
+					IncrementV();
 				break;
 			case 327:	case 335:
 				if (Spr0InLine)
@@ -1004,16 +1012,17 @@ __inline void	RunSkip (int NumTicks)
 					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
 					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
 				}
+				IncrementH();
 				break;
 				// END BACKGROUND
 				// BEGIN SPRITES
-			case 256:	case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
-				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
-				break;
-			case 257:
+			case 256:
 				VRAMAddr &= ~0x41F;
 				VRAMAddr |= IntReg & 0x41F;
-					case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
+					case 264:	case 272:	case 280:	case 288:	case 296:	case 304:	case 312:
+				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
+				break;
+			case 257:	case 265:	case 273:	case 281:	case 289:	case 297:	case 305:	case 313:
 				break;
 			case 258:	case 266:	case 274:	case 282:	case 290:	case 298:	case 306:	case 314:
 				RenderAddr = 0x2000 | (VRAMAddr & 0xFFF);
@@ -1073,7 +1082,7 @@ __inline void	RunSkip (int NumTicks)
 		}
 		if (IOMode)
 		{
-			unsigned short addr = (unsigned short)(IOAddr & 0x3FFF);
+			unsigned short addr = (unsigned short)(VRAMAddr & 0x3FFF);
 			if ((IOMode >= 5) && (!IsRendering))
 				PPUCycle(addr, SLnum, Clockticks, IsRendering);
 			else if (IOMode == 2)
@@ -1092,6 +1101,20 @@ __inline void	RunSkip (int NumTicks)
 				}
 			}
 			IOMode -= 2;
+			if (!IOMode)
+			{
+				if (IsRendering)
+				{
+					// while rendering, perform H and V increment, but only if not already done above
+					// vertical increment done at cycle 255
+					if (!(Clockticks == 255))
+						IncrementV();
+					// horizontal increments done at 7/15/23/31/.../247 (but not 255) and 327/335
+					if (!(((Clockticks & 7) == 7) && !(255 <= Clockticks && Clockticks <= 319)))
+						IncrementH();
+				}
+				else	IncrementAddr();
+			}
 		}
 		if (!IsRendering && !IOMode)
 			PPUCycle(VRAMAddr, SLnum, Clockticks, 0);
@@ -1176,36 +1199,13 @@ int	__fastcall	Read4 (void)
 
 int	__fastcall	Read7 (void)
 {
-	IOAddr = VRAMAddr & 0x3FFF;
 	IOMode = 5;
-	if (IsRendering)
-	{
-		// while rendering, it seems to drop by 1 scanline, regardless of increment mode
-		if ((VRAMAddr & 0x7000) == 0x7000)
-		{
-			register int YScroll = VRAMAddr & 0x3E0;
-			VRAMAddr &= 0xFFF;
-			if (YScroll == 0x3A0)
-				VRAMAddr ^= 0xBA0;
-			else if (YScroll == 0x3E0)
-				VRAMAddr ^= 0x3E0;
-			else	VRAMAddr += 0x20;
-		}
-		else	VRAMAddr += 0x1000;
-	}
-	else
-	{
-		if (Reg2000 & 0x04)
-			VRAMAddr += 32;
-		else	VRAMAddr++;
-		VRAMAddr &= 0x7FFF;
-	}
-	if ((IOAddr & 0x3F00) == 0x3F00)
+	if ((VRAMAddr & 0x3F00) == 0x3F00)
 	{
 		readLatch &= 0xC0;
 		if (Reg2001 & 0x01)
-			return readLatch |= Palette[IOAddr & 0x1F] & 0x30;
-		else	return readLatch |= Palette[IOAddr & 0x1F];
+			return readLatch |= Palette[VRAMAddr & 0x1F] & 0x30;
+		else	return readLatch |= Palette[VRAMAddr & 0x1F];
 	}
 	else	return readLatch = buf2007;
 }
@@ -1316,34 +1316,12 @@ void	__fastcall	Write7 (int Val)
 		Palette[Addr] = (unsigned char)Val;
 		if (!(Addr & 0x3))
 			Palette[Addr ^ 0x10] = (unsigned char)Val;
+		IncrementAddr();
 	}
 	else
 	{
-		IOAddr = VRAMAddr & 0x3FFF;
 		IOVal = (unsigned char)Val;
 		IOMode = 6;
-	}
-	if (IsRendering)
-	{
-		// while rendering, it seems to drop by 1 scanline, regardless of increment mode
-		if ((VRAMAddr & 0x7000) == 0x7000)
-		{
-			register int YScroll = VRAMAddr & 0x3E0;
-			VRAMAddr &= 0xFFF;
-			if (YScroll == 0x3A0)
-				VRAMAddr ^= 0xBA0;
-			else if (YScroll == 0x3E0)
-				VRAMAddr ^= 0x3E0;
-			else	VRAMAddr += 0x20;
-		}
-		else	VRAMAddr += 0x1000;
-	}
-	else
-	{
-		if (Reg2000 & 0x04)
-			VRAMAddr += 32;
-		else	VRAMAddr++;
-		VRAMAddr &= 0x7FFF;
 	}
 }
 

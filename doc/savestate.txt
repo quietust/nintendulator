@@ -1,5 +1,5 @@
 Nintendulator Save State Format
- Updated:  April 6, 2013
+ Updated:  March 21, 2014
 ---------------------------------------
 
 For simplicity, savestates should only be saved during VBLANK; otherwise,
@@ -39,6 +39,8 @@ For versions prior to 0.980, the version was a 4-character ASCII number:
 Subsequent versions will start at "1001" and count upward each time the
 actual data format changes.
 
+Each field is listed with the first and last version which contains it.
+
 -- Section blocks:
 
 Section block headers are 8 bytes in length.  The first DWORD defines what
@@ -49,232 +51,234 @@ including the header).
 
 ---- Section "CPUS" - CPU State - Required
 
-        Type:		Description:
+Version		Type		Description
 
-	uint8		Program Counter, low byte
-	uint8		Program Counter, high byte
-	uint8		Accumulator
-	uint8		X register
-	uint8		Y register
-	uint8		Stack pointer
-	uint8		Processor status register
-	uint8		Last contents of data bus
-	uint8		TRUE if falling edge detected on /NMI
-	uint8		IRQ flags - D0=FRAME, D1=DPCM, D2=EXTERNAL, D3=DEBUG
+0950-		uint8		Program Counter, low byte
+0950-		uint8		Program Counter, high byte
+0950-		uint8		Accumulator
+0950-		uint8		X register
+0950-		uint8		Y register
+0950-		uint8		Stack pointer
+0950-		uint8		Processor status register
+0950-		uint8		Last contents of data bus
+0950-		uint8		TRUE if falling edge detected on /NMI
+0950-		uint8		IRQ flags - D0=FRAME, D1=DPCM, D2=EXTERNAL, D3=DEBUG
 				(FRAME/DPCM are also stored in block "APUS")
-	uint8[0x800]	2KB system RAM
+0950-		uint8[0x800]	2KB system RAM
 
 ---- Section "PPUS" - PPU State - Required
 
-        Type:		Description:
+Version		Type		Description
 
-	uint8[0x1000]	4 KB of name/attribute table RAM
-	uint8[0x100]	256 bytes of sprite RAM
-	uint8[0x20]	32 bytes of palette index RAM
-	uint8		Last value written to $2000
-	uint8		Last value written to $2001
-	uint8		Current contents of $2002
-	uint8		SPR-RAM Address ($2003)
+0950-		uint8[0x1000]	4 KB of name/attribute table RAM
+0950-		uint8[0x100]	256 bytes of sprite RAM
+0950-		uint8[0x20]	32 bytes of palette index RAM
+0950-		uint8		Last value written to $2000
+0950-		uint8		Last value written to $2001
+0950-		uint8		Current contents of $2002
+0950-		uint8		SPR-RAM Address ($2003)
 
-	uint8		Tile X-offset.
-	uint8		Toggle used by $2005 and $2006.
-	uint16		VRAM Address
-	uint16		VRAM Address Latch
-	uint8		VRAM Read Buffer
-	uint8		PPU I/O bus last contents
+0950-		uint8		Tile X-offset.
+0950-		uint8		Toggle used by $2005 and $2006.
+0950-		uint16		VRAM Address
+0950-		uint16		VRAM Address Latch
+0950-		uint8		VRAM Read Buffer
+0950-		uint8		PPU I/O bus last contents
 
-0950:	uint16		Clock Ticks (0..340)
-0960:	uint16		Clock Ticks (0..340) and PAL sub-cycles (upper 4 bits)
-	uint16		Scanline number
-	uint8		Short frame (first scanline 1 tick shorter, NTSC only)
+0950-0955	uint16		Clock Ticks (0..340)
+0960-		uint16		Clock Ticks (0..340) and PAL sub-cycles (upper 4 bits)
+0950-		uint16		Scanline number
+0950-		uint8		Short frame (first scanline 1 tick shorter, NTSC only)
 
-	uint16		External I/O Address
-	uint8		External I/O Value
-	uint8		External I/O Counter (6/4/2 for read, 5/3/1 for write)
+0950-0975	uint16		External I/O Address
+0950-		uint8		External I/O Value
+0950-		uint8		External I/O Counter (6/4/2 for read, 5/3/1 for write)
 
-0950:	uint8		0 for NTSC, 1 for PAL
-0975:	uint8		0 for NTSC, 1 for PAL, 2 for Dendy
+0950-0970	uint8		0 for NTSC, 1 for PAL
+0975-		uint8		0 for NTSC, 1 for PAL, 2 for Dendy
 
 ---- Section "APUS" - APU State - Required
 
-        Type:		Description:
+Version		Type		Description
 
-	uint8		Last value written to $4015, lower 4 bits
+0950-		uint8		Last value written to $4015, lower 4 bits
 
-	uint8		Last value written to $4001
-	uint16		Square0 frequency
-	uint8		Square0 timer
-	uint8		Square0 duty cycle pointer
-	uint8		Boolean, Square0 envelope(D1)/sweep(D0) reload requests
-	uint8		Square0 envelope counter
-	uint8		Square0 envelope value
-	uint8		Square0 bend counter
-	uint16		Square0 cycles
-	uint8		Last value written to $4000
+0950-		uint8		Last value written to $4001
+0950-		uint16		Square0 frequency
+0950-		uint8		Square0 timer
+0950-		uint8		Square0 duty cycle pointer
+0950-		uint8		Boolean, Square0 envelope(D1)/sweep(D0) reload requests
+0950-		uint8		Square0 envelope counter
+0950-		uint8		Square0 envelope value
+0950-		uint8		Square0 bend counter
+0950-		uint16		Square0 cycles
+0950-		uint8		Last value written to $4000
 
-	uint8		Last value written to $4005
-	uint16		Square1 frequency
-	uint8		Square1 timer
-	uint8		Square1 duty cycle pointer
-	uint8		Boolean, Square1 envelope(D1)/sweep(D0) reload requests
-	uint8		Square1 envelope counter
-	uint8		Square1 envelope value
-	uint8		Square1 bend counter
-	uint16		Square1 cycles
-	uint8		Last value written to $4004
+0950-		uint8		Last value written to $4005
+0950-		uint16		Square1 frequency
+0950-		uint8		Square1 timer
+0950-		uint8		Square1 duty cycle pointer
+0950-		uint8		Boolean, Square1 envelope(D1)/sweep(D0) reload requests
+0950-		uint8		Square1 envelope counter
+0950-		uint8		Square1 envelope value
+0950-		uint8		Square1 bend counter
+0950-		uint16		Square1 cycles
+0950-		uint8		Last value written to $4004
 
-	uint16		Triangle frequency
-	uint8		Triangle timer
-	uint8		Triangle duty cycle pointer
-	uint8		Boolean, linear counter reload request
-	uint8		Triangle linear counter
-	uint16		Triangle cycles
-	uint8		Last value written to $4008
+0950-		uint16		Triangle frequency
+0950-		uint8		Triangle timer
+0950-		uint8		Triangle duty cycle pointer
+0950-		uint8		Boolean, linear counter reload request
+0950-		uint8		Triangle linear counter
+0950-		uint16		Triangle cycles
+0950-		uint8		Last value written to $4008
 
-	uint8		Last value written to $400E
-	uint8		Noise timer
-	uint16		Noise duty cycle pointer
-	uint8		Boolean, Noise envelope reload request
-	uint8		Noise envelope counter
-	uint8		Noise  envelope value
-	uint16		Noise cycles
-	uint8		Last value written to $400C
+0950-		uint8		Last value written to $400E
+0950-		uint8		Noise timer
+0950-		uint16		Noise duty cycle pointer
+0950-		uint8		Boolean, Noise envelope reload request
+0950-		uint8		Noise envelope counter
+0950-		uint8		Noise envelope value
+0950-		uint16		Noise cycles
+0950-		uint8		Last value written to $400C
 
-	uint8		Last value written to $4010
-	uint8		Last value written to $4011
-	uint8		Last value written to $4012
-	uint8		Last value written to $4013
-	uint16		DPCM current address
-	uint16		DPCM current length
-	uint8		DPCM shift register
-0950:	uint8		DPCM output mode(D1)/buffer full(D0)
-0975:	uint8		DPCM fetching(D2)/!silenced(D1)/!empty(D0)
-	uint8		DPCM shift count
-	uint8		DPCM read buffer
-	uint16		DPCM cycles
-	uint16		DPCM length counter
+0950-		uint8		Last value written to $4010
+0950-		uint8		Last value written to $4011
+0950-		uint8		Last value written to $4012
+0950-		uint8		Last value written to $4013
+0950-		uint16		DPCM current address
+0950-		uint16		DPCM current length
+0950-		uint8		DPCM shift register
+0950-0970	uint8		DPCM output mode(D1)/buffer full(D0)
+0975-		uint8		DPCM fetching(D2)/!silenced(D1)/!empty(D0)
+0950-		uint8		DPCM shift count
+0950-		uint8		DPCM read buffer
+0950-		uint16		DPCM cycles
+0950-		uint16		DPCM length counter
 
-	uint8		Last value written to $4017
-	uint16		Frame counter cycles
-0950:	uint8		Frame counter phase
-0975:	uint8		Zero, unused
+0950-		uint8		Last value written to $4017
+0950-		uint16		Frame counter cycles
+0950-0975	uint8		Frame counter phase
+0975-0975	uint8		Zero, unused
 
-	uint8		APU-related IRQs (PCM and FRAME, as-is)
+0950-		uint8		APU-related IRQs (PCM and FRAME, as-is)
 
 ---- Section "CTRL" - Controller Data - OBSOLETE, dropped in version 0970
 
-	uint32		Four-Score port 1 controller type
-	uint32		Four-Score port 1 controller type
-	uint32		Four-Score port 1 controller type
-	uint32		Four-Score port 1 controller type
-	uint32		Controller port 1 controller type
-	uint32		Controller port 2 controller type (ignored if Port 1 type is STD_FOURSCORE)
-	uint32		Expansion port controller type
+Version		Type		Description
 
-	uint8[...]	Controller port 1 state data
-	uint8[...]	Controller port 2 state data
-	uint8[...]	Four-Score port 1 state data
-	uint8[...]	Four-Score port 2 state data
-	uint8[...]	Four-Score port 3 state data
-	uint8[...]	Four-Score port 4 state data
-	uint8[...]	Expansion port state data
+0950-0965	uint32		Four-Score port 1 controller type
+0950-0965	uint32		Four-Score port 1 controller type
+0950-0965	uint32		Four-Score port 1 controller type
+0950-0965	uint32		Four-Score port 1 controller type
+0950-0965	uint32		Controller port 1 controller type
+0950-0965	uint32		Controller port 2 controller type (ignored if Port 1 type is STD_FOURSCORE)
+0950-0965	uint32		Expansion port controller type
+
+0950-0965	uint8[...]	Controller port 1 state data
+0950-0965	uint8[...]	Controller port 2 state data
+0950-0965	uint8[...]	Four-Score port 1 state data
+0950-0965	uint8[...]	Four-Score port 2 state data
+0950-0965	uint8[...]	Four-Score port 3 state data
+0950-0965	uint8[...]	Four-Score port 4 state data
+0950-0965	uint8[...]	Expansion port state data
 
 ---- Section "CONT" - Controller Data - Optional, added in version 0970
 
-        Type:		Description:
+Version		Type		Description
 
-	uint8		Controller port 1 controller type
-	uint16		Controller port 1 state data length
-	uint8[...]	Controller port 1 state data
+0970-		uint8		Controller port 1 controller type
+0970-		uint16		Controller port 1 state data length
+0970-		uint8[...]	Controller port 1 state data
 
-	uint8		Controller port 2 controller type (ignored if Port 1 type is STD_FOURSCORE)
-	uint16		Controller port 2 state data length
-	uint8[...]	Controller port 2 state data
+0970-		uint8		Controller port 2 controller type (ignored if Port 1 type is STD_FOURSCORE)
+0970-		uint16		Controller port 2 state data length
+0970-		uint8[...]	Controller port 2 state data
 
-	uint8		Expansion port controller type
-	uint16		Expansion port state data length
-	uint8[...]	Expansion port state data
+0970-		uint8		Expansion port controller type
+0970-		uint16		Expansion port state data length
+0970-		uint8[...]	Expansion port state data
 
-	uint8		Four-Score port 1 controller type
-	uint16		Four-Score port 1 state data length
-	uint8[...]	Four-Score port 1 state data
+0970-		uint8		Four-Score port 1 controller type
+0970-		uint16		Four-Score port 1 state data length
+0970-		uint8[...]	Four-Score port 1 state data
 
-	uint8		Four-Score port 2 controller type
-	uint16		Four-Score port 2 state data length
-	uint8[...]	Four-Score port 2 state data
+0970-		uint8		Four-Score port 2 controller type
+0970-		uint16		Four-Score port 2 state data length
+0970-		uint8[...]	Four-Score port 2 state data
 
-	uint8		Four-Score port 3 controller type
-	uint16		Four-Score port 3 state data length
-	uint8[...]	Four-Score port 3 state data
+0970-		uint8		Four-Score port 3 controller type
+0970-		uint16		Four-Score port 3 state data length
+0970-		uint8[...]	Four-Score port 3 state data
 
-	uint8		Four-Score port 4 controller type
-	uint16		Four-Score port 4 state data length
-	uint8[...]	Four-Score port 4 state data
+0970-		uint8		Four-Score port 4 controller type
+0970-		uint16		Four-Score port 4 state data length
+0970-		uint8[...]	Four-Score port 4 state data
 
 ---- Section "NPRA" - NES PRG RAM State - Optional
 
-        Type:		Description:
+Version		Type		Description
 
-	uint8[...]	PRG_RAM data
+0950-		uint8[...]	PRG_RAM data
 
 ---- Section "NCRA" - NES CHR RAM State - Optional
 
-        Type:		Description:
+Version		Type		Description
 
-	uint8[...]	CHR_RAM data
+0950-		uint8[...]	CHR_RAM data
 
 ---- Section "MAPR" - Mapper State - Optional
 
-        Type:		Description:
+Version		Type		Description
 
-	uint8[...]	Custom mapper data
+0950-		uint8[...]	Custom mapper data
 
 ---- Section "GENI" - Game Genie State - Optional
 
-        Type:		Description:
+Version		Type		Description
 
-	uint8		1 if Game Genie codes are currently active, 0 if not
-	uint8		Game Genie code status (value written to $8000, XORed with 0x7E)
+0950-		uint8		1 if Game Genie codes are currently active, 0 if not
+0950-		uint8		Game Genie code status (value written to $8000, XORed with 0x7E)
 
-	uint16		Address for code #1
-	uint8		Original value for code #1
-	uint8		New value for code #1	
+0950-		uint16		Address for code #1
+0950-		uint8		Original value for code #1
+0950-		uint8		New value for code #1	
 
-	uint16		Address for code #2
-	uint8		Original value for code #2
-	uint8		New value for code #2	
+0950-		uint16		Address for code #2
+0950-		uint8		Original value for code #2
+0950-		uint8		New value for code #2	
 
-	uint16		Address for code #3
-	uint8		Original value for code #3
-	uint8		New value for code #3	
+0950-		uint16		Address for code #3
+0950-		uint8		Original value for code #3
+0950-		uint8		New value for code #3	
 
 ---- Section "DISK" - Mapper State - Optional, only allowed for Famicom Disk System games
 
-        Type:		Description:
+Version		Type		Description
 
-	uint32		Number of modified disk bytes
-	uint32[...]	Modified disk bytes: modified data in upper 8 bits, disk offset in lower 16 bits, disk number in remaining 8 bits
+0950-		uint32		Number of modified disk bytes
+0950-		uint32[...]	Modified disk bytes: modified data in upper 8 bits, disk offset in lower 16 bits, disk number in remaining 8 bits
 				(data << 24) | (disknum << 16) | (offset)
 
 ---- Section "NMOV" - Movie Data - Not allowed in NSAV, required in NREC/NMOV
 							(must be LAST block)
 
-	Type:		Description
+Version		Type		Description
 
-	uint8		Controller present in port 0
-	uint8		If CTRL0 == STD_FOURSCORE, bitmask indicating
+0950-		uint8		Controller present in port 0
+0950-		uint8		If CTRL0 == STD_FOURSCORE, bitmask indicating
 				which subcontrollers are used
-			else, Controller present in port 1
-	uint8		Controller present in expansion port
+				else, Controller present in port 1
+0950-		uint8		Controller present in expansion port
 
-	uint8		Frame size in bytes + 0x00 for NTSC, 0x80 for PAL + 0x40 if Game Genie is active
+0950-		uint8		Frame size in bytes + 0x00 for NTSC, 0x80 for PAL + 0x40 if Game Genie is active
 
-	uint32		Number of re-records used
+0950-		uint32		Number of re-records used
 
-	uint32		Length of info field
-	char[...]	Description of the movie, null-terminated (UTF-8)
+0950-		uint32		Length of info field
+0950-		char[...]	Description of the movie, null-terminated (UTF-8)
 
-	uint32		Length of movie data
-	uint8[...]	Movie data
+0950-		uint32		Length of movie data
+0950-		uint8[...]	Movie data
 
 -- EOF

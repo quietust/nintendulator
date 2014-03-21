@@ -364,9 +364,9 @@ Supporting Features
 - Save States (custom format .NS0-.NS9)
 - Movie Recording (custom format .NMV) with savestates
 - SRAM saving (standard .SAV files)
-- FDS disk writing (stored as differences in custom .FSV file)
+- FDS disk writing (stored as differences in custom .FSAV file)
 - 4 player support, and beyond
-- Ultra-accurate pixel-based rendering
+- Ultra-precise pixel-based rendering
 - Emulates all internal sound channels, as well as most of
      the external Japanese ones (FDS, MMC5, VRC6, VRC7, Sunsoft,
      Namco)
@@ -454,10 +454,11 @@ PPU:
 - Size
    Allows you to set the window size between 1X and 4X stretch.
 - Mode
-   Allows you to switch between NTSC (American and Japanese) and PAL
-     (European) timing. If a game plays at the wrong speed, its music
-     is off-pitch, or has timing-related graphical errors (i.e. screen
-     scrolls at the wrong location), try switching modes.
+   Allows you to switch between NTSC (American and Japanese), PAL
+     (European), and Hybrid (Dendy) timing. If a game plays at the
+     wrong speed, its music is off-pitch, or has timing-related
+     graphical errors (i.e. screen scrolls at the wrong location), try
+     switching modes.
 - Palette...
    Allows you to choose a different set of colors. In NTSC mode,
      specify the Hue and Saturation to your liking; other modes do not
@@ -465,7 +466,7 @@ PPU:
      choose 'Custom' and load a .PAL file.
    Nintendulator allows you to specify different palettes for NTSC and
      PAL emulation (though the NTSC palette uses the same parameters
-     in both modes).
+     in both modes). Dendy mode uses the palette configured for NTSC.
 - Slowdown
    Allows you to slow down emulation in order to better control
      the game you are playing.
@@ -584,7 +585,7 @@ The author is not affiliated with Nintendo of America or any other
 company mentioned, and does not encourage the piracy of NES games.
 
 Nintendulator may be distributed according to the terms of the
-GNU General Public License.
+GNU General Public License, version 2.
 It may NOT be distributed with copyrighted ROM images.
 
 You use this software at your own risk. The author is not responsible
