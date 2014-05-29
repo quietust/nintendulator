@@ -1047,8 +1047,7 @@ __inline void	RunSkip (int NumTicks)
 					((unsigned long *)SprData[0])[0] = CHRLoBit[TC & 0xF];
 					((unsigned long *)SprData[0])[1] = CHRLoBit[TC >> 4];
 				}
-				break;
-			case 269:	case 277:	case 285:	case 293:	case 301:	case 309:	case 317:
+					case 269:	case 277:	case 285:	case 293:	case 301:	case 309:	case 317:
 				break;
 			case 262:	case 270:	case 278:	case 286:	case 294:	case 302:	case 310:	case 318:
 				RenderAddr = PatAddr | 8;
@@ -1061,9 +1060,10 @@ __inline void	RunSkip (int NumTicks)
 					else	TC = ReverseCHR[RenderData[3]];
 					((unsigned long *)SprData[0])[0] |= CHRHiBit[TC & 0xF];
 					((unsigned long *)SprData[0])[1] |= CHRHiBit[TC >> 4];
+					SprData[0][8] = SprBuff[2];
+					SprData[0][9] = SprBuff[3];
 				}
-				break;
-			case 271:	case 279:	case 287:	case 295:	case 303:	case 311:	case 319:
+					case 271:	case 279:	case 287:	case 295:	case 303:	case 311:	case 319:
 				break;
 				// END SPRITES
 			case 336:	case 338:
@@ -1120,7 +1120,7 @@ __inline void	RunSkip (int NumTicks)
 			PPUCycle(VRAMAddr, SLnum, Clockticks, 0);
 		if ((Spr0InLine) && (Clockticks < 255) && (OnScreen) && ((Reg2001 & 0x18) == 0x18) && ((Clockticks >= 8) || ((Reg2001 & 0x06) == 0x06)))
 		{
-			register int SprPixel = Clockticks - SprBuff[3];
+			register int SprPixel = Clockticks - SprData[0][9];
 			if (!(SprPixel & ~7) && (SprData[0][SprPixel] & 0x3) && (TileData[Clockticks + IntX] & 0x3))
 			{
 				Reg2002 |= 0x40;	// Sprite 0 hit
