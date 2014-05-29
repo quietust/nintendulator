@@ -1122,7 +1122,10 @@ __inline void	RunSkip (int NumTicks)
 		{
 			register int SprPixel = Clockticks - SprBuff[3];
 			if (!(SprPixel & ~7) && (SprData[0][SprPixel] & 0x3) && (TileData[Clockticks + IntX] & 0x3))
+			{
 				Reg2002 |= 0x40;	// Sprite 0 hit
+				Spr0InLine = FALSE;
+			}
 		}
 	}
 }
