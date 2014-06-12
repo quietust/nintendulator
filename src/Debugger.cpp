@@ -361,22 +361,59 @@ unsigned char DebugMemPPU (unsigned short Addr)
 	else	return 0xFF;
 }
 
+BOOL IsBreakpoint (unsigned char opcode, unsigned short address, BOOL force_read)
+{
+	// read opcode, effective address has read breakpoint
+	if ((TraceIO[opcode] & DEBUG_BREAK_READ) && (BPcache[address] & DEBUG_BREAK_READ))
+		return TRUE;
+	// write opcode, effective address has write breakpoint, unless it's an explicit read (e.g. indirection or page-cross correction)
+	if ((TraceIO[opcode] & DEBUG_BREAK_WRITE) && (BPcache[address] & (force_read ? DEBUG_BREAK_READ : DEBUG_BREAK_WRITE)))
+		return TRUE;
+}
+
 // Decodes an instruction into plain text, suitable for displaying in the debugger or writing to a logfile
-// Returns the effective address for usage with breakpoints
-int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
+// Returns whether or not a breakpoint was encountered
+BOOL	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2, BOOL checkBreakpoints)
 {
 	unsigned char OpData[3] = {0, 0, 0};
 	unsigned short Operand = 0, MidAddr = 0;
-	int EffectiveAddr = -1;
+	int EffectiveAddr = -1, FixupAddr = 0;
 	OpData[0] = DebugMemCPU(Addr);
+
+	BOOL is_break = FALSE;
+	if (checkBreakpoints)
+	{
+		// opcode breakpoint
+		if (BPcache[0x10000 | OpData[0]] & DEBUG_BREAK_OPCODE)
+			is_break = TRUE;
+		// exec breakpoint
+		if (BPcache[Addr] & DEBUG_BREAK_EXEC)
+			is_break = TRUE;
+		// interrupt breakpoints
+		if ((CPU::GotInterrupt == INTERRUPT_NMI) && (BPcache[0x10100] & DEBUG_BREAK_NMI))
+			is_break = TRUE;
+//		if ((CPU::GotInterrupt == INTERRUPT_RST) && (BPcache[0x10100] & DEBUG_BREAK_RST))
+//			is_break = TRUE;
+		if ((CPU::GotInterrupt == INTERRUPT_IRQ) && (BPcache[0x10100] & DEBUG_BREAK_IRQ))
+			is_break = TRUE;
+		if ((CPU::GotInterrupt == INTERRUPT_BRK) && (BPcache[0x10100] & DEBUG_BREAK_BRK))
+			is_break = TRUE;
+	}
+
 	switch (TraceAddrMode[OpData[0]])
 	{
 	case IND:
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);
 		Operand = OpData[1] | (OpData[2] << 8);
+		MidAddr = (Operand & 0xFF00) | ((Operand+1) & 0xFF);
 		// Used only by JMP indirect, which does NOT handle page crossing correctly
-		EffectiveAddr = DebugMemCPU(Operand) | (DebugMemCPU((Operand & 0xFF00) | ((Operand+1) & 0xFF)) << 8);
+		EffectiveAddr = DebugMemCPU(Operand) | (DebugMemCPU(MidAddr) << 8);
+		if (checkBreakpoints && (
+			IsBreakpoint(OpData[0], Operand, FALSE) ||
+			IsBreakpoint(OpData[0], MidAddr, FALSE)
+			))
+			is_break = TRUE;
 		break;
 	case ADR:
 		OpData[1] = DebugMemCPU(Addr+1);
@@ -386,47 +423,83 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);Operand = OpData[1] | (OpData[2] << 8);
 		EffectiveAddr = Operand;
+		if (checkBreakpoints && IsBreakpoint(OpData[0], EffectiveAddr, FALSE))
+			is_break = TRUE;
 		break;
 	case ABX:
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);Operand = OpData[1] | (OpData[2] << 8);
+		FixupAddr = (Operand & 0xFF00) | ((Operand + CPU::X) & 0xFF);
 		EffectiveAddr = (Operand + CPU::X) & 0xFFFF;
+		if (checkBreakpoints && (
+			IsBreakpoint(OpData[0], FixupAddr, TRUE) ||
+			IsBreakpoint(OpData[0], EffectiveAddr, FALSE)
+			))
+			is_break = TRUE;
 		break;
 	case ABY:
 		OpData[1] = DebugMemCPU(Addr+1);
 		OpData[2] = DebugMemCPU(Addr+2);Operand = OpData[1] | (OpData[2] << 8);
+		FixupAddr = (Operand & 0xFF00) | ((Operand + CPU::Y) & 0xFF);
 		EffectiveAddr = (Operand + CPU::Y) & 0xFFFF;
+		if (checkBreakpoints && (
+			IsBreakpoint(OpData[0], FixupAddr, TRUE) ||
+			IsBreakpoint(OpData[0], EffectiveAddr, FALSE)
+			))
+			is_break = TRUE;
 		break;
 	case IMM:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
+		if (checkBreakpoints && IsBreakpoint(OpData[0], Addr+1, FALSE))
+			is_break = TRUE;
 		break;
 	case ZPG:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
 		EffectiveAddr = Operand;
+		if (checkBreakpoints && IsBreakpoint(OpData[0], EffectiveAddr, FALSE))
+			is_break = TRUE;
 		break;
 	case ZPX:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
 		EffectiveAddr = (Operand + CPU::X) & 0xFF;
+		if (checkBreakpoints && IsBreakpoint(OpData[0], EffectiveAddr, FALSE))
+			is_break = TRUE;
 		break;
 	case ZPY:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
 		EffectiveAddr = (Operand + CPU::Y) & 0xFF;
+		if (checkBreakpoints && IsBreakpoint(OpData[0], EffectiveAddr, FALSE))
+			is_break = TRUE;
 		break;
 	case INX:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
 		MidAddr = (Operand + CPU::X) & 0xFF;
 		EffectiveAddr = DebugMemCPU(MidAddr) | (DebugMemCPU((MidAddr+1) & 0xFF) << 8);
+		if (checkBreakpoints && (
+			IsBreakpoint(OpData[0], MidAddr, TRUE) ||
+			IsBreakpoint(OpData[0], (MidAddr + 1) & 0xFF, TRUE) ||
+			IsBreakpoint(OpData[0], EffectiveAddr, FALSE)
+			))
+			is_break = TRUE;
 		break;
 	case INY:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
 		MidAddr = DebugMemCPU(Operand) | (DebugMemCPU((Operand+1) & 0xFF) << 8);
+		FixupAddr = (MidAddr & 0xFF00) | ((MidAddr + CPU::Y) & 0xFF);
 		EffectiveAddr = (MidAddr + CPU::Y) & 0xFFFF;
+		if (checkBreakpoints && (
+			IsBreakpoint(OpData[0], Operand, TRUE) ||
+			IsBreakpoint(OpData[0], (Operand + 1) & 0xFF, TRUE) ||
+			IsBreakpoint(OpData[0], FixupAddr, TRUE) ||
+			IsBreakpoint(OpData[0], EffectiveAddr, FALSE)
+			))
+			is_break = TRUE;
 		break;
 	case IMP:
 		break;
@@ -485,7 +558,7 @@ int	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2)
 		default :	_tcscpy(str2, _T(""));																								break;
 		}
 	}
-	return EffectiveAddr;
+	return is_break;
 }
 
 bool	UpdateCPU (void)
@@ -499,37 +572,8 @@ bool	UpdateCPU (void)
 	if (Step)
 		NES::DoStop = TRUE;
 	// check for breakpoints
-	{
-		int BreakAddr;
-		// PC has execution breakpoint
-		if (BPcache[CPU::PC] & DEBUG_BREAK_EXEC)
-			NES::DoStop = TRUE;
-		// I/O break
-		BreakAddr = DecodeInstruction((unsigned short)CPU::PC, NULL, NULL);
-		TpVal = DebugMemCPU((unsigned short)CPU::PC);
-		if (BreakAddr != -1)
-		{
-			// read opcode, effective address has read breakpoint
-			if ((TraceIO[TpVal] & DEBUG_BREAK_READ) && (BPcache[BreakAddr] & DEBUG_BREAK_READ))
-				NES::DoStop = TRUE;
-			// write opcode, effective address has write breakpoint
-			if ((TraceIO[TpVal] & DEBUG_BREAK_WRITE) && (BPcache[BreakAddr] & DEBUG_BREAK_WRITE))
-				NES::DoStop = TRUE;
-		}
-		// opcode breakpoint
-		if (BPcache[0x10000 | TpVal] & DEBUG_BREAK_OPCODE)
-			NES::DoStop = TRUE;
-		// interrupt breakpoints
-		if ((CPU::GotInterrupt == INTERRUPT_NMI) && (BPcache[0x10100] & DEBUG_BREAK_NMI))
-			NES::DoStop = TRUE;
-//		if ((CPU::GotInterrupt == INTERRUPT_RST) && (BPcache[0x10100] & DEBUG_BREAK_RST))
-//			NES::DoStop = TRUE;
-		if ((CPU::GotInterrupt == INTERRUPT_IRQ) && (BPcache[0x10100] & DEBUG_BREAK_IRQ))
-			NES::DoStop = TRUE;
-		if ((CPU::GotInterrupt == INTERRUPT_BRK) && (BPcache[0x10100] & DEBUG_BREAK_BRK))
-			NES::DoStop = TRUE;
-
-	}
+	if (DecodeInstruction((unsigned short)CPU::PC, NULL, NULL, TRUE))
+		NES::DoStop = TRUE;
 	// if emulation wasn't stopped, don't bother updating the dialog
 	if (!NES::DoStop)
 		return false;
@@ -626,7 +670,7 @@ bool	UpdateCPU (void)
 	{
 		if (Addr == CPU::PC)
 			TpVal = i;
-		DecodeInstruction(Addr, NULL, tps);
+		DecodeInstruction(Addr, NULL, tps, FALSE);
 		SendDlgItemMessage(CPUWnd, IDC_DEBUG_TRACE_LIST, LB_ADDSTRING, 0, (LPARAM)tps);
 		Addr = Addr + AddrBytes[TraceAddrMode[DebugMemCPU(Addr)]];
 	}
@@ -790,7 +834,7 @@ void	AddInst (void)
 	{
 		unsigned short Addr = (unsigned short)CPU::PC;
 		char tps[64];
-		DecodeInstruction(Addr, tps, NULL);
+		DecodeInstruction(Addr, tps, NULL, FALSE);
 		fwrite(tps, 1, strlen(tps), LogFile);
 		CPU::JoinFlags();
 		sprintf(tps, "  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n", CPU::A, CPU::X, CPU::Y, CPU::P, CPU::SP, PPU::Clockticks, PPU::SLnum);
