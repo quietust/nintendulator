@@ -369,6 +369,7 @@ BOOL IsBreakpoint (unsigned char opcode, unsigned short address, BOOL force_read
 	// write opcode, effective address has write breakpoint, unless it's an explicit read (e.g. indirection or page-cross correction)
 	if ((TraceIO[opcode] & DEBUG_BREAK_WRITE) && (BPcache[address] & (force_read ? DEBUG_BREAK_READ : DEBUG_BREAK_WRITE)))
 		return TRUE;
+	return FALSE;
 }
 
 // Decodes an instruction into plain text, suitable for displaying in the debugger or writing to a logfile
