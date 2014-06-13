@@ -452,8 +452,6 @@ BOOL	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2, BOOL check
 	case IMM:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = OpData[1];
-		if (checkBreakpoints && IsBreakpoint(OpData[0], Addr+1, FALSE))
-			is_break = TRUE;
 		break;
 	case ZPG:
 		OpData[1] = DebugMemCPU(Addr+1);
