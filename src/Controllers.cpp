@@ -1159,7 +1159,7 @@ BOOL	IsPressed (int Button)
 			if (POVAxis)
 				return FALSE;
 			int povNum = (Button >> 3) & 0x3;
-			if (JoyState[DevNum].rgdwPOV[povNum] != -1)
+			if (JoyState[DevNum].rgdwPOV[povNum] == -1)
 				return FALSE;
 			switch (Button & 0x7)
 			{
@@ -1175,8 +1175,10 @@ BOOL	IsPressed (int Button)
 		}
 		else if ((Button & 0xE0) == 0xE0)
 		{	// POV trigger (axis mode)
+			if (!POVAxis)
+				return FALSE;
 			int povNum = (Button >> 2) & 0x3;
-			if (JoyState[DevNum].rgdwPOV[povNum] != -1)
+			if (JoyState[DevNum].rgdwPOV[povNum] == -1)
 				return FALSE;
 			switch (Button & 0x03)
 			{
