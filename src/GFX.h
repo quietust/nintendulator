@@ -26,9 +26,10 @@ extern int WantFPS;
 extern BOOL SlowDown;
 extern int SlowRate;
 
-extern PALETTE PaletteNTSC, PalettePAL;
+// The following two array lengths must equal NES::REGION_MAX
+extern PALETTE Palette[4];
+extern TCHAR CustPalette[4][MAX_PATH];
 extern int NTSChue, NTSCsat, PALsat;
-extern TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
 extern BOOL PC10compat;
 
 extern LPDIRECTDRAW7 DirectDraw;

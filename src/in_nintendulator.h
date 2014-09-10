@@ -209,7 +209,7 @@ extern int PRGMaskROM, PRGMaskRAM;
 extern unsigned char PRG_ROM[MAX_PRGROM_SIZE][0x1000];
 extern unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
 
-enum Region { REGION_NONE, REGION_NTSC, REGION_PAL, REGION_DENDY };
+enum Region { REGION_NONE, REGION_NTSC, REGION_PAL, REGION_DENDY, REGION_MAX };
 extern Region CurRegion;
 } // namespace NES
 

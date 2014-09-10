@@ -538,7 +538,7 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	else if (RI.INES_Flags & 0x20)
 		GFX::LoadPalette(GFX::PALETTE_PC10);
 	// Need to do this, in case the last loaded ROM was one of the above
-	else	GFX::LoadPalette(PPU::IsPAL ? GFX::PalettePAL : GFX::PaletteNTSC);
+	else	GFX::LoadPalette(GFX::PALETTE_MAX);
 
 	if ((RI.INES_Version == 2) && !(RI.INES2_TVMode & 0x02))
 		SetRegion((RI.INES2_TVMode & 0x01) ? REGION_PAL : REGION_NTSC);

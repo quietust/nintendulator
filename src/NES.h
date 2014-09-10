@@ -22,7 +22,7 @@ extern BOOL AutoRun;
 extern BOOL FrameStep, GotStep;
 extern BOOL HasMenu;
 
-enum Region { REGION_NONE, REGION_NTSC, REGION_PAL, REGION_DENDY };
+enum Region { REGION_NONE, REGION_NTSC, REGION_PAL, REGION_DENDY, REGION_MAX };
 extern Region CurRegion;
 
 // Maximum supported data sizes, since it's far easier than dynamically allocating them

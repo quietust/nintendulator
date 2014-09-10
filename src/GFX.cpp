@@ -57,9 +57,10 @@ int FullscreenBorder;
 
 BOOL InError;
 
-PALETTE PaletteNTSC, PalettePAL;
+PALETTE DefaultPalette[NES::REGION_MAX];
+PALETTE Palette[NES::REGION_MAX];
 int NTSChue, NTSCsat, PALsat;
-TCHAR CustPaletteNTSC[MAX_PATH], CustPalettePAL[MAX_PATH];
+TCHAR CustPalette[NES::REGION_MAX][MAX_PATH];
 BOOL PC10compat;
 
 LPDIRECTDRAW7		DirectDraw;
@@ -116,8 +117,10 @@ void	Init (void)
 	Depth = 0;
 	ClockFreq.QuadPart = 0;
 	LastClockVal.QuadPart = 0;
-	PaletteNTSC = PALETTE_NTSC;
-	PalettePAL = PALETTE_PAL;
+	DefaultPalette[NES::REGION_NONE] = Palette[NES::REGION_NONE] = PALETTE_NTSC; // just in case
+	DefaultPalette[NES::REGION_NTSC] = Palette[NES::REGION_NTSC] = PALETTE_NTSC;
+	DefaultPalette[NES::REGION_PAL] = Palette[NES::REGION_PAL] = PALETTE_PAL;
+	DefaultPalette[NES::REGION_DENDY] = Palette[NES::REGION_DENDY] = PALETTE_PAL;
 	NTSChue = 0;
 	NTSCsat = 50;
 	PALsat = 50;
@@ -179,20 +182,18 @@ void	SetRegion (void)
 	{
 	case NES::REGION_NTSC:
 		WantFPS = 60;
-		LoadPalette(PaletteNTSC);
 		break;
 	case NES::REGION_PAL:
 		WantFPS = 50;
-		LoadPalette(PalettePAL);
 		break;
 	case NES::REGION_DENDY:
 		WantFPS = 50;
-		LoadPalette(PaletteNTSC);
 		break;
 	default:
 		EI.DbgOut(_T("Invalid GFX region selected!"));
-		break;
+		return;
 	}
+	LoadPalette(Palette[NES::CurRegion]);
 }
 
 void	Start (void)
@@ -365,7 +366,7 @@ void	Start (void)
 	}
 
 	// this will automatically call Update()
-	LoadPalette(PPU::IsPAL ? PalettePAL : PaletteNTSC);
+	LoadPalette(PALETTE_MAX);
 	EI.DbgOut(_T("Created %ix%i %i-bit display surface (%s)"), SurfDesc.dwWidth, SurfDesc.dwHeight, Depth, Fullscreen ? _T("fullscreen") : _T("windowed"));
 }
 
@@ -403,15 +404,18 @@ void	SaveSettings (HKEY SettingsBase)
 	RegSetValueEx(SettingsBase, _T("Scanlines")   , 0, REG_DWORD, (LPBYTE)&Scanlines  , sizeof(BOOL));
 
 	RegSetValueEx(SettingsBase, _T("FSkip")       , 0, REG_DWORD, (LPBYTE)&FSkip      , sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("PaletteNTSC") , 0, REG_DWORD, (LPBYTE)&PaletteNTSC, sizeof(DWORD));
-	RegSetValueEx(SettingsBase, _T("PalettePAL")  , 0, REG_DWORD, (LPBYTE)&PalettePAL , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("NTSChue")     , 0, REG_DWORD, (LPBYTE)&NTSChue    , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("NTSCsat")     , 0, REG_DWORD, (LPBYTE)&NTSCsat    , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("PALsat")      , 0, REG_DWORD, (LPBYTE)&PALsat     , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("PC10compat")  , 0, REG_DWORD, (LPBYTE)&PC10compat , sizeof(DWORD));
 
-	RegSetValueEx(SettingsBase, _T("CustPaletteNTSC"), 0, REG_SZ, (LPBYTE)CustPaletteNTSC, (DWORD)(sizeof(TCHAR) * _tcslen(CustPaletteNTSC)));
-	RegSetValueEx(SettingsBase, _T("CustPalettePAL") , 0, REG_SZ, (LPBYTE)CustPalettePAL , (DWORD)(sizeof(TCHAR) * _tcslen(CustPalettePAL)));
+	RegSetValueEx(SettingsBase, _T("PaletteNTSC") , 0, REG_DWORD, (LPBYTE)&Palette[NES::REGION_NTSC] , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("PalettePAL")  , 0, REG_DWORD, (LPBYTE)&Palette[NES::REGION_PAL]  , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("PaletteDendy"), 0, REG_DWORD, (LPBYTE)&Palette[NES::REGION_DENDY], sizeof(DWORD));
+
+	RegSetValueEx(SettingsBase, _T("CustPaletteNTSC") , 0, REG_SZ, (LPBYTE)CustPalette[NES::REGION_NTSC] , (DWORD)(sizeof(TCHAR) * _tcslen(CustPalette[NES::REGION_NTSC])));
+	RegSetValueEx(SettingsBase, _T("CustPalettePAL")  , 0, REG_SZ, (LPBYTE)CustPalette[NES::REGION_PAL]  , (DWORD)(sizeof(TCHAR) * _tcslen(CustPalette[NES::REGION_PAL])));
+	RegSetValueEx(SettingsBase, _T("CustPaletteDendy"), 0, REG_SZ, (LPBYTE)CustPalette[NES::REGION_DENDY], (DWORD)(sizeof(TCHAR) * _tcslen(CustPalette[NES::REGION_DENDY])));
 }
 
 void	LoadSettings (HKEY SettingsBase)
@@ -420,31 +424,36 @@ void	LoadSettings (HKEY SettingsBase)
 
 	aFSkip = 1;
 	FSkip = 0;
-	PaletteNTSC = PALETTE_NTSC;
-	PalettePAL = PALETTE_PAL;
 	NTSChue = 0;
 	NTSCsat = 50;
 	PALsat = 50;
 	PC10compat = FALSE;
-	CustPaletteNTSC[0] = CustPalettePAL[0] = 0;
+	for (int i = 0; i < NES::REGION_MAX; i++)
+	{
+		Palette[i] = DefaultPalette[i];
+		CustPalette[i][0] = 0;
+	}
 
 	SlowDown = FALSE;
 	SlowRate = 2;
 	CheckMenuRadioItem(hMenu, ID_PPU_SLOWDOWN_2, ID_PPU_SLOWDOWN_20, ID_PPU_SLOWDOWN_2, MF_BYCOMMAND);
 
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("Scanlines")  , 0, NULL, (LPBYTE)&Scanlines  , &Size);
-	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("aFSkip")     , 0, NULL, (LPBYTE)&aFSkip     , &Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("Scanlines")   , 0, NULL, (LPBYTE)&Scanlines  , &Size);
+	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("aFSkip")      , 0, NULL, (LPBYTE)&aFSkip     , &Size);
 
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSkip")      , 0, NULL, (LPBYTE)&FSkip      , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PaletteNTSC"), 0, NULL, (LPBYTE)&PaletteNTSC, &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PalettePAL") , 0, NULL, (LPBYTE)&PalettePAL , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSChue")    , 0, NULL, (LPBYTE)&NTSChue    , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSCsat")    , 0, NULL, (LPBYTE)&NTSCsat    , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PALsat")     , 0, NULL, (LPBYTE)&PALsat     , &Size);
-	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PC10compat") , 0, NULL, (LPBYTE)&PC10compat , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSkip")       , 0, NULL, (LPBYTE)&FSkip      , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSChue")     , 0, NULL, (LPBYTE)&NTSChue    , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("NTSCsat")     , 0, NULL, (LPBYTE)&NTSCsat    , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PALsat")      , 0, NULL, (LPBYTE)&PALsat     , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PC10compat")  , 0, NULL, (LPBYTE)&PC10compat , &Size);
 
-	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPaletteNTSC"), 0,NULL, (LPBYTE)&CustPaletteNTSC, &Size);
-	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPalettePAL") , 0,NULL, (LPBYTE)&CustPalettePAL , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PaletteNTSC") , 0, NULL, (LPBYTE)&Palette[NES::REGION_NTSC] , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PalettePAL")  , 0, NULL, (LPBYTE)&Palette[NES::REGION_PAL]  , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PaletteDendy"), 0, NULL, (LPBYTE)&Palette[NES::REGION_DENDY], &Size);
+
+	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPaletteNTSC") , 0,NULL, (LPBYTE)&CustPalette[NES::REGION_NTSC] , &Size);
+	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPalettePAL")  , 0,NULL, (LPBYTE)&CustPalette[NES::REGION_PAL]  , &Size);
+	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("CustPaletteDendy"), 0,NULL, (LPBYTE)&CustPalette[NES::REGION_DENDY], &Size);
 
 	SetFrameskip(-1);
 
@@ -1155,6 +1164,14 @@ const double Emphasis[8][3] =
 	{0.70,0.70,0.70}	// white
 };
 
+const int EmphasisOrder[NES::REGION_MAX][8] =
+{
+	{0,0,0,0,0,0,0,0},	// NONE
+	{0,1,2,3,4,5,6,7},	// NTSC
+	{0,2,1,3,4,6,5,7},	// PAL
+	{0,2,1,3,4,6,5,7}	// Dendy
+};
+
 #define CLIP(x,min,max) (((x) > (max)) ? (max) : (((x) < (min)) ? (min) : (x)))
 
 int	getPhase (double *wave)
@@ -1239,6 +1256,7 @@ void	GenerateNTSC (int hue, int sat)
 	int i, x, y, z;
 	for (x = 0; x < 8; x++) 
 	{
+		int _x = EmphasisOrder[NES::CurRegion][x];
 		for (y = 0; y < 4; y++)
 		{
 			for (z = 0; z < 16; z++)
@@ -1258,7 +1276,7 @@ void	GenerateNTSC (int hue, int sat)
 					else if (z == 13)
 						wave[i] = voltage[1][y];
 					else	wave[i] = black;
-					if ((emphasis[x][i]) && (z < 14))
+					if ((emphasis[_x][i]) && (z < 14))
 						wave[i] = wave[i] * 0.75;
 				}
 
@@ -1292,9 +1310,15 @@ void	GenerateNTSC (int hue, int sat)
 	}
 }
 
+void	LoadStaticPalette (const unsigned char input[][64][3])
+{
+	for (int i = 0; i < 8; i++)
+		memcpy(RawPalette[i], *input[EmphasisOrder[NES::CurRegion][i]], sizeof(RawPalette[i]));
+}
+
 void	GeneratePAL (int sat)
 {
-	memcpy(RawPalette, Palette_PAL, sizeof(RawPalette));
+	LoadStaticPalette(Palette_PAL);
 	// TODO - implement
 }
 
@@ -1303,9 +1327,9 @@ void	GenerateRGB (int pal, BOOL compat)
 	if ((pal == PALETTE_PC10) || (pal == PALETTE_PC10_ALT))
 	{
 		if (pal == PALETTE_PC10)
-			memcpy(RawPalette, Palette_PC10, sizeof(RawPalette));
+			LoadStaticPalette(Palette_PC10);
 		if (pal == PALETTE_PC10_ALT)
-			memcpy(RawPalette, Palette_PC10_Alt, sizeof(RawPalette));
+			LoadStaticPalette(Palette_PC10_Alt);
 		if (compat)
 		{
 			// insert grays in column D, allowing for emphasis
@@ -1333,13 +1357,13 @@ void	GenerateRGB (int pal, BOOL compat)
 		}
 	}
 	else if (pal == PALETTE_VS1)
-		memcpy(RawPalette, Palette_VS_0001, sizeof(RawPalette));
+		LoadStaticPalette(Palette_VS_0001);
 	else if (pal == PALETTE_VS2)
-		memcpy(RawPalette, Palette_VS_0002, sizeof(RawPalette));
+		LoadStaticPalette(Palette_VS_0002);
 	else if (pal == PALETTE_VS3)
-		memcpy(RawPalette, Palette_VS_0003, sizeof(RawPalette));
+		LoadStaticPalette(Palette_VS_0003);
 	else if (pal == PALETTE_VS4)
-		memcpy(RawPalette, Palette_VS_0004, sizeof(RawPalette));
+		LoadStaticPalette(Palette_VS_0004);
 	else	MessageBox(hMainWnd, _T("Illegal palette selected!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 }
 
@@ -1347,6 +1371,9 @@ BOOL	ImportPalette (const TCHAR *filename, BOOL load)
 {
 	int i, j;
 	FILE *pal;
+	// If no filename specified, use configured custom palette for current region
+	if (filename == NULL)
+		filename = CustPalette[NES::CurRegion];
 	if (!_tcslen(filename))
 		return FALSE;
 	pal = _tfopen(filename, _T("rb"));
@@ -1400,18 +1427,20 @@ void	LoadPalette (PALETTE PalNum)
 {
 	unsigned int RV, GV, BV;
 	int i;
+	// If no palette number specified, use configured palette for current region
+	if (PalNum == PALETTE_MAX)
+		PalNum = Palette[NES::CurRegion];
 	if (PalNum == PALETTE_NTSC)
 		GenerateNTSC(NTSChue, NTSCsat);
 	else if (PalNum == PALETTE_PAL)
 		GeneratePAL(PALsat);
 	else if (PalNum == PALETTE_EXT)
 	{
-		if (!ImportPalette(PPU::IsPAL ? CustPalettePAL : CustPaletteNTSC, TRUE))
+		if (!ImportPalette(NULL, TRUE))
 		{
 			MessageBox(hMainWnd, _T("Unable to load the specified palette! Reverting to default!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-			if (PPU::IsPAL)
-				PalettePAL = PalNum = PALETTE_PAL;
-			else	PaletteNTSC = PalNum = PALETTE_NTSC;
+			LoadPalette(DefaultPalette[NES::CurRegion]);
+			return;
 		}
 	}
 	else	GenerateRGB(PalNum, PC10compat);
@@ -1489,7 +1518,6 @@ void	UpdatePalette (HWND hDlg, int pal)
 }
 
 BOOL inUpdate = FALSE;
-BOOL ispal;
 PALETTE pal;
 INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1512,12 +1540,11 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 	case WM_INITDIALOG:
 		inUpdate = TRUE;
-		ispal = PPU::IsPAL;
 		hue = NTSChue;
 		nsat = NTSCsat;
 		psat = PALsat;
-		pal = ispal ? PalettePAL : PaletteNTSC;
-		_tcscpy(extfn, ispal ? CustPalettePAL : CustPaletteNTSC);
+		pal = Palette[NES::CurRegion];
+		_tcscpy(extfn, CustPalette[NES::CurRegion]);
 
 		if (pal == PALETTE_NTSC)
 			GenerateNTSC(hue, nsat);
@@ -1528,9 +1555,7 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			if (!ImportPalette(extfn, TRUE))
 			{
 				MessageBox(hMainWnd, _T("Unable to load the specified palette! Reverting to default!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-				if (ispal)
-					pal = PALETTE_PAL;
-				else	pal = PALETTE_NTSC;
+				pal = DefaultPalette[NES::CurRegion];
 			}
 		}
 		else	GenerateRGB(pal, PC10compat);
@@ -1654,19 +1679,14 @@ INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			if (pal == PALETTE_PAL)
 				PALsat = psat;
 			if (pal == PALETTE_EXT)
-				_tcscpy(ispal ? CustPalettePAL : CustPaletteNTSC, extfn);
-			if (ispal)
-				PalettePAL = pal;
-			else	PaletteNTSC = pal;
+				_tcscpy(CustPalette[NES::CurRegion], extfn);
+			Palette[NES::CurRegion] = pal;
 			PC10compat = (IsDlgButtonChecked(hDlg, IDC_PAL_PC10_COMPAT) == BST_CHECKED);
 			LoadPalette(pal);
 			EndDialog(hDlg, 0);
 			return TRUE;
 		case IDCANCEL:
-			if (ispal)
-				pal = PalettePAL;
-			else	pal = PaletteNTSC;
-			LoadPalette(pal);
+			LoadPalette(PALETTE_MAX);
 			EndDialog(hDlg, 0);
 			return TRUE;
 		}
