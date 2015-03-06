@@ -97,10 +97,10 @@ BEGIN
         MENUITEM "&Game Genie\tCtrl+G",         ID_CPU_GAMEGENIE
         MENUITEM "L&og Invalid Opcodes",        ID_CPU_BADOPS
         MENUITEM SEPARATOR
-        POPUP "&Frame Step"
+        POPUP "Fra&me Step"
         BEGIN
-            MENUITEM "Enabled\tCtrl+F",             ID_CPU_FRAMESTEP_ENABLED
-            MENUITEM "Step\tSpace",                 ID_CPU_FRAMESTEP_STEP
+            MENUITEM "&Enabled\tCtrl+F",            ID_CPU_FRAMESTEP_ENABLED
+            MENUITEM "&Step\tSpace",                ID_CPU_FRAMESTEP_STEP
         END
     END
     POPUP "&PPU"
