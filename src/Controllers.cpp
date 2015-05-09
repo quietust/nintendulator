@@ -122,7 +122,7 @@ void	ExpPort_SetMappings (void)
 	ExpPort_Mappings[EXP_TABLET] = _T("Oeka Kids Tablet");
 }
 
-BOOL	POVAxis = FALSE;
+BOOL	POVAxis = TRUE;
 
 INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -169,11 +169,11 @@ INT_PTR	CALLBACK	ControllerProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		switch (wmId)
 		{
 		case IDC_CONT_POV:
-			POVAxis = (IsDlgButtonChecked(hDlg, IDC_CONT_POV) == BST_CHECKED);
+			POVAxis = !(IsDlgButtonChecked(hDlg, IDC_CONT_POV) == BST_CHECKED);
 			return TRUE;
 		case IDOK:
 			EnableOpposites = (IsDlgButtonChecked(hDlg, IDC_CONT_UDLR) == BST_CHECKED);
-			POVAxis = FALSE;
+			POVAxis = TRUE;
 			EndDialog(hDlg, 1);
 			return TRUE;
 		case IDC_CONT_SPORT1:

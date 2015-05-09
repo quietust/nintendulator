@@ -247,7 +247,7 @@ BEGIN
     CONTROL         "&Allow simultaneous Left+Right and Up+Down",
                     IDC_CONT_UDLR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,60,
                     156,8
-    CONTROL         "Configure &POV triggers as axes (temporary)",
+    CONTROL         "Configure &POV triggers as 8-way buttons",
                     IDC_CONT_POV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,68,
                     156,8
     DEFPUSHBUTTON   "Close",IDOK,168,60,48,16
