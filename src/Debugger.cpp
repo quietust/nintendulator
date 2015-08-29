@@ -615,7 +615,7 @@ bool	UpdateCPU (void)
 	_stprintf(tps, _T("%04X"), PPU::VRAMAddr);
 	SetDlgItemText(CPUWnd, IDC_DEBUG_TIMING_VRAM, tps);
 
-	_stprintf(tps, _T("%i/%.3f"), PPU::Clockticks, PPU::Clockticks / (PPU::IsPAL ? 3.2 : 3.0));
+	_stprintf(tps, _T("%i/%.3f"), PPU::Clockticks, PPU::Clockticks / (PPU::PALRatio ? 3.2 : 3.0));
 	SetDlgItemText(CPUWnd, IDC_DEBUG_TIMING_CPU, tps);
 
 	for (i = 0; i < 16; i++)

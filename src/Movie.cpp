@@ -563,7 +563,7 @@ void	Record (void)
 		if (Controllers::FSPort4->Type)	ControllerTypes[1] |= 0x08;
 	}
 	fwrite(ControllerTypes, 1, 3, Data);
-	x = PPU::IsPAL ? 0x80 : 0x00;
+	x = PPU::PALRatio ? 0x80 : 0x00;
 	FrameLen = 0;
 	FrameLen += Controllers::Port1->MovLen;
 	FrameLen += Controllers::Port2->MovLen;

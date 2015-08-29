@@ -53,7 +53,8 @@ BOOL Spr0InLine;
 int SprCount;
 unsigned char SprData[8][10];
 unsigned short *GfxData;
-BOOL IsPAL;	// Use 3.2:1 clock divider, shorten pre-render scanline every other frame
+BOOL PALRatio;	// Use 3.2:1 clock divider
+BOOL SkipTick;	// Shorten pre-render scanline every other frame
 unsigned char PALsubticks;
 unsigned char	VRAM[0x4][0x400];
 unsigned short	DrawArray[256*240];
@@ -216,19 +217,22 @@ void	SetRegion (void)
 	switch (NES::CurRegion)
 	{
 	case NES::REGION_NTSC:
-		IsPAL = FALSE;
+		PALRatio = FALSE;
+		SkipTick = TRUE;
 		SLStartNMI = 241;
 		SLEndFrame = 262;
 		if (SLnum >= SLEndFrame - 1)	// if we switched from PAL, scanline number could be invalid
 			SLnum = SLEndFrame - 2;
 		break;
 	case NES::REGION_PAL:
-		IsPAL = TRUE;
+		PALRatio = TRUE;
+		SkipTick = FALSE;
 		SLStartNMI = 241;
 		SLEndFrame = 312;
 		break;
 	case NES::REGION_DENDY:
-		IsPAL = FALSE;
+		PALRatio = FALSE;
+		SkipTick = FALSE;
 		SLStartNMI = 291;
 		SLEndFrame = 312;
 		break;
@@ -560,7 +564,7 @@ __inline void	RunNoSkip (int NumTicks)
 		{
 			if (SLnum == -1)
 			{
-				if ((ShortSL) && (IsRendering) && (!IsPAL))
+				if ((ShortSL) && (IsRendering) && (SkipTick))
 					EndSLTicks = 340;
 				else	EndSLTicks = 341;
 			}
@@ -873,7 +877,7 @@ __inline void	RunSkip (int NumTicks)
 		{
 			if (SLnum == -1)
 			{
-				if ((ShortSL) && (IsRendering) && (!IsPAL))
+				if ((ShortSL) && (IsRendering) && (SkipTick))
 					EndSLTicks = 340;
 				else	EndSLTicks = 341;
 			}
@@ -1132,7 +1136,7 @@ __inline void	RunSkip (int NumTicks)
 
 void	Run (void)
 {
-	if (IsPAL)
+	if (PALRatio)
 	{
 		register int cycles = 3;
 		if (++PALsubticks == 5)

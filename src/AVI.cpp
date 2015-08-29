@@ -407,9 +407,9 @@ void	Start (void)
 	wfx.wBitsPerSample = 16;
 	wfx.cbSize = 0;
 
-	if (PPU::IsPAL)
-		handle = CreateAvi(FileName, 19997209, &wfx);	// 50.006978 fps
-	else	handle = CreateAvi(FileName, 16639263, &wfx);	// 60.098816 fps
+	if (NES::CurRegion == NES::REGION_NTSC)
+		handle = CreateAvi(FileName, 16639263, &wfx);	// 60.098816 fps
+	else	handle = CreateAvi(FileName, 19997209, &wfx);	// 50.006978 fps
 
 	bmih.biSize = sizeof(BITMAPINFOHEADER);
 	bmih.biWidth = 256;

@@ -26,7 +26,7 @@ extern unsigned char IsRendering, OnScreen;
 
 extern unsigned long VRAMAddr;
 
-extern BOOL IsPAL;
+extern BOOL PALRatio, SkipTick;
 extern unsigned char	VRAM[0x4][0x400];
 extern unsigned char	OpenBus[0x400];
 extern unsigned short	DrawArray[256*240];
