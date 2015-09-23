@@ -509,7 +509,7 @@ __forceinline	void	IN_BIT (void)
 }
 void	IN_BRK (void)
 {
-	MemGet(PC);
+	MemGet(CalcAddr);
 	Push(PCH);
 	Push(PCL);
 	JoinFlags();
