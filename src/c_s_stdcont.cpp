@@ -117,7 +117,7 @@ StdPort_StdController::~StdPort_StdController (void)
 	delete State;
 	delete[] MovData;
 }
-StdPort_StdController::StdPort_StdController (int *buttons)
+StdPort_StdController::StdPort_StdController (DWORD *buttons)
 {
 	Type = STD_STDCONTROLLER;
 	NumButtons = 8;

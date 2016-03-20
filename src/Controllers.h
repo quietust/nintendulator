@@ -42,7 +42,7 @@ public:
 	virtual int		Load	(FILE *, int ver) = 0;
 
 	STDCONT_TYPE	Type;
-	int		*Buttons;
+	DWORD		*Buttons;
 	int		NumButtons;
 	int		MovLen;
 	unsigned char	*MovData;
@@ -52,7 +52,7 @@ struct StdPort_##NAME##_State; \
 class StdPort_##NAME : public StdPort \
 { \
 public: \
-			StdPort_##NAME (int *); \
+			StdPort_##NAME (DWORD *); \
 			~StdPort_##NAME(void); \
 	unsigned char	Read	(void); \
 	void		Write	(unsigned char); \
@@ -75,7 +75,7 @@ DEF_STDCONT(SnesMouse)
 DEF_STDCONT(FourScore2)
 #undef DEF_STDCONT
 
-void	StdPort_SetControllerType (StdPort *&, STDCONT_TYPE, int *);
+void	StdPort_SetControllerType (StdPort *&, STDCONT_TYPE, DWORD *);
 #define SET_STDCONT(PORT,TYPE) StdPort_SetControllerType(PORT, TYPE, PORT##_Buttons)
 extern const TCHAR	*StdPort_Mappings[STD_MAX];
 
@@ -103,7 +103,7 @@ public:
 	virtual int		Save	(FILE *) = 0;
 	virtual int		Load	(FILE *, int ver) = 0;
 	EXPCONT_TYPE	Type;
-	int		*Buttons;
+	DWORD		*Buttons;
 	int		NumButtons;
 	int		MovLen;
 	unsigned char	*MovData;
@@ -113,7 +113,7 @@ struct ExpPort_##NAME##_State; \
 class ExpPort_##NAME : public ExpPort \
 { \
 public: \
-			ExpPort_##NAME (int *); \
+			ExpPort_##NAME (DWORD *); \
 			~ExpPort_##NAME(void); \
 	unsigned char	Read1	(void); \
 	unsigned char	Read2	(void); \
@@ -134,7 +134,7 @@ DEF_EXPCONT(FamTrainer)
 DEF_EXPCONT(Tablet)
 #undef DEF_EXPCONT
 
-void	ExpPort_SetControllerType (ExpPort *&, EXPCONT_TYPE, int *);
+void	ExpPort_SetControllerType (ExpPort *&, EXPCONT_TYPE, DWORD *);
 #define SET_EXPCONT(PORT,TYPE) ExpPort_SetControllerType(PORT, TYPE, PORT##_Buttons)
 extern const TCHAR	*ExpPort_Mappings[EXP_MAX];
 
@@ -144,13 +144,13 @@ extern StdPort *Port1, *Port2;
 extern StdPort *FSPort1, *FSPort2, *FSPort3, *FSPort4;
 extern ExpPort *PortExp;
 
-extern int	Port1_Buttons[CONTROLLERS_MAXBUTTONS],
+extern DWORD	Port1_Buttons[CONTROLLERS_MAXBUTTONS],
 		Port2_Buttons[CONTROLLERS_MAXBUTTONS];
-extern int	FSPort1_Buttons[CONTROLLERS_MAXBUTTONS],
+extern DWORD	FSPort1_Buttons[CONTROLLERS_MAXBUTTONS],
 		FSPort2_Buttons[CONTROLLERS_MAXBUTTONS],
 		FSPort3_Buttons[CONTROLLERS_MAXBUTTONS],
 		FSPort4_Buttons[CONTROLLERS_MAXBUTTONS];
-extern int	PortExp_Buttons[CONTROLLERS_MAXBUTTONS];
+extern DWORD	PortExp_Buttons[CONTROLLERS_MAXBUTTONS];
 
 extern BOOL	EnableOpposites;
 
@@ -169,8 +169,8 @@ void	SetDeviceUsed (void);
 void	Acquire (void);
 void	UnAcquire (void);
 void	UpdateInput (void);
-void	ConfigButton (int *, int, HWND, BOOL);
+void	ConfigButton (DWORD *, int, HWND, BOOL);
 
 BOOL	IsPressed (int);
-INT_PTR	ParseConfigMessages (HWND, int, int *, int *, int *, UINT, WPARAM, LPARAM);
+INT_PTR	ParseConfigMessages (HWND, int, int *, int *, DWORD *, UINT, WPARAM, LPARAM);
 } // namespace Controllers

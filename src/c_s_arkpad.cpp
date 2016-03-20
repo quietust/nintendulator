@@ -122,7 +122,7 @@ StdPort_ArkanoidPaddle::~StdPort_ArkanoidPaddle (void)
 	delete State;
 	delete[] MovData;
 }
-StdPort_ArkanoidPaddle::StdPort_ArkanoidPaddle (int *buttons)
+StdPort_ArkanoidPaddle::StdPort_ArkanoidPaddle (DWORD *buttons)
 {
 	Type = STD_ARKANOIDPADDLE;
 	NumButtons = 1;

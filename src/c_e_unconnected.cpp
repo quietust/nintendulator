@@ -53,7 +53,7 @@ void	ExpPort_Unconnected::SetMasks (void)
 ExpPort_Unconnected::~ExpPort_Unconnected (void)
 {
 }
-ExpPort_Unconnected::ExpPort_Unconnected (int *buttons)
+ExpPort_Unconnected::ExpPort_Unconnected (DWORD *buttons)
 {
 	Type = EXP_UNCONNECTED;
 	NumButtons = 0;

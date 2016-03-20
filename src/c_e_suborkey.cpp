@@ -133,7 +133,7 @@ ExpPort_SuborKeyboard::~ExpPort_SuborKeyboard (void)
 	delete State;
 	delete[] MovData;
 }
-ExpPort_SuborKeyboard::ExpPort_SuborKeyboard (int *buttons)
+ExpPort_SuborKeyboard::ExpPort_SuborKeyboard (DWORD *buttons)
 {
 	Type = EXP_SUBORKEYBOARD;
 	NumButtons = 0;

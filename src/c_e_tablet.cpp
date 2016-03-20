@@ -145,7 +145,7 @@ ExpPort_Tablet::~ExpPort_Tablet (void)
 	delete State;
 	delete[] MovData;
 }
-ExpPort_Tablet::ExpPort_Tablet (int *buttons)
+ExpPort_Tablet::ExpPort_Tablet (DWORD *buttons)
 {
 	Type = EXP_TABLET;
 	NumButtons = 1;

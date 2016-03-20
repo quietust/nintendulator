@@ -151,7 +151,7 @@ ExpPort_Fami4Play::~ExpPort_Fami4Play (void)
 	delete State;
 	delete[] MovData;
 }
-ExpPort_Fami4Play::ExpPort_Fami4Play (int *buttons)
+ExpPort_Fami4Play::ExpPort_Fami4Play (DWORD *buttons)
 {
 	Type = EXP_FAMI4PLAY;
 	NumButtons = 16;

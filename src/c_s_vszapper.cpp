@@ -160,7 +160,7 @@ StdPort_VSZapper::~StdPort_VSZapper (void)
 	delete State;
 	delete[] MovData;
 }
-StdPort_VSZapper::StdPort_VSZapper (int *buttons)
+StdPort_VSZapper::StdPort_VSZapper (DWORD *buttons)
 {
 	Type = STD_VSZAPPER;
 	NumButtons = 1;

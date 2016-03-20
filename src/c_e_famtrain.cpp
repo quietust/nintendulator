@@ -128,7 +128,7 @@ ExpPort_FamTrainer::~ExpPort_FamTrainer (void)
 	delete State;
 	delete[] MovData;
 }
-ExpPort_FamTrainer::ExpPort_FamTrainer (int *buttons)
+ExpPort_FamTrainer::ExpPort_FamTrainer (DWORD *buttons)
 {
 	Type = EXP_FAMTRAINER;
 	NumButtons = 12;

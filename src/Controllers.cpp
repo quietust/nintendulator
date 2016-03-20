@@ -24,13 +24,13 @@ StdPort *Port1, *Port2;
 StdPort *FSPort1, *FSPort2, *FSPort3, *FSPort4;
 ExpPort *PortExp;
 
-int	Port1_Buttons[CONTROLLERS_MAXBUTTONS],
+DWORD	Port1_Buttons[CONTROLLERS_MAXBUTTONS],
 	Port2_Buttons[CONTROLLERS_MAXBUTTONS];
-int	FSPort1_Buttons[CONTROLLERS_MAXBUTTONS],
+DWORD	FSPort1_Buttons[CONTROLLERS_MAXBUTTONS],
 	FSPort2_Buttons[CONTROLLERS_MAXBUTTONS],
 	FSPort3_Buttons[CONTROLLERS_MAXBUTTONS],
 	FSPort4_Buttons[CONTROLLERS_MAXBUTTONS];
-int	PortExp_Buttons[CONTROLLERS_MAXBUTTONS];
+DWORD	PortExp_Buttons[CONTROLLERS_MAXBUTTONS];
 
 BOOL	EnableOpposites;
 
@@ -49,12 +49,13 @@ TCHAR	*ButtonNames[MAX_CONTROLLERS][128],
 
 LPDIRECTINPUT8		DirectInput;
 LPDIRECTINPUTDEVICE8	DIDevices[MAX_CONTROLLERS];
+GUID		DeviceGUID[MAX_CONTROLLERS];
 
 BYTE		KeyState[256];
 DIMOUSESTATE2	MouseState;
 DIJOYSTATE2	JoyState[MAX_CONTROLLERS];	// first 2 entries are unused
 
-void	StdPort_SetControllerType (StdPort *&Port, STDCONT_TYPE Type, int *buttons)
+void	StdPort_SetControllerType (StdPort *&Port, STDCONT_TYPE Type, DWORD *buttons)
 {
 	if (Port != NULL)
 	{
@@ -91,7 +92,7 @@ void	StdPort_SetMappings (void)
 	StdPort_Mappings[STD_FOURSCORE2] = _T("Four Score (port 2 only)");
 }
 
-void    ExpPort_SetControllerType (ExpPort *&Port, EXPCONT_TYPE Type, int *buttons)
+void    ExpPort_SetControllerType (ExpPort *&Port, EXPCONT_TYPE Type, DWORD *buttons)
 {
 	if (Port != NULL)
 	{
@@ -407,6 +408,7 @@ BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 			AxisFlags[DevNum] = 0;
 			POVFlags[DevNum] = 0;
 			DeviceName[DevNum] = _tcsdup(lpddi->tszProductName);
+			DeviceGUID[DevNum] = lpddi->guidInstance;
 
 			DIDevices[DevNum]->EnumObjects(EnumJoystickObjectsCallback, (LPVOID)DevNum, DIDFT_ALL);
 			EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), lpddi->tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
@@ -445,6 +447,7 @@ BOOL	InitKeyboard (void)
 		AxisFlags[0] = 0;	// no axes
 		POVFlags[0] = 0;	// no POV hats
 		DeviceName[0] = _tcsdup(inst.tszProductName);
+		DeviceGUID[0] = GUID_SysKeyboard;
 
 		DIDevices[0]->EnumObjects(EnumKeyboardObjectsCallback, NULL, DIDFT_ALL);
 		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
@@ -480,6 +483,7 @@ BOOL	InitMouse (void)
 		AxisFlags[1] = 0;
 		POVFlags[1] = 0;
 		DeviceName[1] = _tcsdup(inst.tszProductName);
+		DeviceGUID[1] = GUID_SysMouse;
 
 		DIDevices[1]->EnumObjects(EnumMouseObjectsCallback, NULL, DIDFT_ALL);
 		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
@@ -676,6 +680,23 @@ int	Load (FILE *in, int version_id)
 
 void	SaveSettings (HKEY SettingsBase)
 {
+	DWORD numDevsUsed = 0;
+	for (int i = 0; i < MAX_CONTROLLERS; i++)
+		if (DeviceUsed[i])
+			numDevsUsed++;
+
+	int buflen = sizeof(DWORD) + numDevsUsed * (sizeof(GUID) + sizeof(DWORD));
+	BYTE *buf = new BYTE[buflen], *b = buf;
+
+	memcpy(b, &numDevsUsed, sizeof(DWORD)); b += sizeof(DWORD);
+	for (DWORD i = 0; i < MAX_CONTROLLERS; i++)
+	{
+		if (!DeviceUsed[i])
+			continue;
+		memcpy(b, &i, sizeof(DWORD)); b += sizeof(DWORD);
+		memcpy(b, &DeviceGUID[i], sizeof(GUID)); b += sizeof(GUID);
+	}
+
 	RegSetValueEx(SettingsBase, _T("UDLR")    , 0, REG_DWORD, (LPBYTE)&EnableOpposites, sizeof(BOOL));
 
 	RegSetValueEx(SettingsBase, _T("Port1T")  , 0, REG_DWORD, (LPBYTE)&Port1->Type  , sizeof(DWORD));
@@ -686,19 +707,23 @@ void	SaveSettings (HKEY SettingsBase)
 	RegSetValueEx(SettingsBase, _T("FSPort4T"), 0, REG_DWORD, (LPBYTE)&FSPort4->Type, sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("ExpPortT"), 0, REG_DWORD, (LPBYTE)&PortExp->Type, sizeof(DWORD));
 
-	RegSetValueEx(SettingsBase, _T("Port1D")  , 0, REG_BINARY, (LPBYTE)Port1_Buttons  , sizeof(Port1_Buttons));
-	RegSetValueEx(SettingsBase, _T("Port2D")  , 0, REG_BINARY, (LPBYTE)Port2_Buttons  , sizeof(Port2_Buttons));
-	RegSetValueEx(SettingsBase, _T("FSPort1D"), 0, REG_BINARY, (LPBYTE)FSPort1_Buttons, sizeof(FSPort1_Buttons));
-	RegSetValueEx(SettingsBase, _T("FSPort2D"), 0, REG_BINARY, (LPBYTE)FSPort2_Buttons, sizeof(FSPort2_Buttons));
-	RegSetValueEx(SettingsBase, _T("FSPort3D"), 0, REG_BINARY, (LPBYTE)FSPort3_Buttons, sizeof(FSPort3_Buttons));
-	RegSetValueEx(SettingsBase, _T("FSPort4D"), 0, REG_BINARY, (LPBYTE)FSPort4_Buttons, sizeof(FSPort4_Buttons));
-	RegSetValueEx(SettingsBase, _T("ExpPortD"), 0, REG_BINARY, (LPBYTE)PortExp_Buttons, sizeof(PortExp_Buttons));
+	RegSetValueEx(SettingsBase, _T("Port1D")  , 0, REG_BINARY, (LPBYTE)Port1_Buttons  , Port1->NumButtons * sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("Port2D")  , 0, REG_BINARY, (LPBYTE)Port2_Buttons  , Port2->NumButtons * sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FSPort1D"), 0, REG_BINARY, (LPBYTE)FSPort1_Buttons, FSPort1->NumButtons * sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FSPort2D"), 0, REG_BINARY, (LPBYTE)FSPort2_Buttons, FSPort2->NumButtons * sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FSPort3D"), 0, REG_BINARY, (LPBYTE)FSPort3_Buttons, FSPort3->NumButtons * sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FSPort4D"), 0, REG_BINARY, (LPBYTE)FSPort4_Buttons, FSPort4->NumButtons * sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("ExpPortD"), 0, REG_BINARY, (LPBYTE)PortExp_Buttons, PortExp->NumButtons * sizeof(DWORD));
+
+	RegSetValueEx(SettingsBase, _T("PortM")   , 0, REG_BINARY, buf, buflen);
+
+	delete[] buf;
 }
 
 void	LoadSettings (HKEY SettingsBase)
 {
 	unsigned long Size;
-	int Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
+	DWORD Port1T = 0, Port2T = 0, FSPort1T = 0, FSPort2T = 0, FSPort3T = 0, FSPort4T = 0, ExpPortT = 0;
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("UDLR")    , 0, NULL, (LPBYTE)&EnableOpposites, &Size);
 
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Port1T")  , 0, NULL, (LPBYTE)&Port1T  , &Size);
@@ -727,13 +752,70 @@ void	LoadSettings (HKEY SettingsBase)
 	SET_STDCONT(FSPort4, (STDCONT_TYPE)FSPort4T);
 	SET_EXPCONT(PortExp, (EXPCONT_TYPE)ExpPortT);
 
-	Size = sizeof(Port1_Buttons);	RegQueryValueEx(SettingsBase, _T("Port1D")  , 0, NULL, (LPBYTE)Port1_Buttons  , &Size);
-	Size = sizeof(Port2_Buttons);	RegQueryValueEx(SettingsBase, _T("Port2D")  , 0, NULL, (LPBYTE)Port2_Buttons  , &Size);
-	Size = sizeof(FSPort1_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort1D"), 0, NULL, (LPBYTE)FSPort1_Buttons, &Size);
-	Size = sizeof(FSPort2_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort2D"), 0, NULL, (LPBYTE)FSPort2_Buttons, &Size);
-	Size = sizeof(FSPort3_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort3D"), 0, NULL, (LPBYTE)FSPort3_Buttons, &Size);
-	Size = sizeof(FSPort4_Buttons);	RegQueryValueEx(SettingsBase, _T("FSPort4D"), 0, NULL, (LPBYTE)FSPort4_Buttons, &Size);
-	Size = sizeof(PortExp_Buttons);	RegQueryValueEx(SettingsBase, _T("ExpPortD"), 0, NULL, (LPBYTE)PortExp_Buttons, &Size);
+	Size = Port1->NumButtons * sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Port1D")  , 0, NULL, (LPBYTE)Port1_Buttons  , &Size);
+	Size = Port2->NumButtons * sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Port2D")  , 0, NULL, (LPBYTE)Port2_Buttons  , &Size);
+	Size = FSPort1->NumButtons * sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort1D"), 0, NULL, (LPBYTE)FSPort1_Buttons, &Size);
+	Size = FSPort2->NumButtons * sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort2D"), 0, NULL, (LPBYTE)FSPort2_Buttons, &Size);
+	Size = FSPort3->NumButtons * sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort3D"), 0, NULL, (LPBYTE)FSPort3_Buttons, &Size);
+	Size = FSPort4->NumButtons * sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FSPort4D"), 0, NULL, (LPBYTE)FSPort4_Buttons, &Size);
+	Size = PortExp->NumButtons * sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("ExpPortD"), 0, NULL, (LPBYTE)PortExp_Buttons, &Size);
+
+	if (RegQueryValueEx(SettingsBase, _T("PortM"), 0, NULL, NULL, &Size) == ERROR_SUCCESS)
+	{
+		byte* buf = new byte[Size], *b = buf;
+		RegQueryValueEx(SettingsBase, _T("PortM"), 0, NULL, buf, &Size);
+
+		DWORD mapLen;
+		memcpy(&mapLen, buf, sizeof(DWORD)); b += sizeof(DWORD);
+		DWORD *map_nums = new int[mapLen];
+		GUID *map_guids = new GUID[mapLen];
+		for (int i = 0; i < mapLen; i++)
+		{
+			memcpy(&map_nums[i], b, sizeof(DWORD)); b += sizeof(DWORD);
+			memcpy(&map_guids[i], b, sizeof(GUID)); b += sizeof(GUID);
+		}
+		
+		int Lens[7] = { Port1->NumButtons, Port2->NumButtons, FSPort1->NumButtons, FSPort2->NumButtons, FSPort3->NumButtons, FSPort4->NumButtons, PortExp->NumButtons };
+		DWORD *Datas[7] = { Port1_Buttons, Port2_Buttons, FSPort1_Buttons, FSPort2_Buttons, FSPort3_Buttons, FSPort4_Buttons, PortExp_Buttons };
+		TCHAR *Descs[7] = { _T("Port 1"), _T("Port 2"), _T("Four-score Port 1"), _T("Four-score Port 2"), _T("Four-score Port 3"), _T("Four-score Port 4"), _T("Expansion Port") };
+
+		// Resolve stored device IDs into current device index values via GUID matching
+		// This isn't the most efficient way of doing it, but it's still fast so nobody cares
+		for (int i = 0; i < 7; i++)
+		{
+			for (int j = 0; j < Lens[i]; j++)
+			{
+				DWORD &Button = Datas[i][j];
+				int DevNum = (Button & 0xFFFF0000) >> 16;
+				int found = 0;
+				for (int k = 0; k < mapLen; k++)
+				{
+					if (DevNum == map_nums[k])
+					{
+						found = 1;
+						for (int m = 0; m < NumDevices; m++)
+						{
+							if (IsEqualGUID(map_guids[k], DeviceGUID[m]))
+							{
+								found = 2;
+								Button = (m << 16) | (Button & 0xFFFF);
+							}
+						}
+					}
+				}
+				if (found < 2)
+				{
+					EI.DbgOut(_T("%s controller button %i failed to find device, unmapping."), Descs[i], j);
+					Button = 0;
+				}
+			}
+		}
+
+		delete[] map_nums;
+		delete[] map_guids;
+		delete[] buf;
+	}
+
 	SetDeviceUsed();
 }
 
@@ -1098,7 +1180,7 @@ const TCHAR *	GetButtonLabel (int DevNum, int Button)
 	}
 }
 
-void	ConfigButton (int *Button, int Device, HWND hDlg, BOOL getKey)
+void	ConfigButton (DWORD *Button, int Device, HWND hDlg, BOOL getKey)
 {
 	*Button &= 0xFFFF;
 	if (getKey)	// this way, we can just re-label the button
@@ -1197,7 +1279,7 @@ BOOL	IsPressed (int Button)
 	// should never actually reach this point - this is just to make the compiler stop whining
 	return FALSE;
 }
-INT_PTR	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButtons, int *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButtons, DWORD *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId = LOWORD(wParam);
 	int wmEvent = HIWORD(wParam);

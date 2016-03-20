@@ -303,7 +303,7 @@ StdPort_FourScore2::~StdPort_FourScore2 (void)
 	delete State;
 	delete[] MovData;
 }
-StdPort_FourScore::StdPort_FourScore (int *buttons)
+StdPort_FourScore::StdPort_FourScore (DWORD *buttons)
 {
 	Type = STD_FOURSCORE;
 	NumButtons = 0;
@@ -314,7 +314,7 @@ StdPort_FourScore::StdPort_FourScore (int *buttons)
 	MovData = NULL;
 	AllocMov1(this);
 }
-StdPort_FourScore2::StdPort_FourScore2 (int *buttons)
+StdPort_FourScore2::StdPort_FourScore2 (DWORD *buttons)
 {
 	Type = STD_FOURSCORE2;
 	NumButtons = 0;

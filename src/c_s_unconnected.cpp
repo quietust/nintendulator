@@ -49,7 +49,7 @@ void	StdPort_Unconnected::SetMasks (void)
 StdPort_Unconnected::~StdPort_Unconnected (void)
 {
 }
-StdPort_Unconnected::StdPort_Unconnected (int *buttons)
+StdPort_Unconnected::StdPort_Unconnected (DWORD *buttons)
 {
 	Type = STD_UNCONNECTED;
 	NumButtons = 0;

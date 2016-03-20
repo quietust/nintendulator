@@ -138,7 +138,7 @@ StdPort_SnesMouse::~StdPort_SnesMouse (void)
 	delete State;
 	delete[] MovData;
 }
-StdPort_SnesMouse::StdPort_SnesMouse (int *buttons)
+StdPort_SnesMouse::StdPort_SnesMouse (DWORD *buttons)
 {
 	Type = STD_SNESMOUSE;
 	NumButtons = 2;

@@ -150,7 +150,7 @@ StdPort_PowerPad::~StdPort_PowerPad (void)
 	delete State;
 	delete[] MovData;
 }
-StdPort_PowerPad::StdPort_PowerPad (int *buttons)
+StdPort_PowerPad::StdPort_PowerPad (DWORD *buttons)
 {
 	Type = STD_POWERPAD;
 	NumButtons = 12;

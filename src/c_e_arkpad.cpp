@@ -124,7 +124,7 @@ ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 	delete State;
 	delete[] MovData;
 }
-ExpPort_ArkanoidPaddle::ExpPort_ArkanoidPaddle (int *buttons)
+ExpPort_ArkanoidPaddle::ExpPort_ArkanoidPaddle (DWORD *buttons)
 {
 	Type = EXP_ARKANOIDPADDLE;
 	NumButtons = 1;

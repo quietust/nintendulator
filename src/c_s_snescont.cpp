@@ -131,7 +131,7 @@ StdPort_SnesController::~StdPort_SnesController (void)
 	delete State;
 	delete[] MovData;
 }
-StdPort_SnesController::StdPort_SnesController (int *buttons)
+StdPort_SnesController::StdPort_SnesController (DWORD *buttons)
 {
 	Type = STD_SNESCONTROLLER;
 	NumButtons = 12;

@@ -147,7 +147,7 @@ ExpPort_FamilyBasicKeyboard::~ExpPort_FamilyBasicKeyboard (void)
 		ExpPort_FamilyBasicKeyboard_ConfigWindow = NULL;
 	}
 }
-ExpPort_FamilyBasicKeyboard::ExpPort_FamilyBasicKeyboard (int *buttons)
+ExpPort_FamilyBasicKeyboard::ExpPort_FamilyBasicKeyboard (DWORD *buttons)
 {
 	Type = EXP_FAMILYBASICKEYBOARD;
 	NumButtons = 0;
