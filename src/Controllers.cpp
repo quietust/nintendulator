@@ -767,9 +767,9 @@ void	LoadSettings (HKEY SettingsBase)
 
 		DWORD mapLen;
 		memcpy(&mapLen, buf, sizeof(DWORD)); b += sizeof(DWORD);
-		DWORD *map_nums = new int[mapLen];
+		DWORD *map_nums = new DWORD[mapLen];
 		GUID *map_guids = new GUID[mapLen];
-		for (int i = 0; i < mapLen; i++)
+		for (size_t i = 0; i < mapLen; i++)
 		{
 			memcpy(&map_nums[i], b, sizeof(DWORD)); b += sizeof(DWORD);
 			memcpy(&map_guids[i], b, sizeof(GUID)); b += sizeof(GUID);
@@ -786,9 +786,9 @@ void	LoadSettings (HKEY SettingsBase)
 			for (int j = 0; j < Lens[i]; j++)
 			{
 				DWORD &Button = Datas[i][j];
-				int DevNum = (Button & 0xFFFF0000) >> 16;
+				DWORD DevNum = (Button & 0xFFFF0000) >> 16;
 				int found = 0;
-				for (int k = 0; k < mapLen; k++)
+				for (size_t k = 0; k < mapLen; k++)
 				{
 					if (DevNum == map_nums[k])
 					{
