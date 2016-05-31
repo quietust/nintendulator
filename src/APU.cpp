@@ -659,10 +659,10 @@ inline void	Run (void)
 			else	silenced = TRUE;
 		}
 	}
-	if (bufempty && !fetching && LengthCtr)
+	if (bufempty && !fetching && LengthCtr && (InternalClock & 1))
 	{
 		fetching = TRUE;
-		CPU::PCMCycles = 4;
+		CPU::EnableDMA |= DMA_PCM;
 		// decrement LengthCtr now, so $4015 reads are updated in time
 		LengthCtr--;
 	}
@@ -849,14 +849,8 @@ void	MAPINT	IntWrite (int Bank, int Addr, int Val)
 	case 0x011:	DPCM::Write(1, Val);		break;
 	case 0x012:	DPCM::Write(2, Val);		break;
 	case 0x013:	DPCM::Write(3, Val);		break;
-	case 0x014:	// if the write happens before an even clock, the action is delayed by 2 cycles
-			// otherwise, it's delayed by 1 cycle
-			if (!(InternalClock & 1))
-				CPU::MemGet(CPU::PC);
-			CPU::MemGet(CPU::PC);
-			for (int i = 0; i < 0x100; i++)
-				CPU::MemSet(0x2004, CPU::MemGet((Val << 8) | i));
-							break;
+	case 0x014:	CPU::EnableDMA |= DMA_SPR;
+			CPU::DMAPage = Val;		break;
 	case 0x015:	Square0::Write(4, Val & 0x1);
 			Square1::Write(4, Val & 0x2);
 			Triangle::Write(4, Val & 0x4);

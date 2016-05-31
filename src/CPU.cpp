@@ -31,7 +31,8 @@ BOOL	Readable[0x10], Writable[0x10];
 unsigned char WantNMI;
 #endif	/* !NSFPLAYER */
 unsigned char WantIRQ;
-unsigned char PCMCycles;
+BOOL EnableDMA;
+unsigned char DMAPage;
 #ifdef	ENABLE_DEBUGGER
 unsigned char GotInterrupt;
 #endif	/* ENABLE_DEBUGGER */
@@ -84,26 +85,59 @@ unsigned char	MemGet (unsigned int Addr)
 {
 	int buf;
 
-	if (PCMCycles)
+	if (EnableDMA & DMA_PCM)
 	{
-		// zero out PCMCycles so we don't recurse back into this case during the following fetches
-		int _PCMCycles = PCMCycles - 1;
-		PCMCycles = 0;
-		if (((Addr == 0x4016) || (Addr == 0x4017)))
+		BOOL isController = (Addr == 0x4016) || (Addr == 0x4017);
+		BOOL skipRead = FALSE;
+		BOOL WasSPR = (EnableDMA & DMA_SPR);
+
+		EnableDMA &= ~(DMA_PCM | DMA_SPR);
+
+		if (!(EnableDMA & DMA_HALT))
 		{
-			// Consecutive controller port reads from this are treated as one
-			if (_PCMCycles--)
-				MemGet(Addr);
-			while (_PCMCycles--)
-				RunCycle();
+			// Halt - read address and discard
+			MemGet(Addr);
+			skipRead = isController;
 		}
-		else
+
+		// Dummy read
+		skipRead ? RunCycle() : MemGet(Addr);
+		skipRead = isController;
+
+		// Alignment read
+		if (APU::InternalClock & 1)
 		{
-			// but other addresses see multiple reads as expected
-			while (_PCMCycles--)
-				MemGet(Addr);
+			skipRead ? RunCycle() : MemGet(Addr);
+			skipRead = isController;
 		}
+
+		// DPCM read
 		APU::DPCM::Fetch();
+
+		// if we interrupted a Sprite DMA in progress, then realign before it continues
+		if (EnableDMA & DMA_HALT)
+		{
+			if (APU::InternalClock & 1)
+				MemGet(Addr);
+		}
+		// otherwise, if we coincided with it, let it proceed
+		if (WasSPR)
+			EnableDMA |= DMA_SPR | DMA_HALT;
+	}
+	if (EnableDMA & DMA_SPR)
+	{
+		EnableDMA &= ~DMA_SPR;
+
+		// Halt
+		MemGet(Addr);
+		EnableDMA |= DMA_HALT;
+
+		if (APU::InternalClock & 1)
+			MemGet(Addr);
+
+		for (int i = 0; i < 0x100; i++)
+			MemSet(0x2004, MemGet((DMAPage << 8) | i));
+		EnableDMA &= ~(DMA_HALT | DMA_DUMMY);
 	}
 
 	RunCycle();
@@ -121,8 +155,6 @@ unsigned char	MemGet (unsigned int Addr)
 }
 void	MemSet (unsigned int Addr, unsigned char Val)
 {
-	if (PCMCycles)
-		PCMCycles--;
 	RunCycle();
 	WriteHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF, Val);
 }

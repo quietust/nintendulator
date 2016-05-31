@@ -19,6 +19,11 @@
 #define	INTERRUPT_BRK	4
 #endif	/* ENABLE_DEBUGGER */
 
+#define DMA_PCM		0x01
+#define	DMA_SPR		0x02
+#define	DMA_HALT	0x04
+#define	DMA_DUMMY	0x08
+
 namespace CPU
 {
 union SplitReg { unsigned short Full; unsigned char Segment[2]; };
@@ -32,7 +37,8 @@ extern BOOL Readable[0x10], Writable[0x10];
 extern unsigned char WantNMI;
 #endif	/* !NSFPLAYER */
 extern unsigned char WantIRQ;
-extern unsigned char PCMCycles;
+extern BOOL EnableDMA;
+extern unsigned char DMAPage;
 #ifdef	ENABLE_DEBUGGER
 extern unsigned char GotInterrupt;
 #endif	/* ENABLE_DEBUGGER */

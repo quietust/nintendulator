@@ -18,6 +18,7 @@ namespace APU
 extern short	*buffer;
 extern unsigned long	LockSize;
 extern int	buflen;
+extern int	InternalClock;
 
 #ifdef	NSFPLAYER
 extern	short	sample_pos;
