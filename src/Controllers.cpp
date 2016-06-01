@@ -1022,6 +1022,7 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 	ticks = GetTickCount();
 	while (Key == -1)
 	{
+		ProcessMessages();	// Wine workaround
 		// abort after 5 seconds
 		if (GetTickCount() - ticks > 5000)
 			break;
@@ -1070,6 +1071,7 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 		// if we timed out above, then skip this
 		if (Key == -1)
 			break;
+		ProcessMessages();	// Wine workaround
 		// wait 3 seconds to release key
 		if (GetTickCount() - ticks > 3000)
 			break;
