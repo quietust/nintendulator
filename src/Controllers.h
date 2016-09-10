@@ -172,5 +172,5 @@ void	UpdateInput (void);
 void	ConfigButton (DWORD *, int, HWND, BOOL);
 
 BOOL	IsPressed (int);
-INT_PTR	ParseConfigMessages (HWND, int, int *, int *, DWORD *, UINT, WPARAM, LPARAM);
+INT_PTR	ParseConfigMessages (HWND, int, const int *, const int *, DWORD *, UINT, WPARAM, LPARAM);
 } // namespace Controllers

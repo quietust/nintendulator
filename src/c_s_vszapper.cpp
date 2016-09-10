@@ -137,8 +137,8 @@ void	StdPort_VSZapper::Write (unsigned char Val)
 }
 INT_PTR	CALLBACK	StdPort_VSZapper_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int dlgLists[1] = {IDC_CONT_D0};
-	int dlgButtons[1] = {IDC_CONT_K0};
+	const int dlgLists[1] = {IDC_CONT_D0};
+	const int dlgButtons[1] = {IDC_CONT_K0};
 	StdPort *Cont;
 	if (uMsg == WM_INITDIALOG)
 	{

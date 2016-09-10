@@ -1281,7 +1281,7 @@ BOOL	IsPressed (int Button)
 	// should never actually reach this point - this is just to make the compiler stop whining
 	return FALSE;
 }
-INT_PTR	ParseConfigMessages (HWND hDlg, int numItems, int *dlgDevices, int *dlgButtons, DWORD *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR	ParseConfigMessages (HWND hDlg, int numItems, const int *dlgDevices, const int *dlgButtons, DWORD *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId = LOWORD(wParam);
 	int wmEvent = HIWORD(wParam);

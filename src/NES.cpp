@@ -515,7 +515,7 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	// Special checks for Playchoice-10 and Vs. Unisystem ROMs to auto-select palette
 	if ((RI.INES_Flags & 0x10) && (RI.INES_Version == 2))
 	{
-		GFX::PALETTE pals[16] = {
+		const GFX::PALETTE pals[16] = {
 			GFX::PALETTE_PC10, // RP2C03B
 			GFX::PALETTE_PC10, // RP2C03G - no dump available, assuming identical to RP2C03B
 			GFX::PALETTE_VS1, // RP2C04-0001
