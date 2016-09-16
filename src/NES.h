@@ -15,7 +15,8 @@ extern int PRGSizeROM, PRGSizeRAM, CHRSizeROM, CHRSizeRAM;
 extern int PRGMaskROM, PRGMaskRAM, CHRMaskROM, CHRMaskRAM;
 
 extern BOOL ROMLoaded;
-extern BOOL DoStop, Running, Scanline;
+extern BOOL Running, Scanline;
+extern int DoStop;
 extern BOOL GameGenie;
 extern BOOL SoundEnabled;
 extern BOOL AutoRun;

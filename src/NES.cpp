@@ -32,7 +32,8 @@ int PRGSizeROM, PRGSizeRAM, CHRSizeROM, CHRSizeRAM;
 int PRGMaskROM, PRGMaskRAM, CHRMaskROM, CHRMaskRAM;
 
 BOOL ROMLoaded;
-BOOL DoStop, Running, Scanline;
+BOOL Running, Scanline;
+int DoStop;
 BOOL GameGenie;
 BOOL SoundEnabled;
 BOOL AutoRun;
@@ -67,7 +68,7 @@ void	Init (void)
 	CloseFile();
 
 	Running = FALSE;
-	DoStop = FALSE;
+	DoStop = 0;
 	GameGenie = FALSE;
 	ROMLoaded = FALSE;
 	ZeroMemory(&RI, sizeof(RI));
@@ -1051,6 +1052,11 @@ DWORD	WINAPI	Thread (void *param)
 #endif	/* CPU_BENCHMARK */
 	UpdateTitlebar();
 	Running = FALSE;
+	// If Stop was triggered from within the emulation thread
+	// then signal the message loop in the main thread
+	// to unacquire the controllers as soon as possible
+	if (DoStop == 2)
+		PostMessage(hMainWnd, WM_USER, 0, 0);
 	return 0;
 }
 void	Start (BOOL step)
@@ -1062,7 +1068,7 @@ void	Start (BOOL step)
 #ifdef	ENABLE_DEBUGGER
 	Debugger::Step = step;
 #endif	/* ENABLE_DEBUGGER */
-	DoStop = FALSE;
+	DoStop = 0;
 	Controllers::Acquire();
 	CloseHandle(CreateThread(NULL, 0, Thread, NULL, 0, &ThreadID));
 }
@@ -1070,7 +1076,8 @@ void	Stop (void)
 {
 	if (!Running)
 		return;
-	DoStop = TRUE;
+	DoStop = 1;
+	
 	while (Running)
 	{
 		ProcessMessages();

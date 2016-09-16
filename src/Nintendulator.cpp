@@ -135,6 +135,14 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
+		// There are several places where the emulation thread can stop itself
+		// and those need to unacquire the controllers from the main thread
+		if (NES::DoStop == 2)
+		{
+			NES::DoStop = 0;
+			Controllers::UnAcquire();
+		}
+
 		// The proper way to do this is to maintain a list of modeless dialog handles and check each of them here
 		// or to keep one handle and have each modeless dialog set that handle whenever they get focus (KB 71450)
 		// The problem is that mapper DLLs have no way of (un)registering any modeless dialogs they create
@@ -685,6 +693,12 @@ BOOL	ProcessMessages (void)
 	BOOL gotMessage = PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
+		// See message loop in WinMain for explanation on why this is here
+		if (NES::DoStop == 2)
+		{
+			NES::DoStop = 0;
+			Controllers::UnAcquire();
+		}
 		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
 		{
 			TranslateMessage(&msg);

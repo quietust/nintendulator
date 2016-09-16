@@ -569,10 +569,10 @@ bool	UpdateCPU (void)
 
 	// if we chose "Step", stop emulation
 	if (Step)
-		NES::DoStop = TRUE;
+		NES::DoStop = 2;
 	// check for breakpoints
 	if (DecodeInstruction((unsigned short)CPU::PC, NULL, NULL, TRUE))
-		NES::DoStop = TRUE;
+		NES::DoStop = 2;
 	// if emulation wasn't stopped, don't bother updating the dialog
 	if (!NES::DoStop)
 		return false;
