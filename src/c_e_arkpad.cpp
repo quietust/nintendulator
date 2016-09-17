@@ -57,8 +57,8 @@ void	ExpPort_ArkanoidPaddle::Frame (unsigned char mode)
 	{
 		State->Button = IsPressed(Buttons[0]);
 		State->Pos += MouseState.lX;
-		// Arkanoid's expected range is 196-484
-		// Arkanoid 2's expected range is 156-452
+		// Arkanoid's expected range is 196-484 (code caps to 196-516)
+		// Arkanoid 2 SP expected range is 156-452 (code caps to 156-372/420/452/484)
 		// Arkanoid 2 VS expected range is 168-438
 		if (State->Pos < 156)
 			State->Pos = 156;

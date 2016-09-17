@@ -139,7 +139,7 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 		// and those need to unacquire the controllers from the main thread
 		if (NES::DoStop == 2)
 		{
-			NES::DoStop = 0;
+			NES::DoStop = 1;
 			Controllers::UnAcquire();
 		}
 
@@ -696,7 +696,7 @@ BOOL	ProcessMessages (void)
 		// See message loop in WinMain for explanation on why this is here
 		if (NES::DoStop == 2)
 		{
-			NES::DoStop = 0;
+			NES::DoStop = 1;
 			Controllers::UnAcquire();
 		}
 		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
