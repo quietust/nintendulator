@@ -131,7 +131,7 @@ INT_PTR	CALLBACK	ExpPort_Tablet_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam,
 		Cont = (ExpPort *)lParam;
 	}
 	else	Cont = (ExpPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-	return ParseConfigMessages(hDlg, 1, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
+	return ParseConfigMessages(hDlg, uMsg, wParam, lParam, 1, 0, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL);
 }
 void	ExpPort_Tablet::Config (HWND hWnd)
 {

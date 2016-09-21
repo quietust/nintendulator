@@ -33,6 +33,7 @@
 #define IDD_MOVIE_RECORD                150
 #define IDD_MOVIE_PLAY                  151
 #define IDD_STDPORT_SNESMOUSE           152
+#define IDD_AXISCONFIG                  153
 #define IDC_ABOUTICON                   1001
 #define IDC_CONT_SPORT1                 1002
 #define IDC_CONT_SPORT2                 1003
@@ -386,7 +387,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        152
+#define _APS_NEXT_RESOURCE_VALUE        154
 #define _APS_NEXT_COMMAND_VALUE         32827
 #define _APS_NEXT_CONTROL_VALUE         1288
 #define _APS_NEXT_SYMED_VALUE           107

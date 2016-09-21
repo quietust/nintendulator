@@ -285,7 +285,7 @@ BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPV
 
 BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
-	int ItemNum = 0;
+	size_t ItemNum = 0;
 	if (IsEqualGUID(lpddoi->guidType, GUID_XAxis))
 	{
 		AxisFlags[1] |= 0x01;
@@ -976,7 +976,7 @@ void	UpdateInput (void)
 		Movie::SaveInput(Cmd);
 }
 
-int	GetConfigButton (HWND hWnd, int DevNum)
+int	GetConfigButton (HWND hWnd, int DevNum, BOOL AxesOnly = FALSE)
 {
 	LPDIRECTINPUTDEVICE8 dev = DIDevices[DevNum];
 	HRESULT hr;
@@ -986,6 +986,8 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 	int FirstPOV, LastPOV;
 	if (DevNum == 0)
 	{
+		if (AxesOnly)
+			return 0;
 		FirstAxis = LastAxis = 0;
 		FirstPOV = LastPOV = 0;
 	}
@@ -1035,16 +1037,19 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 			hr = dev->Poll();
 			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[DevNum]);
 		}
-		for (i = 0; i < NumButtons[DevNum]; i++)
+		if (!AxesOnly)
 		{
-			if (IsPressed((DevNum << 16) | i))
+			for (i = 0; i < NumButtons[DevNum]; i++)
 			{
-				Key = i;
-				break;
+				if (IsPressed((DevNum << 16) | i))
+				{
+					Key = i;
+					break;
+				}
 			}
+			if (Key != -1)	// if we got a button, don't check for an axis
+				break;
 		}
-		if (Key != -1)	// if we got a button, don't check for an axis
-			break;
 		for (i = FirstAxis; i < LastAxis; i++)
 		{
 			if (IsPressed((DevNum << 16) | i))
@@ -1053,14 +1058,17 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 				break;
 			}
 		}
-		if (Key != -1)	// if we got an axis, don't check for a POV hat
-			break;
-		for (i = FirstPOV; i < LastPOV; i++)
+		if (!AxesOnly)
 		{
-			if (IsPressed((DevNum << 16) | i))
-			{
-				Key = i;
+			if (Key != -1)	// if we got an axis, don't check for a POV hat
 				break;
+			for (i = FirstPOV; i < LastPOV; i++)
+			{
+				if (IsPressed((DevNum << 16) | i))
+				{
+					Key = i;
+					break;
+				}
 			}
 		}
 	}
@@ -1087,14 +1095,17 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[DevNum]);
 		}
 		// don't need to reset FirstAxis/LastAxis or FirstPOV/LastPOV, since they were set in the previous loop
-		for (i = 0; i < NumButtons[DevNum]; i++)
-			if (IsPressed((DevNum << 16) | i))
-			{
-				held = true;
-				break;
-			}
-		if (held)
-			continue;
+		if (!AxesOnly)
+		{
+			for (i = 0; i < NumButtons[DevNum]; i++)
+				if (IsPressed((DevNum << 16) | i))
+				{
+					held = true;
+					break;
+				}
+			if (held)
+				continue;
+		}
 		for (i = FirstAxis; i < LastAxis; i++)
 			if (IsPressed((DevNum << 16) | i))
 			{
@@ -1103,14 +1114,17 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 			}
 		if (held)
 			continue;
-		for (i = FirstPOV; i < LastPOV; i++)
-			if (IsPressed((DevNum << 16) | i))
-			{
-				held = true;
-				break;
-			}
-		if (held)
-			continue;
+		if (!AxesOnly)
+		{
+			for (i = FirstPOV; i < LastPOV; i++)
+				if (IsPressed((DevNum << 16) | i))
+				{
+					held = true;
+					break;
+				}
+			if (held)
+				continue;
+		}
 		break;
 	}
 	dev->Unacquire();
@@ -1122,10 +1136,12 @@ int	GetConfigButton (HWND hWnd, int DevNum)
 	return Key;
 }
 
-const TCHAR *	GetButtonLabel (int DevNum, int Button)
+const TCHAR *	GetButtonLabel (int DevNum, int Button, BOOL AxesOnly = FALSE)
 {
 	static TCHAR str[256];
 	_tcscpy(str, _T("???"));
+	if (AxesOnly && (!DevNum || !Button))
+		return str;
 	if (DevNum == 0)
 	{
 		if (KeyNames[Button])
@@ -1182,22 +1198,22 @@ const TCHAR *	GetButtonLabel (int DevNum, int Button)
 	}
 }
 
-void	ConfigButton (DWORD *Button, int Device, HWND hDlg, BOOL getKey)
+void	ConfigButton (DWORD *Button, int Device, HWND hDlg, BOOL getKey, BOOL AxesOnly)
 {
 	*Button &= 0xFFFF;
 	if (getKey)	// this way, we can just re-label the button
 	{
-		key = CreateDialog(hInst, MAKEINTRESOURCE(IDD_KEYCONFIG), hDlg, NULL);
+		key = CreateDialog(hInst, AxesOnly ? MAKEINTRESOURCE(IDD_AXISCONFIG) : MAKEINTRESOURCE(IDD_KEYCONFIG), hDlg, NULL);
 		ShowWindow(key, TRUE);	// FIXME - center this window properly
 		ProcessMessages();	// let the "Press a key..." dialog display itself
-		int newKey = GetConfigButton(key, Device);
+		int newKey = GetConfigButton(key, Device, AxesOnly);
 		if (newKey != -1)
 			*Button = newKey;
 		ProcessMessages();	// flush all keypresses - don't want them going back to the parent dialog
 		DestroyWindow(key);	// close the little window
 		key = NULL;
 	}
-	SetWindowText(hDlg, GetButtonLabel(Device, *Button));
+	SetWindowText(hDlg, GetButtonLabel(Device, *Button, AxesOnly));
 	*Button |= Device << 16;	// add the device ID
 }
 
@@ -1281,7 +1297,59 @@ BOOL	IsPressed (int Button)
 	// should never actually reach this point - this is just to make the compiler stop whining
 	return FALSE;
 }
-INT_PTR	ParseConfigMessages (HWND hDlg, int numItems, const int *dlgDevices, const int *dlgButtons, DWORD *Buttons, UINT uMsg, WPARAM wParam, LPARAM lParam)
+
+int	GetDelta (int Button)
+{
+	int DevNum = (Button & 0xFFFF0000) >> 16;
+	if (DevNum == 0)
+		return 0;	// Keyboard not supported
+	else if (DevNum == 1)
+	{
+		if (Button & 0x8)	// axis selected
+		{
+			switch (Button & 0x7)
+			{
+			case 0x0:	return (AxisFlags[1] & (1 << AXIS_X)) ? -MouseState.lX : 0;	break;
+			case 0x1:	return (AxisFlags[1] & (1 << AXIS_X)) ?  MouseState.lX : 0;	break;
+			case 0x2:	return (AxisFlags[1] & (1 << AXIS_Y)) ? -MouseState.lY : 0;	break;
+			case 0x3:	return (AxisFlags[1] & (1 << AXIS_Y)) ?  MouseState.lY : 0;	break;
+			case 0x4:	return (AxisFlags[1] & (1 << AXIS_Z)) ? -MouseState.lZ : 0;	break;
+			case 0x5:	return (AxisFlags[1] & (1 << AXIS_Z)) ?  MouseState.lZ : 0;	break;
+			}
+		}
+		else	return 0;
+	}
+	else
+	{
+		if ((Button & 0xE0) == 0x80)
+		{	// axis
+			switch (Button & 0xF)
+			{
+			case 0x0:	return (AxisFlags[DevNum] & (1 << AXIS_X)) ? -(0x8000 - JoyState[DevNum].lX) / 0x400 : 0;	break;
+			case 0x1:	return (AxisFlags[DevNum] & (1 << AXIS_X)) ?  (0x8000 - JoyState[DevNum].lX) / 0x400 : 0;	break;
+			case 0x2:	return (AxisFlags[DevNum] & (1 << AXIS_Y)) ? -(0x8000 - JoyState[DevNum].lY) / 0x400 : 0;	break;
+			case 0x3:	return (AxisFlags[DevNum] & (1 << AXIS_Y)) ?  (0x8000 - JoyState[DevNum].lY) / 0x400 : 0;	break;
+			case 0x4:	return (AxisFlags[DevNum] & (1 << AXIS_Z)) ? -(0x8000 - JoyState[DevNum].lZ) / 0x400 : 0;	break;
+			case 0x5:	return (AxisFlags[DevNum] & (1 << AXIS_Z)) ?  (0x8000 - JoyState[DevNum].lZ) / 0x400 : 0;	break;
+			case 0x6:	return (AxisFlags[DevNum] & (1 << AXIS_RX)) ? -(0x8000 - JoyState[DevNum].lRx) / 0x400 : 0;	break;
+			case 0x7:	return (AxisFlags[DevNum] & (1 << AXIS_RX)) ?  (0x8000 - JoyState[DevNum].lRx) / 0x400 : 0;	break;
+			case 0x8:	return (AxisFlags[DevNum] & (1 << AXIS_RY)) ? -(0x8000 - JoyState[DevNum].lRy) / 0x400 : 0;	break;
+			case 0x9:	return (AxisFlags[DevNum] & (1 << AXIS_RY)) ?  (0x8000 - JoyState[DevNum].lRy) / 0x400 : 0;	break;
+			case 0xA:	return (AxisFlags[DevNum] & (1 << AXIS_RZ)) ? -(0x8000 - JoyState[DevNum].lRz) / 0x400 : 0;	break;
+			case 0xB:	return (AxisFlags[DevNum] & (1 << AXIS_RZ)) ?  (0x8000 - JoyState[DevNum].lRz) / 0x400 : 0;	break;
+			case 0xC:	return (AxisFlags[DevNum] & (1 << AXIS_S0)) ? -(0x8000 - JoyState[DevNum].rglSlider[0]) / 0x400 : 0;	break;
+			case 0xD:	return (AxisFlags[DevNum] & (1 << AXIS_S0)) ?  (0x8000 - JoyState[DevNum].rglSlider[0]) / 0x400 : 0;	break;
+			case 0xE:	return (AxisFlags[DevNum] & (1 << AXIS_S1)) ? -(0x8000 - JoyState[DevNum].rglSlider[1]) / 0x400 : 0;	break;
+			case 0xF:	return (AxisFlags[DevNum] & (1 << AXIS_S1)) ?  (0x8000 - JoyState[DevNum].rglSlider[1]) / 0x400 : 0;	break;
+			}
+		}
+		else	return 0;	// buttons and POV axes not supported
+	}
+	// should never actually reach this point - this is just to make the compiler stop whining
+	return 0;
+}
+
+INT_PTR	ParseConfigMessages (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam, int numButtons, int numAxes, const int *dlgDevices, const int *dlgButtons, DWORD *Buttons)
 {
 	int wmId = LOWORD(wParam);
 	int wmEvent = HIWORD(wParam);
@@ -1290,14 +1358,15 @@ INT_PTR	ParseConfigMessages (HWND hDlg, int numItems, const int *dlgDevices, con
 		return FALSE;
 	if (uMsg == WM_INITDIALOG)
 	{
-		for (i = 0; i < numItems; i++)
+		for (i = 0; i < numButtons + numAxes; i++)
 		{
 			int j;
 			SendDlgItemMessage(hDlg, dlgDevices[i], CB_RESETCONTENT, 0, 0);		// clear the listbox
-			for (j = 0; j < NumDevices; j++)
+			SendDlgItemMessage(hDlg, dlgDevices[i], CB_ADDSTRING, 0, i < numButtons ? (LPARAM)DeviceName[0] : (LPARAM)_T("Select a device..."));
+			for (j = 1; j < NumDevices; j++)
 				SendDlgItemMessage(hDlg, dlgDevices[i], CB_ADDSTRING, 0, (LPARAM)DeviceName[j]);	// add each device
 			SendDlgItemMessage(hDlg, dlgDevices[i], CB_SETCURSEL, Buttons[i] >> 16, 0);	// select the one we want
-			ConfigButton(&Buttons[i], Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), FALSE);	// and label the corresponding button
+			ConfigButton(&Buttons[i], Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), FALSE, i >= numButtons);	// and label the corresponding button
 		}
 	}
 	if (uMsg != WM_COMMAND)
@@ -1307,19 +1376,19 @@ INT_PTR	ParseConfigMessages (HWND hDlg, int numItems, const int *dlgDevices, con
 		EndDialog(hDlg, 1);
 		return TRUE;
 	}
-	for (i = 0; i < numItems; i++)
+	for (i = 0; i < numButtons + numAxes; i++)
 	{
 		if (wmId == dlgDevices[i])
 		{
 			if (wmEvent != CBN_SELCHANGE)
 				break;
 			Buttons[i] = 0;
-			ConfigButton(&Buttons[i], (int)SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0), GetDlgItem(hDlg, dlgButtons[i]), FALSE);
+			ConfigButton(&Buttons[i], (int)SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0), GetDlgItem(hDlg, dlgButtons[i]), FALSE, i >= numButtons);
 			return TRUE;
 		}
 		if (wmId == dlgButtons[i])
 		{
-			ConfigButton(&Buttons[i], Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), TRUE);
+			ConfigButton(&Buttons[i], Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), TRUE, i >= numButtons);
 			return TRUE;
 		}
 	}

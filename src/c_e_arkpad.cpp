@@ -56,7 +56,7 @@ void	ExpPort_ArkanoidPaddle::Frame (unsigned char mode)
 	else
 	{
 		State->Button = IsPressed(Buttons[0]);
-		State->Pos += MouseState.lX;
+		State->Pos += GetDelta(Buttons[1]);
 		// Arkanoid's expected range is 196-484 (code caps to 196-516)
 		// Arkanoid 2 SP expected range is 156-452 (code caps to 156-372/420/452/484)
 		// Arkanoid 2 VS expected range is 168-438
@@ -103,8 +103,8 @@ void	ExpPort_ArkanoidPaddle::Write (unsigned char Val)
 }
 INT_PTR	CALLBACK	ExpPort_ArkanoidPaddle_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const int dlgLists[1] = {IDC_CONT_D0};
-	const int dlgButtons[1] = {IDC_CONT_K0};
+	const int dlgLists[2] = {IDC_CONT_D0,IDC_CONT_D1};
+	const int dlgButtons[2] = {IDC_CONT_K0,IDC_CONT_K1};
 	ExpPort *Cont;
 	if (uMsg == WM_INITDIALOG)
 	{
@@ -112,7 +112,7 @@ INT_PTR	CALLBACK	ExpPort_ArkanoidPaddle_ConfigProc (HWND hDlg, UINT uMsg, WPARAM
 		Cont = (ExpPort *)lParam;
 	}
 	else	Cont = (ExpPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-	return ParseConfigMessages(hDlg, 1, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
+	return ParseConfigMessages(hDlg, uMsg, wParam, lParam, 1, 1, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL);
 }
 void	ExpPort_ArkanoidPaddle::Config (HWND hWnd)
 {
@@ -120,7 +120,7 @@ void	ExpPort_ArkanoidPaddle::Config (HWND hWnd)
 }
 void	ExpPort_ArkanoidPaddle::SetMasks (void)
 {
-	MaskMouse = TRUE;
+	MaskMouse = ((Buttons[1] >> 16) == 1);
 }
 ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 {
@@ -130,7 +130,7 @@ ExpPort_ArkanoidPaddle::~ExpPort_ArkanoidPaddle (void)
 ExpPort_ArkanoidPaddle::ExpPort_ArkanoidPaddle (DWORD *buttons)
 {
 	Type = EXP_ARKANOIDPADDLE;
-	NumButtons = 1;
+	NumButtons = 2;
 	Buttons = buttons;
 	State = new ExpPort_ArkanoidPaddle_State;
 	MovLen = 2;

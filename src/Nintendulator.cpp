@@ -676,7 +676,7 @@ void	AddDebug (const TCHAR *txt)
 //		return;
 	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SETSEL, dbglen, dbglen);
 	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_REPLACESEL, FALSE, (LPARAM)txt);
-	dbglen += _tcslen(txt);
+	dbglen += (int)_tcslen(txt);
 	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_SETSEL, dbglen, dbglen);
 	SendDlgItemMessage(hDebug, IDC_DEBUGTEXT, EM_REPLACESEL, FALSE, (LPARAM)_T("\r\n"));
 }

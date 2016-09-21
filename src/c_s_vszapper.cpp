@@ -146,7 +146,7 @@ INT_PTR	CALLBACK	StdPort_VSZapper_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wPara
 		Cont = (StdPort *)lParam;
 	}
 	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-	return ParseConfigMessages(hDlg, 1, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
+	return ParseConfigMessages(hDlg, uMsg, wParam, lParam, 1, 0, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL);
 }
 void	StdPort_VSZapper::Config (HWND hWnd)
 {

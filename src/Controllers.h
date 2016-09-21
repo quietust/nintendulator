@@ -169,8 +169,9 @@ void	SetDeviceUsed (void);
 void	Acquire (void);
 void	UnAcquire (void);
 void	UpdateInput (void);
-void	ConfigButton (DWORD *, int, HWND, BOOL);
+void	ConfigButton (DWORD *, int, HWND, BOOL, BOOL = FALSE);
 
 BOOL	IsPressed (int);
-INT_PTR	ParseConfigMessages (HWND, int, const int *, const int *, DWORD *, UINT, WPARAM, LPARAM);
+int	GetDelta (int);
+INT_PTR	ParseConfigMessages (HWND, UINT, WPARAM, LPARAM, int, int, const int *, const int *, DWORD *);
 } // namespace Controllers

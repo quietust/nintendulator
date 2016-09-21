@@ -114,7 +114,7 @@ INT_PTR	CALLBACK	ExpPort_FamTrainer_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wPa
 			ConfigButton(&Cont->Buttons[i], Cont->Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), FALSE);
 		return TRUE;
 	}
-	return ParseConfigMessages(hDlg, 12, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
+	return ParseConfigMessages(hDlg, uMsg, wParam, lParam, 12, 0, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL);
 }
 void	ExpPort_FamTrainer::Config (HWND hWnd)
 {

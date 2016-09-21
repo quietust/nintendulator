@@ -117,7 +117,7 @@ INT_PTR	CALLBACK	StdPort_SnesController_ConfigProc (HWND hDlg, UINT uMsg, WPARAM
 		Cont = (StdPort *)lParam;
 	}
 	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-	return ParseConfigMessages(hDlg, 12, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
+	return ParseConfigMessages(hDlg, uMsg, wParam, lParam, 12, 0, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL);
 }
 void	StdPort_SnesController::Config (HWND hWnd)
 {

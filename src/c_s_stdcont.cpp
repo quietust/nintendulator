@@ -103,7 +103,7 @@ INT_PTR	CALLBACK	StdPort_StdController_ConfigProc (HWND hDlg, UINT uMsg, WPARAM 
 		Cont = (StdPort *)lParam;
 	}
 	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-	return ParseConfigMessages(hDlg, 8, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
+	return ParseConfigMessages(hDlg, uMsg, wParam, lParam, 8, 0, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL);
 }
 void	StdPort_StdController::Config (HWND hWnd)
 {

@@ -137,7 +137,7 @@ INT_PTR	CALLBACK	ExpPort_Fami4Play_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wPar
 		Cont = (ExpPort *)lParam;
 	}
 	else	Cont = (ExpPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-	return ParseConfigMessages(hDlg, 16, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
+	return ParseConfigMessages(hDlg, uMsg, wParam, lParam, 16, 0, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL);
 }
 void	ExpPort_Fami4Play::Config (HWND hWnd)
 {

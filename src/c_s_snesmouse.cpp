@@ -61,8 +61,8 @@ void	StdPort_SnesMouse::Frame (unsigned char mode)
 			State->Buttons |= 0x1;
 		if (IsPressed(Buttons[1]))
 			State->Buttons |= 0x2;
-		State->Xdelta = MouseState.lX;
-		State->Ydelta = MouseState.lY;
+		State->Xdelta = GetDelta(Buttons[2]);
+		State->Ydelta = GetDelta(Buttons[3]);
 	}
 	if (mode & MOV_RECORD)
 	{
@@ -114,8 +114,8 @@ void	StdPort_SnesMouse::Write (unsigned char Val)
 }
 INT_PTR	CALLBACK	StdPort_SnesMouse_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const int dlgLists[2] = {IDC_CONT_D0, IDC_CONT_D1};
-	const int dlgButtons[2] = {IDC_CONT_K0, IDC_CONT_K1};
+	const int dlgLists[4] = {IDC_CONT_D0,IDC_CONT_D1,IDC_CONT_D2,IDC_CONT_D3};
+	const int dlgButtons[4] = {IDC_CONT_K0,IDC_CONT_K1,IDC_CONT_K2,IDC_CONT_K3};
 	StdPort *Cont;
 	if (uMsg == WM_INITDIALOG)
 	{
@@ -123,7 +123,7 @@ INT_PTR	CALLBACK	StdPort_SnesMouse_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wPar
 		Cont = (StdPort *)lParam;
 	}
 	else	Cont = (StdPort *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-	return ParseConfigMessages(hDlg, 2, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
+	return ParseConfigMessages(hDlg, uMsg, wParam, lParam, 2, 2, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL);
 }
 void	StdPort_SnesMouse::Config (HWND hWnd)
 {
@@ -131,7 +131,7 @@ void	StdPort_SnesMouse::Config (HWND hWnd)
 }
 void	StdPort_SnesMouse::SetMasks (void)
 {
-	MaskMouse = TRUE;
+	MaskMouse = (((Buttons[2] >> 16) == 1) || ((Buttons[3] >> 16) == 1));
 }
 StdPort_SnesMouse::~StdPort_SnesMouse (void)
 {
@@ -141,7 +141,7 @@ StdPort_SnesMouse::~StdPort_SnesMouse (void)
 StdPort_SnesMouse::StdPort_SnesMouse (DWORD *buttons)
 {
 	Type = STD_SNESMOUSE;
-	NumButtons = 2;
+	NumButtons = 4;
 	Buttons = buttons;
 	State = new StdPort_SnesMouse_State;
 	MovLen = 3;

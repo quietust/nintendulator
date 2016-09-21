@@ -136,7 +136,7 @@ INT_PTR	CALLBACK	StdPort_PowerPad_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wPara
 			ConfigButton(&Cont->Buttons[i], Cont->Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), FALSE);
 		return TRUE;
 	}
-	return ParseConfigMessages(hDlg, 12, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL, uMsg, wParam, lParam);
+	return ParseConfigMessages(hDlg, uMsg, wParam, lParam, 12, 0, dlgLists, dlgButtons, Cont ? Cont->Buttons : NULL);
 }
 void	StdPort_PowerPad::Config (HWND hWnd)
 {
