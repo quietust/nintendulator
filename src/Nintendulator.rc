@@ -126,6 +126,8 @@ BEGIN
             MENUITEM "&2X",                         ID_PPU_SIZE_2X
             MENUITEM "&3X",                         ID_PPU_SIZE_3X
             MENUITEM "&4X",                         ID_PPU_SIZE_4X
+            MENUITEM SEPARATOR
+            MENUITEM "&Fix Aspect",                 ID_PPU_SIZE_ASPECT
         END
         POPUP "&Mode"
         BEGIN

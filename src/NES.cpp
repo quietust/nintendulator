@@ -863,6 +863,9 @@ void	SetRegion (Region NewRegion)
 		EI.DbgOut(_T("Emulation switched to Hybrid"));
 		break;
 	}
+	// Resize window if aspect ratio would change
+	if (FixAspect)
+		UpdateInterface();
 }
 
 void	InitHandlers (void)
@@ -1095,8 +1098,16 @@ void	MapperConfig (void)
 void	UpdateInterface (void)
 {
 	HWND hWnd = hMainWnd;
+	
 	int w = 256 * SizeMult;
 	int h = 240 * SizeMult;
+
+	if (FixAspect)
+	{
+		if (CurRegion == REGION_NTSC)
+			w = w * 8 / 7;
+		else	w = w * 355 / 256; // 2950000 / 2128137
+	}
 
 	RECT client, window, desktop;
 	SetWindowPos(hWnd, hWnd, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
@@ -1156,6 +1167,7 @@ void	SaveSettings (void)
 	RegSetValueEx(SettingsBase, _T("BadOpcodes")  , 0, REG_DWORD, (LPBYTE)&CPU::LogBadOps  , sizeof(BOOL));
 
 	RegSetValueEx(SettingsBase, _T("SizeMult")    , 0, REG_DWORD, (LPBYTE)&SizeMult        , sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("FixAspect")   , 0, REG_DWORD, (LPBYTE)&FixAspect       , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("PosX")        , 0, REG_DWORD, (LPBYTE)&wRect.left      , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("PosY")        , 0, REG_DWORD, (LPBYTE)&wRect.top       , sizeof(DWORD));
 	RegSetValueEx(SettingsBase, _T("Region")      , 0, REG_DWORD, (LPBYTE)&CurRegion       , sizeof(DWORD));
@@ -1191,6 +1203,7 @@ void	LoadSettings (void)
 
 	// Load Defaults
 	SizeMult = 2;
+	FixAspect = FALSE;
 	SoundEnabled = TRUE;
 	dbgVisible = TRUE;
 	CPU::LogBadOps = FALSE;
@@ -1207,6 +1220,7 @@ void	LoadSettings (void)
 	Size = sizeof(BOOL);	RegQueryValueEx(SettingsBase, _T("BadOpcodes")  , 0, NULL, (LPBYTE)&CPU::LogBadOps , &Size);
 
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("SizeMult")    , 0, NULL, (LPBYTE)&SizeMult       , &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("FixAspect")   , 0, NULL, (LPBYTE)&FixAspect      , &Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PosX")        , 0, NULL, (LPBYTE)&PosX           , &Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("PosY")        , 0, NULL, (LPBYTE)&PosY           , &Size);
 	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("Region")      , 0, NULL, (LPBYTE)&MyRegion       , &Size);
@@ -1255,6 +1269,10 @@ void	LoadSettings (void)
 	case 3:	CheckMenuRadioItem(hMenu, ID_PPU_SIZE_1X, ID_PPU_SIZE_4X, ID_PPU_SIZE_3X, MF_BYCOMMAND);	break;
 	case 4:	CheckMenuRadioItem(hMenu, ID_PPU_SIZE_1X, ID_PPU_SIZE_4X, ID_PPU_SIZE_4X, MF_BYCOMMAND);	break;
 	}
+
+	if (FixAspect)
+		CheckMenuItem(hMenu, ID_PPU_SIZE_ASPECT, MF_CHECKED);
+	else	CheckMenuItem(hMenu, ID_PPU_SIZE_ASPECT, MF_UNCHECKED);
 
 	SetRegion(MyRegion);
 
