@@ -202,16 +202,6 @@ void	Start (void)
 		return;
 	if (Fullscreen)
 	{
-		if (dbgVisible)
-			ShowWindow(hDebug, SW_MINIMIZE);
-		SetWindowLongPtr(hMainWnd, GWL_STYLE, WS_POPUP);
-		SetMenu(hMainWnd, NULL);
-		if (FAILED(DirectDraw->SetCooperativeLevel(hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
-		{
-			Stop();
-			MessageBox(hMainWnd, _T("Failed to set cooperative level!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-			return;
-		}
 		// Examine the current screen resolution and try to figure out the current aspect ratio
 		// We'll support 4:3, 16:10, and 16:9
 		double ratio = (double)GetSystemMetrics(SM_CXSCREEN) / (double)GetSystemMetrics(SM_CYSCREEN);
@@ -222,17 +212,47 @@ void	Start (void)
 			720, 768,	// 16:10 - last offset 2
 			848, 856, 864	// 16:9 - last offset 5
 		};
+		// only try switching to a particular resolution once, and remember it as long as the program is running
+		static BOOL widths_ok[] = {
+			TRUE,
+			TRUE, TRUE,
+			TRUE, TRUE, TRUE
+		};
+		// pick a resolution with a decent aspect ratio
 		int i;
 		if (ratio < 1.4)
 			i = 0;
 		else if (ratio < 1.7)
 			i = 2;
 		else	i = 5;
+		// if the final resolution failed, then don't even allow fullscreen at all
+		if (!widths_ok[0])
+		{
+			// no need to Stop() here, since we didn't start anything yet
+			MessageBox(hMainWnd, _T("No fullscreen resolutions are supported on your display device!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+			Fullscreen = FALSE;
+			Start();
+			return;
+		}
+
+		if (dbgVisible)
+			ShowWindow(hDebug, SW_MINIMIZE);
+		SetWindowLongPtr(hMainWnd, GWL_STYLE, WS_POPUP);
+		SetMenu(hMainWnd, NULL);
+		if (FAILED(DirectDraw->SetCooperativeLevel(hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
+		{
+			Stop();
+			MessageBox(hMainWnd, _T("Failed to set fullscreen cooperative level! Returning to Windowed mode..."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+			Fullscreen = FALSE;
+			Start();
+			return;
+		}
 		while (1)
 		{
 			FullscreenBorder = (widths[i] - 512) / 2;
-			if (FAILED(DirectDraw->SetDisplayMode(widths[i], 480, 32, 0, 0)))
+			if (!widths_ok[i] || FAILED(DirectDraw->SetDisplayMode(widths[i], 480, 32, 0, 0)))
 			{
+				widths_ok[i] = FALSE;
 				if (i == 0)
 				{
 					// not even 640x480 worked!
