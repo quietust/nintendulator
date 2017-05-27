@@ -32,8 +32,9 @@ int PRGSizeROM, PRGSizeRAM, CHRSizeROM, CHRSizeRAM;
 int PRGMaskROM, PRGMaskRAM, CHRMaskROM, CHRMaskRAM;
 
 BOOL ROMLoaded;
-BOOL Running, Scanline;
-int DoStop;
+BOOL Scanline;
+volatile BOOL Running;
+volatile int DoStop;
 BOOL GameGenie;
 BOOL SoundEnabled;
 BOOL AutoRun;
@@ -941,7 +942,7 @@ void	Reset (RESET_TYPE ResetType)
 		APU::PowerOn();
 		if (GameGenie)
 			Genie::Reset();
-		else	if ((MI) && (MI->Reset))
+		else if ((MI) && (MI->Reset))
 			MI->Reset(RESET_HARD);
 		break;
 	case RESET_SOFT:
@@ -971,7 +972,7 @@ void	Reset (RESET_TYPE ResetType)
 	Debugger::NTabChanged = TRUE;
 	Debugger::SprChanged = TRUE;
 	if (Debugger::Enabled)
-		Debugger::Update(DEBUG_MODE_CPU | DEBUG_MODE_PPU);
+		Debugger::Update(Debugger::Mode);
 #endif	/* ENABLE_DEBUGGER */
 	Scanline = FALSE;
 	EI.DbgOut(_T("Reset complete."));
@@ -1007,16 +1008,29 @@ DWORD	WINAPI	Thread (void *param)
 	if ((!DoStop) && (SoundEnabled))
 		APU::SoundON();	// don't turn on sound if we're only stepping 1 instruction
 
-	if ((PPU::SLnum == 240) && (FrameStep))
-	{	// if we save or load while paused, we want to end up here
-		// so we don't end up advancing another frame
-		GotStep = FALSE;
-		Movie::ShowFrame();
-		while (FrameStep && !GotStep && !DoStop)
-			Sleep(1);
+	// clear "soft start", unless we only started in order to wait until vblank
+	if (!(DoStop & STOPMODE_WAIT))
+		DoStop &= ~STOPMODE_SOFT;
+
+	if (PPU::SLnum == 240)
+	{
+		if (FrameStep)
+		{	// if we save or load while paused, we want to end up here
+			// so we don't end up advancing another frame
+			GotStep = FALSE;
+			Movie::ShowFrame();
+			while (FrameStep && !GotStep && !DoStop)
+				Sleep(1);
+		}
+		// if savestate was triggered, stop before we even started
+		if (DoStop & STOPMODE_WAIT)
+		{
+			DoStop &= ~STOPMODE_WAIT;
+			DoStop |= STOPMODE_NOW;
+		}
 	}
 	
-	while (!DoStop)
+	while (!(DoStop & STOPMODE_NOW))
 	{
 #ifdef	ENABLE_DEBUGGER
 		if (Debugger::Enabled)
@@ -1024,7 +1038,7 @@ DWORD	WINAPI	Thread (void *param)
 #endif	/* ENABLE_DEBUGGER */
 		CPU::ExecOp();
 #ifdef	ENABLE_DEBUGGER
-		if (Debugger::Enabled)
+		if (Debugger::Enabled && !(DoStop & STOPMODE_WAIT))	// don't update debugger while in wait mode
 			Debugger::Update(DEBUG_MODE_CPU);
 #endif	/* ENABLE_DEBUGGER */
 		if (Scanline)
@@ -1033,7 +1047,7 @@ DWORD	WINAPI	Thread (void *param)
 			if (PPU::SLnum == 240)
 			{
 #ifdef	ENABLE_DEBUGGER
-				if (Debugger::Enabled)
+				if (Debugger::Enabled && !(DoStop & STOPMODE_WAIT))	// don't update debugger while in wait mode
 					Debugger::Update(DEBUG_MODE_PPU);
 #endif	/* ENABLE_DEBUGGER */
 				if (FrameStep)	// if we pause during emulation
@@ -1043,13 +1057,26 @@ DWORD	WINAPI	Thread (void *param)
 					while (FrameStep && !GotStep && !DoStop)
 						Sleep(1);
 				}
+				// if savestate was triggered, stop here
+				if (DoStop & STOPMODE_WAIT)
+				{
+					DoStop &= ~STOPMODE_WAIT;
+					DoStop |= STOPMODE_NOW;
+#ifdef	ENABLE_DEBUGGER
+					// and immediately update the debugger if it's open
+					if (Debugger::Enabled)
+						Debugger::Update(Debugger::Mode);
+#endif	/* ENABLE_DEBUGGER */
+				}
 			}
 			else if (PPU::SLnum == 241)
 				Controllers::UpdateInput();
 		}
 	}
 
-	APU::SoundOFF();
+	// special case - do not silence audio during soft stop
+	if (!(DoStop & STOPMODE_SOFT))
+		APU::SoundOFF();
 	Movie::ShowFrame();
 
 #endif	/* CPU_BENCHMARK */
@@ -1058,7 +1085,7 @@ DWORD	WINAPI	Thread (void *param)
 	// If Stop was triggered from within the emulation thread
 	// then signal the message loop in the main thread
 	// to unacquire the controllers as soon as possible
-	if (DoStop == 2)
+	if (DoStop & STOPMODE_BREAK)
 		PostMessage(hMainWnd, WM_USER, 0, 0);
 	return 0;
 }
@@ -1087,6 +1114,51 @@ void	Stop (void)
 		Sleep(1);
 	}
 	Controllers::UnAcquire();
+}
+
+void	Pause (BOOL wait)
+{
+	if (!Running)
+		return;
+	if (wait)
+		DoStop = STOPMODE_SOFT | STOPMODE_WAIT;
+	else
+		DoStop = STOPMODE_SOFT | STOPMODE_NOW;
+	
+	while (Running)
+	{
+		ProcessMessages();
+		Sleep(1);
+	}
+}
+void	Resume (void)
+{
+	DWORD ThreadID;
+	if (Running)
+		return;
+	Running = TRUE;
+#ifdef	ENABLE_DEBUGGER
+	Debugger::Step = FALSE;
+#endif	/* ENABLE_DEBUGGER */
+	DoStop = STOPMODE_SOFT;
+	CloseHandle(CreateThread(NULL, 0, Thread, NULL, 0, &ThreadID));
+}
+void	SkipToVBlank (void)
+{
+	DWORD ThreadID;
+	if (Running)	// this should never happen
+		return;
+	Running = TRUE;
+#ifdef	ENABLE_DEBUGGER
+	Debugger::Step = FALSE;
+#endif	/* ENABLE_DEBUGGER */
+	DoStop = STOPMODE_SOFT | STOPMODE_WAIT;
+	CloseHandle(CreateThread(NULL, 0, Thread, NULL, 0, &ThreadID));
+	while (Running)
+	{
+		ProcessMessages();
+		Sleep(1);
+	}
 }
 
 void	MapperConfig (void)

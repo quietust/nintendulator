@@ -15,8 +15,15 @@ extern int PRGSizeROM, PRGSizeRAM, CHRSizeROM, CHRSizeRAM;
 extern int PRGMaskROM, PRGMaskRAM, CHRMaskROM, CHRMaskRAM;
 
 extern BOOL ROMLoaded;
-extern BOOL Running, Scanline;
-extern int DoStop;
+extern volatile BOOL Running;
+extern BOOL Scanline;
+
+#define	STOPMODE_NOW	0x01
+#define	STOPMODE_WAIT	0x02
+#define	STOPMODE_SOFT	0x04
+#define	STOPMODE_BREAK	0x08
+
+extern volatile int DoStop;
 extern BOOL GameGenie;
 extern BOOL SoundEnabled;
 extern BOOL AutoRun;
@@ -68,6 +75,10 @@ void	Reset (RESET_TYPE);
 
 void	Start (BOOL);
 void	Stop (void);
+
+void	Pause (BOOL);
+void	Resume (void);
+void	SkipToVBlank (void);
 
 void	UpdateInterface (void);
 void	LoadSettings (void);

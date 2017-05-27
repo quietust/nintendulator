@@ -850,7 +850,7 @@ __forceinline	void	IV_HLT (void)
 	EI.DbgOut(_T("HLT opcode $%02X encountered at $%04X; CPU locked"), Opcode, OpAddr);
 #ifndef	NSFPLAYER
 	MessageBox(hMainWnd, _T("Bad opcode, CPU locked"), _T("Nintendulator"), MB_OK);
-	NES::DoStop = 2;
+	NES::DoStop = STOPMODE_NOW | STOPMODE_BREAK;
 #endif	/* !NSFPLAYER */
 }
 __forceinline	void	IV_NOP (void)

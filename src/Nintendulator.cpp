@@ -138,9 +138,9 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 	{
 		// There are several places where the emulation thread can stop itself
 		// and those need to unacquire the controllers from the main thread
-		if (NES::DoStop == 2)
+		if (NES::DoStop & STOPMODE_BREAK)
 		{
-			NES::DoStop = 1;
+			NES::DoStop &= ~STOPMODE_BREAK;
 			Controllers::UnAcquire();
 		}
 
@@ -344,48 +344,36 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			NES::Stop();
 			break;
 		case ID_CPU_SOFTRESET:
-			NES::Stop();
+			NES::Pause(FALSE);
 			if (Movie::Mode)
 				Movie::Stop();
 			NES::Reset(RESET_SOFT);
 			if (running)
-				NES::Start(FALSE);
+				NES::Resume();
 			break;
 		case ID_CPU_HARDRESET:
-			NES::Stop();
+			NES::Pause(FALSE);
 			if (Movie::Mode)
 				Movie::Stop();
 			NES::Reset(RESET_HARD);
 			if (running)
-				NES::Start(FALSE);
+				NES::Resume();
 			break;
 		case ID_CPU_SAVESTATE:
-			NES::Stop();
-			while (PPU::SLnum != 240)
-			{
-				if (NES::FrameStep && !NES::GotStep)
-					MessageBox(hMainWnd, _T("Impossible: savestate is advancing to scanline 240 in framestep mode!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-				do
-				{
-#ifdef	ENABLE_DEBUGGER
-					if (Debugger::Enabled)
-						Debugger::AddInst();
-#endif	/* ENABLE_DEBUGGER */
-					CPU::ExecOp();
-				} while (!NES::Scanline);
-				NES::Scanline = FALSE;
-			}
-#ifdef	ENABLE_DEBUGGER
-			if (Debugger::Enabled)
-				Debugger::Update(DEBUG_MODE_CPU | DEBUG_MODE_PPU);
-#endif	/* ENABLE_DEBUGGER */
+			if (running)
+				NES::Pause(TRUE);
+			else	NES::SkipToVBlank();
 			States::SaveState();
-			if (running)	NES::Start(FALSE);
+			if (running)	NES::Resume();
 			break;
 		case ID_CPU_LOADSTATE:
-			NES::Stop();
+			NES::Pause(FALSE);
 			States::LoadState();
-			if (running)	NES::Start(FALSE);
+			if (running)	NES::Resume();
+#ifdef	ENABLE_DEBUGGER
+			else if (Debugger::Enabled)
+				Debugger::Update(Debugger::Mode);
+#endif	/* ENABLE_DEBUGGER */
 			break;
 		case ID_CPU_PREVSTATE:
 			States::SelSlot += 9;
@@ -702,9 +690,9 @@ BOOL	ProcessMessages (void)
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
 		// See message loop in WinMain for explanation on why this is here
-		if (NES::DoStop == 2)
+		if (NES::DoStop & STOPMODE_BREAK)
 		{
-			NES::DoStop = 1;
+			NES::DoStop &= ~STOPMODE_BREAK;
 			Controllers::UnAcquire();
 		}
 		if (MaskKeyboard || !TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
