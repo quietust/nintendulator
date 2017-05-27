@@ -235,10 +235,6 @@ void	Start (void)
 			return;
 		}
 
-		if (dbgVisible)
-			ShowWindow(hDebug, SW_MINIMIZE);
-		SetWindowLongPtr(hMainWnd, GWL_STYLE, WS_POPUP);
-		SetMenu(hMainWnd, NULL);
 		if (FAILED(DirectDraw->SetCooperativeLevel(hMainWnd, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_NOWINDOWCHANGES)))
 		{
 			Stop();
@@ -247,6 +243,8 @@ void	Start (void)
 			Start();
 			return;
 		}
+		if (dbgVisible)
+			ShowWindow(hDebug, SW_MINIMIZE);
 		while (1)
 		{
 			FullscreenBorder = (widths[i] - 512) / 2;
@@ -267,6 +265,8 @@ void	Start (void)
 			}
 			else	break;
 		}
+		SetWindowLongPtr(hMainWnd, GWL_STYLE, WS_POPUP);
+		SetMenu(hMainWnd, NULL);
 		ShowWindow(hMainWnd, SW_MAXIMIZE);
 	}
 	else 
@@ -409,6 +409,7 @@ void	Stop (void)
 	}
 	if (Fullscreen)
 	{
+		DirectDraw->RestoreDisplayMode();
 		SetWindowLongPtr(hMainWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
 		SetMenu(hMainWnd, hMenu);
 		ShowWindow(hMainWnd, SW_RESTORE);
@@ -707,11 +708,15 @@ void	Draw1x (void)
 
 void	Update (void)
 {
+	// ensure secondary surface exists
 	if (!SecondarySurf)
 		return;
+	// if it got lost, try to restore it
+	if (SecondarySurf->IsLost() == DDERR_SURFACELOST)
+		SecondarySurf->Restore();
 	if (InError)
 		return;
-	Try(SecondarySurf->Lock(NULL, &SurfDesc, DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY, NULL), _T("Failed to lock secondary surface"));
+	Try(SecondarySurf->Lock(NULL, &SurfDesc, DDLOCK_WAIT | DDLOCK_NOSYSLOCK | DDLOCK_WRITEONLY | DDLOCK_SURFACEMEMORYPTR, NULL), _T("Failed to lock secondary surface"));
 
 	if (Fullscreen || Scanlines)
 		Draw2x();
@@ -723,6 +728,13 @@ void	Update (void)
 
 void	Repaint (void)
 {
+	// ensure primary surface exists
+	if (!PrimarySurf)
+		return;
+	// if it got lost, try to restore it
+	if (PrimarySurf->IsLost() == DDERR_SURFACELOST)
+		PrimarySurf->Restore();
+	// just to be safe, make sure the secondary surface exists too - this is only called by Repaint
 	if (!SecondarySurf)
 		return;
 	if (InError)
@@ -730,7 +742,7 @@ void	Repaint (void)
 
 	if (Fullscreen)
 	{
-		// can't use Try() here, because a failure will revert it to Windowed mode and just make it fail again
+		// can't use Try() here, because a failure will make it retry in Windowed mode, where Flip() isn't allowed
 		if (SUCCEEDED(PrimarySurf->Flip(NULL, DDFLIP_WAIT)))
 			return;
 		Stop();
@@ -738,16 +750,14 @@ void	Repaint (void)
 		Fullscreen = FALSE;
 		Start();
 	}
+	// translate window position appropriately
 	RECT rect;
 	POINT pt = {0, 0};
 	GetClientRect(hMainWnd, &rect);
 	if ((rect.right == 0) || (rect.bottom == 0))
 		return;
 	ClientToScreen(hMainWnd, &pt);
-	rect.left += pt.x;
-	rect.right += pt.x;
-	rect.top += pt.y;
-	rect.bottom += pt.y;
+	OffsetRect(&rect, pt.x, pt.y);
 	Try(PrimarySurf->Blt(&rect, SecondarySurf, NULL, DDBLT_WAIT, NULL), _T("Failed to blit to primary surface"));
 }
 
