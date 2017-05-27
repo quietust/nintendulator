@@ -257,7 +257,7 @@ void	Start (void)
 				{
 					// not even 640x480 worked!
 					Stop();
-					MessageBox(hMainWnd, _T("Failed to set display mode! Reverting to Windowed mode..."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
+					MessageBox(hMainWnd, _T("No fullscreen resolutions are supported on your display device! Reverting to Windowed mode..."), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 					Fullscreen = FALSE;
 					// drop to windowed
 					Start();
