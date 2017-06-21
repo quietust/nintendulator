@@ -23,6 +23,7 @@
 namespace CPU
 {
 FCPURead	ReadHandler[0x10];
+FCPURead	ReadHandlerDebug[0x10];
 FCPUWrite	WriteHandler[0x10];
 unsigned char *	PRGPointer[0x10];
 BOOL	Readable[0x10], Writable[0x10];
@@ -308,6 +309,11 @@ int	Load (FILE *in, int version_id)
 	return clen;
 }
 #endif	/* !NSFPLAYER */
+
+int	MAPINT	ReadUnsafe (int Bank, int Addr)
+{
+	return 0xFF;
+}
 
 int	MAPINT	ReadRAM (int Bank, int Addr)
 {

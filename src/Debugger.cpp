@@ -346,19 +346,13 @@ void	StopLogging (void)
 unsigned char DebugMemCPU (unsigned short Addr)
 {
 	int Bank = (Addr >> 12) & 0xF;
-	FCPURead Read = CPU::ReadHandler[Bank];
-	if ((Read == CPU::ReadRAM) || (Read == CPU::ReadPRG) || (Read == Genie::Read) || (Read == Genie::Read1) || (Read == Genie::Read2) || (Read == Genie::Read3))
-		return (unsigned char)Read(Bank, Addr & 0xFFF);
-	else	return 0xFF;
+	return CPU::ReadHandlerDebug[Bank](Bank, Addr & 0xFFF);
 }
 
 unsigned char DebugMemPPU (unsigned short Addr)
 {
 	int Bank = (Addr >> 10) & 0xF;
-	FPPURead Read = PPU::ReadHandler[Bank];
-	if (Read == PPU::BusRead)
-		return (unsigned char)Read(Bank, Addr & 0x3FF);
-	else	return 0xFF;
+	return PPU::ReadHandlerDebug[Bank](Bank, Addr & 0x3FF);
 }
 
 BOOL IsBreakpoint (unsigned char opcode, unsigned short address, BOOL force_read)

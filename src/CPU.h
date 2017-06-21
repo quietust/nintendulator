@@ -29,6 +29,7 @@ namespace CPU
 union SplitReg { unsigned short Full; unsigned char Segment[2]; };
 
 extern FCPURead ReadHandler[0x10];
+extern FCPURead ReadHandlerDebug[0x10];
 extern FCPUWrite WriteHandler[0x10];
 extern unsigned char *PRGPointer[0x10];
 extern BOOL Readable[0x10], Writable[0x10];
@@ -70,6 +71,7 @@ int	Save (FILE *);
 int	Load (FILE *, int ver);
 #endif	/* !NSFPLAYER */
 void	ExecOp (void);
+int	MAPINT	ReadUnsafe (int, int);
 int	MAPINT	ReadRAM (int, int);
 void	MAPINT	WriteRAM (int, int, int);
 int	MAPINT	ReadPRG (int, int);

@@ -1,5 +1,5 @@
 /* Nintendulator Mapper Interface
- * Copyright (C) 2002-2011 QMT Productions
+ * Copyright (C) 2002-2017 QMT Productions
  *
  * $URL$
  * $Id$
@@ -7,12 +7,12 @@
 
 #pragma once
 
-/* Mapper Interface version (3.8) */
+/* Mapper Interface version (3.9) */
 
 #ifdef	UNICODE
-#define	CurrentMapperInterface	0x80030008
+#define	CurrentMapperInterface	0x80030009
 #else	/* !UNICODE */
-#define	CurrentMapperInterface	0x00030008
+#define	CurrentMapperInterface	0x00030009
 #endif	/* UNICODE */
 
 /* Function types */
@@ -31,13 +31,21 @@ struct	EmulatorInterface
 {
 /* Functions for managing read/write handlers */
 	void		(MAPINT *SetCPUReadHandler)	(int,FCPURead);
-	void		(MAPINT *SetCPUWriteHandler)	(int,FCPUWrite);
 	FCPURead	(MAPINT *GetCPUReadHandler)	(int);
+
+	void		(MAPINT *SetCPUReadHandlerDebug)(int,FCPURead);
+	FCPURead	(MAPINT *GetCPUReadHandlerDebug)(int);
+
+	void		(MAPINT *SetCPUWriteHandler)	(int,FCPUWrite);
 	FCPUWrite	(MAPINT *GetCPUWriteHandler)	(int);
 
 	void		(MAPINT *SetPPUReadHandler)	(int,FPPURead);
-	void		(MAPINT *SetPPUWriteHandler)	(int,FPPUWrite);
 	FPPURead	(MAPINT *GetPPUReadHandler)	(int);
+
+	void		(MAPINT *SetPPUReadHandlerDebug)(int,FPPURead);
+	FPPURead	(MAPINT *GetPPUReadHandlerDebug)(int);
+
+	void		(MAPINT *SetPPUWriteHandler)	(int,FPPUWrite);
 	FPPUWrite	(MAPINT *GetPPUWriteHandler)	(int);
 
 /* Functions for mapping PRG */
@@ -46,6 +54,7 @@ struct	EmulatorInterface
 	void		(MAPINT *SetPRG_ROM16)		(int,int);
 	void		(MAPINT *SetPRG_ROM32)		(int,int);
 	int		(MAPINT *GetPRG_ROM4)		(int);		/* -1 if no ROM mapped */
+
 	void		(MAPINT *SetPRG_RAM4)		(int,int);
 	void		(MAPINT *SetPRG_RAM8)		(int,int);
 	void		(MAPINT *SetPRG_RAM16)		(int,int);

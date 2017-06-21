@@ -372,15 +372,12 @@ void	CloseFile (void)
 	SRAM_Size = 0;
 	for (i = 0; i < 16; i++)
 	{
-		CPU::PRGPointer[i] = PRG_RAM[0];
-		CPU::ReadHandler[i] = CPU::ReadPRG;
-		CPU::WriteHandler[i] = CPU::WritePRG;
-		CPU::Readable[i] = FALSE;
-		CPU::Writable[i] = FALSE;
-		PPU::CHRPointer[i] = CHR_RAM[0];
-		PPU::ReadHandler[i] = PPU::BusRead;
-		PPU::WriteHandler[i] = PPU::BusWriteCHR;
-		PPU::Writable[i] = FALSE;
+		EI.SetCPUReadHandler(i, CPU::ReadPRG);
+		EI.SetCPUWriteHandler(i, CPU::WritePRG);
+		EI.SetPRG_OB4(i);
+		EI.SetPPUReadHandler(i, PPU::BusRead);
+		EI.SetPPUWriteHandler(i, PPU::BusWriteCHR);
+		EI.SetCHR_OB1(i);
 	}
 }
 
@@ -874,16 +871,14 @@ void	InitHandlers (void)
 	int i;
 	for (i = 0x0; i < 0x10; i++)
 	{
-		CPU::ReadHandler[i] = CPU::ReadPRG;
-		CPU::WriteHandler[i] = CPU::WritePRG;
-		CPU::Readable[i] = FALSE;
-		CPU::Writable[i] = FALSE;
-		CPU::PRGPointer[i] = NULL;
+		EI.SetCPUReadHandler(i, CPU::ReadPRG);
+		EI.SetCPUWriteHandler(i, CPU::WritePRG);
+		EI.SetPRG_OB4(i);
 	}
-	CPU::ReadHandler[0] = CPU::ReadRAM;	CPU::WriteHandler[0] = CPU::WriteRAM;
-	CPU::ReadHandler[1] = CPU::ReadRAM;	CPU::WriteHandler[1] = CPU::WriteRAM;
-	CPU::ReadHandler[2] = PPU::IntRead;	CPU::WriteHandler[2] = PPU::IntWrite;
-	CPU::ReadHandler[3] = PPU::IntRead;	CPU::WriteHandler[3] = PPU::IntWrite;
+	EI.SetCPUReadHandler(0, CPU::ReadRAM);	EI.SetCPUWriteHandler(0, CPU::WriteRAM);
+	EI.SetCPUReadHandler(1, CPU::ReadRAM);	EI.SetCPUWriteHandler(1, CPU::WriteRAM);
+	EI.SetCPUReadHandler(2, PPU::IntRead);	EI.SetCPUWriteHandler(2, PPU::IntWrite);
+	EI.SetCPUReadHandler(3, PPU::IntRead);	EI.SetCPUWriteHandler(3, PPU::IntWrite);
 	// special check for Vs. Unisystem ROMs with NES 2.0 headers to apply a special PPU
 	if ((RI.ROMType == ROM_INES) && (RI.INES_Flags & 0x10) && (RI.INES_Version == 2))
 	{
@@ -891,8 +886,8 @@ void	InitHandlers (void)
 		// only 5 of the special PPUs need this behavior
 		if ((VsPPU >= 0x8) && (VsPPU <= 0xC))
 		{
-			CPU::ReadHandler[2] = PPU::IntReadVs;	CPU::WriteHandler[2] = PPU::IntWriteVs;
-			CPU::ReadHandler[3] = PPU::IntReadVs;	CPU::WriteHandler[3] = PPU::IntWriteVs;
+			EI.SetCPUReadHandler(2, PPU::IntReadVs);	EI.SetCPUWriteHandler(2, PPU::IntWriteVs);
+			EI.SetCPUReadHandler(3, PPU::IntReadVs);	EI.SetCPUWriteHandler(3, PPU::IntWriteVs);
 			switch (VsPPU)
 			{
 			case 0x8:	PPU::VsSecurity = 0x1B;	break;
@@ -904,22 +899,20 @@ void	InitHandlers (void)
 		}
 	}
 
-	CPU::ReadHandler[4] = APU::IntRead;	CPU::WriteHandler[4] = APU::IntWrite;
+	EI.SetCPUReadHandler(4, APU::IntRead);	EI.SetCPUWriteHandler(4, APU::IntWrite);
 	if (!GameGenie)
 		Genie::CodeStat = 0;
 	for (i = 0x0; i < 0x8; i++)
 	{
-		PPU::ReadHandler[i] = PPU::BusRead;
-		PPU::WriteHandler[i] = PPU::BusWriteCHR;
-		PPU::CHRPointer[i] = PPU::OpenBus;
-		PPU::Writable[i] = FALSE;
+		EI.SetPPUReadHandler(i, PPU::BusRead);
+		EI.SetPPUWriteHandler(i, PPU::BusWriteCHR);
+		EI.SetCHR_OB1(i);
 	}
 	for (i = 0x8; i < 0x10; i++)
 	{
-		PPU::ReadHandler[i] = PPU::BusRead;
-		PPU::WriteHandler[i] = PPU::BusWriteNT;
-		PPU::CHRPointer[i] = PPU::OpenBus;
-		PPU::Writable[i] = FALSE;
+		EI.SetPPUReadHandler(i, PPU::BusRead);
+		EI.SetPPUWriteHandler(i, PPU::BusWriteNT);
+		EI.SetCHR_OB1(i);
 	}
 }
 

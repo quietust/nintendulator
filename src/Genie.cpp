@@ -244,7 +244,7 @@ void	MAPINT	Write (int Bank, int Addr, int Val)
 				PPU::Writable[i] = FALSE;
 				PPU::CHRPointer[i] = PPU::OpenBus;
 			}
-			CPU::WriteHandler[0x8] = CPU::WritePRG;	// and the PRG write handler for $8000-$8FFF
+			EI.SetCPUWriteHandler(0x8, CPU::WritePRG);	// and the PRG write handler for $8000-$8FFF
 
 			Init();	// map in the appropriate [optimized] read handlers
 			MI = MI2;	// swap in the REAL mapper
@@ -297,7 +297,7 @@ void	Reset (void)
 		CPU::Readable[i] = TRUE;
 		CPU::PRGPointer[i] = PRG;
 	}
-	CPU::WriteHandler[0x8] = Write;
+	EI.SetCPUWriteHandler(0x8, Write);
 	for (i = 0; i < 8; i++)
 	{
 		PPU::Writable[i] = FALSE;
@@ -322,20 +322,20 @@ void	Init (void)
 	if (CodeStat & 0x10)
 	{
 		if (IsCode[Code1B - 8] > 1)
-			CPU::ReadHandler[Code1B] = Read;
-		else 	CPU::ReadHandler[Code1B] = Read1;
+			EI.SetCPUReadHandler(Code1B, Read);
+		else 	EI.SetCPUReadHandler(Code1B, Read1);
 	}
 	if (CodeStat & 0x20)
 	{
 		if (IsCode[Code2B - 8] > 1)
-			CPU::ReadHandler[Code2B] = Read;
-		else 	CPU::ReadHandler[Code2B] = Read2;
+			EI.SetCPUReadHandler(Code2B, Read);
+		else 	EI.SetCPUReadHandler(Code2B, Read2);
 	}
 	if (CodeStat & 0x40)
 	{
 		if (IsCode[Code3B - 8] > 1)
-			CPU::ReadHandler[Code3B] = Read;
-		else 	CPU::ReadHandler[Code3B] = Read3;
+			EI.SetCPUReadHandler(Code3B, Read);
+		else 	EI.SetCPUReadHandler(Code3B, Read3);
 	}
 }
 

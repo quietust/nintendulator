@@ -107,14 +107,13 @@ void	Reset (void)
 	int i;
 	for (i = 0x0; i < 0x10; i++)
 	{
-		CPU::ReadHandler[i] = CPU::ReadPRG;
-		CPU::WriteHandler[i] = CPU::WritePRG;
-		CPU::Readable[i] = FALSE;
-		CPU::Writable[i] = FALSE;
+		EI.SetCPUReadHandler(i, CPU::ReadPRG);
+		EI.SetCPUWriteHandler(i, CPU::WritePRG);
+		EI.SetPRG_OB4(i);
 	}
-	CPU::ReadHandler[0] = CPU::ReadRAM;	CPU::WriteHandler[0] = CPU::WriteRAM;
-	CPU::ReadHandler[1] = CPU::ReadRAM;	CPU::WriteHandler[1] = CPU::WriteRAM;
-	CPU::ReadHandler[4] = APU::IntRead;	CPU::WriteHandler[4] = APU::IntWrite;
+	EI.SetCPUReadHandler(0, CPU::ReadRAM);	EI.SetCPUWriteHandler(0, CPU::WriteRAM);
+	EI.SetCPUReadHandler(1, CPU::ReadRAM);	EI.SetCPUWriteHandler(1, CPU::WriteRAM);
+	EI.SetCPUReadHandler(4, APU::IntRead);	EI.SetCPUWriteHandler(4, APU::IntWrite);
 
 	CPU::PowerOn();
 	APU::PowerOn();
@@ -137,10 +136,10 @@ void about(HWND hwndParent)
 void	init (void)
 {
 	NES::ROMLoaded = FALSE;
+	MapperInterface::Init();
 	APU::Init();
 	APU::Start();
 	APU::SetRegion();
-	MapperInterface::Init();
 }
 
 void	quit (void)

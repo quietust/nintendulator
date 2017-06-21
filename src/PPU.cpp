@@ -17,6 +17,7 @@
 namespace PPU
 {
 FPPURead	ReadHandler[0x10];
+FPPURead	ReadHandlerDebug[0x10];
 FPPUWrite	WriteHandler[0x10];
 int SLStartNMI;
 int SLEndFrame;
@@ -162,6 +163,11 @@ const	unsigned long	CHRHiBit[16] =
 
 void	(MAPINT *PPUCycle)		(int,int,int,int);
 void	MAPINT	NoPPUCycle		(int Addr, int Scanline, int Cycle, int IsRendering)	{ }
+
+int	MAPINT	ReadUnsafe (int Bank, int Addr)
+{
+	return 0;
+}
 
 int	MAPINT	BusRead (int Bank, int Addr)
 {

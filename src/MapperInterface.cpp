@@ -18,6 +18,7 @@
 # include "CPU.h"
 # include "PPU.h"
 # include "GFX.h"
+# include "Genie.h"
 # include "Debugger.h"
 #endif	/* NSFPLAYER */
 
@@ -50,21 +51,72 @@ struct	MapperDLL
 
 /******************************************************************************/
 
-void	MAPINT	SetCPUWriteHandler (int Page, FCPUWrite New)
+void	MAPINT	SetCPUReadHandlerDebug (int Page, FCPURead New)
 {
-	CPU::WriteHandler[Page] = New;
+	CPU::ReadHandlerDebug[Page] = New;
 }
+FCPURead	MAPINT	GetCPUReadHandlerDebug (int Page)
+{
+	return CPU::ReadHandlerDebug[Page];
+}
+
 void	MAPINT	SetCPUReadHandler (int Page, FCPURead New)
 {
 	CPU::ReadHandler[Page] = New;
+	if ((New == CPU::ReadRAM) || (New == CPU::ReadPRG)
+#ifndef	NSFPLAYER
+		|| (New == Genie::Read) || (New == Genie::Read1) || (New == Genie::Read2) || (New == Genie::Read3)
+#endif	/* !NSFPLAYER */
+	)
+	if ((New == CPU::ReadRAM) || (New == CPU::ReadPRG))
+		SetCPUReadHandlerDebug(Page, New);
+	else	SetCPUReadHandlerDebug(Page, CPU::ReadUnsafe);
+}
+FCPURead	MAPINT	GetCPUReadHandler (int Page)
+{
+	return CPU::ReadHandler[Page];
+}
+
+void	MAPINT	SetCPUWriteHandler (int Page, FCPUWrite New)
+{
+	CPU::WriteHandler[Page] = New;
 }
 FCPUWrite	MAPINT	GetCPUWriteHandler (int Page)
 {
 	return CPU::WriteHandler[Page];
 }
-FCPURead	MAPINT	GetCPUReadHandler (int Page)
+
+void	MAPINT	SetPPUReadHandlerDebug (int Page, FPPURead New)
 {
-	return CPU::ReadHandler[Page];
+#ifndef	NSFPLAYER
+	PPU::ReadHandlerDebug[Page] = New;
+#endif	/* !NSFPLAYER */
+}
+FPPURead	MAPINT	GetPPUReadHandlerDebug (int Page)
+{
+#ifndef	NSFPLAYER
+	return PPU::ReadHandlerDebug[Page];
+#else	/* NSFPLAYER */
+	return NULL;
+#endif	/* !NSFPLAYER */
+}
+
+void	MAPINT	SetPPUReadHandler (int Page, FPPURead New)
+{
+#ifndef	NSFPLAYER
+	PPU::ReadHandler[Page] = New;
+	if (New == PPU::BusRead)
+		SetPPUReadHandlerDebug(Page, New);
+	else	SetPPUReadHandlerDebug(Page, PPU::ReadUnsafe);
+#endif	/* !NSFPLAYER */
+}
+FPPURead	MAPINT	GetPPUReadHandler (int Page)
+{
+#ifndef	NSFPLAYER
+	return PPU::ReadHandler[Page];
+#else	/* NSFPLAYER */
+	return NULL;
+#endif	/* !NSFPLAYER */
 }
 
 void	MAPINT	SetPPUWriteHandler (int Page, FPPUWrite New)
@@ -73,24 +125,10 @@ void	MAPINT	SetPPUWriteHandler (int Page, FPPUWrite New)
 	PPU::WriteHandler[Page] = New;
 #endif	/* !NSFPLAYER */
 }
-void	MAPINT	SetPPUReadHandler (int Page, FPPURead New)
-{
-#ifndef	NSFPLAYER
-	PPU::ReadHandler[Page] = New;
-#endif	/* !NSFPLAYER */
-}
 FPPUWrite	MAPINT	GetPPUWriteHandler (int Page)
 {
 #ifndef	NSFPLAYER
 	return PPU::WriteHandler[Page];
-#else	/* NSFPLAYER */
-	return NULL;
-#endif	/* !NSFPLAYER */
-}
-FPPURead	MAPINT	GetPPUReadHandler (int Page)
-{
-#ifndef	NSFPLAYER
-	return PPU::ReadHandler[Page];
 #else	/* NSFPLAYER */
 	return NULL;
 #endif	/* !NSFPLAYER */
@@ -558,14 +596,18 @@ void	Init (void)
 #endif	/* !NSFPLAYER */
 	ZeroMemory(&EI, sizeof(EI));
 	ZeroMemory(&RI, sizeof(RI));
-	EI.SetCPUWriteHandler = SetCPUWriteHandler;
 	EI.SetCPUReadHandler = SetCPUReadHandler;
-	EI.GetCPUWriteHandler = GetCPUWriteHandler;
 	EI.GetCPUReadHandler = GetCPUReadHandler;
-	EI.SetPPUWriteHandler = SetPPUWriteHandler;
+	EI.SetCPUReadHandlerDebug = SetCPUReadHandlerDebug;
+	EI.GetCPUReadHandlerDebug = GetCPUReadHandlerDebug;
+	EI.SetCPUWriteHandler = SetCPUWriteHandler;
+	EI.GetCPUWriteHandler = GetCPUWriteHandler;
 	EI.SetPPUReadHandler = SetPPUReadHandler;
-	EI.GetPPUWriteHandler = GetPPUWriteHandler;
 	EI.GetPPUReadHandler = GetPPUReadHandler;
+	EI.SetPPUReadHandlerDebug = SetPPUReadHandlerDebug;
+	EI.GetPPUReadHandlerDebug = GetPPUReadHandlerDebug;
+	EI.SetPPUWriteHandler = SetPPUWriteHandler;
+	EI.GetPPUWriteHandler = GetPPUWriteHandler;
 	EI.SetPRG_ROM4 = SetPRG_ROM4;
 	EI.SetPRG_ROM8 = SetPRG_ROM8;
 	EI.SetPRG_ROM16 = SetPRG_ROM16;

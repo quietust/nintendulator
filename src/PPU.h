@@ -10,6 +10,7 @@
 namespace PPU
 {
 extern FPPURead	ReadHandler[0x10];
+extern FPPURead	ReadHandlerDebug[0x10];
 extern FPPUWrite	WriteHandler[0x10];
 extern int Clockticks;
 extern int SLnum;
@@ -46,6 +47,7 @@ void	MAPINT	IntWriteVs (int, int, int);
 void	Run (void);
 void	GetGFXPtr (void);
 
+int	MAPINT	ReadUnsafe (int, int);
 int	MAPINT	BusRead (int, int);
 void	MAPINT	BusWriteCHR (int, int, int);
 void	MAPINT	BusWriteNT (int, int, int);
