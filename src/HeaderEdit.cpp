@@ -301,7 +301,7 @@ INT_PTR CALLBACK	dlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			header[7] |= (n & 0x0F0) << 0;
 			if (isExtended)
 			{
-				header[8] &= 0x0F;
+				header[8] &= 0xF0;
 				header[8] |= (n & 0xF00) >> 8;
 			}
 			UpdateDialog(hDlg);
