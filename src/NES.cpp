@@ -219,7 +219,7 @@ int	FDSLoad (FILE *in, int version_id)
 	while (n > 0)
 	{
 		readLong(data);
-		PRG_ROM[(data >> 12) & (MAX_PRGROM_MASK >> 1)][data & 0xFFF] = (unsigned char)(data >> 24);
+		PRG_ROM[(data >> 12) & (MAX_PRGROM_MASK >> 1) & 0xFFF][data & 0xFFF] = (unsigned char)(data >> 24);
 		n--;
 	}
 	return clen;
