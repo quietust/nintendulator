@@ -394,6 +394,8 @@ void	Stop (void)
 {
 	if (Clipper)
 	{
+		if (PrimarySurf)
+			PrimarySurf->SetClipper(NULL);
 		Clipper->Release();
 		Clipper = NULL;
 	}
