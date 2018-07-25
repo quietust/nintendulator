@@ -81,6 +81,9 @@ void	Destroy (void)
 {
 	if (ROMLoaded)
 		CloseFile();
+
+	GFX::Stop();
+
 	SaveSettings();
 #ifdef	ENABLE_DEBUGGER
 	Debugger::Destroy();
@@ -1099,7 +1102,7 @@ void	Stop (void)
 {
 	if (!Running)
 		return;
-	DoStop = 1;
+	DoStop = STOPMODE_NOW;
 	
 	while (Running)
 	{

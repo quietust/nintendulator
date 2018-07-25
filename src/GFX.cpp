@@ -150,22 +150,11 @@ void	Init (void)
 		return;
 	}
 #endif
-	if (FAILED(DirectDrawCreateEx(NULL, (LPVOID *)&DirectDraw, IID_IDirectDraw7, NULL)))
-	{
-		Destroy();
-		MessageBox(hMainWnd, _T("Failed to initialize DirectDraw 7"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
-		return;
-	}
 }
 
 void	Destroy (void)
 {
 	Stop();
-	if (DirectDraw)
-	{
-		DirectDraw->Release();
-		DirectDraw = NULL;
-	}
 #if (_MSC_VER >= 1400)
 	DirectDrawCreateEx = NULL;
 	if (dDrawInst)
@@ -198,8 +187,11 @@ void	SetRegion (void)
 
 void	Start (void)
 {
-	if (!DirectDraw)
+	if (FAILED(DirectDrawCreateEx(NULL, (LPVOID *)&DirectDraw, IID_IDirectDraw7, NULL)))
+	{
+		MessageBox(hMainWnd, _T("Failed to initialize DirectDraw 7"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return;
+	}
 	if (Fullscreen)
 	{
 		// Examine the current screen resolution and try to figure out the current aspect ratio
@@ -392,6 +384,8 @@ void	Start (void)
 
 void	Stop (void)
 {
+	if (!DirectDraw)
+		return;
 	if (Clipper)
 	{
 		if (PrimarySurf)
@@ -418,6 +412,11 @@ void	Stop (void)
 		if (dbgVisible)
 			ShowWindow(hDebug, SW_RESTORE);
 		NES::UpdateInterface();
+	}
+	if (DirectDraw)
+	{
+		DirectDraw->Release();
+		DirectDraw = NULL;
 	}
 }
 

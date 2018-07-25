@@ -22,6 +22,7 @@ extern BOOL Scanline;
 #define	STOPMODE_WAIT	0x02
 #define	STOPMODE_SOFT	0x04
 #define	STOPMODE_BREAK	0x08
+#define	STOPMODE_QUIT	0x10
 
 extern volatile int DoStop;
 extern BOOL GameGenie;

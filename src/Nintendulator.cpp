@@ -144,6 +144,17 @@ int APIENTRY	_tWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 			Controllers::UnAcquire();
 		}
 
+		// If WM_CLOSE came in during fullscreen emulation, shut down Graphics
+		// here to revert to Windowed mode, then re-post WM_CLOSE and let the
+		// program exit. Without this, we'd be destroying the window out from
+		// underneath DirectDraw, which causes it to crash.
+		if (NES::DoStop & STOPMODE_QUIT)
+		{
+			NES::DoStop &= ~STOPMODE_QUIT;
+			GFX::Stop();
+			PostMessage(hMainWnd, WM_CLOSE, 0, 0);
+		}
+
 		// The proper way to do this is to maintain a list of modeless dialog handles and check each of them here
 		// or to keep one handle and have each modeless dialog set that handle whenever they get focus (KB 71450)
 		// The problem is that mapper DLLs have no way of (un)registering any modeless dialogs they create
@@ -608,7 +619,11 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_CLOSE:
 		NES::Stop();
-		NES::Destroy();
+		// Cannot safely shutdown DirectDraw while in fullscreen mode,
+		// so defer it to the message loop
+		if (GFX::DirectDraw && GFX::Fullscreen)
+			NES::DoStop |= STOPMODE_QUIT;
+		else	NES::Destroy();
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
