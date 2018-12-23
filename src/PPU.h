@@ -12,6 +12,7 @@ namespace PPU
 extern FPPURead	ReadHandler[0x10];
 extern FPPURead	ReadHandlerDebug[0x10];
 extern FPPUWrite	WriteHandler[0x10];
+extern int SLEndFrame;
 extern int Clockticks;
 extern int SLnum;
 extern unsigned char *CHRPointer[0x10];

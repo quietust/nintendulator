@@ -321,6 +321,7 @@
 #define IDC_DEBUG_BANK_PPU3C            1285
 #define IDC_PAL_PC10_ALT                1286
 #define IDC_PAL_PC10_COMPAT             1287
+#define IDC_DEBUG_TIMING_PPU            1288
 #define ID_FILE_OPEN                    32768
 #define ID_FILE_CLOSE                   32769
 #define ID_FILE_HEADER                  32770
@@ -390,7 +391,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        154
 #define _APS_NEXT_COMMAND_VALUE         32828
-#define _APS_NEXT_CONTROL_VALUE         1288
+#define _APS_NEXT_CONTROL_VALUE         1289
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

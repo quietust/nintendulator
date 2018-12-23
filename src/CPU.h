@@ -42,6 +42,7 @@ extern BOOL EnableDMA;
 extern unsigned char DMAPage;
 #ifdef	ENABLE_DEBUGGER
 extern unsigned char GotInterrupt;
+extern unsigned long Cycles;
 #endif	/* ENABLE_DEBUGGER */
 
 extern unsigned char A, X, Y, SP, P;

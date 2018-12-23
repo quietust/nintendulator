@@ -36,6 +36,7 @@ BOOL EnableDMA;
 unsigned char DMAPage;
 #ifdef	ENABLE_DEBUGGER
 unsigned char GotInterrupt;
+unsigned long Cycles;
 #endif	/* ENABLE_DEBUGGER */
 
 unsigned char A, X, Y, SP, P;
@@ -74,6 +75,9 @@ inline	void	RunCycle (void)
 #endif	/* !NSFPLAYER */
 	LastIRQ = WantIRQ && !FI;
 	CPUCycle();
+#ifdef	ENABLE_DEBUGGER
+	Cycles++;
+#endif
 #ifndef	CPU_BENCHMARK
 #ifndef	NSFPLAYER
 	PPU::Run();
@@ -253,6 +257,9 @@ void	PowerOn (void)
 	CalcAddr = 0;
 	SplitFlags();
 	GetHandlers();
+#ifdef	ENABLE_DEBUGGER
+	Cycles = 0;
+#endif	/* ENABLE_DEBUGGER */
 }
 
 void	Reset (void)

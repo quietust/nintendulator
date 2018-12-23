@@ -604,13 +604,13 @@ bool	UpdateCPU (void)
 	CheckDlgButton(CPUWnd, IDC_DEBUG_IRQ_FRAME, (CPU::WantIRQ & IRQ_FRAME) ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(CPUWnd, IDC_DEBUG_IRQ_DEBUG, (CPU::WantIRQ & IRQ_DEBUG) ? BST_CHECKED : BST_UNCHECKED);
 
+	SetDlgItemInt(CPUWnd, IDC_DEBUG_TIMING_CPU, CPU::Cycles, FALSE);
+
 	SetDlgItemInt(CPUWnd, IDC_DEBUG_TIMING_SCANLINE, PPU::SLnum, TRUE);
+	SetDlgItemInt(CPUWnd, IDC_DEBUG_TIMING_PPU, PPU::Clockticks, TRUE);
 
 	_stprintf(tps, _T("%04X"), PPU::VRAMAddr);
 	SetDlgItemText(CPUWnd, IDC_DEBUG_TIMING_VRAM, tps);
-
-	_stprintf(tps, _T("%i/%.3f"), PPU::Clockticks, PPU::Clockticks / (PPU::PALRatio ? 3.2 : 3.0));
-	SetDlgItemText(CPUWnd, IDC_DEBUG_TIMING_CPU, tps);
 
 	for (i = 0; i < 16; i++)
 	{
@@ -830,7 +830,7 @@ void	AddInst (void)
 		DecodeInstruction(Addr, tps, NULL, FALSE);
 		fwrite(tps, 1, strlen(tps), LogFile);
 		CPU::JoinFlags();
-		sprintf(tps, "  A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%3i SL:%i\n", CPU::A, CPU::X, CPU::Y, CPU::P, CPU::SP, PPU::Clockticks, PPU::SLnum);
+		sprintf(tps, "  A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:%3i,%3i CYC:%i\n", CPU::A, CPU::X, CPU::Y, CPU::P, CPU::SP, PPU::Clockticks, PPU::SLnum + ((PPU::SLnum < 0) ? PPU::SLEndFrame : 0), CPU::Cycles);
 		fwrite(tps, 1, strlen(tps), LogFile);
 	}
 }
