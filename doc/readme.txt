@@ -30,6 +30,118 @@ hardware as well.
 Version History
 ---------------
 
+0.980
+- Overall:
+   Adjusted code to use C++ memory allocation routines where possible.
+   Added support for 64-bit builds.
+   Various code cleanup and bugfixes.
+- APU:
+   Added separate logic for power-on and soft-reset events.
+   Updated various counters to more closely match actual hardware
+      behavior.
+   Upgraded audio playback code to use DirectSound 8.0.
+- CPU:
+   Improved DMA emulation logic to properly handle both Sprite and PCM
+      operations happening concurrently.
+   Removed all inline assembly for 64-bit support.
+   Fixed interrupt timing for branch instructions without page crosses.
+   Added a configuration setting to suppress Debug statements for
+      invalid opcodes.
+   Added support for undefined opcodes AAC, ASR, ARR, ATX, and AXS.
+- Controllers:
+   Renamed "Alternate Keyboard" to "Subor Keyboard".
+   Updated Family Basic and Subor Keyboards to support movie recording
+      and playback.
+   Updated controllers to use Save/Load routines instead of exposing
+      their internal state as packed byte arrays.
+   Updated Arkanoid paddles to support axis configuration and adjusted
+      range of valid positions.
+   Added support for SNES Mouse.
+   Fixed support for configuring POV triggers as axes versus buttons.
+- Debugger:
+   Updated CPU debugger and trace log output to include total elapsed
+      CPU cycles since reset.
+   Improved breakpoint support to properly handle intermediate reads.
+   Improved PPU debugger to only redraw pattern tables and sprites when
+      their corresponding palettes actually changed.
+- Graphics:
+   Added separate default palettes for each region.
+   Improved fullscreen code to attempt to select a resolution which
+      matches your monitor's aspect ratio.
+   Fix a bug with Zapper emulation while in fullscreen mode.
+   Added an alternative Playchoice-10 palette.
+   Added a configuration setting for Playchoice-10 palettes to control
+      whether or not extra gray colors should be added at 1D/2D/3D.
+   Fixed color emphasis to swap the Red/Green bits on PAL and Dendy.
+   Updated NTSC palette generation.
+   Added an option to horizontally stretch the window to produce the
+      correct aspect ratio.
+- iNES Header Editor:
+   Moved header editor into its own source file.
+   Added support for editing NES 2.0 format fields.
+- Mapper Interface:
+   Updated Mapper Interface version from 3.7 to 3.9.
+   Reordered several enumerated types to be more consistent.
+   Added support for debug-safe read handlers which do not trigger side
+      effects.
+   Improved handling of multiple DLLs supporting the same mapper.
+- Main Program:
+   Updated Winamp plugin to support Unicode.
+   Added support for Hybrid (Dendy) timing - PAL's 50Hz framerate, but
+      NTSC's CPU/PPU clock ratio and VBLANK length.
+   Reorganized code for saving and loading configuration settings to be
+      localized according to function.
+   Increased maximum supported PRG RAM from 64KB to 1024KB.
+   Increased maximum supported CHR RAM from 32KB to 256KB.
+   Changed FDS disk writing to use a new file format which permits
+      tracking version numbers.
+   Added full NES 2.0 format support.
+   Reworked Savestate/Reset commands to avoid stopping and restarting
+      sound playback (and causing pops).
+   Fixed debugger breakpoints to properly unacquire input devices.
+   Fixed crash when exiting the program while in fullscreen mode.
+   Added a "Browse Save Files" option to the File menu.
+- PPU:
+   Removed some unneeded optimizations that didn't work with 64-bit and
+      weren't beneficial with 32-bit anymore.
+   Fixed pre-render scanline to reset vertical scroll bits for every
+      cycle in 280-304 instead of just the last one.
+   Removed old "non-accurate" sprite evaluation logic.
+   Fixed emulation of $2007 accesses during rendering and how they
+      affect the VRAM address.
+   Added support for Vs. Unisystem PPUs returning special values from
+      the lower bits of $2002.
+- Savestates:
+   Updated savestate logic to better handle version differences.
+- Mappers:
+   Added support for NES 2.0 custom SRAM sizes
+   Added support for various iNES mappers using CHR RAM when no ROM is
+      present.
+   Updated MMC2 emulation for switching the lower CHR ROM bank.
+   Updated IRQ counters for MMC3, MMC5, MMC6, VRC4, VRC6, VRC7, and
+      Tengen RAMBO-1.
+   Updated MMC5 sound length counter timing and added support for
+      read-triggered PCM.
+   Updated iNES mappers 1 and 4 to support NES 2.0 PRG RAM sizes.
+   Updated iNES mapper 16 to support EEPROM saves, and added mapper 159
+      as a variant.
+   Added iNES mapper 210 as a variant of mapper 19.
+   Fixed iNES mappers 21, 22, 23, and 25 to properly reflect their
+      actual functionality.
+   Improved compatibility for iNES mapper 185.
+   Added support for NES-AN1ROM, HVC-FKROM, NES-PEEOROM, NES-SC1ROM,
+      NES-SHROM, NES-SH1ROM, NES-SIROM, NES-SJROM, NES-SL2ROM,
+      NES-SL3ROM, NES-SLRROM, NES-SMROM, NES-TBROM, NES-TEROM,
+      NES-TKSROM, NES-TL2ROM, NES-TLSROM,  NES-TNROM, NES-TQROM,
+      and NES-TVROM boards.
+   Added support for iNES mappers 28, 31, 36, 48, 57, 72, 77, 82, 92,
+      101, 107, 152, 154, 155, 159, 165, 191, 192, 193, 194, 200, 201,
+      203, 205, 206, 207, 240, 242, and 245.
+   Merged iNES mapper 151 (Extended Vs. Unisystem) into 75 (VRC1).
+   Fixed NSF player to properly silence internal channels when changing
+      tracks.
+
+
 0.970
 - Overall:
    Updated all code to use C++ with namespaces, significantly reducing
@@ -83,7 +195,7 @@ Version History
       emphasis modes.
 - Mapper Interface:
    Updated Mapper Interface version from 3.6 to 3.7.
-   Updated ROM Information structure to support iNES 2.0 format fields.
+   Updated ROM Information structure to support NES 2.0 format fields.
 - Movies:
    Added a dialog for movie recording, allowing a description to be
       added (Unicode version only) for the movie being recorded.
@@ -453,6 +565,9 @@ PPU:
      let the emulator automatically adjust frameskip for best speed.
 - Size
    Allows you to set the window size between 1X and 4X stretch.
+- Fix Aspect (under Size)
+   Stretches the window horizontally in order to match the aspect ratio
+      on a typical NTSC or PAL television set.
 - Mode
    Allows you to switch between NTSC (American and Japanese), PAL
      (European), and Hybrid (Dendy) timing. If a game plays at the
@@ -571,8 +686,8 @@ numerous to name.
 Contact
 -------
 
-Homepage - http://www.qmtpro.com/~nes/nintendulator
-           http://nintendulator.sourceforge.net/ (redirect)
+Homepage - https://www.qmtpro.com/~nes/nintendulator
+           https://nintendulator.sourceforge.net/ (redirect)
 
 ----------
 Disclaimer
