@@ -1,5 +1,5 @@
 /* Nintendulator - Win32 NES emulator written in C++
- * Copyright (C) 2002-2017 QMT Productions
+ * Copyright (C) 2002-2019 QMT Productions
  *
  * Based on NinthStar, a portable Win32 NES Emulator written in C++
  * Copyright (C) 2000  David de Regt

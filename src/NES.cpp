@@ -295,7 +295,7 @@ void	LoadSRAM (void)
 			FSAVFile = _tfopen(Filename, _T("rb"));
 			if (!FSAVFile)
 				return;
-			version_id = 975;
+			version_id = 975;	// version when FSAV was added
 			fseek(FSAVFile, 0, SEEK_END);
 			len = ftell(FSAVFile);
 			fseek(FSAVFile, 0, SEEK_SET);

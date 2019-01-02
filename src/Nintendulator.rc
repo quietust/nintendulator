@@ -221,7 +221,7 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     ICON            IDI_NINTENDULATOR,IDC_ABOUTICON,8,8,21,20
-    LTEXT           "Nintendulator Version 0.975\nCopyright © 2002-2016 QMT Productions",IDC_STATIC,32,8,136,20
+    LTEXT           "Nintendulator Version 0.980\nCopyright © 2002-2019 QMT Productions",IDC_STATIC,32,8,136,20
     DEFPUSHBUTTON   "OK",IDOK,172,12,56,16
 END
 
