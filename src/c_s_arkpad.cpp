@@ -29,10 +29,10 @@ int	StdPort_ArkanoidPaddle::Save (FILE *out)
 
 	writeByte(State->Bits);
 	writeWord(State->Pos);
-	writeWord(State->BitPtr);
-	writeWord(State->Strobe);
-	writeWord(State->Button);
-	writeWord(State->NewBits);
+	writeByte(State->BitPtr);
+	writeByte(State->Strobe);
+	writeByte(State->Button);
+	writeByte(State->NewBits);
 
 	return clen;
 }
