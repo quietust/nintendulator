@@ -14,7 +14,6 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct ExpPort_Tablet_State
 {
 	unsigned long Bits;
@@ -25,24 +24,51 @@ struct ExpPort_Tablet_State
 	unsigned char Button;
 	unsigned long NewBits;
 };
-#include <poppack.h>
 int	ExpPort_Tablet::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeLong(State->Bits);
+	writeByte(State->Strobe);
+	writeByte(State->BitPtr);
+	writeByte(State->PosX);
+	writeByte(State->PosY);
+	writeByte(State->Button);
+	writeLong(State->NewBits);
 
 	return clen;
 }
 int	ExpPort_Tablet::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 13)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->Bits = 0;
+			State->Strobe = 0;
+			State->BitPtr = 0;
+			State->PosX = 0;
+			State->PosY = 0;
+			State->Button = 0;
+			State->NewBits = 0;
+			return clen;
+		}
+	}
+
+	readLong(State->Bits);
+	readByte(State->Strobe);
+	readByte(State->BitPtr);
+	readByte(State->PosX);
+	readByte(State->PosY);
+	readByte(State->Button);
+	readLong(State->NewBits);
 
 	return clen;
 }

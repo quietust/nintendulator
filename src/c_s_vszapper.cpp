@@ -16,7 +16,6 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct StdPort_VSZapper_State
 {
 	unsigned char Bits;
@@ -26,24 +25,48 @@ struct StdPort_VSZapper_State
 	unsigned char PosY;
 	unsigned char Button;
 };
-#include <poppack.h>
 int	StdPort_VSZapper::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
-
-	writeWord(len);
-	writeArray(State, len);
+	
+	writeByte(State->Bits);
+	writeByte(State->BitPtr);
+	writeByte(State->Strobe);
+	writeByte(State->PosX);
+	writeByte(State->PosY);
+	writeByte(State->Button);
 
 	return clen;
 }
 int	StdPort_VSZapper::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 6)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->PosX = 0;
+			State->PosY = 0;
+			State->Button = 0;
+			State->Bits = 0x10;
+			State->BitPtr = 0;
+			State->Strobe = 0;
+			return clen;
+		}
+	}
+
+	readByte(State->Bits);
+	readByte(State->BitPtr);
+	readByte(State->Strobe);
+	readByte(State->PosX);
+	readByte(State->PosY);
+	readByte(State->Button);
 
 	return clen;
 }

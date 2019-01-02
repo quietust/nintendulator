@@ -14,7 +14,6 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct StdPort_SnesMouse_State
 {
 	unsigned long Bits;
@@ -25,24 +24,57 @@ struct StdPort_SnesMouse_State
 	unsigned char Buttons;
 	unsigned char Sensitivity;
 };
-#include <poppack.h>
 int	StdPort_SnesMouse::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeLong(State->Bits);
+	writeByte(State->BitPtr);
+	writeByte(State->Strobe);
+	writeByte(State->Xmov);
+	writeByte(State->Ymov);
+	writeWord(State->Xdelta);
+	writeWord(State->Ydelta);
+	writeByte(State->Buttons);
+	writeByte(State->Sensitivity);
 
 	return clen;
 }
 int	StdPort_SnesMouse::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 14)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->Bits = 0;
+			State->BitPtr = 0;
+			State->Strobe = 0;
+			State->Xmov = 0;
+			State->Ymov = 0;
+			State->Xdelta = 0;
+			State->Ydelta = 0;
+			State->Buttons = 0;
+			State->Sensitivity = 0;
+			return clen;
+		}
+	}
+
+	readLong(State->Bits);
+	readByte(State->BitPtr);
+	readByte(State->Strobe);
+	readByte(State->Xmov);
+	readByte(State->Ymov);
+	readWord(State->Xdelta);
+	readWord(State->Ydelta);
+	readByte(State->Buttons);
+	readByte(State->Sensitivity);
 
 	return clen;
 }

@@ -13,7 +13,6 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct StdPort_SnesController_State
 {
 	unsigned char Bits1;
@@ -23,24 +22,48 @@ struct StdPort_SnesController_State
 	unsigned char NewBit1;
 	unsigned char NewBit2;
 };
-#include <poppack.h>
 int	StdPort_SnesController::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeByte(State->Bits1);
+	writeByte(State->Bits2);
+	writeByte(State->BitPtr);
+	writeByte(State->Strobe);
+	writeByte(State->NewBit1);
+	writeByte(State->NewBit2);
 
 	return clen;
 }
 int	StdPort_SnesController::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 6)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->Bits1 = 0;
+			State->Bits2 = 0;
+			State->BitPtr = 0;
+			State->Strobe = 0;
+			State->NewBit1 = 0;
+			State->NewBit2 = 0;
+			return clen;
+		}
+	}
+
+	readByte(State->Bits1);
+	readByte(State->Bits2);
+	readByte(State->BitPtr);
+	readByte(State->Strobe);
+	readByte(State->NewBit1);
+	readByte(State->NewBit2);
 
 	return clen;
 }

@@ -14,7 +14,6 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct ExpPort_ArkanoidPaddle_State
 {
 	unsigned char Bits;
@@ -24,24 +23,48 @@ struct ExpPort_ArkanoidPaddle_State
 	unsigned char Button;
 	unsigned char NewBits;
 };
-#include <poppack.h>
 int	ExpPort_ArkanoidPaddle::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeByte(State->Bits);
+	writeWord(State->Pos);
+	writeWord(State->BitPtr);
+	writeWord(State->Strobe);
+	writeWord(State->Button);
+	writeWord(State->NewBits);
 
 	return clen;
 }
 int	ExpPort_ArkanoidPaddle::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 7)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->Bits = 0;
+			State->Pos = 340;
+			State->BitPtr = 0;
+			State->Strobe = 0;
+			State->Button = 0;
+			State->NewBits = 0;
+			return clen;
+		}
+	}
+
+	readByte(State->Bits);
+	readWord(State->Pos);
+	readByte(State->BitPtr);
+	readByte(State->Strobe);
+	readByte(State->Button);
+	readByte(State->NewBits);
 
 	return clen;
 }
@@ -136,11 +159,11 @@ ExpPort_ArkanoidPaddle::ExpPort_ArkanoidPaddle (DWORD *buttons)
 	MovLen = 2;
 	MovData = new unsigned char[MovLen];
 	ZeroMemory(MovData, MovLen);
-	State->Bits = 0;
 	State->Pos = 340;
+	State->Button = 0;
+	State->Bits = 0;
 	State->BitPtr = 0;
 	State->Strobe = 0;
-	State->Button = 0;
 	State->NewBits = 0;
 }
 } // namespace Controllers

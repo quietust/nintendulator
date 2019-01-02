@@ -15,17 +15,24 @@ int	StdPort_Unconnected::Save (FILE *out)
 {
 	int clen = 0;
 
-	writeWord(0);
-
 	return clen;
 }
 int	StdPort_Unconnected::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	fseek(in, len, SEEK_CUR);
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 0)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			return clen;
+		}
+	}
 
 	return clen;
 }

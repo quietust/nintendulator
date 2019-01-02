@@ -13,7 +13,6 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct StdPort_StdController_State
 {
 	unsigned char Bits;
@@ -21,24 +20,42 @@ struct StdPort_StdController_State
 	unsigned char Strobe;
 	unsigned char NewBits;
 };
-#include <poppack.h>
 int	StdPort_StdController::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeByte(State->Bits);
+	writeByte(State->BitPtr);
+	writeByte(State->Strobe);
+	writeByte(State->NewBits);
 
 	return clen;
 }
 int	StdPort_StdController::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 4)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->Bits = 0;
+			State->BitPtr = 0;
+			State->Strobe = 0;
+			State->NewBits = 0;
+			return clen;
+		}
+	}
+
+	readByte(State->Bits);
+	readByte(State->BitPtr);
+	readByte(State->Strobe);
+	readByte(State->NewBits);
 
 	return clen;
 }

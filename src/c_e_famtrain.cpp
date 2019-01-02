@@ -13,31 +13,45 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct ExpPort_FamTrainer_State
 {
 	unsigned short Bits;
 	unsigned char Sel;
 	unsigned short NewBits;
 };
-#include <poppack.h>
 int	ExpPort_FamTrainer::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeWord(State->Bits);
+	writeByte(State->Sel);
+	writeWord(State->NewBits);
 
 	return clen;
 }
 int	ExpPort_FamTrainer::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 5)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->Bits = 0;
+			State->Sel = 0;
+			State->NewBits = 0;
+			return clen;
+		}
+	}
+
+	readWord(State->Bits);
+	readByte(State->Sel);
+	readWord(State->NewBits);
 
 	return clen;
 }

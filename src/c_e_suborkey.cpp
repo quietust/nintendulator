@@ -13,31 +13,47 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct ExpPort_SuborKeyboard_State
 {
 	unsigned char Column;
 	unsigned char Row;
 	unsigned char Keys[13];
 };
-#include <poppack.h>
 int	ExpPort_SuborKeyboard::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeByte(State->Column);
+	writeByte(State->Row);
+	for (int i = 0; i < 13; i++)
+		writeByte(State->Keys[i]);
 
 	return clen;
 }
 int	ExpPort_SuborKeyboard::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 15)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->Row = 0;
+			State->Column = 0;
+			ZeroMemory(State->Keys, sizeof(State->Keys));
+			return clen;
+		}
+	}
+
+	readByte(State->Column);
+	readByte(State->Row);
+	for (int i = 0; i < 13; i++)
+		readByte(State->Keys[i]);
 
 	return clen;
 }

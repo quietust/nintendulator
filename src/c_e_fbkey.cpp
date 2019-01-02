@@ -13,31 +13,47 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct ExpPort_FamilyBasicKeyboard_State
 {
 	unsigned char Column;
 	unsigned char Row;
 	unsigned char Keys[9];
 };
-#include <poppack.h>
 int	ExpPort_FamilyBasicKeyboard::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeByte(State->Column);
+	writeByte(State->Row);
+	for (int i = 0; i < 9; i++)
+		writeByte(State->Keys[i]);
 
 	return clen;
 }
 int	ExpPort_FamilyBasicKeyboard::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 11)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->Column = 0;
+			State->Row = 0;
+			ZeroMemory(State->Keys, sizeof(State->Keys));
+			return clen;
+		}
+	}
+
+	readByte(State->Column);
+	readByte(State->Row);
+	for (int i = 0; i < 9; i++)
+		readByte(State->Keys[i]);
 
 	return clen;
 }

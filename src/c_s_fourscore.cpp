@@ -13,7 +13,6 @@
 
 namespace Controllers
 {
-#include <pshpack1.h>
 struct StdPort_FourScore_State
 {
 	unsigned char BitPtr;
@@ -24,44 +23,69 @@ struct StdPort_FourScore2_State
 	unsigned char BitPtr;
 	unsigned char Strobe;
 };
-#include <poppack.h>
 int	StdPort_FourScore::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeByte(State->BitPtr);
+	writeByte(State->Strobe);
 
 	return clen;
 }
 int	StdPort_FourScore2::Save (FILE *out)
 {
 	int clen = 0;
-	unsigned short len = sizeof(*State);
 
-	writeWord(len);
-	writeArray(State, len);
+	writeByte(State->BitPtr);
+	writeByte(State->Strobe);
 
 	return clen;
 }
 int	StdPort_FourScore::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 2)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->BitPtr = 0;
+			State->Strobe = 0;
+			return clen;
+		}
+	}
+
+	readByte(State->BitPtr);
+	readByte(State->Strobe);
 
 	return clen;
 }
 int	StdPort_FourScore2::Load (FILE *in, int version_id)
 {
 	int clen = 0;
-	unsigned short len;
 
-	readWord(len);
-	readArraySkip(State, len, sizeof(*State));
+	// Skip length field from 0.975 and earlier
+	if (version_id <= 1001)
+	{
+		unsigned short len;
+		readWord(len);
+		if (len != 2)
+		{
+			// State length was bad - discard all of it, then reset state
+			fseek(in, len, SEEK_CUR); clen += len;
+			State->BitPtr = 0;
+			State->Strobe = 0;
+			return clen;
+		}
+	}
+
+	readByte(State->BitPtr);
+	readByte(State->Strobe);
 
 	return clen;
 }
