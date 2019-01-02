@@ -651,7 +651,10 @@ int	Load (FILE *in, int version_id)
 		SET_STDCONT(Port2, STD_FOURSCORE2);
 	// If not, however, make sure that the right half of a four-score doesn't end up here
 	else if ((STDCONT_TYPE)type == STD_FOURSCORE2)
+	{
+		EI.DbgOut(_T("WARNING: Four-score configured in port 2 but not port 1 - savestate may be corrupted."));
 		SET_STDCONT(Port2, STD_UNCONNECTED);
+	}
 	else	SET_STDCONT(Port2, (STDCONT_TYPE)type);
 	clen += Port2->Load(in, version_id);
 
