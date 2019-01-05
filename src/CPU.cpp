@@ -218,7 +218,7 @@ void	DoIRQ (void)
 	Push(P);
 	FI = 1;
 #ifndef	NSFPLAYER
-	if (WantNMI)
+	if (LastNMI)
 	{
 		WantNMI = FALSE;
 		PCL = MemGet(0xFFFA);
@@ -236,6 +236,9 @@ void	DoIRQ (void)
 #ifdef	ENABLE_DEBUGGER
 	GotInterrupt = INTERRUPT_IRQ;
 #endif	/* ENABLE_DEBUGGER */
+	// Prevent NMI from triggering immediately after IRQ
+	if (LastNMI)
+		LastNMI = FALSE;
 }
 
 void	GetHandlers (void)
@@ -561,7 +564,7 @@ void	IN_BRK (void)
 	Push(P | 0x10);
 	FI = 1;
 #ifndef	NSFPLAYER
-	if (WantNMI)
+	if (LastNMI)
 	{
 		WantNMI = FALSE;
 		PCL = MemGet(0xFFFA);
@@ -579,6 +582,9 @@ void	IN_BRK (void)
 #ifdef	ENABLE_DEBUGGER
 	GotInterrupt = INTERRUPT_BRK;
 #endif	/* ENABLE_DEBUGGER */
+	// Prevent NMI from triggering immediately after BRK
+	if (LastNMI)
+		LastNMI = FALSE;
 }
 __forceinline	void	IN_CLC (void) { FC = 0; }
 __forceinline	void	IN_CLD (void) { FD = 0; }
@@ -1039,6 +1045,24 @@ __forceinline	void	IV_AXS (void)
 
 void	ExecOp (void)
 {
+#ifndef	NSFPLAYER
+	if (LastNMI)
+	{
+		WantNMI = FALSE;
+		DoNMI();
+		return;
+	}
+	else
+#endif	/* !NSFPLAYER */
+	if (LastIRQ)
+	{
+		DoIRQ();
+		return;
+	}
+#ifdef	ENABLE_DEBUGGER
+	else	GotInterrupt = 0;
+#endif	/* ENABLE_DEBUGGER */
+
 	Opcode = MemGetCode(OpAddr = PC++);
 	switch (Opcode)
 	{
@@ -1082,19 +1106,5 @@ OP(E3, INX, IV_ISB) OP(F3,INYW, IV_ISB) OP(EB, IMM, IV_SBC) OP(FB,ABYW, IV_ISB) 
 
 #undef OP
 	}
-
-#ifndef	NSFPLAYER
-	if (LastNMI)
-	{
-		DoNMI();
-		WantNMI = FALSE;
-	}
-	else
-#endif	/* !NSFPLAYER */
-	if (LastIRQ)
-		DoIRQ();
-#ifdef	ENABLE_DEBUGGER
-	else	GotInterrupt = 0;
-#endif	/* ENABLE_DEBUGGER */
 }
 } // namespace CPU
