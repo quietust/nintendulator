@@ -601,11 +601,13 @@ __inline void	RunNoSkip (int NumTicks)
 				ShortSL = !ShortSL;
 				if (Reg2001 & 0x18)
 					IsRendering = TRUE;
+				// Sprite flags are cleared immediately
+				Reg2002 &= ~0x60;
 			}
 		}
 		// VBL flag gets cleared a cycle late
 		else if ((SLnum == -1) && (Clockticks == 1))
-			Reg2002 = 0;
+			Reg2002 &= ~0x80;
 		if (IsRendering)
 		{
 			ProcessSprites();
@@ -914,11 +916,13 @@ __inline void	RunSkip (int NumTicks)
 				ShortSL = !ShortSL;
 				if (Reg2001 & 0x18)
 					IsRendering = TRUE;
+				// Sprite flags are cleared immediately
+				Reg2002 &= ~0x60;
 			}
 		}
 		// VBL flag gets cleared a cycle late
 		else if ((SLnum == -1) && (Clockticks == 1))
-			Reg2002 = 0;
+			Reg2002 &= ~0x80;
 		if (IsRendering)
 		{
 			ProcessSprites();
