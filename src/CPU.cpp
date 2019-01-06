@@ -89,70 +89,78 @@ inline	void	RunCycle (void)
 unsigned char	MemGet (unsigned int Addr)
 {
 	int buf;
-
-	if (EnableDMA & DMA_PCM)
+	if (EnableDMA)
 	{
-		BOOL isController = (Addr == 0x4016) || (Addr == 0x4017);
-		BOOL skipRead = FALSE;
-		BOOL WasSPR = (EnableDMA & DMA_SPR);
-
-		EnableDMA &= ~(DMA_PCM | DMA_SPR);
-
-		if (!(EnableDMA & DMA_HALT))
+		if ((EnableDMA & (DMA_PCM | DMA_SPR)) == DMA_PCM)
 		{
+			BOOL isController = (Addr == 0x4016) || (Addr == 0x4017);
+
+			// Only run through this section if PCM triggered by itself
+			// if it interrupts Sprite DMA, the timing comes out differently
+			EnableDMA &= ~DMA_PCM;
+
 			// Halt - read address and discard
 			MemGet(Addr);
-			skipRead = isController;
+
+			// Dummy read
+			isController ? RunCycle() : MemGet(Addr);
+
+			// Optional alignment read
+			if (!(APU::InternalClock & 1))
+				isController ? RunCycle() : MemGet(Addr);
+
+			// DPCM read
+			APU::DPCM::Fetch();
 		}
-
-		// Dummy read
-		skipRead ? RunCycle() : MemGet(Addr);
-		skipRead = isController;
-
-		// Alignment read
-		if (APU::InternalClock & 1)
+		if (EnableDMA & DMA_SPR)
 		{
-			skipRead ? RunCycle() : MemGet(Addr);
-			skipRead = isController;
-		}
+			// Check if PCM and Sprite DMAs managed to coincide
+			BOOL WasPCM = (EnableDMA & DMA_PCM);	EnableDMA = 0;
 
-		// DPCM read
-		APU::DPCM::Fetch();
-
-		// if we interrupted a Sprite DMA in progress, then realign before it continues
-		if (EnableDMA & DMA_HALT)
-		{
-			if (APU::InternalClock & 1)
-				MemGet(Addr);
-		}
-		// otherwise, if we coincided with it, let it proceed
-		if (WasSPR)
-			EnableDMA |= DMA_SPR | DMA_HALT;
-	}
-	if (EnableDMA & DMA_SPR)
-	{
-		EnableDMA &= ~DMA_SPR;
-
-		// Halt
-		MemGet(Addr);
-		EnableDMA |= DMA_HALT;
-
-		if (APU::InternalClock & 1)
+			// Halt
 			MemGet(Addr);
 
-		for (int i = 0; i < 0x100; i++)
-			MemSet(0x2004, MemGet((DMAPage << 8) | i));
-		EnableDMA &= ~(DMA_HALT | DMA_DUMMY);
+			WasPCM |= (EnableDMA & DMA_PCM);	EnableDMA = 0;
+
+			if (!(APU::InternalClock & 1))
+			{
+				MemGet(Addr);
+				// PCM DMA can't trigger here, wrong alignment
+			}
+
+			for (int i = 0; i < 0x100; i++)
+			{
+				if (WasPCM)
+				{
+					// process PCM DMA
+					APU::DPCM::Fetch();
+					// Realign clock
+					MemGet(Addr);
+					WasPCM = FALSE;
+				}
+				else
+				{
+					// check for PCM DMA and schedule it for the next loop
+					WasPCM = (EnableDMA & DMA_PCM);	EnableDMA = 0;
+				}
+				buf = MemGet((DMAPage << 8) | i);
+				MemSet(0x2004, buf);
+			}
+			// if it triggered at the very end, handle it here
+			if (WasPCM)
+			{
+				// process PCM DMA
+				APU::DPCM::Fetch();
+				// Realign clock
+				MemGet(Addr);
+			}
+		}
 	}
 
 	RunCycle();
-	// avoid a function call if possible - if it's ReadPRG, then run it inline
+	// avoid an indirect function call if possible - if it's ReadPRG, then call it directly (ideally inline)
 	if (ReadHandler[(Addr >> 12) & 0xF] == ReadPRG)
-	{
-		if (Readable[(Addr >> 12) & 0xF])
-			buf = PRGPointer[(Addr >> 12) & 0xF][Addr & 0xFFF];
-		else	buf = -1;
-	}
+		buf = ReadPRG((Addr >> 12) & 0xF, Addr & 0xFFF);
 	else	buf = ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF);
 	if (buf != -1)
 		LastRead = (unsigned char)buf;

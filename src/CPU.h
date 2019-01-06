@@ -21,8 +21,6 @@
 
 #define DMA_PCM		0x01
 #define	DMA_SPR		0x02
-#define	DMA_HALT	0x04
-#define	DMA_DUMMY	0x08
 
 namespace CPU
 {

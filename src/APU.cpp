@@ -1356,7 +1356,6 @@ void	Run (void)
 	if (NewBufPos == SAMPLERATE)	// we've generated 1 second, so we can reset our counters now
 		Cycles = NewBufPos = 0;
 #endif	/* !NSFPLAYER */
-	InternalClock++;
 	Frame::Run();
 	Race::Run();
 	Square0::Run();
@@ -1364,6 +1363,7 @@ void	Run (void)
 	Triangle::Run();
 	Noise::Run();
 	DPCM::Run();
+	InternalClock++;
 
 #ifdef	SOUND_FILTERING
 	samppos += Square0::Pos + Square1::Pos + Triangle::Pos + Noise::Pos + DPCM::Pos;
