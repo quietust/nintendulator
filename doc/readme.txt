@@ -1,4 +1,4 @@
-Nintendulator 0.970
+Nintendulator 0.980
 
 ------------
 Introduction
