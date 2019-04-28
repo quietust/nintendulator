@@ -1,8 +1,5 @@
 /* Nintendulator Mapper Interface
  * Copyright (C) QMT Productions
- *
- * $URL$
- * $Id$
  */
 
 #pragma once

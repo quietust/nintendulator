@@ -1,8 +1,5 @@
 /* in_nintendulator - NSF player plugin for Winamp, based on Nintendulator
  * Copyright (C) QMT Productions
- *
- * $URL$
- * $Id$
  */
 
 #pragma once
