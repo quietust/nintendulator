@@ -1,0 +1,10 @@
+msvc*/.vs
+msvc*/*.db
+msvc*/*.opendb
+msvc*/*.sdf
+msvc*/*.suo
+msvc*/*.user
+msvc*/Win32
+msvc*/x64
+msvc*/ipch
+src/*.aps
