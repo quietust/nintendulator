@@ -883,6 +883,10 @@ void	UpdatePPU (void)
 	int MemAddr;
 	int x, y;
 
+	// If a Sprite is being previewed and it changed, repaint the Nametable pane too
+	if ((DetailType == DEBUG_DETAIL_SPRITE) && SprChanged)
+		NTabChanged = TRUE;
+
 	if (PalChanged)
 	{
 		BOOL palChanged[8] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
@@ -988,6 +992,41 @@ void	UpdatePPU (void)
 				AttribVal = (DebugMemPPU(0x23C0 | (NT << 10) | ((y << 1) & 0x38) | (x >> 2)) >> AttribNum) & 3;
 				MemAddr = ((PPU::Reg2000 & 0x10) << 8) | (DebugMemPPU(0x2000 | (NT << 10) | (y << 5) | x) << 4);
 				DrawTile(NameArray + y * 8 * D_NAM_W + x * 8, MemAddr, AttribVal, D_NAM_W);
+			}
+		}
+
+		// If a sprite is being viewed in the Detail pane, draw a border around its position in the Nametable pane
+		if (DetailType == DEBUG_DETAIL_SPRITE)
+		{
+			x = PPU::Sprite[(DetailNum << 2) | 3];
+			y = PPU::Sprite[(DetailNum << 2) | 0] + 1;
+			int height = (PPU::Reg2000 & 0x20) ? 16 : 8;
+
+			// Make sure the sprite is actually visible
+			if (y < D_NAM_H)
+			{
+				// Draw vertical lines for the left and right edges
+				for (int sy = y; sy < y + height; sy++)
+				{
+					if (sy >= D_NAM_H)
+						break;
+					// Any explicit color could blend in with the background
+					// Instead, use the RGB inverse so it'll always be visible
+					NameArray[sy * D_NAM_W + x] ^= 0xFFFFFF;
+					if (x + 7 < D_NAM_W)
+						NameArray[sy * D_NAM_W + x + 7] ^= 0xFFFFFF;
+				}
+
+				// Draw horizontal lines for the top and bottom edges
+				// Skip the far left and far right pixels, since we already did them
+				for (int sx = x + 1; sx < x + 7; sx++)
+				{
+					if (sx >= D_NAM_W)
+						break;
+					NameArray[y * D_NAM_W + sx] ^= 0xFFFFFF;
+					if (y + height - 1 < D_NAM_H)
+						NameArray[(y + height - 1) * D_NAM_W + sx] ^= 0xFFFFFF;
+				}
 			}
 		}
 
@@ -1282,6 +1321,11 @@ void	SetDetail (int type, int num)
 {
 	if ((DetailType == type) && (DetailNum == num))
 		return;
+
+	// If a Sprite is (or was) being previewed, update the Nametable pane too
+	if ((DetailType == DEBUG_DETAIL_SPRITE) || (type == DEBUG_DETAIL_SPRITE))
+		NTabChanged = TRUE;
+
 	DetailType = type;
 	DetailNum = num;
 	DetChanged = TRUE;
