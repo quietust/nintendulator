@@ -2128,8 +2128,19 @@ LRESULT CALLBACK PPUProc_Nametable (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	}
 	if (uMsg == WM_RBUTTONDOWN)
 	{
-		DetailTypeSave = DetailType;
-		DetailNumSave = DetailNum;
+		point.x = GET_X_LPARAM(lParam);
+		point.y = GET_Y_LPARAM(lParam);
+		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 240))
+		{
+			DetailTypeSave = DetailType;
+			DetailNumSave = DetailNum;
+		}
+		else
+		{
+			DetailTypeSave = DEBUG_DETAIL_NONE;
+			DetailNumSave = 0;
+			SetDetail(DetailTypeSave, DetailNumSave);
+		}
 		return 0;
 	}
 	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWLP_USERDATA), hWnd, uMsg, wParam, lParam);
@@ -2148,8 +2159,19 @@ LRESULT CALLBACK PPUProc_Pattern (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	}
 	if (uMsg == WM_RBUTTONDOWN)
 	{
-		DetailTypeSave = DetailType;
-		DetailNumSave = DetailNum;
+		point.x = GET_X_LPARAM(lParam);
+		point.y = GET_Y_LPARAM(lParam);
+		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 128))
+		{
+			DetailTypeSave = DetailType;
+			DetailNumSave = DetailNum;
+		}
+		else
+		{
+			DetailTypeSave = DEBUG_DETAIL_NONE;
+			DetailNumSave = 0;
+			SetDetail(DetailTypeSave, DetailNumSave);
+		}
 		return 0;
 	}
 	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWLP_USERDATA), hWnd, uMsg, wParam, lParam);
@@ -2168,8 +2190,19 @@ LRESULT CALLBACK PPUProc_Palette (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	}
 	if (uMsg == WM_RBUTTONDOWN)
 	{
-		DetailTypeSave = DetailType;
-		DetailNumSave = DetailNum;
+		point.x = GET_X_LPARAM(lParam);
+		point.y = GET_Y_LPARAM(lParam);
+		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 32))
+		{
+			DetailTypeSave = DetailType;
+			DetailNumSave = DetailNum;
+		}
+		else
+		{
+			DetailTypeSave = DEBUG_DETAIL_NONE;
+			DetailNumSave = 0;
+			SetDetail(DetailTypeSave, DetailNumSave);
+		}
 		return 0;
 	}
 	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWLP_USERDATA), hWnd, uMsg, wParam, lParam);
@@ -2189,8 +2222,20 @@ LRESULT CALLBACK PPUProc_Sprite (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	}
 	if (uMsg == WM_RBUTTONDOWN)
 	{
-		DetailTypeSave = DetailType;
-		DetailNumSave = DetailNum;
+		int height = (PPU::Reg2000 & 0x20) ? 16 : 8;
+		point.x = GET_X_LPARAM(lParam);
+		point.y = GET_Y_LPARAM(lParam);
+		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 96) && ((point.x % 16) < 8) && ((point.y % 24) < height))
+		{
+			DetailTypeSave = DetailType;
+			DetailNumSave = DetailNum;
+		}
+		else
+		{
+			DetailTypeSave = DEBUG_DETAIL_NONE;
+			DetailNumSave = 0;
+			SetDetail(DetailTypeSave, DetailNumSave);
+		}
 		return 0;
 	}
 	return CallWindowProc((WNDPROC)GetWindowLongPtr(hWnd, GWLP_USERDATA), hWnd, uMsg, wParam, lParam);
