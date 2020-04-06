@@ -47,6 +47,7 @@ int Pitch;
 int WantFPS;
 int aFPScnt;
 LONGLONG aFPSnum;
+int forceNoSkip;
 
 BOOL SlowDown;
 int SlowRate;
@@ -111,6 +112,7 @@ void	Init (void)
 	aFPSnum = 0;
 	FSkip = 0;
 	aFSkip = TRUE;
+	forceNoSkip = 0;
 	Depth = 0;
 	ClockFreq.QuadPart = 0;
 	LastClockVal.QuadPart = 0;
@@ -488,7 +490,7 @@ void	DrawScreen (void)
 		AVI::AddVideo();
 	if (SlowDown)
 		Sleep(SlowRate * 1000 / WantFPS);
-	if (++FPSCnt > FSkip)
+	if ((++FPSCnt > FSkip) || forceNoSkip)
 	{
 		Update();
 		FPSCnt = 0;
@@ -499,7 +501,7 @@ void	DrawScreen (void)
 	if (++aFPScnt >= 20)
 	{
 		FPSnum = (int)((ClockFreq.QuadPart * aFPScnt) / aFPSnum);
-		if (aFSkip)
+		if (aFSkip && !forceNoSkip)
 		{
 			if ((FSkip < 9) && (FPSnum <= (WantFPS * 9 / 10)))
 				FSkip++;
@@ -522,17 +524,10 @@ void	SetFrameskip (int skip)
 	if (skip >= 0)
 		FSkip = skip;
 
-	if ((skip == -2) ||
-		(Controllers::Port1->Type == Controllers::STD_ZAPPER) || (Controllers::Port1->Type == Controllers::STD_VSZAPPER) ||
-		(Controllers::Port2->Type == Controllers::STD_ZAPPER) || (Controllers::Port2->Type == Controllers::STD_VSZAPPER))
-	{	// if Zapper, force it to zero frameskip, otherwise it won't work
-		FSkip = 0;
-		aFSkip = 0;
-	}
-
 	if (aFSkip)
 		CheckMenuItem(hMenu, ID_PPU_FRAMESKIP_AUTO, MF_CHECKED);
 	else	CheckMenuItem(hMenu, ID_PPU_FRAMESKIP_AUTO, MF_UNCHECKED);
+
 	switch (FSkip)
 	{
 	case 0:	CheckMenuRadioItem(hMenu, ID_PPU_FRAMESKIP_0, ID_PPU_FRAMESKIP_9, ID_PPU_FRAMESKIP_0, MF_BYCOMMAND);	break;
@@ -546,6 +541,35 @@ void	SetFrameskip (int skip)
 	case 8:	CheckMenuRadioItem(hMenu, ID_PPU_FRAMESKIP_0, ID_PPU_FRAMESKIP_9, ID_PPU_FRAMESKIP_8, MF_BYCOMMAND);	break;
 	case 9:	CheckMenuRadioItem(hMenu, ID_PPU_FRAMESKIP_0, ID_PPU_FRAMESKIP_9, ID_PPU_FRAMESKIP_9, MF_BYCOMMAND);	break;
 	}
+
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_AUTO, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_0, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_1, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_2, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_3, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_4, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_5, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_6, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_7, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_8, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+	EnableMenuItem(hMenu, ID_PPU_FRAMESKIP_9, (forceNoSkip == 0) ? MF_ENABLED : MF_GRAYED);
+}
+
+// Allow parts of the emulator to forcibly disable frameskip,
+// such as Zapper emulation and AVI recording
+void 	ForceNoSkip (BOOL enable)
+{
+	if (enable)
+		forceNoSkip++;
+	else	forceNoSkip--;
+	SetFrameskip(-1);
+}
+
+BOOL	NeedSkip (void)
+{
+	if (forceNoSkip)
+		return FALSE;
+	return FPSCnt < FSkip;
 }
 
 void	Draw2x (void)

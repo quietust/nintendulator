@@ -148,6 +148,7 @@ StdPort_Zapper::~StdPort_Zapper (void)
 {
 	delete State;
 	delete[] MovData;
+	GFX::ForceNoSkip(FALSE);
 }
 StdPort_Zapper::StdPort_Zapper (DWORD *buttons)
 {
@@ -161,6 +162,6 @@ StdPort_Zapper::StdPort_Zapper (DWORD *buttons)
 	State->PosX = 0;
 	State->PosY = 0;
 	State->Button = 0;
-	GFX::SetFrameskip(-2);
+	GFX::ForceNoSkip(TRUE);
 }
 } // namespace Controllers

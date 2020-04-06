@@ -17,6 +17,7 @@ extern BOOL Fullscreen, Scanlines;
 
 extern int FPSnum, FPSCnt, FSkip;
 extern BOOL aFSkip;
+extern int forceNoSkip;
 
 extern int WantFPS;
 
@@ -45,6 +46,8 @@ void	Update (void);
 void	Repaint (void);
 void	LoadPalette (PALETTE);
 void	SetFrameskip (int);
+void	ForceNoSkip (BOOL);
+BOOL	NeedSkip (void);
 void	PaletteConfig (void);
 void	GetCursorPos (POINT *);
 void	SetCursorPos (int, int);

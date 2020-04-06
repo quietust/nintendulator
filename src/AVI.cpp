@@ -346,6 +346,7 @@ void	End (void)
 	videoBuffer = NULL;
 	EnableMenuItem(hMenu, ID_MISC_STARTAVICAPTURE, MF_ENABLED);
 	EnableMenuItem(hMenu, ID_MISC_STOPAVICAPTURE, MF_GRAYED);
+	GFX::ForceNoSkip(FALSE);
 	if (running)
 		NES::Start(FALSE);
 }
@@ -423,6 +424,7 @@ void	Start (void)
 	hbm = CreateDIBSection(NULL, (BITMAPINFO *)&bmih, DIB_RGB_COLORS, (void **)&videoBuffer, NULL, 0);
 
 	hr = SetAviVideoCompression(handle, hbm, NULL, TRUE, hMainWnd);
+	GFX::ForceNoSkip(TRUE);
 	if (hr)
 	{
 		TCHAR msg[256];

@@ -1151,13 +1151,13 @@ void	Run (void)
 			PALsubticks = 0;
 			cycles = 4;
 		}
-		if (GFX::FPSCnt < GFX::FSkip)
+		if (GFX::NeedSkip())
 			RunSkip(cycles);
 		else	RunNoSkip(cycles);
 	}
 	else
 	{
-		if (GFX::FPSCnt < GFX::FSkip)
+		if (GFX::NeedSkip())
 			RunSkip(3);
 		else	RunNoSkip(3);
 	}
