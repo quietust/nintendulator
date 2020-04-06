@@ -85,8 +85,6 @@ int	DetailTypeSave, DetailNumSave;
 
 BOOL	Logging, Step;
 
-int	Depth;
-
 int	Palette, Nametable;
 
 HDC	PaletteDC;	// Palette
@@ -203,10 +201,6 @@ void	CacheBreakpoints (void);
 
 void	Init (void)
 {
-	HDC TpHDC = GetDC(hMainWnd);
-	Depth = GetDeviceCaps(TpHDC, BITSPIXEL);
-	ReleaseDC(hMainWnd, TpHDC);
-
 	Enabled = FALSE;
 	Mode = 0;
 
@@ -220,7 +214,7 @@ void	Init (void)
 	Palette = 0;
 	Nametable = 0;
 
-	TpHDC = GetWindowDC(GetDesktopWindow());
+	HDC TpHDC = GetDC(hMainWnd);
 
 	PaletteDC = CreateCompatibleDC(TpHDC);
 	PaletteBMP = CreateCompatibleBitmap(TpHDC, D_PAL_W, D_PAL_H);
@@ -246,6 +240,8 @@ void	Init (void)
 	TileBMP = CreateCompatibleBitmap(TpHDC, D_TIL_W, D_TIL_H);
 	SelectObject(TileDC, TileBMP);
 	BitBlt(TileDC, 0, 0, D_TIL_W, D_TIL_H, NULL, 0, 0, BLACKNESS);
+
+	ReleaseDC(hMainWnd, TpHDC);
 
 	CPUWnd = NULL;
 	PPUWnd = NULL;
@@ -2121,7 +2117,7 @@ LRESULT CALLBACK PPUProc_Nametable (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
-		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 240))
+		if ((point.x >= 0) && (point.x < D_NAM_W) && (point.y >= 0) && (point.y < D_NAM_H))
 			SetDetail(DEBUG_DETAIL_NAMETABLE, ((point.y << 2) & 0x3E0) | ((point.x >> 3) & 0x1F) | (Nametable << 10));
 		else	SetDetail(DetailTypeSave, DetailNumSave);
 		return 0;
@@ -2130,7 +2126,7 @@ LRESULT CALLBACK PPUProc_Nametable (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
-		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 240))
+		if ((point.x >= 0) && (point.x < D_NAM_W) && (point.y >= 0) && (point.y < D_NAM_H))
 		{
 			DetailTypeSave = DetailType;
 			DetailNumSave = DetailNum;
@@ -2152,7 +2148,7 @@ LRESULT CALLBACK PPUProc_Pattern (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	{
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
-		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 128))
+		if ((point.x >= 0) && (point.x < D_PAT_W) && (point.y >= 0) && (point.y < D_PAT_H))
 			SetDetail(DEBUG_DETAIL_PATTERN, ((point.x >> 3) & 0xF) | ((point.y << 1) & 0xF0) | ((point.x & 0x80) << 1));
 		else	SetDetail(DetailTypeSave, DetailNumSave);
 		return 0;
@@ -2161,7 +2157,7 @@ LRESULT CALLBACK PPUProc_Pattern (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	{
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
-		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 128))
+		if ((point.x >= 0) && (point.x < D_PAT_W) && (point.y >= 0) && (point.y < D_PAT_H))
 		{
 			DetailTypeSave = DetailType;
 			DetailNumSave = DetailNum;
@@ -2183,7 +2179,7 @@ LRESULT CALLBACK PPUProc_Palette (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	{
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
-		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 32))
+		if ((point.x >= 0) && (point.x < D_PAL_W) && (point.y >= 0) && (point.y < D_PAL_H))
 			SetDetail(DEBUG_DETAIL_PALETTE, (point.y & 0x30) | (point.x >> 4));
 		else	SetDetail(DetailTypeSave, DetailNumSave);
 		return 0;
@@ -2192,7 +2188,7 @@ LRESULT CALLBACK PPUProc_Palette (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	{
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
-		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 32))
+		if ((point.x >= 0) && (point.x < D_PAL_W) && (point.y >= 0) && (point.y < D_PAL_H))
 		{
 			DetailTypeSave = DetailType;
 			DetailNumSave = DetailNum;
@@ -2215,7 +2211,7 @@ LRESULT CALLBACK PPUProc_Sprite (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		int height = (PPU::Reg2000 & 0x20) ? 16 : 8;
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
-		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 96) && ((point.x % 16) < 8) && ((point.y % 24) < height))
+		if ((point.x >= 0) && (point.x < D_SPR_W) && (point.y >= 0) && (point.y < D_SPR_H) && ((point.x % 16) < 8) && ((point.y % 24) < height))
 			SetDetail(DEBUG_DETAIL_SPRITE, ((point.y / 24) << 4) | (point.x >> 4));
 		else	SetDetail(DetailTypeSave, DetailNumSave);
 		return 0;
@@ -2225,7 +2221,7 @@ LRESULT CALLBACK PPUProc_Sprite (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		int height = (PPU::Reg2000 & 0x20) ? 16 : 8;
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
-		if ((point.x >= 0) && (point.x < 256) && (point.y >= 0) && (point.y < 96) && ((point.x % 16) < 8) && ((point.y % 24) < height))
+		if ((point.x >= 0) && (point.x < D_SPR_W) && (point.y >= 0) && (point.y < D_SPR_H) && ((point.x % 16) < 8) && ((point.y % 24) < height))
 		{
 			DetailTypeSave = DetailType;
 			DetailNumSave = DetailNum;
