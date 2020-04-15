@@ -151,9 +151,6 @@ extern DWORD	PortExp_Buttons[CONTROLLERS_MAXBUTTONS];
 
 extern BOOL	EnableOpposites;
 
-extern BYTE		KeyState[256];
-extern DIMOUSESTATE2	MouseState;
-
 void	OpenConfig (void);
 void	Init (void);
 void	Destroy (void);

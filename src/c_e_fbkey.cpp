@@ -80,11 +80,11 @@ void	ExpPort_FamilyBasicKeyboard::Frame (unsigned char mode)
 		{
 			State->Keys[row] = 0;
 			for (col = 0; col < 8; col++)
-				if (KeyState[keymap[row][col]] & 0x80)
+				if (IsPressed(keymap[row][col]))
 					State->Keys[row] |= 1 << col;
 		}
 		// special case - allow either Ctrl key
-		if (KeyState[DIK_RCONTROL] & 0x80)
+		if (IsPressed(DIK_RCONTROL))
 			State->Keys[7] |= 0x08;
 	}
 	if (mode & MOV_RECORD)

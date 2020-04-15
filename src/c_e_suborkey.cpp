@@ -85,13 +85,13 @@ void	ExpPort_SuborKeyboard::Frame (unsigned char mode)
 		{
 			State->Keys[row] = 0;
 			for (col = 0; col < 8; col++)
-				if (KeyState[keymap[row][col]] & 0x80)
+				if (IsPressed(keymap[row][col]))
 					State->Keys[row] |= 1 << col;
 		}
 		// special cases
-		if (KeyState[DIK_RSHIFT] & 0x80)
+		if (IsPressed(DIK_RSHIFT))
 			State->Keys[7] |= 0x80;
-		if (KeyState[DIK_RCONTROL] & 0x80)
+		if (IsPressed(DIK_RCONTROL))
 			State->Keys[5] |= 0x80;
 	}
 	if (mode & MOV_RECORD)

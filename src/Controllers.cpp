@@ -32,25 +32,33 @@ DWORD	PortExp_Buttons[CONTROLLERS_MAXBUTTONS];
 BOOL	EnableOpposites;
 
 int	NumDevices;
-BOOL	DeviceUsed[MAX_CONTROLLERS];
-TCHAR	*DeviceName[MAX_CONTROLLERS];
 
-int	NumButtons[MAX_CONTROLLERS];
-BYTE	AxisFlags[MAX_CONTROLLERS],
-	POVFlags[MAX_CONTROLLERS];
-	
-TCHAR	*ButtonNames[MAX_CONTROLLERS][128],
-	*AxisNames[MAX_CONTROLLERS][8],
-	*POVNames[MAX_CONTROLLERS][4],
-	*KeyNames[256];
+struct TDeviceInfo
+{
+	LPDIRECTINPUTDEVICE8 DIDevice;
+	GUID GUID;
+
+	BOOL Used;
+	TCHAR *Name;
+
+	int NumButtons;
+	BYTE AxisFlags;
+	BYTE POVFlags;
+
+	TCHAR *ButtonNames[256];
+	TCHAR *AxisNames[8];
+	TCHAR *POVNames[4];
+
+	union
+	{
+		BYTE KeyState[256];
+		DIMOUSESTATE2 MouseState;
+		DIJOYSTATE2 JoyState;
+	};
+};
+TDeviceInfo Devices[MAX_CONTROLLERS];
 
 LPDIRECTINPUT8		DirectInput;
-LPDIRECTINPUTDEVICE8	DIDevices[MAX_CONTROLLERS];
-GUID		DeviceGUID[MAX_CONTROLLERS];
-
-BYTE		KeyState[256];
-DIMOUSESTATE2	MouseState;
-DIJOYSTATE2	JoyState[MAX_CONTROLLERS];	// first 2 entries are unused
 
 void	StdPort_SetControllerType (StdPort *&Port, STDCONT_TYPE Type, DWORD *buttons)
 {
@@ -270,11 +278,13 @@ void	OpenConfig (void)
 BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	int ItemNum = 0;
+	TDeviceInfo &dev = Devices[0];
+
 	if (IsEqualGUID(lpddoi->guidType, GUID_Key))
 	{
 		ItemNum = lpddoi->dwOfs;
 		if ((ItemNum >= 0) && (ItemNum < 256))
-			KeyNames[ItemNum] = _tcsdup(lpddoi->tszName);
+			dev.ButtonNames[ItemNum] = _tcsdup(lpddoi->tszName);
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid keyboard key ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 	return DIENUM_CONTINUE;
@@ -283,26 +293,27 @@ BOOL CALLBACK	EnumKeyboardObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPV
 BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	size_t ItemNum = 0;
+	TDeviceInfo &dev = Devices[1];
 	if (IsEqualGUID(lpddoi->guidType, GUID_XAxis))
 	{
-		AxisFlags[1] |= 0x01;
-		AxisNames[1][AXIS_X] = _tcsdup(lpddoi->tszName);
+		dev.AxisFlags |= 0x01;
+		dev.AxisNames[AXIS_X] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_YAxis))
 	{
-		AxisFlags[1] |= 0x02;
-		AxisNames[1][AXIS_Y] = _tcsdup(lpddoi->tszName);
+		dev.AxisFlags |= 0x02;
+		dev.AxisNames[AXIS_Y] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_ZAxis))
 	{
-		AxisFlags[1] |= 0x04;
-		AxisNames[1][AXIS_Z] = _tcsdup(lpddoi->tszName);
+		dev.AxisFlags |= 0x04;
+		dev.AxisNames[AXIS_Z] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_Button))
 	{
-		ItemNum = (lpddoi->dwOfs - ((BYTE *)&MouseState.rgbButtons - (BYTE *)&MouseState)) / sizeof(MouseState.rgbButtons[0]);
+		ItemNum = (lpddoi->dwOfs - FIELD_OFFSET(DIMOUSESTATE2, rgbButtons)) / sizeof(dev.MouseState.rgbButtons[0]);
 		if ((ItemNum >= 0) && (ItemNum < 8))
-			ButtonNames[1][ItemNum] = _tcsdup(lpddoi->tszName);
+			dev.ButtonNames[ItemNum] = _tcsdup(lpddoi->tszName);
 		else	MessageBox(hMainWnd, _T("Error - encountered invalid mouse button ID!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	}
 
@@ -312,36 +323,37 @@ BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID
 BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
 	int DevNum = (int)pvRef;
+	TDeviceInfo &dev = Devices[DevNum];
 	int ItemNum = 0;
 	if (IsEqualGUID(lpddoi->guidType, GUID_XAxis))
 	{
-		AxisFlags[DevNum] |= 0x01;
-		AxisNames[DevNum][AXIS_X] = _tcsdup(lpddoi->tszName);
+		dev.AxisFlags |= 0x01;
+		dev.AxisNames[AXIS_X] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_YAxis))
 	{
-		AxisFlags[DevNum] |= 0x02;
-		AxisNames[DevNum][AXIS_Y] = _tcsdup(lpddoi->tszName);
+		dev.AxisFlags |= 0x02;
+		dev.AxisNames[AXIS_Y] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_ZAxis))
 	{
-		AxisFlags[DevNum] |= 0x04;
-		AxisNames[DevNum][AXIS_Z] = _tcsdup(lpddoi->tszName);
+		dev.AxisFlags |= 0x04;
+		dev.AxisNames[AXIS_Z] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_RxAxis))
 	{
-		AxisFlags[DevNum] |= 0x08;
-		AxisNames[DevNum][AXIS_RX] = _tcsdup(lpddoi->tszName);
+		dev.AxisFlags |= 0x08;
+		dev.AxisNames[AXIS_RX] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_RyAxis))
 	{
-		AxisFlags[DevNum] |= 0x10;
-		AxisNames[DevNum][AXIS_RY] = _tcsdup(lpddoi->tszName);
+		dev.AxisFlags |= 0x10;
+		dev.AxisNames[AXIS_RY] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_RzAxis))
 	{
-		AxisFlags[DevNum] |= 0x20;
-		AxisNames[DevNum][AXIS_RZ] = _tcsdup(lpddoi->tszName);
+		dev.AxisFlags |= 0x20;
+		dev.AxisNames[AXIS_RZ] = _tcsdup(lpddoi->tszName);
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_Slider))
 	{
@@ -350,20 +362,20 @@ BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPV
 		// starts where the other axes left off
 		// Thus, we need to ignore it and assign them incrementally
 		// Hopefully, this actually works reliably
-		if (!(AxisFlags[DevNum] & 0x40))
+		if (!(dev.AxisFlags & 0x40))
 			ItemNum = 0;
-		else if (!(AxisFlags[DevNum] & 0x80))
+		else if (!(dev.AxisFlags & 0x80))
 			ItemNum = 1;
 		else	ItemNum = 2;
 		if (ItemNum == 0)
 		{
-			AxisFlags[DevNum] |= 0x40;
-			AxisNames[DevNum][AXIS_S0] = _tcsdup(lpddoi->tszName);
+			dev.AxisFlags |= 0x40;
+			dev.AxisNames[AXIS_S0] = _tcsdup(lpddoi->tszName);
 		}
 		else if (ItemNum == 1)
 		{
-			AxisFlags[DevNum] |= 0x80;
-			AxisNames[DevNum][AXIS_S1] = _tcsdup(lpddoi->tszName);
+			dev.AxisFlags |= 0x80;
+			dev.AxisNames[AXIS_S1] = _tcsdup(lpddoi->tszName);
 		}
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_POV))
@@ -371,15 +383,15 @@ BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPV
 		ItemNum = DIDFT_GETINSTANCE(lpddoi->dwType);
 		if ((ItemNum >= 0) && (ItemNum < 4))
 		{
-			POVFlags[DevNum] |= 0x01 << ItemNum;
-			POVNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
+			dev.POVFlags |= 0x01 << ItemNum;
+			dev.POVNames[ItemNum] = _tcsdup(lpddoi->tszName);
 		}
 	}
 	if (IsEqualGUID(lpddoi->guidType, GUID_Button))
 	{
 		ItemNum = DIDFT_GETINSTANCE(lpddoi->dwType);
 		if ((ItemNum >= 0) && (ItemNum < 128))
-			ButtonNames[DevNum][ItemNum] = _tcsdup(lpddoi->tszName);
+			dev.ButtonNames[ItemNum] = _tcsdup(lpddoi->tszName);
 	}
 	return DIENUM_CONTINUE;
 }
@@ -388,34 +400,35 @@ BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
 	HRESULT hr;
 	int DevNum = NumDevices;
+	TDeviceInfo &dev = Devices[DevNum];
 	do
 	{
-		if (SUCCEEDED(DirectInput->CreateDevice(lpddi->guidInstance, &DIDevices[DevNum], NULL)))
+		if (SUCCEEDED(DirectInput->CreateDevice(lpddi->guidInstance, &dev.DIDevice, NULL)))
 		{
 			DIDEVCAPS caps;
-			if (FAILED(hr = DIDevices[DevNum]->SetDataFormat(&c_dfDIJoystick2)))
+			if (FAILED(hr = dev.DIDevice->SetDataFormat(&c_dfDIJoystick2)))
 				break;
-			if (FAILED(hr = DIDevices[DevNum]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+			if (FAILED(hr = dev.DIDevice->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 				break;
 			caps.dwSize = sizeof(DIDEVCAPS);
-			if (FAILED(hr = DIDevices[DevNum]->GetCapabilities(&caps)))
+			if (FAILED(hr = dev.DIDevice->GetCapabilities(&caps)))
 				break;
 
-			NumButtons[DevNum] = caps.dwButtons;
-			AxisFlags[DevNum] = 0;
-			POVFlags[DevNum] = 0;
-			DeviceName[DevNum] = _tcsdup(lpddi->tszProductName);
-			DeviceGUID[DevNum] = lpddi->guidInstance;
+			dev.NumButtons = caps.dwButtons;
+			dev.AxisFlags = 0;
+			dev.POVFlags = 0;
+			dev.Name = _tcsdup(lpddi->tszProductName);
+			dev.GUID = lpddi->guidInstance;
 
-			DIDevices[DevNum]->EnumObjects(EnumJoystickObjectsCallback, (LPVOID)DevNum, DIDFT_ALL);
+			dev.DIDevice->EnumObjects(EnumJoystickObjectsCallback, (LPVOID)DevNum, DIDFT_ALL);
 			EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), lpddi->tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 			NumDevices++;
 		}
 		return DIENUM_CONTINUE;
 	} while (0);
 
-	DIDevices[DevNum]->Release();
-	DIDevices[DevNum] = NULL;
+	dev.DIDevice->Release();
+	dev.DIDevice = NULL;
 	return hr;
 }
 
@@ -423,36 +436,37 @@ BOOL	InitKeyboard (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
+	TDeviceInfo &dev = Devices[0];
 	do
 	{
-		if (FAILED(DirectInput->CreateDevice(GUID_SysKeyboard, &DIDevices[0], NULL)))
+		if (FAILED(DirectInput->CreateDevice(GUID_SysKeyboard, &dev.DIDevice, NULL)))
 			return FALSE;
-		if (FAILED(DIDevices[0]->SetDataFormat(&c_dfDIKeyboard)))
+		if (FAILED(dev.DIDevice->SetDataFormat(&c_dfDIKeyboard)))
 			break;
-		if (FAILED(DIDevices[0]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+		if (FAILED(dev.DIDevice->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 			break;
 
 		caps.dwSize = sizeof(DIDEVCAPS);
-		if (FAILED(DIDevices[0]->GetCapabilities(&caps)))
+		if (FAILED(dev.DIDevice->GetCapabilities(&caps)))
 			break;
 
 		inst.dwSize = sizeof(DIDEVICEINSTANCE);
-		if (FAILED(DIDevices[0]->GetDeviceInfo(&inst)))
+		if (FAILED(dev.DIDevice->GetDeviceInfo(&inst)))
 			break;
 
-		NumButtons[0] = 256;	// normally, I would use caps.dwButtons
-		AxisFlags[0] = 0;	// no axes
-		POVFlags[0] = 0;	// no POV hats
-		DeviceName[0] = _tcsdup(inst.tszProductName);
-		DeviceGUID[0] = GUID_SysKeyboard;
+		dev.NumButtons = 256;	// normally, I would use caps.dwButtons
+		dev.AxisFlags = 0;	// no axes
+		dev.POVFlags = 0;	// no POV hats
+		dev.Name = _tcsdup(inst.tszProductName);
+		dev.GUID = GUID_SysKeyboard;
 
-		DIDevices[0]->EnumObjects(EnumKeyboardObjectsCallback, NULL, DIDFT_ALL);
+		dev.DIDevice->EnumObjects(EnumKeyboardObjectsCallback, NULL, DIDFT_ALL);
 		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 		return TRUE;
 	} while (0);
 
-	DIDevices[0]->Release();
-	DIDevices[0] = NULL;
+	dev.DIDevice->Release();
+	dev.DIDevice = NULL;
 	return FALSE;
 }
 
@@ -460,35 +474,36 @@ BOOL	InitMouse (void)
 {
 	DIDEVICEINSTANCE inst;
 	DIDEVCAPS caps;
+	TDeviceInfo &dev = Devices[1];
 	do
 	{
-		if (FAILED(DirectInput->CreateDevice(GUID_SysMouse, &DIDevices[1], NULL)))
+		if (FAILED(DirectInput->CreateDevice(GUID_SysMouse, &dev.DIDevice, NULL)))
 			return FALSE;
-		if (FAILED(DIDevices[1]->SetDataFormat(&c_dfDIMouse2)))
+		if (FAILED(dev.DIDevice->SetDataFormat(&c_dfDIMouse2)))
 			break;
-		if (FAILED(DIDevices[1]->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+		if (FAILED(dev.DIDevice->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 			break;
 		caps.dwSize = sizeof(DIDEVCAPS);
-		if (FAILED(DIDevices[1]->GetCapabilities(&caps)))
+		if (FAILED(dev.DIDevice->GetCapabilities(&caps)))
 			break;
 
 		inst.dwSize = sizeof(DIDEVICEINSTANCE);
-		if (FAILED(DIDevices[1]->GetDeviceInfo(&inst)))
+		if (FAILED(dev.DIDevice->GetDeviceInfo(&inst)))
 			break;
 
-		NumButtons[1] = caps.dwButtons;
-		AxisFlags[1] = 0;
-		POVFlags[1] = 0;
-		DeviceName[1] = _tcsdup(inst.tszProductName);
-		DeviceGUID[1] = GUID_SysMouse;
+		dev.NumButtons = caps.dwButtons;
+		dev.AxisFlags = 0;
+		dev.POVFlags = 0;
+		dev.Name = _tcsdup(inst.tszProductName);
+		dev.GUID = GUID_SysMouse;
 
-		DIDevices[1]->EnumObjects(EnumMouseObjectsCallback, NULL, DIDFT_ALL);
+		dev.DIDevice->EnumObjects(EnumMouseObjectsCallback, NULL, DIDFT_ALL);
 		EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), inst.tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 		return TRUE;
 	} while (0);
 
-	DIDevices[1]->Release();
-	DIDevices[1] = NULL;
+	dev.DIDevice->Release();
+	dev.DIDevice = NULL;
 	return FALSE;
 }
 
@@ -496,16 +511,23 @@ void	Init (void)
 {
 	int i;
 	
-	for (i = 0; i < NumDevices; i++)
+	for (i = 0; i < MAX_CONTROLLERS; i++)
 	{
-		DeviceUsed[i] = FALSE;
-		DIDevices[i] = NULL;
-		DeviceName[i] = NULL;
-		ZeroMemory(AxisNames[i], sizeof(AxisNames[i]));
-		ZeroMemory(ButtonNames[i], sizeof(ButtonNames[i]));
-		ZeroMemory(POVNames[i], sizeof(POVNames[i]));
+		TDeviceInfo &dev = Devices[i];
+
+		dev.DIDevice = NULL;
+		ZeroMemory(&dev.GUID, sizeof(dev.GUID));
+
+		dev.Used = FALSE;
+		dev.Name = NULL;
+
+		dev.NumButtons = 0;
+		dev.AxisFlags = 0;
+		dev.POVFlags = 0;
+		ZeroMemory(dev.ButtonNames, sizeof(dev.ButtonNames));
+		ZeroMemory(dev.AxisNames, sizeof(dev.AxisNames));
+		ZeroMemory(dev.POVNames, sizeof(dev.POVNames));
 	}
-	ZeroMemory(KeyNames, sizeof(KeyNames));
 
 	StdPort_SetMappings();
 	ExpPort_SetMappings();
@@ -556,38 +578,34 @@ void	Destroy (void)
 	delete PortExp;	PortExp = NULL;
 	for (i = 0; i < NumDevices; i++)
 	{
-		if (DIDevices[i])
+		TDeviceInfo &dev = Devices[i];
+
+		if (dev.DIDevice)
 		{
-			DIDevices[i]->Release();
-			DIDevices[i] = NULL;
+			dev.DIDevice->Release();
+			dev.DIDevice = NULL;
 		}
 		// Allocated using _tcsdup()
-		free(DeviceName[i]);
-		DeviceName[i] = NULL;
-		for (j = 0; j < 128; j++)
+		free(dev.Name);
+		dev.Name = NULL;
+		for (j = 0; j < 256; j++)
 		{
 			// Allocated using _tcsdup()
-			free(ButtonNames[i][j]);
-			ButtonNames[i][j] = NULL;
+			free(dev.ButtonNames[j]);
+			dev.ButtonNames[j] = NULL;
 		}
 		for (j = 0; j < 8; j++)
 		{
 			// Allocated using _tcsdup()
-			free(AxisNames[i][j]);
-			AxisNames[i][j] = NULL;
+			free(dev.AxisNames[j]);
+			dev.AxisNames[j] = NULL;
 		}
 		for (j = 0; j < 4; j++)
 		{
 			// Allocated using _tcsdup()
-			free(POVNames[i][j]);
-			POVNames[i][j] = NULL;
+			free(dev.POVNames[j]);
+			dev.POVNames[j] = NULL;
 		}
-	}
-	for (j = 0; j < 256; j++)
-	{
-		// Allocated using _tcsdup()
-		free(KeyNames[j]);
-		KeyNames[j] = NULL;
 	}
 
 	DirectInput->Release();
@@ -682,7 +700,7 @@ void	SaveSettings (HKEY SettingsBase)
 {
 	DWORD numDevsUsed = 0;
 	for (int i = 0; i < MAX_CONTROLLERS; i++)
-		if (DeviceUsed[i])
+		if (Devices[i].Used)
 			numDevsUsed++;
 
 	int buflen = sizeof(DWORD) + numDevsUsed * (sizeof(GUID) + sizeof(DWORD));
@@ -691,10 +709,10 @@ void	SaveSettings (HKEY SettingsBase)
 	memcpy(b, &numDevsUsed, sizeof(DWORD)); b += sizeof(DWORD);
 	for (DWORD i = 0; i < MAX_CONTROLLERS; i++)
 	{
-		if (!DeviceUsed[i])
+		if (!Devices[i].Used)
 			continue;
 		memcpy(b, &i, sizeof(DWORD)); b += sizeof(DWORD);
-		memcpy(b, &DeviceGUID[i], sizeof(GUID)); b += sizeof(GUID);
+		memcpy(b, &Devices[i].GUID, sizeof(GUID)); b += sizeof(GUID);
 	}
 
 	RegSetValueEx(SettingsBase, _T("UDLR")    , 0, REG_DWORD, (LPBYTE)&EnableOpposites, sizeof(BOOL));
@@ -795,7 +813,7 @@ void	LoadSettings (HKEY SettingsBase)
 						found = 1;
 						for (int m = 0; m < NumDevices; m++)
 						{
-							if (IsEqualGUID(map_guids[k], DeviceGUID[m]))
+							if (IsEqualGUID(map_guids[k], Devices[m].GUID))
 							{
 								found = 2;
 								Button = (m << 16) | (Button & 0xFFFF);
@@ -824,44 +842,44 @@ void	SetDeviceUsed (void)
 	int i;
 
 	for (i = 0; i < NumDevices; i++)
-		DeviceUsed[i] = FALSE;
+		Devices[i].Used = FALSE;
 
 	for (i = 0; i < CONTROLLERS_MAXBUTTONS; i++)
 	{
 		if (Port1->Type == STD_FOURSCORE)
 		{
 			if (i < FSPort1->NumButtons)
-				DeviceUsed[FSPort1->Buttons[i] >> 16] = TRUE;
+				Devices[FSPort1->Buttons[i] >> 16].Used = TRUE;
 			if (i < FSPort2->NumButtons)
-				DeviceUsed[FSPort2->Buttons[i] >> 16] = TRUE;
+				Devices[FSPort2->Buttons[i] >> 16].Used = TRUE;
 			if (i < FSPort3->NumButtons)
-				DeviceUsed[FSPort3->Buttons[i] >> 16] = TRUE;
+				Devices[FSPort3->Buttons[i] >> 16].Used = TRUE;
 			if (i < FSPort4->NumButtons)
-				DeviceUsed[FSPort4->Buttons[i] >> 16] = TRUE;
+				Devices[FSPort4->Buttons[i] >> 16].Used = TRUE;
 		}
 		else
 		{
 			if (i < Port1->NumButtons)
-				DeviceUsed[Port1->Buttons[i] >> 16] = TRUE;
+				Devices[Port1->Buttons[i] >> 16].Used = TRUE;
 			if (i < Port2->NumButtons)
-				DeviceUsed[Port2->Buttons[i] >> 16] = TRUE;
+				Devices[Port2->Buttons[i] >> 16].Used = TRUE;
 		}
 		if (i < PortExp->NumButtons)
-			DeviceUsed[PortExp->Buttons[i] >> 16] = TRUE;
+			Devices[PortExp->Buttons[i] >> 16].Used = TRUE;
 	}
 	if ((Port1->Type == STD_ARKANOIDPADDLE) || (Port2->Type == STD_ARKANOIDPADDLE) || (PortExp->Type == EXP_ARKANOIDPADDLE))
-		DeviceUsed[1] = TRUE;
+		Devices[1].Used = TRUE;
 
 	if ((PortExp->Type == EXP_FAMILYBASICKEYBOARD) || (PortExp->Type == EXP_SUBORKEYBOARD))
-		DeviceUsed[0] = TRUE;
+		Devices[0].Used = TRUE;
 }
 
 void	Acquire (void)
 {
 	int i;
 	for (i = 0; i < NumDevices; i++)
-		if (DeviceUsed[i])
-			DIDevices[i]->Acquire();
+		if (Devices[i].Used)
+			Devices[i].DIDevice->Acquire();
 	Port1->SetMasks();
 	Port2->SetMasks();
 	PortExp->SetMasks();
@@ -890,8 +908,8 @@ void	UnAcquire (void)
 {
 	int i;
 	for (i = 0; i < NumDevices; i++)
-		if (DeviceUsed[i])
-			DIDevices[i]->Unacquire();
+		if (Devices[i].Used)
+			Devices[i].DIDevice->Unacquire();
 	if (MaskMouse)
 	{
 		ClipCursor(NULL);
@@ -901,25 +919,23 @@ void	UnAcquire (void)
 	MaskMouse = FALSE;
 }
 
-void	ClearKeyState (void)
+void	ClearDevState (int DevNum)
 {
-	ZeroMemory(KeyState, sizeof(KeyState));
-}
-
-void	ClearMouseState (void)
-{
-	ZeroMemory(&MouseState, sizeof(MouseState));
-}
-
-void	ClearJoyState (int dev)
-{
-	ZeroMemory(&JoyState[dev], sizeof(DIJOYSTATE2));
-	// axes need to be initialized to 0x8000
-	JoyState[dev].lX = JoyState[dev].lY = JoyState[dev].lZ = 0x8000;
-	JoyState[dev].lRx = JoyState[dev].lRy = JoyState[dev].lRz = 0x8000;
-	JoyState[dev].rglSlider[0] = JoyState[dev].rglSlider[1] = 0x8000;
-	// and POV hats need to be initialized to -1
-	JoyState[dev].rgdwPOV[0] = JoyState[dev].rgdwPOV[1] = JoyState[dev].rgdwPOV[2] = JoyState[dev].rgdwPOV[3] = (DWORD)-1;
+	TDeviceInfo &dev = Devices[DevNum];
+	if (DevNum == 0)
+		ZeroMemory(&dev.KeyState, sizeof(dev.KeyState));
+	else if (DevNum == 1)
+		ZeroMemory(&dev.MouseState, sizeof(dev.MouseState));
+	else
+	{
+		ZeroMemory(&dev.JoyState, sizeof(dev.JoyState));
+		// axes need to be initialized to 0x8000
+		dev.JoyState.lX = dev.JoyState.lY = dev.JoyState.lZ = 0x8000;
+		dev.JoyState.lRx = dev.JoyState.lRy = dev.JoyState.lRz = 0x8000;
+		dev.JoyState.rglSlider[0] = dev.JoyState.rglSlider[1] = 0x8000;
+		// and POV hats need to be initialized to -1
+		dev.JoyState.rgdwPOV[0] = dev.JoyState.rgdwPOV[1] = dev.JoyState.rgdwPOV[2] = dev.JoyState.rgdwPOV[3] = (DWORD)-1;
+	}
 }
 
 void	UpdateInput (void)
@@ -927,38 +943,43 @@ void	UpdateInput (void)
 	HRESULT hr;
 	int i;
 	unsigned char Cmd = 0;
-	if (DeviceUsed[0])
+	for (i = 0; i < NumDevices; i++)
 	{
-		hr = DIDevices[0]->GetDeviceState(256, KeyState);
-		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
+		TDeviceInfo &dev = Devices[i];
+		if (!dev.Used)
+			continue;
+		if (i == 0)
 		{
-			ClearKeyState();
-			DIDevices[0]->Acquire();
-		}
-	}
-	if (DeviceUsed[1])
-	{
-		hr = DIDevices[1]->GetDeviceState(sizeof(DIMOUSESTATE2), &MouseState);
-		if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
-		{
-			ClearMouseState();
-			DIDevices[1]->Acquire();
-		}
-	}
-	for (i = 2; i < NumDevices; i++)
-		if (DeviceUsed[i])
-		{
-			hr = DIDevices[i]->Poll();
+			hr = dev.DIDevice->GetDeviceState(sizeof(dev.KeyState), &dev.KeyState);
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
 			{
-				ClearJoyState(i);
-				DIDevices[i]->Acquire();
+				ClearDevState(0);
+				dev.DIDevice->Acquire();
+			}
+		}
+		else if (i == 1)
+		{
+			hr = dev.DIDevice->GetDeviceState(sizeof(dev.MouseState), &dev.MouseState);
+			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
+			{
+				ClearDevState(1);
+				dev.DIDevice->Acquire();
+			}
+		}
+		else
+		{
+			hr = dev.DIDevice->Poll();
+			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
+			{
+				ClearDevState(i);
+				dev.DIDevice->Acquire();
 				continue;
 			}
-			hr = DIDevices[i]->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[i]);
+			hr = dev.DIDevice->GetDeviceState(sizeof(dev.JoyState), &dev.JoyState);
 			if ((hr == DIERR_INPUTLOST) || (hr == DIERR_NOTACQUIRED))
-				ClearJoyState(i);
+				ClearDevState(i);
 		}
+	}
 
 	if (Movie::Mode & MOV_PLAY)
 		Cmd = Movie::LoadInput();
@@ -978,7 +999,7 @@ void	UpdateInput (void)
 
 int	GetConfigButton (HWND hWnd, int DevNum, BOOL AxesOnly = FALSE)
 {
-	LPDIRECTINPUTDEVICE8 dev = DIDevices[DevNum];
+	TDeviceInfo &dev = Devices[DevNum];
 	HRESULT hr;
 	int i;
 	int Key = -1;
@@ -1013,13 +1034,13 @@ int	GetConfigButton (HWND hWnd, int DevNum, BOOL AxesOnly = FALSE)
 		}
 	}
 
-	if (FAILED(dev->SetCooperativeLevel(hWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	if (FAILED(dev.DIDevice->SetCooperativeLevel(hWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
 		MessageBox(hMainWnd, _T("Unable to modify device input cooperative level!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return Key;
 	}
 
-	dev->Acquire();
+	dev.DIDevice->Acquire();
 	DWORD ticks;
 	ticks = GetTickCount();
 	while (Key == -1)
@@ -1029,17 +1050,17 @@ int	GetConfigButton (HWND hWnd, int DevNum, BOOL AxesOnly = FALSE)
 		if (GetTickCount() - ticks > 5000)
 			break;
 		if (DevNum == 0)
-			hr = dev->GetDeviceState(256, KeyState);
+			hr = dev.DIDevice->GetDeviceState(sizeof(dev.KeyState), &dev.KeyState);
 		else if (DevNum == 1)
-			hr = dev->GetDeviceState(sizeof(DIMOUSESTATE2), &MouseState);
+			hr = dev.DIDevice->GetDeviceState(sizeof(dev.MouseState), &dev.MouseState);
 		else
 		{
-			hr = dev->Poll();
-			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[DevNum]);
+			hr = dev.DIDevice->Poll();
+			hr = dev.DIDevice->GetDeviceState(sizeof(dev.JoyState), &dev.JoyState);
 		}
 		if (!AxesOnly)
 		{
-			for (i = 0; i < NumButtons[DevNum]; i++)
+			for (i = 0; i < dev.NumButtons; i++)
 			{
 				if (IsPressed((DevNum << 16) | i))
 				{
@@ -1086,18 +1107,18 @@ int	GetConfigButton (HWND hWnd, int DevNum, BOOL AxesOnly = FALSE)
 
 		bool held = false;
 		if (DevNum == 0)
-			hr = dev->GetDeviceState(256, KeyState);
+			hr = dev.DIDevice->GetDeviceState(sizeof(dev.KeyState), &dev.KeyState);
 		else if (DevNum == 1)
-			hr = dev->GetDeviceState(sizeof(DIMOUSESTATE2), &MouseState);
+			hr = dev.DIDevice->GetDeviceState(sizeof(dev.MouseState), &dev.MouseState);
 		else
 		{
-			hr = dev->Poll();
-			hr = dev->GetDeviceState(sizeof(DIJOYSTATE2), &JoyState[DevNum]);
+			hr = dev.DIDevice->Poll();
+			hr = dev.DIDevice->GetDeviceState(sizeof(dev.JoyState), &dev.JoyState);
 		}
 		// don't need to reset FirstAxis/LastAxis or FirstPOV/LastPOV, since they were set in the previous loop
 		if (!AxesOnly)
 		{
-			for (i = 0; i < NumButtons[DevNum]; i++)
+			for (i = 0; i < dev.NumButtons; i++)
 				if (IsPressed((DevNum << 16) | i))
 				{
 					held = true;
@@ -1127,8 +1148,8 @@ int	GetConfigButton (HWND hWnd, int DevNum, BOOL AxesOnly = FALSE)
 		}
 		break;
 	}
-	dev->Unacquire();
-	if (FAILED(dev->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
+	dev.DIDevice->Unacquire();
+	if (FAILED(dev.DIDevice->SetCooperativeLevel(hMainWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE)))
 	{
 		MessageBox(hMainWnd, _T("Unable to restore device input cooperative level!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 		return Key;
@@ -1138,14 +1159,17 @@ int	GetConfigButton (HWND hWnd, int DevNum, BOOL AxesOnly = FALSE)
 
 const TCHAR *	GetButtonLabel (int DevNum, int Button, BOOL AxesOnly = FALSE)
 {
+	TDeviceInfo &dev = Devices[DevNum];
+
 	static TCHAR str[256];
 	_tcscpy(str, _T("???"));
+
 	if (AxesOnly && (!DevNum || !Button))
 		return str;
 	if (DevNum == 0)
 	{
-		if (KeyNames[Button])
-			_tcscpy(str, KeyNames[Button]);
+		if (dev.ButtonNames[Button])
+			_tcscpy(str, dev.ButtonNames[Button]);
 		return str;
 	}
 	else if (DevNum == 1)
@@ -1153,14 +1177,14 @@ const TCHAR *	GetButtonLabel (int DevNum, int Button, BOOL AxesOnly = FALSE)
 		if (Button & 0x08)
 		{
 			Button &= 0x07;
-			if (AxisNames[1][Button >> 1])
-				_stprintf(str, _T("%s %s"), AxisNames[1][Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
+			if (dev.AxisNames[Button >> 1])
+				_stprintf(str, _T("%s %s"), dev.AxisNames[Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
 			return str;
 		}
 		else
 		{
-			if (ButtonNames[1][Button])
-				_tcscpy(str, ButtonNames[1][Button]);
+			if (dev.ButtonNames[Button])
+				_tcscpy(str, dev.ButtonNames[Button]);
 			return str;
 		}
 	}
@@ -1169,30 +1193,30 @@ const TCHAR *	GetButtonLabel (int DevNum, int Button, BOOL AxesOnly = FALSE)
 		if ((Button & 0xE0) == 0x80)
 		{
 			Button &= 0x0F;
-			if (AxisNames[DevNum][Button >> 1])
-				_stprintf(str, _T("%s %s"), AxisNames[DevNum][Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
+			if (dev.AxisNames[Button >> 1])
+				_stprintf(str, _T("%s %s"), dev.AxisNames[Button >> 1], (Button & 1) ? _T("(+)") : _T("(-)"));
 			return str;
 		}
 		else if ((Button & 0xE0) == 0xC0)
 		{
 			const TCHAR *POVs[8] = {_T("(N)"), _T("(NE)"), _T("(E)"), _T("(SE)"), _T("(S)"), _T("(SW)"), _T("(W)"), _T("(NW)") };
 			Button &= 0x1F;
-			if (POVNames[DevNum][Button >> 3])
-				_stprintf(str, _T("%s %s"), POVNames[DevNum][Button >> 3], POVs[Button & 0x7]);
+			if (dev.POVNames[Button >> 3])
+				_stprintf(str, _T("%s %s"), dev.POVNames[Button >> 3], POVs[Button & 0x7]);
 			return str;
 		}
 		else if ((Button & 0xE0) == 0xE0)
 		{
 			const TCHAR *POVs[4] = {_T("Y (-)"), _T("X (+)"), _T("Y (+)"), _T("X (-)") };
 			Button &= 0xF;
-			if (POVNames[DevNum][Button >> 2])
-				_stprintf(str, _T("%s %s"), POVNames[DevNum][Button >> 2], POVs[Button & 0x3]);
+			if (dev.POVNames[Button >> 2])
+				_stprintf(str, _T("%s %s"), dev.POVNames[Button >> 2], POVs[Button & 0x3]);
 			return str;
 		}
 		else
 		{
-			if (ButtonNames[DevNum][Button])
-				_tcscpy(str, ButtonNames[DevNum][Button]);
+			if (dev.ButtonNames[Button])
+				_tcscpy(str, dev.ButtonNames[Button]);
 			return str;
 		}
 	}
@@ -1220,23 +1244,24 @@ void	ConfigButton (DWORD *Button, int Device, HWND hDlg, BOOL getKey, BOOL AxesO
 BOOL	IsPressed (int Button)
 {
 	int DevNum = (Button & 0xFFFF0000) >> 16;
+	TDeviceInfo &dev = Devices[DevNum];
 	if (DevNum == 0)
-		return (KeyState[Button & 0xFF] & 0x80) ? TRUE : FALSE;
+		return (dev.KeyState[Button & 0xFF] & 0x80) ? TRUE : FALSE;
 	else if (DevNum == 1)
 	{
 		if (Button & 0x8)	// axis selected
 		{
 			switch (Button & 0x7)
 			{
-			case 0x0:	return ((AxisFlags[1] & (1 << AXIS_X)) && (MouseState.lX < -1)) ? TRUE : FALSE;	break;
-			case 0x1:	return ((AxisFlags[1] & (1 << AXIS_X)) && (MouseState.lX > +1)) ? TRUE : FALSE;	break;
-			case 0x2:	return ((AxisFlags[1] & (1 << AXIS_Y)) && (MouseState.lY < -1)) ? TRUE : FALSE;	break;
-			case 0x3:	return ((AxisFlags[1] & (1 << AXIS_Y)) && (MouseState.lY > +1)) ? TRUE : FALSE;	break;
-			case 0x4:	return ((AxisFlags[1] & (1 << AXIS_Z)) && (MouseState.lZ < -1)) ? TRUE : FALSE;	break;
-			case 0x5:	return ((AxisFlags[1] & (1 << AXIS_Z)) && (MouseState.lZ > +1)) ? TRUE : FALSE;	break;
+			case 0x0:	return ((dev.AxisFlags & (1 << AXIS_X)) && (dev.MouseState.lX < -1)) ? TRUE : FALSE;	break;
+			case 0x1:	return ((dev.AxisFlags & (1 << AXIS_X)) && (dev.MouseState.lX > +1)) ? TRUE : FALSE;	break;
+			case 0x2:	return ((dev.AxisFlags & (1 << AXIS_Y)) && (dev.MouseState.lY < -1)) ? TRUE : FALSE;	break;
+			case 0x3:	return ((dev.AxisFlags & (1 << AXIS_Y)) && (dev.MouseState.lY > +1)) ? TRUE : FALSE;	break;
+			case 0x4:	return ((dev.AxisFlags & (1 << AXIS_Z)) && (dev.MouseState.lZ < -1)) ? TRUE : FALSE;	break;
+			case 0x5:	return ((dev.AxisFlags & (1 << AXIS_Z)) && (dev.MouseState.lZ > +1)) ? TRUE : FALSE;	break;
 			}
 		}
-		else	return (MouseState.rgbButtons[Button & 0x7] & 0x80) ? TRUE : FALSE;
+		else	return (dev.MouseState.rgbButtons[Button & 0x7] & 0x80) ? TRUE : FALSE;
 	}
 	else
 	{
@@ -1244,55 +1269,55 @@ BOOL	IsPressed (int Button)
 		{	// axis
 			switch (Button & 0xF)
 			{
-			case 0x0:	return ((AxisFlags[DevNum] & (1 << AXIS_X)) && (JoyState[DevNum].lX < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x1:	return ((AxisFlags[DevNum] & (1 << AXIS_X)) && (JoyState[DevNum].lX > 0xC000)) ? TRUE : FALSE;	break;
-			case 0x2:	return ((AxisFlags[DevNum] & (1 << AXIS_Y)) && (JoyState[DevNum].lY < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x3:	return ((AxisFlags[DevNum] & (1 << AXIS_Y)) && (JoyState[DevNum].lY > 0xC000)) ? TRUE : FALSE;	break;
-			case 0x4:	return ((AxisFlags[DevNum] & (1 << AXIS_Z)) && (JoyState[DevNum].lZ < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x5:	return ((AxisFlags[DevNum] & (1 << AXIS_Z)) && (JoyState[DevNum].lZ > 0xC000)) ? TRUE : FALSE;	break;
-			case 0x6:	return ((AxisFlags[DevNum] & (1 << AXIS_RX)) && (JoyState[DevNum].lRx < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x7:	return ((AxisFlags[DevNum] & (1 << AXIS_RX)) && (JoyState[DevNum].lRx > 0xC000)) ? TRUE : FALSE;	break;
-			case 0x8:	return ((AxisFlags[DevNum] & (1 << AXIS_RY)) && (JoyState[DevNum].lRy < 0x4000)) ? TRUE : FALSE;	break;
-			case 0x9:	return ((AxisFlags[DevNum] & (1 << AXIS_RY)) && (JoyState[DevNum].lRy > 0xC000)) ? TRUE : FALSE;	break;
-			case 0xA:	return ((AxisFlags[DevNum] & (1 << AXIS_RZ)) && (JoyState[DevNum].lRz < 0x4000)) ? TRUE : FALSE;	break;
-			case 0xB:	return ((AxisFlags[DevNum] & (1 << AXIS_RZ)) && (JoyState[DevNum].lRz > 0xC000)) ? TRUE : FALSE;	break;
-			case 0xC:	return ((AxisFlags[DevNum] & (1 << AXIS_S0)) && (JoyState[DevNum].rglSlider[0] < 0x4000)) ? TRUE : FALSE;	break;
-			case 0xD:	return ((AxisFlags[DevNum] & (1 << AXIS_S0)) && (JoyState[DevNum].rglSlider[0] > 0xC000)) ? TRUE : FALSE;	break;
-			case 0xE:	return ((AxisFlags[DevNum] & (1 << AXIS_S1)) && (JoyState[DevNum].rglSlider[1] < 0x4000)) ? TRUE : FALSE;	break;
-			case 0xF:	return ((AxisFlags[DevNum] & (1 << AXIS_S1)) && (JoyState[DevNum].rglSlider[1] > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x0:	return ((dev.AxisFlags & (1 << AXIS_X)) && (dev.JoyState.lX < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x1:	return ((dev.AxisFlags & (1 << AXIS_X)) && (dev.JoyState.lX > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x2:	return ((dev.AxisFlags & (1 << AXIS_Y)) && (dev.JoyState.lY < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x3:	return ((dev.AxisFlags & (1 << AXIS_Y)) && (dev.JoyState.lY > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x4:	return ((dev.AxisFlags & (1 << AXIS_Z)) && (dev.JoyState.lZ < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x5:	return ((dev.AxisFlags & (1 << AXIS_Z)) && (dev.JoyState.lZ > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x6:	return ((dev.AxisFlags & (1 << AXIS_RX)) && (dev.JoyState.lRx < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x7:	return ((dev.AxisFlags & (1 << AXIS_RX)) && (dev.JoyState.lRx > 0xC000)) ? TRUE : FALSE;	break;
+			case 0x8:	return ((dev.AxisFlags & (1 << AXIS_RY)) && (dev.JoyState.lRy < 0x4000)) ? TRUE : FALSE;	break;
+			case 0x9:	return ((dev.AxisFlags & (1 << AXIS_RY)) && (dev.JoyState.lRy > 0xC000)) ? TRUE : FALSE;	break;
+			case 0xA:	return ((dev.AxisFlags & (1 << AXIS_RZ)) && (dev.JoyState.lRz < 0x4000)) ? TRUE : FALSE;	break;
+			case 0xB:	return ((dev.AxisFlags & (1 << AXIS_RZ)) && (dev.JoyState.lRz > 0xC000)) ? TRUE : FALSE;	break;
+			case 0xC:	return ((dev.AxisFlags & (1 << AXIS_S0)) && (dev.JoyState.rglSlider[0] < 0x4000)) ? TRUE : FALSE;	break;
+			case 0xD:	return ((dev.AxisFlags & (1 << AXIS_S0)) && (dev.JoyState.rglSlider[0] > 0xC000)) ? TRUE : FALSE;	break;
+			case 0xE:	return ((dev.AxisFlags & (1 << AXIS_S1)) && (dev.JoyState.rglSlider[1] < 0x4000)) ? TRUE : FALSE;	break;
+			case 0xF:	return ((dev.AxisFlags & (1 << AXIS_S1)) && (dev.JoyState.rglSlider[1] > 0xC000)) ? TRUE : FALSE;	break;
 			}
 		}
 		else if ((Button & 0xE0) == 0xC0)
 		{	// POV trigger (8-button mode)
 			int povNum = (Button >> 3) & 0x3;
-			if (JoyState[DevNum].rgdwPOV[povNum] == -1)
+			if (dev.JoyState.rgdwPOV[povNum] == -1)
 				return FALSE;
 			switch (Button & 0x7)
 			{
-			case 0x00:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 33750) || (JoyState[DevNum].rgdwPOV[povNum] <  2250))) ? TRUE : FALSE;	break;
-			case 0x01:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] >  2250) && (JoyState[DevNum].rgdwPOV[povNum] <  6750))) ? TRUE : FALSE;	break;
-			case 0x02:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] >  6750) && (JoyState[DevNum].rgdwPOV[povNum] < 11250))) ? TRUE : FALSE;	break;
-			case 0x03:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 11250) && (JoyState[DevNum].rgdwPOV[povNum] < 15750))) ? TRUE : FALSE;	break;
-			case 0x04:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 15750) && (JoyState[DevNum].rgdwPOV[povNum] < 20250))) ? TRUE : FALSE;	break;
-			case 0x05:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 20250) && (JoyState[DevNum].rgdwPOV[povNum] < 24750))) ? TRUE : FALSE;	break;
-			case 0x06:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 24750) && (JoyState[DevNum].rgdwPOV[povNum] < 29250))) ? TRUE : FALSE;	break;
-			case 0x07:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 29250) && (JoyState[DevNum].rgdwPOV[povNum] < 33750))) ? TRUE : FALSE;	break;
+			case 0x00:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] > 33750) || (dev.JoyState.rgdwPOV[povNum] <  2250))) ? TRUE : FALSE;	break;
+			case 0x01:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] >  2250) && (dev.JoyState.rgdwPOV[povNum] <  6750))) ? TRUE : FALSE;	break;
+			case 0x02:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] >  6750) && (dev.JoyState.rgdwPOV[povNum] < 11250))) ? TRUE : FALSE;	break;
+			case 0x03:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] > 11250) && (dev.JoyState.rgdwPOV[povNum] < 15750))) ? TRUE : FALSE;	break;
+			case 0x04:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] > 15750) && (dev.JoyState.rgdwPOV[povNum] < 20250))) ? TRUE : FALSE;	break;
+			case 0x05:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] > 20250) && (dev.JoyState.rgdwPOV[povNum] < 24750))) ? TRUE : FALSE;	break;
+			case 0x06:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] > 24750) && (dev.JoyState.rgdwPOV[povNum] < 29250))) ? TRUE : FALSE;	break;
+			case 0x07:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] > 29250) && (dev.JoyState.rgdwPOV[povNum] < 33750))) ? TRUE : FALSE;	break;
 			}
 		}
 		else if ((Button & 0xE0) == 0xE0)
 		{	// POV trigger (axis mode)
 			int povNum = (Button >> 2) & 0x3;
-			if (JoyState[DevNum].rgdwPOV[povNum] == -1)
+			if (dev.JoyState.rgdwPOV[povNum] == -1)
 				return FALSE;
 			switch (Button & 0x03)
 			{
-			case 0x0:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 29250) || (JoyState[DevNum].rgdwPOV[povNum] <  6750))) ? TRUE : FALSE;	break;
-			case 0x1:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] >  2250) && (JoyState[DevNum].rgdwPOV[povNum] < 15750))) ? TRUE : FALSE;	break;
-			case 0x2:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 11250) && (JoyState[DevNum].rgdwPOV[povNum] < 24750))) ? TRUE : FALSE;	break;
-			case 0x3:	return ((POVFlags[DevNum] & (1 << povNum)) && ((JoyState[DevNum].rgdwPOV[povNum] > 20250) && (JoyState[DevNum].rgdwPOV[povNum] < 33750))) ? TRUE : FALSE;	break;
+			case 0x0:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] > 29250) || (dev.JoyState.rgdwPOV[povNum] <  6750))) ? TRUE : FALSE;	break;
+			case 0x1:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] >  2250) && (dev.JoyState.rgdwPOV[povNum] < 15750))) ? TRUE : FALSE;	break;
+			case 0x2:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] > 11250) && (dev.JoyState.rgdwPOV[povNum] < 24750))) ? TRUE : FALSE;	break;
+			case 0x3:	return ((dev.POVFlags & (1 << povNum)) && ((dev.JoyState.rgdwPOV[povNum] > 20250) && (dev.JoyState.rgdwPOV[povNum] < 33750))) ? TRUE : FALSE;	break;
 			}
 		}
-		else	return (JoyState[DevNum].rgbButtons[Button & 0x7F] & 0x80) ? TRUE : FALSE;
+		else	return (dev.JoyState.rgbButtons[Button & 0x7F] & 0x80) ? TRUE : FALSE;
 	}
 	// should never actually reach this point - this is just to make the compiler stop whining
 	return FALSE;
@@ -1301,6 +1326,7 @@ BOOL	IsPressed (int Button)
 int	GetDelta (int Button)
 {
 	int DevNum = (Button & 0xFFFF0000) >> 16;
+	TDeviceInfo &dev = Devices[DevNum];
 	if (DevNum == 0)
 		return 0;	// Keyboard not supported
 	else if (DevNum == 1)
@@ -1309,12 +1335,12 @@ int	GetDelta (int Button)
 		{
 			switch (Button & 0x7)
 			{
-			case 0x0:	return (AxisFlags[1] & (1 << AXIS_X)) ? -MouseState.lX : 0;	break;
-			case 0x1:	return (AxisFlags[1] & (1 << AXIS_X)) ?  MouseState.lX : 0;	break;
-			case 0x2:	return (AxisFlags[1] & (1 << AXIS_Y)) ? -MouseState.lY : 0;	break;
-			case 0x3:	return (AxisFlags[1] & (1 << AXIS_Y)) ?  MouseState.lY : 0;	break;
-			case 0x4:	return (AxisFlags[1] & (1 << AXIS_Z)) ? -MouseState.lZ : 0;	break;
-			case 0x5:	return (AxisFlags[1] & (1 << AXIS_Z)) ?  MouseState.lZ : 0;	break;
+			case 0x0:	return (dev.AxisFlags & (1 << AXIS_X)) ? -dev.MouseState.lX : 0;	break;
+			case 0x1:	return (dev.AxisFlags & (1 << AXIS_X)) ?  dev.MouseState.lX : 0;	break;
+			case 0x2:	return (dev.AxisFlags & (1 << AXIS_Y)) ? -dev.MouseState.lY : 0;	break;
+			case 0x3:	return (dev.AxisFlags & (1 << AXIS_Y)) ?  dev.MouseState.lY : 0;	break;
+			case 0x4:	return (dev.AxisFlags & (1 << AXIS_Z)) ? -dev.MouseState.lZ : 0;	break;
+			case 0x5:	return (dev.AxisFlags & (1 << AXIS_Z)) ?  dev.MouseState.lZ : 0;	break;
 			}
 		}
 		else	return 0;
@@ -1325,22 +1351,22 @@ int	GetDelta (int Button)
 		{	// axis
 			switch (Button & 0xF)
 			{
-			case 0x0:	return (AxisFlags[DevNum] & (1 << AXIS_X)) ? -(0x8000 - JoyState[DevNum].lX) / 0x400 : 0;	break;
-			case 0x1:	return (AxisFlags[DevNum] & (1 << AXIS_X)) ?  (0x8000 - JoyState[DevNum].lX) / 0x400 : 0;	break;
-			case 0x2:	return (AxisFlags[DevNum] & (1 << AXIS_Y)) ? -(0x8000 - JoyState[DevNum].lY) / 0x400 : 0;	break;
-			case 0x3:	return (AxisFlags[DevNum] & (1 << AXIS_Y)) ?  (0x8000 - JoyState[DevNum].lY) / 0x400 : 0;	break;
-			case 0x4:	return (AxisFlags[DevNum] & (1 << AXIS_Z)) ? -(0x8000 - JoyState[DevNum].lZ) / 0x400 : 0;	break;
-			case 0x5:	return (AxisFlags[DevNum] & (1 << AXIS_Z)) ?  (0x8000 - JoyState[DevNum].lZ) / 0x400 : 0;	break;
-			case 0x6:	return (AxisFlags[DevNum] & (1 << AXIS_RX)) ? -(0x8000 - JoyState[DevNum].lRx) / 0x400 : 0;	break;
-			case 0x7:	return (AxisFlags[DevNum] & (1 << AXIS_RX)) ?  (0x8000 - JoyState[DevNum].lRx) / 0x400 : 0;	break;
-			case 0x8:	return (AxisFlags[DevNum] & (1 << AXIS_RY)) ? -(0x8000 - JoyState[DevNum].lRy) / 0x400 : 0;	break;
-			case 0x9:	return (AxisFlags[DevNum] & (1 << AXIS_RY)) ?  (0x8000 - JoyState[DevNum].lRy) / 0x400 : 0;	break;
-			case 0xA:	return (AxisFlags[DevNum] & (1 << AXIS_RZ)) ? -(0x8000 - JoyState[DevNum].lRz) / 0x400 : 0;	break;
-			case 0xB:	return (AxisFlags[DevNum] & (1 << AXIS_RZ)) ?  (0x8000 - JoyState[DevNum].lRz) / 0x400 : 0;	break;
-			case 0xC:	return (AxisFlags[DevNum] & (1 << AXIS_S0)) ? -(0x8000 - JoyState[DevNum].rglSlider[0]) / 0x400 : 0;	break;
-			case 0xD:	return (AxisFlags[DevNum] & (1 << AXIS_S0)) ?  (0x8000 - JoyState[DevNum].rglSlider[0]) / 0x400 : 0;	break;
-			case 0xE:	return (AxisFlags[DevNum] & (1 << AXIS_S1)) ? -(0x8000 - JoyState[DevNum].rglSlider[1]) / 0x400 : 0;	break;
-			case 0xF:	return (AxisFlags[DevNum] & (1 << AXIS_S1)) ?  (0x8000 - JoyState[DevNum].rglSlider[1]) / 0x400 : 0;	break;
+			case 0x0:	return (dev.AxisFlags & (1 << AXIS_X)) ? -(0x8000 - dev.JoyState.lX) / 0x400 : 0;	break;
+			case 0x1:	return (dev.AxisFlags & (1 << AXIS_X)) ?  (0x8000 - dev.JoyState.lX) / 0x400 : 0;	break;
+			case 0x2:	return (dev.AxisFlags & (1 << AXIS_Y)) ? -(0x8000 - dev.JoyState.lY) / 0x400 : 0;	break;
+			case 0x3:	return (dev.AxisFlags & (1 << AXIS_Y)) ?  (0x8000 - dev.JoyState.lY) / 0x400 : 0;	break;
+			case 0x4:	return (dev.AxisFlags & (1 << AXIS_Z)) ? -(0x8000 - dev.JoyState.lZ) / 0x400 : 0;	break;
+			case 0x5:	return (dev.AxisFlags & (1 << AXIS_Z)) ?  (0x8000 - dev.JoyState.lZ) / 0x400 : 0;	break;
+			case 0x6:	return (dev.AxisFlags & (1 << AXIS_RX)) ? -(0x8000 - dev.JoyState.lRx) / 0x400 : 0;	break;
+			case 0x7:	return (dev.AxisFlags & (1 << AXIS_RX)) ?  (0x8000 - dev.JoyState.lRx) / 0x400 : 0;	break;
+			case 0x8:	return (dev.AxisFlags & (1 << AXIS_RY)) ? -(0x8000 - dev.JoyState.lRy) / 0x400 : 0;	break;
+			case 0x9:	return (dev.AxisFlags & (1 << AXIS_RY)) ?  (0x8000 - dev.JoyState.lRy) / 0x400 : 0;	break;
+			case 0xA:	return (dev.AxisFlags & (1 << AXIS_RZ)) ? -(0x8000 - dev.JoyState.lRz) / 0x400 : 0;	break;
+			case 0xB:	return (dev.AxisFlags & (1 << AXIS_RZ)) ?  (0x8000 - dev.JoyState.lRz) / 0x400 : 0;	break;
+			case 0xC:	return (dev.AxisFlags & (1 << AXIS_S0)) ? -(0x8000 - dev.JoyState.rglSlider[0]) / 0x400 : 0;	break;
+			case 0xD:	return (dev.AxisFlags & (1 << AXIS_S0)) ?  (0x8000 - dev.JoyState.rglSlider[0]) / 0x400 : 0;	break;
+			case 0xE:	return (dev.AxisFlags & (1 << AXIS_S1)) ? -(0x8000 - dev.JoyState.rglSlider[1]) / 0x400 : 0;	break;
+			case 0xF:	return (dev.AxisFlags & (1 << AXIS_S1)) ?  (0x8000 - dev.JoyState.rglSlider[1]) / 0x400 : 0;	break;
 			}
 		}
 		else	return 0;	// buttons and POV axes not supported
@@ -1362,9 +1388,10 @@ INT_PTR	ParseConfigMessages (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam,
 		{
 			int j;
 			SendDlgItemMessage(hDlg, dlgDevices[i], CB_RESETCONTENT, 0, 0);		// clear the listbox
-			SendDlgItemMessage(hDlg, dlgDevices[i], CB_ADDSTRING, 0, i < numButtons ? (LPARAM)DeviceName[0] : (LPARAM)_T("Select a device..."));
+			// for configurable Axes, replace Keyboard with "Select a device..."
+			SendDlgItemMessage(hDlg, dlgDevices[i], CB_ADDSTRING, 0, i < numButtons ? (LPARAM)Devices[0].Name : (LPARAM)_T("Select a device..."));
 			for (j = 1; j < NumDevices; j++)
-				SendDlgItemMessage(hDlg, dlgDevices[i], CB_ADDSTRING, 0, (LPARAM)DeviceName[j]);	// add each device
+				SendDlgItemMessage(hDlg, dlgDevices[i], CB_ADDSTRING, 0, (LPARAM)Devices[j].Name);	// add each device
 			SendDlgItemMessage(hDlg, dlgDevices[i], CB_SETCURSEL, Buttons[i] >> 16, 0);	// select the one we want
 			ConfigButton(&Buttons[i], Buttons[i] >> 16, GetDlgItem(hDlg, dlgButtons[i]), FALSE, i >= numButtons);	// and label the corresponding button
 		}
