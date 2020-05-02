@@ -4,12 +4,9 @@
 
 #pragma once
 
-DECLARE_HANDLE(HAVI);
-
 namespace AVI
 {
-extern HAVI handle;
-
+BOOL	IsActive	(void);
 void	Init		(void);
 void	Start		(void);
 void	AddVideo	(void);

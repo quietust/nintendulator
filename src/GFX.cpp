@@ -486,7 +486,7 @@ int TitleDelay = 0;
 void	DrawScreen (void)
 {
 	LARGE_INTEGER TmpClockVal;
-	if (AVI::handle)
+	if (AVI::IsActive())
 		AVI::AddVideo();
 	if (SlowDown)
 		Sleep(SlowRate * 1000 / WantFPS);

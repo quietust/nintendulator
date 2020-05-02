@@ -1327,7 +1327,7 @@ void	Run (void)
 		unsigned long rpos, wpos;
 
 		Cycles = NewBufPos = 0;
-		if (AVI::handle)
+		if (AVI::IsActive())
 			AVI::AddAudio();
 		do
 		{

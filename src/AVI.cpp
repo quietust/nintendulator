@@ -16,311 +16,324 @@
 
 #pragma comment(lib, "vfw32.lib")
 
-// AVI utilities -- for creating avi files
-// (c) 2002 Lucian Wischik. No restrictions on use.
-// http://www.wischik.com/lu/programmer/avi_utils.html
-
-// This is the internal structure represented by the HAVI handle:
-typedef struct
+class AVIHandle
 {
-	PAVIFILE pfile;			// created by CreateAvi
-	WAVEFORMATEX wfx;		// as given to CreateAvi (.nChannels=0 if none was given). Used when audio stream is first created.
-	int period;			// specified in CreateAvi, used when the video stream is first created
-	PAVISTREAM audStream;		// audio stream, initialised when audio stream is first created
-	PAVISTREAM vidStream;		// video stream, uncompressed
-	PAVISTREAM vidStreamComp;	// video stream, compressed
-	unsigned long nframe, nsamp;	// which frame will be added next, which sample will be added next
-	BOOL iserr;			// if true, then no function will do anything
-} TAviUtil;
+protected:
+	PAVIFILE pfile;		// AVI file handle
+	WAVEFORMATEX wfx;	// Desired audio format
+	int period;		// Desired framerate divisor (dividend is 1,000,000,000)
+	PAVISTREAM audStreamU;	// Uncompressed audio stream handle. Compression does not seem to work.
+	PAVISTREAM vidStreamU;	// Uncompressed video stream handle
+	PAVISTREAM vidStreamC;	// Compressed video stream handle
 
-HAVI CreateAvi (const TCHAR *filename, int frameperiod, const WAVEFORMATEX *wfx)
-{
-	PAVIFILE pfile;
-	HRESULT hr;
-	TAviUtil *au;
+	unsigned long nframe;	// Next frame number
+	unsigned long nsamp;	// Next sample number
 
-	AVIFileInit();
-	hr = AVIFileOpen(&pfile, filename, OF_WRITE | OF_CREATE, NULL);
-	if (hr)
+	bool iserr;		// Error state - if true, then all functions will abort
+	bool WineHack;		// special hack for Wine's broken implementation of AVIStreamWrite
+
+	bool CreateAudioStream (void)
 	{
-		AVIFileExit();
-		return NULL;
-	}
-	au = new TAviUtil;
-	au->pfile = pfile;
-	if (wfx)
-		CopyMemory(&au->wfx, wfx, sizeof(WAVEFORMATEX));
-	else	ZeroMemory(&au->wfx, sizeof(WAVEFORMATEX));
-	au->period = frameperiod;
-	au->audStream = NULL;
-	au->vidStream = NULL;
-	au->vidStreamComp = NULL;
-	au->nframe = 0;
-	au->nsamp = 0;
-	au->iserr = FALSE;
-	return (HAVI)au;
-}
+		if (audStreamU)
+			return true;
 
-HRESULT CloseAvi (HAVI avi)
-{
-	TAviUtil *au;
-	if (!avi)
-		return AVIERR_BADHANDLE;
-	au = (TAviUtil *)avi;
-	if (au->audStream)
-		AVIStreamRelease(au->audStream);
-	if (au->vidStreamComp)
-		AVIStreamRelease(au->vidStreamComp);
-	if (au->vidStream)
-		AVIStreamRelease(au->vidStream);
-	if (au->pfile)
-		AVIFileRelease(au->pfile);
-	AVIFileExit();
-	delete au;
-	return S_OK;
-}
-
-HRESULT SetAviVideoCompression (HAVI avi, HBITMAP hbm, AVICOMPRESSOPTIONS *opts, BOOL ShowDialog, HWND hparent)
-{
-	DIBSECTION dibs;
-	int sbm;
-	TAviUtil *au;
-	HRESULT hr;
-
-	if (!avi)
-		return AVIERR_BADHANDLE;
-	if (!hbm)
-		return AVIERR_BADPARAM;
-	sbm = GetObject(hbm, sizeof(dibs), &dibs);
-	if (sbm != sizeof(DIBSECTION))
-		return AVIERR_BADPARAM;
-	au = (TAviUtil*)avi;
-	if (au->iserr)
-		return AVIERR_ERROR;
-	// has compression already been configured?
-	if (au->vidStreamComp)
-		return AVIERR_COMPRESSOR;
-
-	if (!au->vidStream)	// create the stream, if it wasn't there before
-	{
-		AVISTREAMINFO strhdr;
-		ZeroMemory(&strhdr,sizeof(strhdr));
-		strhdr.fccType = streamtypeVIDEO;
-		strhdr.fccHandler = 0; 
-		strhdr.dwScale = au->period;
-		strhdr.dwRate = 1000000000;
-		strhdr.dwSuggestedBufferSize = dibs.dsBmih.biSizeImage;
-		SetRect(&strhdr.rcFrame, 0, 0, dibs.dsBmih.biWidth, dibs.dsBmih.biHeight);
-		hr = AVIFileCreateStream(au->pfile, &au->vidStream, &strhdr);
-		if (hr)
-		{
-			au->iserr = TRUE;
-			return hr;
-		}
-	}
-
-	if (!au->vidStreamComp)	// set the compression, prompting dialog if necessary
-	{
-		AVICOMPRESSOPTIONS myopts;
-		AVICOMPRESSOPTIONS *aopts[1];
-		DIBSECTION dibs;
-
-		ZeroMemory(&myopts, sizeof(myopts));
-		if (opts)
-			aopts[0] = opts;
-		else	aopts[0] = &myopts;
-		if (ShowDialog)
-		{
-			BOOL res = (BOOL)AVISaveOptions(hparent, 0, 1, &au->vidStream, aopts);
-			if (!res)
-			{
-				AVISaveOptionsFree(1, aopts);
-				au->iserr = TRUE;
-				return AVIERR_USERABORT;
-			}
-		}
-		hr = AVIMakeCompressedStream(&au->vidStreamComp, au->vidStream, aopts[0], NULL);
-		AVISaveOptionsFree(1, aopts);
-		if (hr)
-		{
-			au->iserr = TRUE;
-			return hr;
-		}
-		GetObject(hbm, sizeof(dibs), &dibs);
-		hr = AVIStreamSetFormat(au->vidStreamComp, 0, &dibs.dsBmih, dibs.dsBmih.biSize + dibs.dsBmih.biClrUsed * sizeof(RGBQUAD));
-		if (hr)
-		{
-			au->iserr = TRUE;
-			return hr;
-		}
-	}
-	return AVIERR_OK;
-}
-
-HRESULT AddAviFrame (HAVI avi, HBITMAP hbm)
-{
-	DIBSECTION dibs;
-	TAviUtil *au;
-	int sbm;
-	HRESULT hr;
-
-	if (!avi)
-		return AVIERR_BADHANDLE;
-	if (!hbm)
-		return AVIERR_BADPARAM;
-	sbm = GetObject(hbm, sizeof(dibs), &dibs);
-	if (sbm != sizeof(DIBSECTION))
-		return AVIERR_BADPARAM;
-	au = (TAviUtil*)avi;
-	if (au->iserr)
-		return AVIERR_ERROR;
-
-	if (!au->vidStream)	// create the stream, if it wasn't there before
-	{
-		AVISTREAMINFO strhdr;
-		ZeroMemory(&strhdr,sizeof(strhdr));
-		strhdr.fccType = streamtypeVIDEO;
-		strhdr.fccHandler = 0; 
-		strhdr.dwScale = au->period;
-		strhdr.dwRate = 1000000000;
-		strhdr.dwSuggestedBufferSize = dibs.dsBmih.biSizeImage;
-		SetRect(&strhdr.rcFrame, 0, 0, dibs.dsBmih.biWidth, dibs.dsBmih.biHeight);
-		hr = AVIFileCreateStream(au->pfile, &au->vidStream, &strhdr);
-		if (hr)
-		{
-			au->iserr = TRUE;
-			return hr;
-		}
-	}
-	if (!au->vidStreamComp)	// create an empty compression, if the user hasn't set any
-	{
-		AVICOMPRESSOPTIONS opts;
-		ZeroMemory(&opts,sizeof(opts));
-		opts.fccHandler = mmioFOURCC('D','I','B',' '); 
-		hr = AVIMakeCompressedStream(&au->vidStreamComp, au->vidStream, &opts, NULL);
-		if (hr)
-		{
-			au->iserr = TRUE;
-			return hr;
-		}
-		hr = AVIStreamSetFormat(au->vidStreamComp, 0, &dibs.dsBmih, dibs.dsBmih.biSize + dibs.dsBmih.biClrUsed * sizeof(RGBQUAD));
-		if (hr)
-		{
-			au->iserr = TRUE;
-			return hr;
-		}
-	}
-
-	// Now we can add the frame
-	hr = AVIStreamWrite(au->vidStreamComp, au->nframe, 1, dibs.dsBm.bmBits, dibs.dsBmih.biSizeImage, AVIIF_KEYFRAME, NULL, NULL);
-	if (hr)
-	{
-		au->iserr = TRUE;
-		return hr;
-	}
-	au->nframe++;
-	return S_OK;
-}
-
-HRESULT AddAviAudio (HAVI avi, void *dat, unsigned long numbytes)
-{
-	TAviUtil *au;
-	unsigned long numsamps;
-	HRESULT hr;
-
-	if (!avi)
-		return AVIERR_BADHANDLE;
-	if ((!dat) || (!numbytes))
-		return AVIERR_BADPARAM;
-	au = (TAviUtil*)avi;
-	if (au->iserr)
-		return AVIERR_ERROR;
-	if (!au->wfx.nChannels)
-		return AVIERR_BADFORMAT;
-
-	// make sure it's a whole number of samples
-	numsamps = numbytes * 8 / au->wfx.wBitsPerSample;
-	if ((numsamps * au->wfx.wBitsPerSample / 8) != numbytes)
-		return AVIERR_BADPARAM;
-
-	if (!au->audStream)	// create the stream if necessary
-	{
+		HRESULT hr;
 		AVISTREAMINFO ahdr;
 		ZeroMemory(&ahdr, sizeof(ahdr));
 		ahdr.fccType = streamtypeAUDIO;
-		ahdr.dwScale = au->wfx.nBlockAlign;
-		ahdr.dwRate = au->wfx.nSamplesPerSec * au->wfx.nBlockAlign; 
-		ahdr.dwSampleSize = au->wfx.nBlockAlign;
+		ahdr.dwScale = wfx.nBlockAlign;
+		ahdr.dwRate = wfx.nSamplesPerSec * wfx.nBlockAlign;
 		ahdr.dwQuality = (DWORD)-1;
-		hr = AVIFileCreateStream(au->pfile, &au->audStream, &ahdr);
+		ahdr.dwSampleSize = wfx.nBlockAlign;
+		_stprintf(ahdr.szName, _T("Audio"));
+
+		hr = AVIFileCreateStream(pfile, &audStreamU, &ahdr);
 		if (hr)
 		{
-			au->iserr = TRUE;
-			return hr;
+			iserr = true;
+			Error(hr, _T("CreateAudioStream::AVIFileCreateStream"));
+			return false;
 		}
-		hr = AVIStreamSetFormat(au->audStream, 0, &au->wfx, sizeof(WAVEFORMATEX));
+
+		hr = AVIStreamSetFormat(audStreamU, 0, &wfx, sizeof(WAVEFORMATEX) + wfx.cbSize);
 		if (hr)
 		{
-			au->iserr = TRUE;
-			return hr;
+			iserr = true;
+			Error(hr, _T("CreateAudioStream::AVIStreamSetFormat"));
+			return false;
 		}
+		return true;
 	}
 
-	// now we can write the data
-	hr = AVIStreamWrite(au->audStream, au->nsamp, numsamps, dat, numbytes, 0, NULL, NULL);
-	if (hr)
+	bool CreateVideoStream (DIBSECTION *dibs)
 	{
-		au->iserr = TRUE;
-		return hr;
-	}
-	au->nsamp += numsamps;
-	return S_OK;
-}
+		if (vidStreamU)
+			return true;
 
-unsigned int FormatAviMessage (HRESULT code, TCHAR *buf, unsigned int len)
-{
-	unsigned int mlen, n;
-	const TCHAR *msg = _T("Unknown AVI result code");
-	switch (code)
-	{
-	case S_OK:			msg = _T("Success");									break;
-	case AVIERR_BADFORMAT:		msg = _T("AVIERR_BADFORMAT: corrupt file or unrecognized format");			break;
-	case AVIERR_MEMORY:		msg = _T("AVIERR_MEMORY: insufficient memory");						break;
-	case AVIERR_FILEREAD:		msg = _T("AVIERR_FILEREAD: disk error while reading file");				break;
-	case AVIERR_FILEOPEN:		msg = _T("AVIERR_FILEOPEN: disk error while opening file");				break;
-	case REGDB_E_CLASSNOTREG:	msg = _T("REGDB_E_CLASSNOTREG: file type not recognised");				break;
-	case AVIERR_READONLY:		msg = _T("AVIERR_READONLY: file is read-only");						break;
-	case AVIERR_NOCOMPRESSOR:	msg = _T("AVIERR_NOCOMPRESSOR: a suitable compressor could not be found");		break;
-	case AVIERR_UNSUPPORTED:	msg = _T("AVIERR_UNSUPPORTED: compression is not supported for this type of data");	break;
-	case AVIERR_INTERNAL:		msg = _T("AVIERR_INTERNAL: internal error");						break;
-	case AVIERR_BADFLAGS:		msg = _T("AVIERR_BADFLAGS");								break;
-	case AVIERR_BADPARAM:		msg = _T("AVIERR_BADPARAM");								break;
-	case AVIERR_BADSIZE:		msg = _T("AVIERR_BADSIZE");								break;
-	case AVIERR_BADHANDLE:		msg = _T("AVIERR_BADHANDLE");								break;
-	case AVIERR_FILEWRITE:		msg = _T("AVIERR_FILEWRITE: disk error while writing file");				break;
-	case AVIERR_COMPRESSOR:		msg = _T("AVIERR_COMPRESSOR");								break;
-	case AVIERR_NODATA:		msg = _T("AVIERR_READONLY");								break;
-	case AVIERR_BUFFERTOOSMALL:	msg = _T("AVIERR_BUFFERTOOSMALL");							break;
-	case AVIERR_CANTCOMPRESS:	msg = _T("AVIERR_CANTCOMPRESS");							break;
-	case AVIERR_USERABORT:		msg = _T("AVIERR_USERABORT");								break;
-	case AVIERR_ERROR:		msg = _T("AVIERR_ERROR");								break;
+		HRESULT hr;
+		AVISTREAMINFO strhdr;
+		ZeroMemory(&strhdr, sizeof(strhdr));
+		strhdr.fccType = streamtypeVIDEO;
+		strhdr.fccHandler = 0; 
+		strhdr.dwScale = period;
+		strhdr.dwRate = 1000000000;
+		strhdr.dwQuality = (DWORD)-1;
+		strhdr.dwSuggestedBufferSize = dibs->dsBmih.biSizeImage;
+		_stprintf(strhdr.szName, _T("Video"));
+
+		SetRect(&strhdr.rcFrame, 0, 0, dibs->dsBmih.biWidth, dibs->dsBmih.biHeight);
+		hr = AVIFileCreateStream(pfile, &vidStreamU, &strhdr);
+		if (hr)
+		{
+			iserr = true;
+			Error(hr, _T("CreateVideoStream::AVIFileCreateStream"));
+			return false;
+		}
+
+		hr = AVIStreamSetFormat(vidStreamU, 0, &dibs->dsBmih, dibs->dsBmih.biSize + dibs->dsBmih.biClrUsed * sizeof(RGBQUAD));
+		if (hr)
+		{
+			iserr = true;
+			Error(hr, _T("CreateVideoStream::AVIStreamSetFormat"));
+			return false;
+		}
+		return true;
 	}
-	mlen = (unsigned int)_tcslen(msg);
-	if (!buf || !len)
-		return mlen;
-	n = mlen;
-	if (n + 1 > len)
-		n = len - 1;
-	_tcsncpy(buf, msg, n);
-	buf[n] = 0;
-	return mlen;
-}
+
+	bool CreateVideoStreamComp (DIBSECTION *dibs, AVICOMPRESSOPTIONS *opts)
+	{
+		if (vidStreamC)
+			return true;
+
+		HRESULT hr;
+		hr = AVIMakeCompressedStream(&vidStreamC, vidStreamU, opts, NULL);
+		if (hr)
+		{
+			iserr = true;
+			Error(hr, _T("CreateVideoStreamComp::AVIMakeCompressedStream"));
+			return false;
+		}
+
+		hr = AVIStreamSetFormat(vidStreamC, 0, &dibs->dsBmih, dibs->dsBmih.biSize + dibs->dsBmih.biClrUsed * sizeof(RGBQUAD));
+		if (hr)
+		{
+			AVIStreamRelease(vidStreamC);
+			vidStreamC = NULL;
+			Error(hr, _T("CreateVideoStreamComp::AVIStreamSetFormat"));
+		}
+		return true;
+	}
+
+public:
+	AVIHandle (const TCHAR *filename, int frameperiod)
+	{
+		HRESULT hr;
+		AVIFileInit();
+		hr = AVIFileOpen(&pfile, filename, OF_WRITE | OF_CREATE, NULL);
+		if (hr)
+		{
+			AVIFileExit();
+			Error(hr, _T("AVIFileOpen"));
+			throw hr;
+		}
+
+		ZeroMemory(&wfx, sizeof(WAVEFORMATEX));
+		wfx.wFormatTag = WAVE_FORMAT_PCM;
+		wfx.nChannels = 1;
+		wfx.nSamplesPerSec = 44100;
+		wfx.nAvgBytesPerSec = 88200;
+		wfx.nBlockAlign = 2;
+		wfx.wBitsPerSample = 16;
+		wfx.cbSize = 0;
+
+		period = frameperiod;
+		audStreamU = NULL;
+		vidStreamU = NULL;
+		vidStreamC = NULL;
+
+		nframe = 0;
+		nsamp = 0;
+
+		iserr = false;
+	}
+	~AVIHandle ()
+	{
+		if (audStreamU)
+			AVIStreamRelease(audStreamU);
+		if (vidStreamC)
+			AVIStreamRelease(vidStreamC);
+		if (vidStreamU)
+			AVIStreamRelease(vidStreamU);
+		AVIFileRelease(pfile);
+		AVIFileExit();
+	}
+
+	bool SetCompression (HBITMAP hbm)
+	{
+		if (iserr)
+			return false;
+
+		if (!hbm)
+		{
+			Error(AVIERR_BADPARAM, _T("SetCompression::hbm"));
+			return false;
+		}
+
+		DIBSECTION dibs;
+		if (GetObject(hbm, sizeof(dibs), &dibs) != sizeof(DIBSECTION))
+		{
+			Error(AVIERR_BADPARAM, _T("SetCompression::dibs"));
+			return false;
+		}
+
+		// has compression already been configured?
+		if (vidStreamC)
+			return true;
+
+		// Ensure uncompressed video and audio streams are created
+		if (!CreateVideoStream(&dibs))
+			return false;
+		if (!CreateAudioStream())
+			return false;
+
+		AVICOMPRESSOPTIONS opts;
+		ZeroMemory(&opts, sizeof(opts));
+		opts.fccType = streamtypeVIDEO;
+
+		LPAVICOMPRESSOPTIONS aopts[1] = { &opts };
+		PAVISTREAM ppavi[1] = { vidStreamU };
+
+		INT_PTR res = AVISaveOptions(hMainWnd, 0, 1, ppavi, aopts);
+		if (res != TRUE)
+		{
+			AVISaveOptionsFree(1, aopts);
+			return false;
+		}
+
+		if (!CreateVideoStreamComp(&dibs, aopts[0]))
+			return false;
+
+		AVISaveOptionsFree(1, aopts);
+		return true;
+	}
+
+	bool AddVideo (HBITMAP hbm)
+	{
+		DIBSECTION dibs;
+		HRESULT hr;
+
+		if (iserr)
+			return false;
+
+		if (!hbm)
+			return false;
+		if (GetObject(hbm, sizeof(dibs), &dibs) != sizeof(DIBSECTION))
+			return false;
+
+		// Make sure the video stream has been set up
+		if (!vidStreamC && !vidStreamU)
+			return false;
+
+		// And add the frame
+		hr = AVIStreamWrite(vidStreamC ? vidStreamC : vidStreamU, nframe, 1, dibs.dsBm.bmBits, dibs.dsBmih.biSizeImage, AVIIF_KEYFRAME, NULL, NULL);
+		if (hr)
+		{
+			iserr = true;
+			Error(hr, _T("AddVideo::AVIStreamWrite"));
+			return false;
+		}
+		nframe++;
+		return true;
+	}
+
+	bool AddAudio (short *data, unsigned long numbytes)
+	{
+		HRESULT hr;
+
+		if (iserr)
+			return false;
+
+		if ((!data) || (!numbytes))
+			return false;
+
+		// make sure it's a whole number of samples
+		unsigned long numsamps = numbytes * 8 / wfx.wBitsPerSample;
+		if ((numsamps * wfx.wBitsPerSample / 8) != numbytes)
+			return false;
+
+		// Make sure the audio stream has been set up
+		if (!audStreamU)
+			return false;
+
+		// And write the data
+		hr = AVIStreamWrite(audStreamU, nsamp, numsamps, data, numbytes, 0, NULL, NULL);
+
+		// Wine doesn't handle the "lStart" parameter correctly for audio,
+		// so the second frame will always fail if we do it correctly.
+		if ((hr) && (!WineHack) && (nsamp == numsamps))
+		{
+			// It expects it to increment by 1
+			// rather than by the number of samples
+			nsamp = 1;
+			WineHack = true;
+			hr = AVIStreamWrite(audStreamU, nsamp, numsamps, data, numbytes, 0, NULL, NULL);
+		}
+		if (hr)
+		{
+			iserr = true;
+			Error(hr, _T("AddAudio::AVIStreamWrite"));
+			return false;
+		}
+		if (WineHack)
+			nsamp++;
+		else	nsamp += numsamps;
+		return true;
+	}
+
+	static void Error (HRESULT code, TCHAR *location)
+	{
+		const TCHAR *msg;
+		switch (code)
+		{
+		case AVIERR_BADFORMAT:		msg = _T("AVIERR_BADFORMAT");		break;
+		case AVIERR_MEMORY:		msg = _T("AVIERR_MEMORY");		break;
+		case AVIERR_FILEREAD:		msg = _T("AVIERR_FILEREAD");		break;
+		case AVIERR_FILEOPEN:		msg = _T("AVIERR_FILEOPEN");		break;
+		case REGDB_E_CLASSNOTREG:	msg = _T("REGDB_E_CLASSNOTREG");	break;
+		case AVIERR_READONLY:		msg = _T("AVIERR_READONLY");		break;
+		case AVIERR_NOCOMPRESSOR:	msg = _T("AVIERR_NOCOMPRESSOR");	break;
+		case AVIERR_UNSUPPORTED:	msg = _T("AVIERR_UNSUPPORTED");		break;
+		case AVIERR_INTERNAL:		msg = _T("AVIERR_INTERNAL");		break;
+		case AVIERR_BADFLAGS:		msg = _T("AVIERR_BADFLAGS");		break;
+		case AVIERR_BADPARAM:		msg = _T("AVIERR_BADPARAM");		break;
+		case AVIERR_BADSIZE:		msg = _T("AVIERR_BADSIZE");		break;
+		case AVIERR_BADHANDLE:		msg = _T("AVIERR_BADHANDLE");		break;
+		case AVIERR_FILEWRITE:		msg = _T("AVIERR_FILEWRITE");		break;
+		case AVIERR_COMPRESSOR:		msg = _T("AVIERR_COMPRESSOR");		break;
+		case AVIERR_NODATA:		msg = _T("AVIERR_READONLY");		break;
+		case AVIERR_BUFFERTOOSMALL:	msg = _T("AVIERR_BUFFERTOOSMALL");	break;
+		case AVIERR_CANTCOMPRESS:	msg = _T("AVIERR_CANTCOMPRESS");	break;
+		case AVIERR_USERABORT:		msg = _T("AVIERR_USERABORT");		break;
+		case AVIERR_ERROR:		msg = _T("AVIERR_ERROR");		break;
+		default:			msg = _T("UNKNOWN");
+		}
+
+		TCHAR buf[256];	// long enough for all of the above errors
+		_stprintf(buf, _T("AVI error %s (%08x) at %s"), msg, code, location);
+		MessageBox(hMainWnd, buf, _T("Nintendulator"), MB_OK);
+	}
+};
 
 namespace AVI
 {
-	HAVI handle;
+	AVIHandle *handle;
 	unsigned long *videoBuffer;
 	HBITMAP hbm;
+
+BOOL	IsActive (void)
+{
+	return (handle != NULL);
+}
 
 void	Init (void)
 {
@@ -331,36 +344,33 @@ void	Init (void)
 
 void	End (void)
 {
-	if (!handle)
+	if (!IsActive())
 	{
 		MessageBox(hMainWnd, _T("No AVI capture is currently in progress!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
 	BOOL running = NES::Running;
 	NES::Stop();
-	CloseAvi(handle);
-	handle = NULL;
+
+	delete handle; handle = NULL;
 	if (hbm)
 		DeleteObject(hbm);
 	hbm = NULL;
 	videoBuffer = NULL;
+
 	EnableMenuItem(hMenu, ID_MISC_STARTAVICAPTURE, MF_ENABLED);
 	EnableMenuItem(hMenu, ID_MISC_STOPAVICAPTURE, MF_GRAYED);
 	GFX::ForceNoSkip(FALSE);
+
 	if (running)
 		NES::Start(FALSE);
 }
 
 void	Start (void)
 {
-	WAVEFORMATEX wfx;
-	BITMAPINFOHEADER bmih;
-	HRESULT hr;
-
 	TCHAR FileName[MAX_PATH] = {0};
-	OPENFILENAME ofn;
 
-	if (handle)
+	if (IsActive())
 	{
 		MessageBox(hMainWnd, _T("An AVI capture is already in progress!"), _T("Nintendulator"), MB_OK);
 		return;
@@ -369,6 +379,7 @@ void	Start (void)
 	BOOL running = NES::Running;
 	NES::Stop();
 
+	OPENFILENAME ofn;
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hMainWnd;
@@ -397,18 +408,23 @@ void	Start (void)
 	_tcscpy(Path_AVI, FileName);
 	Path_AVI[ofn.nFileOffset - 1] = 0;
 
-	wfx.wFormatTag = WAVE_FORMAT_PCM;
-	wfx.nChannels = 1;
-	wfx.nSamplesPerSec = 44100;
-	wfx.nAvgBytesPerSec = 88200;
-	wfx.nBlockAlign = 2;
-	wfx.wBitsPerSample = 16;
-	wfx.cbSize = 0;
+	try
+	{
+		if (NES::CurRegion == NES::REGION_NTSC)
+			handle = new AVIHandle(FileName, 16639263);	// 60.098816 fps
+		else	handle = new AVIHandle(FileName, 19997209);	// 50.006978 fps
+	}
+	catch (HRESULT)
+	{
+		// Error will be reported from the constructor,
+		// so there's nothing to do here but resume emulation
+		if (running)
+			NES::Start(FALSE);
+		return;
+	}
 
-	if (NES::CurRegion == NES::REGION_NTSC)
-		handle = CreateAvi(FileName, 16639263, &wfx);	// 60.098816 fps
-	else	handle = CreateAvi(FileName, 19997209, &wfx);	// 50.006978 fps
-
+	BITMAPINFOHEADER bmih;
+	ZeroMemory(&bmih, sizeof(BITMAPINFOHEADER));
 	bmih.biSize = sizeof(BITMAPINFOHEADER);
 	bmih.biWidth = 256;
 	bmih.biHeight = 240;
@@ -420,21 +436,17 @@ void	Start (void)
 	bmih.biYPelsPerMeter = 0;
 	bmih.biClrUsed = 0;
 	bmih.biClrImportant = 0;
-	
 	hbm = CreateDIBSection(NULL, (BITMAPINFO *)&bmih, DIB_RGB_COLORS, (void **)&videoBuffer, NULL, 0);
 
-	hr = SetAviVideoCompression(handle, hbm, NULL, TRUE, hMainWnd);
-	GFX::ForceNoSkip(TRUE);
-	if (hr)
+	if (!handle->SetCompression(hbm))
 	{
-		TCHAR msg[256];
-		FormatAviMessage(hr, msg, 256);
-		MessageBox(hMainWnd, msg, _T("Nintendulator"), MB_OK);
+		MessageBox(hMainWnd, _T("Failed to configure AVI compression!"), _T("Nintendulator"), MB_OK);
 		End();
 		if (running)
 			NES::Start(FALSE);
 		return;
 	}
+	GFX::ForceNoSkip(TRUE);
 	EnableMenuItem(hMenu, ID_MISC_STARTAVICAPTURE, MF_GRAYED);
 	EnableMenuItem(hMenu, ID_MISC_STOPAVICAPTURE, MF_ENABLED);
 	if (running)
@@ -443,8 +455,6 @@ void	Start (void)
 
 void	AddVideo (void)
 {
-	HRESULT hr;
-
 	if (!handle)
 	{
 		MessageBox(hMainWnd, _T("Error! AVI frame capture attempted while not recording!"), _T("Nintendulator"), MB_OK);
@@ -459,29 +469,24 @@ void	AddVideo (void)
 			dst[x] = GFX::Palette32[src[x]];
 		src += 256;
 	}
-	hr = AddAviFrame(handle, hbm);
-	if (hr)
+	if (!handle->AddVideo(hbm))
 	{
-		TCHAR msg[256];
-		FormatAviMessage(hr, msg, 256);
-		MessageBox(hMainWnd, msg, _T("Nintendulator"), MB_OK);
+		MessageBox(hMainWnd, _T("Failed to write video to AVI!"), _T("Nintendulator"), MB_OK);
+		NES::DoStop = STOPMODE_NOW;
 	}
 }
 
 void	AddAudio (void)
 {
-	HRESULT hr;
 	if (!handle)
 	{
 		MessageBox(hMainWnd, _T("Error! AVI audio capture attempted while not recording!"), _T("Nintendulator"), MB_OK);
 		return;
 	}
-	hr = AddAviAudio(handle, APU::buffer, APU::LockSize);
-	if (hr)
+	if (!handle->AddAudio(APU::buffer, APU::LockSize))
 	{
-		TCHAR msg[256];
-		FormatAviMessage(hr, msg, 256);
-		MessageBox(hMainWnd, msg, _T("Nintendulator"), MB_OK);
+		MessageBox(hMainWnd, _T("Failed to write audio to AVI!"), _T("Nintendulator"), MB_OK);
+		NES::DoStop = STOPMODE_NOW;
 	}
 }
 } // namespace AVI

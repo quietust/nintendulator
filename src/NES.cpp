@@ -346,7 +346,7 @@ void	CloseFile (void)
 		ZeroMemory(&RI, sizeof(RI));
 	}
 
-	if (AVI::handle)
+	if (AVI::IsActive())
 		AVI::End();
 	if (Movie::Mode)
 		Movie::Stop();
