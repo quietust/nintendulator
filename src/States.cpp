@@ -224,12 +224,12 @@ BOOL	LoadData (FILE *in, int flen, int version_id)
 		{
 			if ((MI) && (MI->SaveLoad))
 			{
-				int len = MI->SaveLoad(STATE_SIZE, 0, NULL);
-				unsigned char *tpmi = new unsigned char[len];
-				fread(tpmi, 1, len, in);		//	CUST	uint8[...]	Custom mapper data
-				MI->SaveLoad(STATE_LOAD, 0, tpmi);
+				unsigned char *tpmi = new unsigned char[clen];
+				fread(tpmi, 1, clen, in);		//	CUST	uint8[...]	Custom mapper data
+				if (clen != MI->SaveLoad((version_id > 1002) ? STATE_LOAD_VER : STATE_LOAD, 0, tpmi))
+					SSOK = FALSE;
 				delete[] tpmi;
-				clen -= len;
+				clen = 0;
 			}
 		}
 		else if (!memcmp(csig, "NMOV", 4))

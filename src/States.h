@@ -4,7 +4,7 @@
 
 #pragma once
 
-#define	STATES_CUR_VERSION	1002	// current savestate version
+#define	STATES_CUR_VERSION	1003	// current savestate version
 #define	STATES_MIN_VERSION	950	// minimum supported savestate version
 
 namespace States

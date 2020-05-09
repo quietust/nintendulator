@@ -1,5 +1,5 @@
 Nintendulator Save State Format
- Updated:  January 1, 2019
+ Updated:  May 9, 2020
 ---------------------------------------
 
 For simplicity, savestates should only be saved during VBLANK; otherwise,
@@ -37,7 +37,7 @@ For versions prior to 0.980, the version was a 4-character ASCII number:
 	"0975" - 0.975 Beta
 
 Subsequent versions will start at "1001" and count upward each time the
-actual data format changes.
+actual data format changes. The current version is "1003".
 
 Each field is listed with the first and last version which contains it.
 
@@ -231,7 +231,8 @@ Version		Type		Description
 
 Version		Type		Description
 
-0950-		uint8[...]	Custom mapper data
+0950-1002	uint8[...]	Custom mapper data without version tags
+1003-		uint8[...]	Custom mapper data with version tags
 
 ---- Section "GENI" - Game Genie State - Optional
 

@@ -4,12 +4,12 @@
 
 #pragma once
 
-/* Mapper Interface version (3.9) */
+/* Mapper Interface version (3.10) */
 
 #ifdef	UNICODE
-#define	CurrentMapperInterface	0x80030009
+#define	CurrentMapperInterface	0x80030010
 #else	/* !UNICODE */
-#define	CurrentMapperInterface	0x00030009
+#define	CurrentMapperInterface	0x00030010
 #endif	/* UNICODE */
 
 /* Function types */
@@ -109,7 +109,7 @@ enum COMPAT_TYPE	{ COMPAT_NONE, COMPAT_PARTIAL, COMPAT_NEARLY, COMPAT_FULL, COMP
 
 enum RESET_TYPE	{ RESET_NONE, RESET_SOFT, RESET_HARD };
 
-enum STATE_TYPE	{ STATE_SIZE, STATE_SAVE, STATE_LOAD };
+enum STATE_TYPE	{ STATE_SIZE, STATE_SAVE, STATE_LOAD, STATE_LOAD_VER };
 
 enum CFG_TYPE	{ CFG_WINDOW, CFG_QUERY, CFG_CMD };
 
