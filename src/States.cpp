@@ -193,6 +193,10 @@ BOOL	LoadData (FILE *in, int flen, int version_id)
 	fread(&clen, 4, 1, in);	flen -= 4;
 	while (flen > 0)
 	{
+		// If we encountered EOF while attempting to read data, bail out
+		// This can happen if the length in the file header was wrong
+		if (feof(in))
+			return FALSE;
 		flen -= clen;
 		if (!memcmp(csig, "CPUS", 4))
 			clen -= CPU::Load(in, version_id);
@@ -234,6 +238,7 @@ BOOL	LoadData (FILE *in, int flen, int version_id)
 		}
 		else if (!memcmp(csig, "NMOV", 4))
 			clen -= Movie::Load(in, version_id);
+		else	EI.DbgOut(_T("Unknown savestate block '%c%c%c%c' encountered!"), csig[0], csig[1], csig[2], csig[3]);
 		if (clen != 0)
 		{
 			SSOK = FALSE;			// too much, or too little
