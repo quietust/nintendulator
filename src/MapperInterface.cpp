@@ -233,6 +233,7 @@ void	MAPINT	SetPRG_Ptr4 (int Bank, unsigned char *Data, BOOL Writable)
 }
 void	MAPINT	SetPRG_OB4 (int Bank)	// Open bus
 {
+	CPU::PRGPointer[Bank] = NULL;
 	CPU::Readable[Bank] = FALSE;
 	CPU::Writable[Bank] = FALSE;
 }
