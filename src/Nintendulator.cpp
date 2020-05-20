@@ -557,6 +557,9 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(hMenu, ID_SOUND_ENABLED, MF_UNCHECKED);
 			}
 			break;
+		case ID_SOUND_VOLUME:
+			APU::Config();
+			break;
 		case ID_INPUT_SETUP:
 			NES::Stop();
 			Controllers::OpenConfig();

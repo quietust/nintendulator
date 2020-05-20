@@ -34,13 +34,15 @@ void	Stop		(void);
 #ifndef	NSFPLAYER
 int	Save		(FILE *);
 int	Load		(FILE *, int ver);
+void	SaveSettings	(HKEY);
+void	LoadSettings	(HKEY);
 void	SoundOFF	(void);
 void	SoundON		(void);
 #endif	/* !NSFPLAYER */
 void	PowerOn		(void);
 void	Reset		(void);
 #ifndef	NSFPLAYER
-void	Config		(HWND);
+void	Config		(void);
 #endif	/* !NSFPLAYER */
 void	Run		(void);
 void	SetRegion	(void);

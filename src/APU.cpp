@@ -10,6 +10,7 @@
 #else	/* !NSFPLAYER */
 # include "stdafx.h"
 # include "Nintendulator.h"
+# include "resource.h"
 # include "MapperInterface.h"
 # include "NES.h"
 # include "APU.h"
@@ -38,6 +39,7 @@ LPDIRECTSOUNDBUFFER	Buffer;
 
 short			*buffer;
 int			buflen;
+int			volumes[7];
 BYTE			Regs[0x18];
 #endif	/* !NSFPLAYER */
 
@@ -1146,8 +1148,72 @@ void	SoundON (void)
 	next_pos = 0;
 }
 
-void	Config (HWND hWnd)
+INT_PTR	CALLBACK	VolumeConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	const int vol_sliders[7] = {IDC_AUDIO_VOL_MASTER, IDC_AUDIO_VOL_SQ0, IDC_AUDIO_VOL_SQ1, IDC_AUDIO_VOL_TRI, IDC_AUDIO_VOL_NOI, IDC_AUDIO_VOL_PCM, IDC_AUDIO_VOL_EXT};
+	const int vol_mutes[7] = {IDC_AUDIO_MUTE_MASTER, IDC_AUDIO_MUTE_SQ0, IDC_AUDIO_MUTE_SQ1, IDC_AUDIO_MUTE_TRI, IDC_AUDIO_MUTE_NOI, IDC_AUDIO_MUTE_PCM, IDC_AUDIO_MUTE_EXT};
+	int wmId, wmEvent;
+	int i;
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		for (i = 0; i < 7; i++)
+		{
+			SendDlgItemMessage(hDlg, vol_sliders[i], TBM_SETRANGE, FALSE, MAKELONG(0, 100));
+			SendDlgItemMessage(hDlg, vol_sliders[i], TBM_SETTICFREQ, 10, 0);
+			if (volumes[i] >= 0)
+			{
+				SendDlgItemMessage(hDlg, vol_sliders[i], TBM_SETPOS, TRUE, 100 - volumes[i]);
+				CheckDlgButton(hDlg, vol_mutes[i], BST_UNCHECKED);
+			}
+			else
+			{
+				SendDlgItemMessage(hDlg, vol_sliders[i], TBM_SETPOS, TRUE, 100 + volumes[i]);
+				CheckDlgButton(hDlg, vol_mutes[i], BST_CHECKED);
+			}
+		}
+		return TRUE;
+	case WM_COMMAND:
+		wmId    = LOWORD(wParam);
+		wmEvent = HIWORD(wParam);
+		for (i = 0; i < 7; i++)
+		{
+			if (wmId == vol_mutes[i])
+			{
+				int vol = 100 - SendDlgItemMessage(hDlg, vol_sliders[i], TBM_GETPOS, 0, 0);
+				if (IsDlgButtonChecked(hDlg, vol_mutes[i]) == BST_CHECKED)
+					volumes[i] = -vol;
+				else	volumes[i] = vol;
+				return TRUE;
+			}
+		}
+		if (wmId == IDOK)
+		{
+			EndDialog(hDlg, 0);
+			return TRUE;
+		}
+		break;
+	case WM_VSCROLL:
+		for (i = 0; i < 7; i++)
+		{
+			if (lParam == (LPARAM)GetDlgItem(hDlg, vol_sliders[i]))
+			{
+				int vol = 100 - SendDlgItemMessage(hDlg, vol_sliders[i], TBM_GETPOS, 0, 0);
+				if (IsDlgButtonChecked(hDlg, vol_mutes[i]) == BST_CHECKED)
+					volumes[i] = -vol;
+				else	volumes[i] = vol;
+				return TRUE;
+			}
+		}
+		break;
+	}
+	return FALSE;
+}
+
+void	Config (void)
+{
+	DialogBox(hInst, MAKEINTRESOURCE(IDD_VOLUME), hMainWnd, VolumeConfigProc);
 }
 
 int	Save (FILE *out)
@@ -1310,6 +1376,35 @@ int	Load (FILE *in, int version_id)
 	
 	return clen;
 }
+
+void	SaveSettings (HKEY SettingsBase)
+{
+	RegSetValueEx(SettingsBase, _T("VolMaster"), 0, REG_DWORD, (LPBYTE)&volumes[0], sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("VolSq0")   , 0, REG_DWORD, (LPBYTE)&volumes[1], sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("VolSq1")   , 0, REG_DWORD, (LPBYTE)&volumes[2], sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("VolTri")   , 0, REG_DWORD, (LPBYTE)&volumes[3], sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("VolNoi")   , 0, REG_DWORD, (LPBYTE)&volumes[4], sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("VolPCM")   , 0, REG_DWORD, (LPBYTE)&volumes[5], sizeof(DWORD));
+	RegSetValueEx(SettingsBase, _T("VolExt")   , 0, REG_DWORD, (LPBYTE)&volumes[6], sizeof(DWORD));
+}
+
+void	LoadSettings (HKEY SettingsBase)
+{
+	unsigned long Size;
+
+	// Defaults
+	for (int i = 0; i < 7; i++)
+		volumes[i] = 100;
+
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("VolMaster"), 0, NULL, (LPBYTE)&volumes[0], &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("VolSq0")   , 0, NULL, (LPBYTE)&volumes[1], &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("VolSq1")   , 0, NULL, (LPBYTE)&volumes[2], &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("VolTri")   , 0, NULL, (LPBYTE)&volumes[3], &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("VolNoi")   , 0, NULL, (LPBYTE)&volumes[4], &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("VolPCM")   , 0, NULL, (LPBYTE)&volumes[5], &Size);
+	Size = sizeof(DWORD);	RegQueryValueEx(SettingsBase, _T("VolExt")   , 0, NULL, (LPBYTE)&volumes[6], &Size);
+}
+
 #else	/* NSFPLAYER */
 short	sample_pos = 0;
 BOOL	sample_ok = FALSE;
@@ -1348,7 +1443,9 @@ void	Run (void)
 			next_pos = (next_pos + 1) % FRAMEBUF;
 		}
 	}
+#define	VolAdjust(pos, vol) ((volumes[vol] > 0) ? (((pos) * volumes[vol]) / 100) : 0)
 #else	/* NSFPLAYER */
+#define	VolAdjust(pos, vol) (pos)
 	int NewBufPos = SAMPLERATE * ++Cycles / MHz;
 	if (NewBufPos == SAMPLERATE)	// we've generated 1 second, so we can reset our counters now
 		Cycles = NewBufPos = 0;
@@ -1363,7 +1460,7 @@ void	Run (void)
 	InternalClock++;
 
 #ifdef	SOUND_FILTERING
-	samppos += Square0::Pos + Square1::Pos + Triangle::Pos + Noise::Pos + DPCM::Pos;
+	samppos += VolAdjust(Square0::Pos, 1) + VolAdjust(Square1::Pos, 2) + VolAdjust(Triangle::Pos, 3) + VolAdjust(Noise::Pos, 4) + VolAdjust(DPCM::Pos, 5);
 #endif	/* SOUND_FILTERING */
 	sampcycles++;
 	
@@ -1373,10 +1470,11 @@ void	Run (void)
 #ifdef	SOUND_FILTERING
 		samppos = (samppos << 6) / sampcycles;
 #else	/* !SOUND_FILTERING */
-		samppos = (Square0::Pos + Square1::Pos + Triangle::Pos + Noise::Pos + DPCM::Pos) << 6;
+		samppos = (VolAdjust(Square0::Pos, 1) + VolAdjust(Square1::Pos, 2) + VolAdjust(Triangle::Pos, 3) + VolAdjust(Noise::Pos, 4) + VolAdjust(DPCM::Pos, 5)) << 6;
 #endif	/* SOUND_FILTERING */
 		if ((MI) && (MI->GenSound))
-			samppos += MI->GenSound(sampcycles);
+			samppos += VolAdjust(MI->GenSound(sampcycles), 6);
+		samppos = VolAdjust(samppos, 0);
 		if (samppos < -0x8000)
 			samppos = -0x8000;
 		if (samppos > 0x7FFF)

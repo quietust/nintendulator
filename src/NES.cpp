@@ -1244,6 +1244,7 @@ void	SaveSettings (void)
 
 	RegSetValueEx(SettingsBase, _T("ConfigVersion"), 0, REG_DWORD, (LPBYTE)&ConfigVersion, sizeof(DWORD));
 
+	APU::SaveSettings(SettingsBase);
 	Controllers::SaveSettings(SettingsBase);
 	GFX::SaveSettings(SettingsBase);
 
@@ -1295,6 +1296,7 @@ void	LoadSettings (void)
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("Path_AVI"), 0, NULL, (LPBYTE)&Path_AVI, &Size);
 	Size = MAX_PATH * sizeof(TCHAR);	RegQueryValueEx(SettingsBase, _T("Path_PAL"), 0, NULL, (LPBYTE)&Path_PAL, &Size);
 
+	APU::LoadSettings(SettingsBase);
 	Controllers::LoadSettings(SettingsBase);
 	GFX::LoadSettings(SettingsBase);
 

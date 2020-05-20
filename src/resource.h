@@ -34,6 +34,7 @@
 #define IDD_MOVIE_PLAY                  151
 #define IDD_STDPORT_SNESMOUSE           152
 #define IDD_AXISCONFIG                  153
+#define IDD_VOLUME                      154
 #define IDC_ABOUTICON                   1001
 #define IDC_CONT_SPORT1                 1002
 #define IDC_CONT_SPORT2                 1003
@@ -322,6 +323,20 @@
 #define IDC_PAL_PC10_ALT                1286
 #define IDC_PAL_PC10_COMPAT             1287
 #define IDC_DEBUG_TIMING_PPU            1288
+#define IDC_AUDIO_VOL_MASTER            1289
+#define IDC_AUDIO_VOL_SQ0               1290
+#define IDC_AUDIO_VOL_SQ1               1291
+#define IDC_AUDIO_VOL_TRI               1292
+#define IDC_AUDIO_VOL_NOI               1293
+#define IDC_AUDIO_VOL_PCM               1294
+#define IDC_AUDIO_VOL_EXT               1295
+#define IDC_AUDIO_MUTE_MASTER           1296
+#define IDC_AUDIO_MUTE_SQ0              1297
+#define IDC_AUDIO_MUTE_SQ1              1298
+#define IDC_AUDIO_MUTE_TRI              1299
+#define IDC_AUDIO_MUTE_NOI              1300
+#define IDC_AUDIO_MUTE_PCM              1301
+#define IDC_AUDIO_MUTE_EXT              1302
 #define ID_FILE_OPEN                    32768
 #define ID_FILE_CLOSE                   32769
 #define ID_FILE_HEADER                  32770
@@ -382,6 +397,7 @@
 #define ID_FILE_BROWSESAVES             32825
 #define ID_CPU_BADOPS                   32826
 #define ID_PPU_MODE_DENDY               32827
+#define ID_SOUND_VOLUME                 32828
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -389,9 +405,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        154
-#define _APS_NEXT_COMMAND_VALUE         32828
-#define _APS_NEXT_CONTROL_VALUE         1289
+#define _APS_NEXT_RESOURCE_VALUE        155
+#define _APS_NEXT_COMMAND_VALUE         32829
+#define _APS_NEXT_CONTROL_VALUE         1303
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif
