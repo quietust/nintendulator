@@ -1214,7 +1214,7 @@ int	__fastcall	Read4 (void)
 int	__fastcall	Read7 (void)
 {
 	IOMode = 5;
-	if ((VRAMAddr & 0x3F00) == 0x3F00)
+	if (((VRAMAddr & 0x3F00) == 0x3F00) && !IsRendering)
 	{
 		readLatch &= 0xC0;
 		if (Reg2001 & 0x01)
@@ -1320,7 +1320,7 @@ void	__fastcall	Write6 (int Val)
 
 void	__fastcall	Write7 (int Val)
 {
-	if ((VRAMAddr & 0x3F00) == 0x3F00)
+	if (((VRAMAddr & 0x3F00) == 0x3F00) && !IsRendering)
 	{
 		register unsigned char Addr = (unsigned char)VRAMAddr & 0x1F;
 		Val = Val & 0x3F;
