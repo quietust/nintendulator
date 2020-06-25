@@ -823,7 +823,7 @@ void	AddInst (void)
 		DecodeInstruction(Addr, tps, NULL, FALSE);
 		fwrite(tps, 1, strlen(tps), LogFile);
 		CPU::JoinFlags();
-		sprintf(tps, "  A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:%3i,%3i CYC:%i\n", CPU::A, CPU::X, CPU::Y, CPU::P, CPU::SP, PPU::Clockticks, PPU::SLnum + ((PPU::SLnum < 0) ? PPU::SLEndFrame : 0), CPU::Cycles);
+		sprintf(tps, "  A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:%3i,%3i CYC:%i\n", CPU::A, CPU::X, CPU::Y, CPU::P, CPU::SP, PPU::SLnum + ((PPU::SLnum < 0) ? PPU::SLEndFrame : 0), PPU::Clockticks, CPU::Cycles);
 		fwrite(tps, 1, strlen(tps), LogFile);
 	}
 }
