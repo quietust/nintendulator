@@ -270,6 +270,7 @@ public:
 
 		// Wine doesn't handle the "lStart" parameter correctly for audio,
 		// so the second frame will always fail if we do it correctly.
+		// Ref: https://bugs.winehq.org/show_bug.cgi?id=49074
 		if ((hr) && (!WineHack) && (nsamp == numsamps))
 		{
 			// It expects it to increment by 1
