@@ -930,9 +930,9 @@ void	Reset (RESET_TYPE ResetType)
 			MI = MI2;
 			MI2 = NULL;
 		}
-		CPU::PowerOn();
 		PPU::PowerOn();
 		APU::PowerOn();
+		CPU::PowerOn();
 		if (GameGenie)
 			Genie::Reset();
 		else if ((MI) && (MI->Reset))
@@ -955,9 +955,9 @@ void	Reset (RESET_TYPE ResetType)
 			MI->Reset(RESET_SOFT);
 		break;
 	}
+	PPU::Reset();
 	APU::Reset();
 	CPU::Reset();
-	PPU::Reset();
 	CPU::WantNMI = FALSE;
 #ifdef	ENABLE_DEBUGGER
 	Debugger::PalChanged = TRUE;
