@@ -673,7 +673,7 @@ bool	UpdateCPU (void)
 		sinfo.cbSize = sizeof(SCROLLINFO);
 		sinfo.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
 		sinfo.nPos = MemOffset;
-		sinfo.nPage = 0x080;
+		sinfo.nPage = DEBUG_MEMLINES;
 		sinfo.nMin = 0;
 		sinfo.nMax = 0xFFF;
 		SetScrollInfo(GetDlgItem(CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
@@ -708,7 +708,7 @@ bool	UpdateCPU (void)
 		sinfo.cbSize = sizeof(SCROLLINFO);
 		sinfo.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
 		sinfo.nPos = MemOffset;
-		sinfo.nPage = 0x080;
+		sinfo.nPage = DEBUG_MEMLINES;
 		sinfo.nMin = 0;
 		sinfo.nMax = 0x3FF;
 		SetScrollInfo(GetDlgItem(CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
@@ -743,7 +743,7 @@ bool	UpdateCPU (void)
 		sinfo.cbSize = sizeof(SCROLLINFO);
 		sinfo.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
 		sinfo.nPos = MemOffset;
-		sinfo.nPage = 0x8;
+		sinfo.nPage = DEBUG_MEMLINES;
 		sinfo.nMin = 0;
 		sinfo.nMax = 0xF;
 		SetScrollInfo(GetDlgItem(CPUWnd, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
