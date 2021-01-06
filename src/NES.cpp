@@ -444,9 +444,9 @@ const TCHAR *	OpenFileiNES (FILE *in)
 		if (RI.INES2_CHRRAM & 0xF0)
 			EI.DbgOut(_T("This ROM uses battery-backed CHR RAM, which is not yet supported!"));
 		if (Header[14])
-			return _T("Unrecognized data found at header offset 14 - this ROM may make use of features not supported by this emulator!");
+			EI.DbgOut(_T("Miscellaneous ROM data found in header and ignored"));
 		if (Header[15])
-			return _T("Unrecognized data found at header offset 15 - this ROM may make use of features not supported by this emulator!");
+			EI.DbgOut(_T("Default Expansion Device data found in header and ignored"));
 	}
 	else
 	{
@@ -464,14 +464,76 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	PRGSizeROM = RI.INES_PRGSize * 0x4;
 	CHRSizeROM = RI.INES_CHRSize * 0x8;
 
+	// NES 2.0 support for "unusual" ROM sizes
+	// In practice, none of these are likely to work, especially the really small ones.
+	// but at least it will allow us to display proper error messages
+	if (RI.INES_Version == 2)
+	{
+		if (RI.INES_PRGSize >= 0xF00)
+		{
+			// Flat-out refuse to deal with excessively large ROM sizes
+			if ((RI.INES_PRGSize & 0xFC) >= 0xA0)
+				return _T("NES 2.0 PRG ROM size exceeds 1 TB!");
+
+			unsigned __int64 prgsize = (((RI.INES_PRGSize << 1) | 1) & 0x7) << ((RI.INES_PRGSize >> 2) & 0x3F);
+
+			if (prgsize < 0x1000)
+				PRGSizeROM = 1;
+			else	PRGSizeROM = prgsize / 0x1000;
+
+			if (PRGSizeROM * 0x1000 != prgsize)
+			{
+				EI.DbgOut(_T("Error - PRG ROM size is %i bytes, which is not a multiple of 4 KB!"), prgsize);
+				return _T("PRG ROM size must be a multiple of 4 KB!");
+			}
+
+			if (PRGSizeROM < 4)
+				RI.INES_PRGSize = 1;
+			else if (PRGSizeROM < 4 * 0x10000)
+				RI.INES_PRGSize = PRGSizeROM / 4;
+			else	RI.INES_PRGSize = 0xFFFF; // too large to represent within current Mapper Interface
+		}
+
+		if (RI.INES_CHRSize >= 0xF00)
+		{
+			// Flat-out refuse to deal with excessively large ROM sizes
+			if ((RI.INES_CHRSize & 0xFC) >= 0xA0)
+				return _T("NES 2.0 CHR ROM size exceeds 1 TB!");
+
+			unsigned __int64 chrsize = (((RI.INES_CHRSize << 1) | 1) & 0x7) << ((RI.INES_CHRSize >> 2) & 0x3F);
+
+			if (chrsize < 0x400)
+				CHRSizeROM = 1;
+			else	CHRSizeROM = chrsize / 0x400;
+
+			if (CHRSizeROM * 0x400 != chrsize)
+			{
+				EI.DbgOut(_T("Error - CHR ROM size is %i bytes, which is not a multiple of 1 KB!"), chrsize);
+				return _T("CHR ROM size must be a multiple of 1 KB!");
+			}
+
+			if (CHRSizeROM < 8)
+				RI.INES_CHRSize = 1;
+			else if (CHRSizeROM < 8 * 0x10000)
+				RI.INES_CHRSize = CHRSizeROM / 8;
+			else	RI.INES_CHRSize = 0xFFFF; // too large to represent within current Mapper Interface
+		}
+	}
+
 	if (PRGSizeROM > MAX_PRGROM_SIZE)
+	{
+		EI.DbgOut(_T("Error - PRG ROM size is %i KB, which exceeds the current limit of %i KB"), PRGSizeROM * 4, MAX_PRGROM_SIZE * 4);
 		return _T("PRG ROM is too large! Increase MAX_PRGROM_SIZE and recompile!");
+	}
 
 	if (CHRSizeROM > MAX_CHRROM_SIZE)
+	{
+		EI.DbgOut(_T("Error - CHR ROM size is %i KB, which exceeds the current limit of %i KB"), CHRSizeROM, MAX_CHRROM_SIZE);
 		return _T("CHR ROM is too large! Increase MAX_CHRROM_SIZE and recompile!");
+	}
 
-	fread(PRG_ROM, 1, RI.INES_PRGSize * 0x4000, in);
-	fread(CHR_ROM, 1, RI.INES_CHRSize * 0x2000, in);
+	fread(PRG_ROM, 1, PRGSizeROM * 0x1000, in);
+	fread(CHR_ROM, 1, CHRSizeROM * 0x400, in);
 
 	if (RI.INES_Version == 2)
 	{
@@ -511,36 +573,111 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"), RI.INES_PRGSize << 4, RI.INES_CHRSize << 3);
 	EI.DbgOut(_T("Flags: %s%s"), RI.INES_Flags & 0x02 ? _T("Battery-backed SRAM, ") : _T(""), RI.INES_Flags & 0x08 ? _T("Four-screen VRAM") : (RI.INES_Flags & 0x01 ? _T("Vertical mirroring") : _T("Horizontal mirroring")));
 
-	// Special checks for Playchoice-10 and Vs. Unisystem ROMs to auto-select palette
-	if ((RI.INES_Flags & 0x10) && (RI.INES_Version == 2))
+	// Select region
+	if (RI.INES_Version == 2)
 	{
-		const GFX::PALETTE pals[16] = {
-			GFX::PALETTE_PC10, // RP2C03B
-			GFX::PALETTE_PC10, // RP2C03G - no dump available, assuming identical to RP2C03B
-			GFX::PALETTE_VS1, // RP2C04-0001
-			GFX::PALETTE_VS2, // RP2C04-0002
-			GFX::PALETTE_VS3, // RP2C04-0003
-			GFX::PALETTE_VS4, // RP2C04-0004
-			GFX::PALETTE_PC10_ALT, // RC2C03B
-			GFX::PALETTE_PC10, // RC2C03C
-			GFX::PALETTE_PC10, // RC2C05C-01 - no dump available, assuming identical to RC2C05C-03
-			GFX::PALETTE_PC10, // RC2C05C-02 - no dump available, assuming identical to RC2C05C-03
-			GFX::PALETTE_PC10, // RC2C05C-03
-			GFX::PALETTE_PC10, // RC2C05C-04 - no dump available, assuming identical to RC2C05C-03
-			GFX::PALETTE_PC10, // RC2C05C-05 - no dump available, assuming identical to RC2C05C-03
-			GFX::PALETTE_NTSC, // unused
-			GFX::PALETTE_NTSC, // unused
-			GFX::PALETTE_NTSC // unused
-		};
-		GFX::LoadPalette(pals[RI.INES2_VSDATA & 0x0F]);
+		switch (RI.INES2_TVMode & 0x3)
+		{
+		case 0x0:
+			SetRegion(REGION_NTSC);
+			break;
+		case 0x1:
+			SetRegion(REGION_PAL);
+			break;
+		case 0x2:
+			// Multiple-region - keep existing region
+			// (unless it was Dendy, in which case switch it to PAL)
+			if (CurRegion == REGION_DENDY)
+				SetRegion(REGION_PAL);
+			break;
+		case 0x3:
+			SetRegion(REGION_DENDY);
+			break;
+		}
 	}
-	else if (RI.INES_Flags & 0x20)
-		GFX::LoadPalette(GFX::PALETTE_PC10);
-	// Need to do this, in case the last loaded ROM was one of the above
-	else	GFX::LoadPalette(GFX::PALETTE_MAX);
 
-	if ((RI.INES_Version == 2) && !(RI.INES2_TVMode & 0x02))
-		SetRegion((RI.INES2_TVMode & 0x01) ? REGION_PAL : REGION_NTSC);
+	// Handle Extended Console Types - currently, none of these are actually supported
+	// (except for 0/1/2, which shouldn't be specified this way anyways)
+	if ((RI.INES_Version == 2) && ((RI.INES_Flags & 0x30) == 0x30))
+	{
+		switch (RI.INES2_VSDATA & 0x0F)
+		{
+		case 0x0:
+			EI.DbgOut(_T("Warning - selected ROM image specified Extended Console Type of 'Regular NES'!"));
+			RI.INES_Flags &= ~0x30; // turn off both flags
+		case 0x1:
+			EI.DbgOut(_T("Warning - selected ROM image specified Extended Console Type of 'Vs. System'!"));
+			RI.INES_Flags &= ~0x20; // turn off the PC10 flag
+			break;
+		case 0x2:
+			EI.DbgOut(_T("Warning - selected ROM image specified Extended Console Type of 'PlayChoice-10'!"));
+			RI.INES_Flags &= ~0x10; // turn off the Vs flag
+			break;
+		case 0x3:	return _T("Selected ROM requires Decimal mode, which is not supported");
+		case 0x4:	return _T("Selected ROM requires VT01 (monochrome), which is not supported");
+		case 0x5:	return _T("Selected ROM requires VT01 (STN), which is not supported");
+		case 0x6:	return _T("Selected ROM requires VT02, which is not supported");
+		case 0x7:	return _T("Selected ROM requires VT03, which is not supported");
+		case 0x8:	return _T("Selected ROM requires VT09, which is not supported");
+		case 0x9:	return _T("Selected ROM requires VT32, which is not supported");
+		case 0xA:	return _T("Selected ROM requires VT369, which is not supported");
+		case 0xB:	return _T("Selected ROM requires UMC UM6578, which is not supported");
+		case 0xC:	return _T("Unrecognized Extended Console Type 0xC");
+		case 0xD:	return _T("Unrecognized Extended Console Type 0xD");
+		case 0xE:	return _T("Unrecognized Extended Console Type 0xE");
+		case 0xF:	return _T("Unrecognized Extended Console Type 0xF");
+		}
+	}
+
+	// Special checks for PlayChoice-10 and Vs. Unisystem ROMs to auto-select palette
+	switch (RI.INES_Flags & 0x30)
+	{
+	case 0x00:
+		// Standard console - use default configured palette for selected region
+		GFX::LoadPalette(GFX::PALETTE_MAX);
+		break;
+	case 0x10:
+		// Vs System - use palette based on header byte 13
+		if (RI.INES_Version == 2)
+		{
+			const GFX::PALETTE pals[16] = {
+				GFX::PALETTE_PC10, // RP2C03B
+				GFX::PALETTE_PC10, // RP2C03G - no dump available, assuming identical to RP2C03B
+				GFX::PALETTE_VS1, // RP2C04-0001
+				GFX::PALETTE_VS2, // RP2C04-0002
+				GFX::PALETTE_VS3, // RP2C04-0003
+				GFX::PALETTE_VS4, // RP2C04-0004
+				GFX::PALETTE_PC10_ALT, // RC2C03B
+				GFX::PALETTE_PC10, // RC2C03C
+				GFX::PALETTE_PC10, // RC2C05C-01 - no dump available, assuming identical to RC2C05C-03
+				GFX::PALETTE_PC10, // RC2C05C-02 - no dump available, assuming identical to RC2C05C-03
+				GFX::PALETTE_PC10, // RC2C05C-03
+				GFX::PALETTE_PC10, // RC2C05C-04 - no dump available, assuming identical to RC2C05C-03
+				GFX::PALETTE_PC10, // RC2C05C-05 - no dump available, assuming identical to RC2C05C-03
+				GFX::PALETTE_NTSC, // unused
+				GFX::PALETTE_NTSC, // unused
+				GFX::PALETTE_NTSC // unused
+			};
+			GFX::LoadPalette(pals[RI.INES2_VSDATA & 0x0F]);
+			if (RI.INES2_VSDATA & 0xF0)
+				EI.DbgOut(_T("Warning - special Vs. System hardware specified, ROM may not work correctly"));
+		}
+		else	GFX::LoadPalette(GFX::PALETTE_MAX);
+		break;
+	case 0x20:
+		// PlayChoice-10
+		GFX::LoadPalette(GFX::PALETTE_PC10);
+		break;
+	case 0x30:
+		// We already handled Extended Console above, so this represents
+		// the NES 1.0 case of setting both flags at once (which is not allowed)
+		if (RI.INES_Version != 2)
+		{
+			EI.DbgOut(_T("Warning - selected ROM image claims to use both PlayChoice-10 and Vs. System, ignoring both flags"));
+			GFX::LoadPalette(GFX::PALETTE_MAX);
+		}
+		break;
+	}
 	return NULL;
 }
 
