@@ -143,28 +143,28 @@ __inline void	MAPINT	SetPRG_ROM4 (int Bank, int Val)
 void	MAPINT	SetPRG_ROM8 (int Bank, int Val)
 {
 	Val <<= 1;
-	SetPRG_ROM4(Bank+0, Val+0);
-	SetPRG_ROM4(Bank+1, Val+1);
+	SetPRG_ROM4(Bank+0, Val | 0);
+	SetPRG_ROM4(Bank+1, Val | 1);
 }
 void	MAPINT	SetPRG_ROM16 (int Bank, int Val)
 {
 	Val <<= 2;
-	SetPRG_ROM4(Bank+0, Val+0);
-	SetPRG_ROM4(Bank+1, Val+1);
-	SetPRG_ROM4(Bank+2, Val+2);
-	SetPRG_ROM4(Bank+3, Val+3);
+	SetPRG_ROM4(Bank+0, Val | 0);
+	SetPRG_ROM4(Bank+1, Val | 1);
+	SetPRG_ROM4(Bank+2, Val | 2);
+	SetPRG_ROM4(Bank+3, Val | 3);
 }
 void	MAPINT	SetPRG_ROM32 (int Bank, int Val)
 {
 	Val <<= 3;
-	SetPRG_ROM4(Bank+0, Val+0);
-	SetPRG_ROM4(Bank+1, Val+1);
-	SetPRG_ROM4(Bank+2, Val+2);
-	SetPRG_ROM4(Bank+3, Val+3);
-	SetPRG_ROM4(Bank+4, Val+4);
-	SetPRG_ROM4(Bank+5, Val+5);
-	SetPRG_ROM4(Bank+6, Val+6);
-	SetPRG_ROM4(Bank+7, Val+7);
+	SetPRG_ROM4(Bank+0, Val | 0);
+	SetPRG_ROM4(Bank+1, Val | 1);
+	SetPRG_ROM4(Bank+2, Val | 2);
+	SetPRG_ROM4(Bank+3, Val | 3);
+	SetPRG_ROM4(Bank+4, Val | 4);
+	SetPRG_ROM4(Bank+5, Val | 5);
+	SetPRG_ROM4(Bank+6, Val | 6);
+	SetPRG_ROM4(Bank+7, Val | 7);
 }
 int	MAPINT	GetPRG_ROM4 (int Bank)	// -1 if no ROM mapped
 {
@@ -187,28 +187,28 @@ __inline void	MAPINT	SetPRG_RAM4 (int Bank, int Val)
 void	MAPINT	SetPRG_RAM8 (int Bank, int Val)
 {
 	Val <<= 1;
-	SetPRG_RAM4(Bank+0, Val+0);
-	SetPRG_RAM4(Bank+1, Val+1);
+	SetPRG_RAM4(Bank+0, Val | 0);
+	SetPRG_RAM4(Bank+1, Val | 1);
 }
 void	MAPINT	SetPRG_RAM16 (int Bank, int Val)
 {
 	Val <<= 2;
-	SetPRG_RAM4(Bank+0, Val+0);
-	SetPRG_RAM4(Bank+1, Val+1);
-	SetPRG_RAM4(Bank+2, Val+2);
-	SetPRG_RAM4(Bank+3, Val+3);
+	SetPRG_RAM4(Bank+0, Val | 0);
+	SetPRG_RAM4(Bank+1, Val | 1);
+	SetPRG_RAM4(Bank+2, Val | 2);
+	SetPRG_RAM4(Bank+3, Val | 3);
 }
 void	MAPINT	SetPRG_RAM32 (int Bank, int Val)
 {
 	Val <<= 3;
-	SetPRG_RAM4(Bank+0, Val+0);
-	SetPRG_RAM4(Bank+1, Val+1);
-	SetPRG_RAM4(Bank+2, Val+2);
-	SetPRG_RAM4(Bank+3, Val+3);
-	SetPRG_RAM4(Bank+4, Val+4);
-	SetPRG_RAM4(Bank+5, Val+5);
-	SetPRG_RAM4(Bank+6, Val+6);
-	SetPRG_RAM4(Bank+7, Val+7);
+	SetPRG_RAM4(Bank+0, Val | 0);
+	SetPRG_RAM4(Bank+1, Val | 1);
+	SetPRG_RAM4(Bank+2, Val | 2);
+	SetPRG_RAM4(Bank+3, Val | 3);
+	SetPRG_RAM4(Bank+4, Val | 4);
+	SetPRG_RAM4(Bank+5, Val | 5);
+	SetPRG_RAM4(Bank+6, Val | 6);
+	SetPRG_RAM4(Bank+7, Val | 7);
 }
 int	MAPINT	GetPRG_RAM4 (int Bank)	// -1 if no RAM mapped
 {
@@ -256,28 +256,28 @@ __inline void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
 void	MAPINT	SetCHR_ROM2 (int Bank, int Val)
 {
 	Val <<= 1;
-	SetCHR_ROM1(Bank+0, Val+0);
-	SetCHR_ROM1(Bank+1, Val+1);
+	SetCHR_ROM1(Bank+0, Val | 0);
+	SetCHR_ROM1(Bank+1, Val | 1);
 }
 void	MAPINT	SetCHR_ROM4 (int Bank, int Val)
 {
 	Val <<= 2;
-	SetCHR_ROM1(Bank+0, Val+0);
-	SetCHR_ROM1(Bank+1, Val+1);
-	SetCHR_ROM1(Bank+2, Val+2);
-	SetCHR_ROM1(Bank+3, Val+3);
+	SetCHR_ROM1(Bank+0, Val | 0);
+	SetCHR_ROM1(Bank+1, Val | 1);
+	SetCHR_ROM1(Bank+2, Val | 2);
+	SetCHR_ROM1(Bank+3, Val | 3);
 }
 void	MAPINT	SetCHR_ROM8 (int Bank, int Val)
 {
 	Val <<= 3;
-	SetCHR_ROM1(Bank+0, Val+0);
-	SetCHR_ROM1(Bank+1, Val+1);
-	SetCHR_ROM1(Bank+2, Val+2);
-	SetCHR_ROM1(Bank+3, Val+3);
-	SetCHR_ROM1(Bank+4, Val+4);
-	SetCHR_ROM1(Bank+5, Val+5);
-	SetCHR_ROM1(Bank+6, Val+6);
-	SetCHR_ROM1(Bank+7, Val+7);
+	SetCHR_ROM1(Bank+0, Val | 0);
+	SetCHR_ROM1(Bank+1, Val | 1);
+	SetCHR_ROM1(Bank+2, Val | 2);
+	SetCHR_ROM1(Bank+3, Val | 3);
+	SetCHR_ROM1(Bank+4, Val | 4);
+	SetCHR_ROM1(Bank+5, Val | 5);
+	SetCHR_ROM1(Bank+6, Val | 6);
+	SetCHR_ROM1(Bank+7, Val | 7);
 }
 int	MAPINT	GetCHR_ROM1 (int Bank)	// -1 if no ROM mapped
 {
@@ -310,28 +310,28 @@ __inline void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
 void	MAPINT	SetCHR_RAM2 (int Bank, int Val)
 {
 	Val <<= 1;
-	SetCHR_RAM1(Bank+0, Val+0);
-	SetCHR_RAM1(Bank+1, Val+1);
+	SetCHR_RAM1(Bank+0, Val | 0);
+	SetCHR_RAM1(Bank+1, Val | 1);
 }
 void	MAPINT	SetCHR_RAM4 (int Bank, int Val)
 {
 	Val <<= 2;
-	SetCHR_RAM1(Bank+0, Val+0);
-	SetCHR_RAM1(Bank+1, Val+1);
-	SetCHR_RAM1(Bank+2, Val+2);
-	SetCHR_RAM1(Bank+3, Val+3);
+	SetCHR_RAM1(Bank+0, Val | 0);
+	SetCHR_RAM1(Bank+1, Val | 1);
+	SetCHR_RAM1(Bank+2, Val | 2);
+	SetCHR_RAM1(Bank+3, Val | 3);
 }
 void	MAPINT	SetCHR_RAM8 (int Bank, int Val)
 {
 	Val <<= 3;
-	SetCHR_RAM1(Bank+0, Val+0);
-	SetCHR_RAM1(Bank+1, Val+1);
-	SetCHR_RAM1(Bank+2, Val+2);
-	SetCHR_RAM1(Bank+3, Val+3);
-	SetCHR_RAM1(Bank+4, Val+4);
-	SetCHR_RAM1(Bank+5, Val+5);
-	SetCHR_RAM1(Bank+6, Val+6);
-	SetCHR_RAM1(Bank+7, Val+7);
+	SetCHR_RAM1(Bank+0, Val | 0);
+	SetCHR_RAM1(Bank+1, Val | 1);
+	SetCHR_RAM1(Bank+2, Val | 2);
+	SetCHR_RAM1(Bank+3, Val | 3);
+	SetCHR_RAM1(Bank+4, Val | 4);
+	SetCHR_RAM1(Bank+5, Val | 5);
+	SetCHR_RAM1(Bank+6, Val | 6);
+	SetCHR_RAM1(Bank+7, Val | 7);
 }
 int	MAPINT	GetCHR_RAM1 (int Bank)	// -1 if no ROM mapped
 {
