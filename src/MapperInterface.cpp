@@ -65,7 +65,6 @@ void	MAPINT	SetCPUReadHandler (int Page, FCPURead New)
 		|| (New == Genie::Read) || (New == Genie::Read1) || (New == Genie::Read2) || (New == Genie::Read3)
 #endif	/* !NSFPLAYER */
 	)
-	if ((New == CPU::ReadRAM) || (New == CPU::ReadPRG))
 		SetCPUReadHandlerDebug(Page, New);
 	else	SetCPUReadHandlerDebug(Page, CPU::ReadUnsafe);
 }
