@@ -1073,7 +1073,9 @@ int	GetConfigButton (HWND hWnd, int DevNum, BOOL AxesOnly = FALSE)
 		}
 		for (i = FirstAxis; i < LastAxis; i++)
 		{
-			if (IsPressed((DevNum << 16) | i))
+			// For axes, require sufficient magnitude,
+			// otherwise Mouse controls are nigh impossible to configure
+			if (GetDelta((DevNum << 16) | i) >= 8)
 			{
 				Key = i;
 				break;
@@ -1128,7 +1130,7 @@ int	GetConfigButton (HWND hWnd, int DevNum, BOOL AxesOnly = FALSE)
 				continue;
 		}
 		for (i = FirstAxis; i < LastAxis; i++)
-			if (IsPressed((DevNum << 16) | i))
+			if (GetDelta((DevNum << 16) | i) >= 8)
 			{
 				held = true;
 				break;
