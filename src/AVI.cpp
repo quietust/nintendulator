@@ -278,6 +278,8 @@ public:
 			nsamp = 1;
 			WineHack = true;
 			hr = AVIStreamWrite(audStreamU, nsamp, numsamps, data, numbytes, 0, NULL, NULL);
+			if (!hr)
+				EI.DbgOut(_T("Wine bug #49074 detected, workaround activated"));
 		}
 		if (hr)
 		{
