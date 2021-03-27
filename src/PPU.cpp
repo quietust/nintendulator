@@ -159,7 +159,7 @@ const	unsigned long	CHRHiBit[16] =
 };
 
 void	(MAPINT *PPUCycle)		(int,int,int,int);
-void	MAPINT	NoPPUCycle		(int Addr, int Scanline, int Cycle, int IsRendering)	{ }
+void	MAPINT	NoPPUCycle		(int,int,int,int)	{ }
 
 int	MAPINT	ReadUnsafe (int Bank, int Addr)
 {

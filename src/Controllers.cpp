@@ -322,7 +322,7 @@ BOOL CALLBACK	EnumMouseObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID
 
 BOOL CALLBACK	EnumJoystickObjectsCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
 {
-	int DevNum = (int)pvRef;
+	int DevNum = (int)(size_t)pvRef;
 	TDeviceInfo &dev = Devices[DevNum];
 	int ItemNum = 0;
 	if (IsEqualGUID(lpddoi->guidType, GUID_XAxis))
@@ -420,7 +420,7 @@ BOOL CALLBACK	EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 			dev.Name = _tcsdup(lpddi->tszProductName);
 			dev.GUID = lpddi->guidInstance;
 
-			dev.DIDevice->EnumObjects(EnumJoystickObjectsCallback, (LPVOID)DevNum, DIDFT_ALL);
+			dev.DIDevice->EnumObjects(EnumJoystickObjectsCallback, (LPVOID)(size_t)DevNum, DIDFT_ALL);
 			EI.DbgOut(_T("Added input device '%s' with %i buttons, %i axes, %i POVs"), lpddi->tszProductName, caps.dwButtons, caps.dwAxes, caps.dwPOVs);
 			NumDevices++;
 		}
