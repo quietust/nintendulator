@@ -1,0 +1,180 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{dc374dac-f782-4428-932b-d29b299b99f3}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Std Controllers">
+      <UniqueIdentifier>{7f396059-9d42-4cca-8a32-c217f696901b}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Exp Controllers">
+      <UniqueIdentifier>{ca0c380b-4b60-4cc8-bec9-0cb313e6e109}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{3b260171-8f39-4eb7-8bcd-f7c647ef0ae4}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{b389444a-115a-4f8e-8769-062f29ad6d8c}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\APU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\AVI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Controllers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Debugger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Genie.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GFX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MapperInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Movie.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NES.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Nintendulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\PPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\States.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_s_arkpad.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_s_fourscore.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_s_powpad.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_s_snescont.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_s_snesmouse.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_s_stdcont.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_s_unconnected.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_s_vszapper.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_s_zapper.cpp">
+      <Filter>Source Files\Std Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_e_arkpad.cpp">
+      <Filter>Source Files\Exp Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_e_fam4play.cpp">
+      <Filter>Source Files\Exp Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_e_famtrain.cpp">
+      <Filter>Source Files\Exp Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_e_fbkey.cpp">
+      <Filter>Source Files\Exp Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_e_suborkey.cpp">
+      <Filter>Source Files\Exp Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_e_tablet.cpp">
+      <Filter>Source Files\Exp Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\c_e_unconnected.cpp">
+      <Filter>Source Files\Exp Controllers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\HeaderEdit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\APU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\AVI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Controllers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CPU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Debugger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Genie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GFX.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\MapperInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Movie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NES.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Nintendulator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\PPU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\States.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\HeaderEdit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\Nintendulator.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\src\small.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\src\Nintendulator.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
