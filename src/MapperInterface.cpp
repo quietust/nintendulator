@@ -132,7 +132,7 @@ FPPUWrite	MAPINT	GetPPUWriteHandler (int Page)
 
 /******************************************************************************/
 
-__inline void	MAPINT	SetPRG_ROM4 (int Bank, int Val)
+void	MAPINT	SetPRG_ROM4 (int Bank, int Val)
 {
 //	if (!NES::PRGSizeROM)
 //		return;
@@ -176,7 +176,7 @@ int	MAPINT	GetPRG_ROM4 (int Bank)	// -1 if no ROM mapped
 
 /******************************************************************************/
 
-__inline void	MAPINT	SetPRG_RAM4 (int Bank, int Val)
+void	MAPINT	SetPRG_RAM4 (int Bank, int Val)
 {
 	if (!NES::PRGSizeRAM)
 		return;
@@ -239,7 +239,7 @@ void	MAPINT	SetPRG_OB4 (int Bank)	// Open bus
 
 /******************************************************************************/
 
-__inline void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
+void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
 	if (!NES::CHRSizeROM)
@@ -293,7 +293,7 @@ int	MAPINT	GetCHR_ROM1 (int Bank)	// -1 if no ROM mapped
 
 /******************************************************************************/
 
-__inline void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
+void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
 	if (!NES::CHRSizeRAM)
@@ -347,7 +347,7 @@ int	MAPINT	GetCHR_RAM1 (int Bank)	// -1 if no ROM mapped
 
 /******************************************************************************/
 
-__inline void	MAPINT	SetCHR_NT1 (int Bank, int Val)
+void	MAPINT	SetCHR_NT1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
 	PPU::CHRPointer[Bank] = PPU::VRAM[Val & 3];

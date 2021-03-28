@@ -537,7 +537,7 @@ int EndSLTicks = 341;
 unsigned long PatAddr;
 unsigned char RenderData[4];
 
-__inline void	RunNoSkip (int NumTicks)
+void	RunNoSkip (int NumTicks)
 {
 	register unsigned long TL;
 	register unsigned char TC;
@@ -850,7 +850,7 @@ __inline void	RunNoSkip (int NumTicks)
 		}
 	}
 }
-__inline void	RunSkip (int NumTicks)
+void	RunSkip (int NumTicks)
 {
 	register unsigned char TC;
 
