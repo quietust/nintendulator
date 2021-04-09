@@ -385,7 +385,7 @@ void	ProcessSprites (void)
 	{
 		if (Clockticks == 257)
 		{
-			SprCount = sprcount * 4;
+			SprCount = sprcount;
 			Spr0InLine = sprzero;
 			SprAddr = SprAddrH = 0;
 		}
@@ -815,13 +815,13 @@ void	RunNoSkip (int NumTicks)
 				TC = TileData[Clockticks + IntX];
 			else	TC = 0;
 			if ((Reg2001 & 0x10) && ((Clockticks >= 8) || (Reg2001 & 0x04)))
-				for (y = 0; y < SprCount; y += 4)
+				for (y = 0; y < SprCount; y++)
 				{
-					register int SprPixel = Clockticks - SprData[y >> 2][9];
+					register int SprPixel = Clockticks - SprData[y][9];
 					register unsigned char SprDat;
 					if (SprPixel & ~7)
 						continue;
-					SprDat = SprData[y >> 2][SprPixel];
+					SprDat = SprData[y][SprPixel];
 					if (SprDat & 0x3)
 					{
 						if ((Spr0InLine) && (y == 0) && (TC & 0x3) && (Clockticks < 255))
@@ -829,7 +829,7 @@ void	RunNoSkip (int NumTicks)
 							Reg2002 |= 0x40;	// Sprite 0 hit
 							Spr0InLine = FALSE;
 						}
-						if (!((TC & 0x3) && (SprData[y >> 2][8] & 0x20)))
+						if (!((TC & 0x3) && (SprData[y][8] & 0x20)))
 							TC = SprDat | 0x10;
 						break;
 					}
