@@ -323,13 +323,15 @@ void	LoadSRAM (void)
 void	CloseFile (void)
 {
 	int i;
-	SaveSRAM();
 	if (ROMLoaded)
 	{
 		MapperInterface::UnloadMapper();
 		ROMLoaded = FALSE;
 		EI.DbgOut(_T("ROM unloaded."));
 	}
+	// Need to do this after UnloadMapper in order to
+	// handle saving internal chip state data to SRAM
+	SaveSRAM();
 
 	if (RI.ROMType)
 	{
@@ -545,6 +547,12 @@ const TCHAR *	OpenFileiNES (FILE *in)
 		if (PRGSizeRAM > MAX_PRGRAM_SIZE * 0x1000)
 			return _T("PRG RAM is too large! Increase MAX_PRGRAM_SIZE and recompile!");
 		PRGSizeRAM = (PRGSizeRAM / 0x1000) + ((PRGSizeRAM % 0x1000) ? 1 : 0);
+
+		// Hack: mapper 19 images can specify Battery and zero RAM
+		// This means the mapper's internal 128-byte state is battery-backed
+		// so we need to allow at least one bank
+		if ((RI.INES_Flags & 0x02) && !PRGSizeRAM)
+			PRGSizeRAM = 1;
 
 		CHRSizeRAM = 0;
 		if (RI.INES2_CHRRAM & 0xF)
