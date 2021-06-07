@@ -1237,7 +1237,7 @@ int	MAPINT	IntReadVs (int Bank, int Addr)
 
 void	__fastcall	Write0 (int Val)
 {
-	if ((Val & 0x80) && !(Reg2000 & 0x80) && (Reg2002 & 0x80))
+	if ((Val & 0x80) && !(Reg2000 & 0x80) && (Reg2002 & 0x80) && (SLnum != -1))
 		CPU::WantNMI = TRUE;
 	// race condition
 	if ((SLnum == SLStartNMI) && !(Val & 0x80) && (Clockticks < 3))
