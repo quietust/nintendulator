@@ -1534,6 +1534,8 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
+			SetFocus(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1));
+			SendDlgItemMessage(hwndDlg, IDC_BREAK_ADDR1, EM_SETSEL, 0, -1);
 		}
 		else if (bp != NULL)
 		{
@@ -1588,6 +1590,8 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
+				SetFocus(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1));
+				SendDlgItemMessage(hwndDlg, IDC_BREAK_ADDR1, EM_SETSEL, 0, -1);
 				break;
 			case DEBUG_BREAK_OPCODE:
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
@@ -1599,6 +1603,8 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
+				SetFocus(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM));
+				SendDlgItemMessage(hwndDlg, IDC_BREAK_OPNUM, EM_SETSEL, 0, -1);
 				break;
 			case DEBUG_BREAK_NMI:
 			case DEBUG_BREAK_IRQ:
@@ -1611,6 +1617,7 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
+				SetFocus(GetDlgItem(hwndDlg, IDC_BREAK_ENABLED));
 				break;
 			case DEBUG_BREAK_SCANLINE:
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
@@ -1621,6 +1628,8 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), TRUE);
+				SetFocus(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM));
+				SendDlgItemMessage(hwndDlg, IDC_BREAK_SLNUM, EM_SETSEL, 0, -1);
 				break;
 			}
 			CheckDlgButton(hwndDlg, IDC_BREAK_ENABLED, (bp->enabled) ? BST_CHECKED : BST_UNCHECKED);
@@ -1637,9 +1646,9 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
+			SetFocus(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1));
+			SendDlgItemMessage(hwndDlg, IDC_BREAK_ADDR1, EM_SETSEL, 0, -1);
 		}
-		SetFocus(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1));
-		SendDlgItemMessage(hwndDlg, IDC_BREAK_ADDR1, EM_SETSEL, 0, -1);
 		return FALSE;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam); 
