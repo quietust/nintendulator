@@ -19,7 +19,7 @@
 #define	DEBUG_BREAK_NMI		0x10
 #define	DEBUG_BREAK_IRQ		0x20
 #define	DEBUG_BREAK_BRK		0x40
-/* #define	DEBUG_BREAK_RST		0x80	/* unused */
+#define	DEBUG_BREAK_SCANLINE	0x80
 
 #define	DEBUG_DETAIL_NONE	0
 #define	DEBUG_DETAIL_NAMETABLE	1

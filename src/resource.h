@@ -337,6 +337,8 @@
 #define IDC_AUDIO_MUTE_NOI              1300
 #define IDC_AUDIO_MUTE_PCM              1301
 #define IDC_AUDIO_MUTE_EXT              1302
+#define IDC_BREAK_SCANLINE              1303
+#define IDC_BREAK_SLNUM                 1304
 #define ID_FILE_OPEN                    32768
 #define ID_FILE_CLOSE                   32769
 #define ID_FILE_HEADER                  32770
@@ -407,7 +409,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        155
 #define _APS_NEXT_COMMAND_VALUE         32829
-#define _APS_NEXT_CONTROL_VALUE         1303
+#define _APS_NEXT_CONTROL_VALUE         1305
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

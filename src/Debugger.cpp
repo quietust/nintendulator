@@ -19,6 +19,9 @@
 
 #ifdef	ENABLE_DEBUGGER
 
+// Needed for window subclassing (to allow breakpoint on scanline -1)
+#pragma comment(lib, "comctl32.lib")
+
 namespace Debugger
 {
 struct tBreakpoint
@@ -28,6 +31,7 @@ struct tBreakpoint
 	unsigned char opcode;
 	unsigned char type;
 	unsigned char enabled;
+	unsigned short scanline;
 	struct tBreakpoint *prev, *next;
 	void updateDescription ()
 	{
@@ -64,6 +68,9 @@ struct tBreakpoint
 			break;
 		case DEBUG_BREAK_BRK:
 			_stprintf(desc, _T("Interrupt: BRK"));
+			break;
+		case DEBUG_BREAK_SCANLINE:
+			_stprintf(desc, _T("Scanline: %i"), scanline - 1);
 			break;
 		default:
 			_stprintf(desc, _T("UNDEFINED"));
@@ -112,6 +119,7 @@ FILE	*LogFile;
 unsigned char	BPcache[0x10000];
 unsigned char	PalCache[0x20];
 struct tBreakpoint *Breakpoints;
+int	LastScanline;
 
 BOOL inUpdate = FALSE;
 
@@ -384,6 +392,8 @@ BOOL	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2, BOOL check
 			is_break = TRUE;
 		if ((CPU::GotInterrupt == INTERRUPT_BRK) && (BPcache[0] & DEBUG_BREAK_BRK))
 			is_break = TRUE;
+		if ((LastScanline != PPU::SLnum) && (BPcache[PPU::SLnum + 1] & DEBUG_BREAK_SCANLINE))
+			is_break = TRUE;
 	}
 
 	switch (TraceAddrMode[OpData[0]])
@@ -558,6 +568,8 @@ bool	UpdateCPU (void)
 	// check for breakpoints
 	if (DecodeInstruction((unsigned short)CPU::PC, NULL, NULL, TRUE))
 		NES::DoStop = STOPMODE_NOW | STOPMODE_BREAK;
+
+	LastScanline = PPU::SLnum;
 	// if emulation wasn't stopped, don't bother updating the dialog
 	if (!(NES::DoStop & STOPMODE_NOW))
 		return false;
@@ -1392,6 +1404,8 @@ void	CacheBreakpoints (void)
 			BPcache[bp->opcode] |= bp->type;
 		if (bp->type & (DEBUG_BREAK_NMI | DEBUG_BREAK_IRQ | DEBUG_BREAK_BRK))
 			BPcache[0] |= bp->type;
+		if (bp->type & DEBUG_BREAK_SCANLINE)
+			BPcache[bp->scanline] |= bp->type;
 	}
 }
 
@@ -1455,6 +1469,30 @@ void	SetBreakpoint (HWND hwndDlg, struct tBreakpoint *bp)
 	}
 }
 
+// Editbox subclass to allow typing negative scanline numbers
+// Adapted from code borrowed from The Old New Thing
+// https://devblogs.microsoft.com/oldnewthing/20190222-00/?p=101064
+LRESULT CALLBACK SignedIntegerSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	switch (uMsg)
+	{
+	case WM_NCDESTROY:
+		RemoveWindowSubclass(hwnd, SignedIntegerSubclassProc, uIdSubclass);
+		break;
+	case WM_CHAR:
+		TCHAR ch = (TCHAR)wParam;
+		if (ch < _T(' '))
+			break;	// let control character through
+		else if ((ch == _T('-')) && (LOWORD(SendMessage(hwnd, EM_GETSEL, 0, 0)) == 0))
+			break;	// let hyphen-minus through, but only as first character
+		else if ((ch >= _T('0')) && (ch <= _T('9')))
+			break;	// let digit through
+		MessageBeep(0);	// otherwise invalid
+		return 0;
+	}
+	return DefSubclassProc(hwnd, uMsg, wParam, lParam);
+}
+
 INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -1463,12 +1501,13 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 	int line, len, Addr;
 	TCHAR *str;
 
-	int addr1, addr2, opcode, type, enabled;
+	int addr1, addr2, opcode, type, scanline, enabled;
 
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
+		SetWindowSubclass(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), SignedIntegerSubclassProc, 0, 0);
 		bp = (struct tBreakpoint *)lParam;
 		if (bp == (struct tBreakpoint *)(size_t)0xFFFFFFFF)
 		{
@@ -1489,38 +1528,43 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 
 			SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
 			SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+			SetDlgItemInt(hwndDlg, IDC_BREAK_SLNUM, 0, TRUE);
 			CheckDlgButton(hwndDlg, IDC_BREAK_ENABLED, BST_CHECKED);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
 		}
 		else if (bp != NULL)
 		{
 			switch (bp->type)
 			{
 			case DEBUG_BREAK_EXEC:
-				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_EXEC);
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_SCANLINE, IDC_BREAK_EXEC);
 				break;
 			case DEBUG_BREAK_READ:
-				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_READ);
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_SCANLINE, IDC_BREAK_READ);
 				break;
 			case DEBUG_BREAK_WRITE:
-				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_WRITE);
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_SCANLINE, IDC_BREAK_WRITE);
 				break;
 			case DEBUG_BREAK_READ | DEBUG_BREAK_WRITE:
-				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_ACCESS);
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_SCANLINE, IDC_BREAK_ACCESS);
 				break;
 			case DEBUG_BREAK_OPCODE:
-				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_OPCODE);
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_SCANLINE, IDC_BREAK_OPCODE);
 				break;
 			case DEBUG_BREAK_NMI:
-				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_NMI);
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_SCANLINE, IDC_BREAK_NMI);
 				break;
 			case DEBUG_BREAK_IRQ:
-				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_IRQ);
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_SCANLINE, IDC_BREAK_IRQ);
 				break;
 			case DEBUG_BREAK_BRK:
-				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_BRK, IDC_BREAK_BRK);
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_SCANLINE, IDC_BREAK_BRK);
+				break;
+			case DEBUG_BREAK_SCANLINE:
+				CheckRadioButton(hwndDlg, IDC_BREAK_EXEC, IDC_BREAK_SCANLINE, IDC_BREAK_SCANLINE);
 				break;
 			}
 			switch (bp->type)
@@ -1539,18 +1583,22 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, tpc);
 				}
 				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+				SetDlgItemInt(hwndDlg, IDC_BREAK_SLNUM, 0, TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
 				break;
 			case DEBUG_BREAK_OPCODE:
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
 				_stprintf(tpc, _T("%02X"), bp->opcode);
 				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, tpc);
+				SetDlgItemInt(hwndDlg, IDC_BREAK_SLNUM, 0, TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
 				break;
 			case DEBUG_BREAK_NMI:
 			case DEBUG_BREAK_IRQ:
@@ -1558,9 +1606,21 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
 				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
 				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+				SetDlgItemInt(hwndDlg, IDC_BREAK_SLNUM, 0, TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
+				break;
+			case DEBUG_BREAK_SCANLINE:
+				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
+				SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
+				SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+				SetDlgItemInt(hwndDlg, IDC_BREAK_SLNUM, bp->scanline - 1, TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), TRUE);
 				break;
 			}
 			CheckDlgButton(hwndDlg, IDC_BREAK_ENABLED, (bp->enabled) ? BST_CHECKED : BST_UNCHECKED);
@@ -1571,10 +1631,12 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			SetDlgItemText(hwndDlg, IDC_BREAK_ADDR1, _T("0000"));
 			SetDlgItemText(hwndDlg, IDC_BREAK_ADDR2, _T(""));
 			SetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, _T("00"));
+			SetDlgItemInt(hwndDlg, IDC_BREAK_SLNUM, 0, TRUE);
 			CheckDlgButton(hwndDlg, IDC_BREAK_ENABLED, BST_CHECKED);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
 		}
 		SetFocus(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1));
 		SendDlgItemMessage(hwndDlg, IDC_BREAK_ADDR1, EM_SETSEL, 0, -1);
@@ -1592,11 +1654,13 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
 			return TRUE;
 		case IDC_BREAK_OPCODE:
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), TRUE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
 			return TRUE;
 		case IDC_BREAK_NMI:
 		case IDC_BREAK_IRQ:
@@ -1604,6 +1668,13 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), FALSE);
+			return TRUE;
+		case IDC_BREAK_SCANLINE:
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR1), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_ADDR2), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_OPNUM), FALSE);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_BREAK_SLNUM), TRUE);
 			return TRUE;
 
 		case IDOK:
@@ -1615,6 +1686,7 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				addr2 = addr1;
 			GetDlgItemText(hwndDlg, IDC_BREAK_OPNUM, tpc, 3);
 			opcode = _tcstol(tpc, NULL, 16);
+			scanline = (int)GetDlgItemInt(hwndDlg, IDC_BREAK_SLNUM, NULL, TRUE);
 			enabled = (IsDlgButtonChecked(hwndDlg, IDC_BREAK_ENABLED) == BST_CHECKED);
 
 			type = 0;
@@ -1634,6 +1706,8 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				type = DEBUG_BREAK_IRQ;
 			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_BRK) == BST_CHECKED)
 				type = DEBUG_BREAK_BRK;
+			if (IsDlgButtonChecked(hwndDlg, IDC_BREAK_SCANLINE) == BST_CHECKED)
+				type = DEBUG_BREAK_SCANLINE;
 
 			if (type & (DEBUG_BREAK_EXEC | DEBUG_BREAK_READ | DEBUG_BREAK_WRITE))
 			{
@@ -1653,6 +1727,21 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					break;
 				}
 			}
+			if (type & (DEBUG_BREAK_SCANLINE))
+			{
+				if ((scanline < -1) || (scanline >= PPU::SLEndFrame))
+				{
+					MessageBox(hwndDlg, _T("Invalid scanline specified!"), _T("Breakpoint"), MB_ICONERROR);
+					break;
+				}
+				// End-of-frame scanline is converted to -1 so we don't
+				// have to translate the state retrieved from the PPU
+				if (scanline == PPU::SLEndFrame - 1)
+					scanline = -1;
+				// Scanline numbers are also biased by +1
+				// to avoid storing negative values
+				scanline++;
+			}
 			if (bp == NULL)
 			{
 				bp = new struct tBreakpoint;
@@ -1670,6 +1759,7 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			}
 			bp->type = (unsigned char)type;
 			bp->opcode = (unsigned char)opcode;
+			bp->scanline = (unsigned short)scanline;
 			bp->enabled = (unsigned char)enabled;
 			bp->addr_start = (unsigned short)addr1;
 			bp->addr_end = (unsigned short)addr2;
