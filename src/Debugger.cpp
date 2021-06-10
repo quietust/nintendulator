@@ -109,7 +109,7 @@ int	TraceOffset;	// -1 to center on PC, otherwise center on TraceOffset
 int	MemOffset;
 
 FILE	*LogFile;
-unsigned char	BPcache[0x10101];
+unsigned char	BPcache[0x10000];
 unsigned char	PalCache[0x20];
 struct tBreakpoint *Breakpoints;
 
@@ -372,19 +372,17 @@ BOOL	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2, BOOL check
 	if (checkBreakpoints)
 	{
 		// opcode breakpoint
-		if (BPcache[0x10000 | OpData[0]] & DEBUG_BREAK_OPCODE)
+		if (BPcache[OpData[0]] & DEBUG_BREAK_OPCODE)
 			is_break = TRUE;
 		// exec breakpoint
 		if (BPcache[Addr] & DEBUG_BREAK_EXEC)
 			is_break = TRUE;
 		// interrupt breakpoints
-		if ((CPU::GotInterrupt == INTERRUPT_NMI) && (BPcache[0x10100] & DEBUG_BREAK_NMI))
+		if ((CPU::GotInterrupt == INTERRUPT_NMI) && (BPcache[0] & DEBUG_BREAK_NMI))
 			is_break = TRUE;
-//		if ((CPU::GotInterrupt == INTERRUPT_RST) && (BPcache[0x10100] & DEBUG_BREAK_RST))
-//			is_break = TRUE;
-		if ((CPU::GotInterrupt == INTERRUPT_IRQ) && (BPcache[0x10100] & DEBUG_BREAK_IRQ))
+		if ((CPU::GotInterrupt == INTERRUPT_IRQ) && (BPcache[0] & DEBUG_BREAK_IRQ))
 			is_break = TRUE;
-		if ((CPU::GotInterrupt == INTERRUPT_BRK) && (BPcache[0x10100] & DEBUG_BREAK_BRK))
+		if ((CPU::GotInterrupt == INTERRUPT_BRK) && (BPcache[0] & DEBUG_BREAK_BRK))
 			is_break = TRUE;
 	}
 
@@ -1391,9 +1389,9 @@ void	CacheBreakpoints (void)
 				BPcache[i] |= bp->type;
 		}
 		if (bp->type & DEBUG_BREAK_OPCODE)
-			BPcache[0x10000 | bp->opcode] |= bp->type;
+			BPcache[bp->opcode] |= bp->type;
 		if (bp->type & (DEBUG_BREAK_NMI | DEBUG_BREAK_IRQ | DEBUG_BREAK_BRK))
-			BPcache[0x10100] |= bp->type;
+			BPcache[0] |= bp->type;
 	}
 }
 
