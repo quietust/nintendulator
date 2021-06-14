@@ -942,7 +942,7 @@ void	UpdatePPU (void)
 	if (PatChanged)
 	{
 		int t;
-		unsigned long PatternArray[D_PAT_W * D_PAT_H];
+		static unsigned long PatternArray[D_PAT_W * D_PAT_H];
 		BITMAPINFO bmi;
 
 		// updating pattern table also makes nametable and sprites dirty
@@ -984,7 +984,7 @@ void	UpdatePPU (void)
 	{
 		int AttribVal, AttribNum;
 		int NT = Nametable;
-		unsigned long NameArray[D_NAM_W * D_NAM_H];
+		static unsigned long NameArray[D_NAM_W * D_NAM_H];
 		BITMAPINFO bmi;
 
 		if (DetailType == DEBUG_DETAIL_NAMETABLE)
@@ -1056,7 +1056,7 @@ void	UpdatePPU (void)
 	if (SprChanged)
 	{
 		int SprNum, Attr, TileNum;
-		unsigned long SprArray[D_SPR_W * D_SPR_H];
+		static unsigned long SprArray[D_SPR_W * D_SPR_H];
 		BITMAPINFO bmi;
 
 		if (DetailType == DEBUG_DETAIL_SPRITE)
@@ -1112,7 +1112,7 @@ void	UpdatePPU (void)
 		TCHAR tpstr[16];
 		HBRUSH brush;
 		RECT rect;
-		unsigned long TileArray[D_TIL_W * D_TIL_H];
+		static unsigned long TileArray[D_TIL_W * D_TIL_H];
 		BITMAPINFO bmi;
 		BOOL DrawBitmap = FALSE;
 
