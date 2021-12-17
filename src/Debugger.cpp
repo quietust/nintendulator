@@ -92,7 +92,7 @@ int	DetailTypeSave, DetailNumSave;
 
 BOOL	Logging, Step;
 
-int	Palette, Nametable;
+int	Palette, Nametable, TileFlip;
 
 HDC	PaletteDC;	// Palette
 HBITMAP	PaletteBMP;
@@ -221,6 +221,7 @@ void	Init (void)
 
 	Palette = 0;
 	Nametable = 0;
+	TileFlip = 0;
 
 	HDC TpHDC = GetDC(hMainWnd);
 
@@ -884,6 +885,13 @@ void	DrawTileStretch (unsigned long *dest, int PPUaddr, int palette, int width, 
 	}
 }
 
+int	CheckFlip (int tile)
+{
+	if (TileFlip)
+		tile = (tile & 0x1EE) | ((tile & 0x10) >> 4) | ((tile & 0x1) << 4);
+	return tile;
+}
+
 void	UpdatePPU (void)
 {
 	int MemAddr;
@@ -957,7 +965,7 @@ void	UpdatePPU (void)
 			{
 				for (x = 0; x < 16; x++)
 				{
-					MemAddr = (t << 12) | (y << 8) | (x << 4);
+					MemAddr = CheckFlip((t << 8) | (y << 4) | x) << 4;
 					DrawTile(PatternArray + y * 8 * D_PAT_W + x * 8 + t * 128, MemAddr, Palette, D_PAT_W);
 				}
 			}
@@ -2246,7 +2254,7 @@ LRESULT CALLBACK PPUProc_Pattern (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		point.x = GET_X_LPARAM(lParam);
 		point.y = GET_Y_LPARAM(lParam);
 		if ((point.x >= 0) && (point.x < D_PAT_W) && (point.y >= 0) && (point.y < D_PAT_H))
-			SetDetail(DEBUG_DETAIL_PATTERN, ((point.x >> 3) & 0xF) | ((point.y << 1) & 0xF0) | ((point.x & 0x80) << 1));
+			SetDetail(DEBUG_DETAIL_PATTERN, CheckFlip(((point.x >> 3) & 0xF) | ((point.y << 1) & 0xF0) | ((point.x & 0x80) << 1)));
 		else	SetDetail(DetailTypeSave, DetailNumSave);
 		return 0;
 	}
@@ -2345,6 +2353,7 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_INITDIALOG:
 		CheckRadioButton(hwndDlg, IDC_DEBUG_PPU_NT0, IDC_DEBUG_PPU_NT3, dbgRadio[Nametable]);
+		CheckDlgButton(hwndDlg, IDC_DEBUG_PPU_TILEFLIP, TileFlip ? BST_CHECKED : BST_UNCHECKED);
 		NTabChanged = PalChanged = PatChanged = SprChanged = DetChanged = TRUE;
 
 		dlgItem = GetDlgItem(hwndDlg, IDC_DEBUG_PPU_NAMETABLE);
@@ -2392,11 +2401,6 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			NTabChanged = TRUE;
 			UpdatePPU();
 			return TRUE;
-		case IDC_DEBUG_PPU_PATTERN:
-			Palette = (Palette + 1) & 7;
-			PatChanged = TRUE;
-			UpdatePPU();
-			return TRUE;
 		case IDC_DEBUG_PPU_NT0:
 			Nametable = 0;
 			NTabChanged = TRUE;
@@ -2415,6 +2419,16 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_DEBUG_PPU_NT3:
 			Nametable = 3;
 			NTabChanged = TRUE;
+			UpdatePPU();
+			return TRUE;
+		case IDC_DEBUG_PPU_PATTERN:
+			Palette = (Palette + 1) & 7;
+			PatChanged = TRUE;
+			UpdatePPU();
+			return TRUE;
+		case IDC_DEBUG_PPU_TILEFLIP:
+			TileFlip = IsDlgButtonChecked(hwndDlg, IDC_DEBUG_PPU_TILEFLIP);
+			PatChanged = TRUE;
 			UpdatePPU();
 			return TRUE;
 		case IDCANCEL:
