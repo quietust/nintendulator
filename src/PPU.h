@@ -27,6 +27,7 @@ extern unsigned long VRAMAddr;
 
 extern BOOL PALRatio, SkipTick;
 extern unsigned char	VRAM[0x4][0x400];
+extern const unsigned char	ReverseCHR[256];
 extern unsigned char	OpenBus[0x400];
 extern unsigned short	DrawArray[256*240];
 

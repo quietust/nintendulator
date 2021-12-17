@@ -839,14 +839,19 @@ void	AddInst (void)
 	}
 }
 
-void	DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch)
+void	DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch, bool hflip = false, bool vflip = false)
 {
 	int sy, sx;
 	int byte0, byte1, color;
 	for (sy = 0; sy < 8; sy++)
 	{
-		byte0 = DebugMemPPU((unsigned short)(PPUaddr + sy));
-		byte1 = DebugMemPPU((unsigned short)(PPUaddr + sy + 8));
+		byte0 = DebugMemPPU((unsigned short)(PPUaddr + (vflip ? 7 - sy : sy)));
+		byte1 = DebugMemPPU((unsigned short)(PPUaddr + (vflip ? 7 - sy : sy) + 8));
+		if (hflip)
+		{
+			byte0 = PPU::ReverseCHR[byte0];
+			byte1 = PPU::ReverseCHR[byte1];
+		}
 		for (sx = 0; sx < 8; sx++)
 		{
 			color = ((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6);
@@ -861,14 +866,19 @@ void	DrawTile (unsigned long *dest, int PPUaddr, int palette, int pitch)
 	}
 }
 
-void	DrawTileStretch (unsigned long *dest, int PPUaddr, int palette, int width, int height, int pitch)
+void	DrawTileStretch (unsigned long *dest, int PPUaddr, int palette, int width, int height, int pitch, bool hflip = false, bool vflip = false)
 {
 	int sy, sx, py, px;
 	int byte0, byte1, color;
 	for (sy = 0; sy < 8; sy++)
 	{
-		byte0 = DebugMemPPU((unsigned short)(PPUaddr + sy));
-		byte1 = DebugMemPPU((unsigned short)(PPUaddr + sy + 8));
+		byte0 = DebugMemPPU((unsigned short)(PPUaddr + (vflip ? 7 - sy : sy)));
+		byte1 = DebugMemPPU((unsigned short)(PPUaddr + (vflip ? 7 - sy : sy) + 8));
+		if (hflip)
+		{
+			byte0 = PPU::ReverseCHR[byte0];
+			byte1 = PPU::ReverseCHR[byte1];
+		}
 		for (sx = 0; sx < 8; sx++)
 		{
 			color = ((byte0 & 0x80) >> 7) | ((byte1 & 0x80) >> 6);
@@ -1086,13 +1096,13 @@ void	UpdatePPU (void)
 				if (PPU::Reg2000 & 0x20)
 				{
 					MemAddr = ((TileNum & 0xFE) << 4) | ((TileNum & 0x01) << 12);
-					DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), D_SPR_W);
-					DrawTile(SprArray + y * 24 * D_SPR_W + x * 16 + 8 * D_SPR_W, MemAddr + 16, 4 | (Attr & 3), D_SPR_W);
+					DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr + ((Attr & 0x80) ? 16 : 0), 4 | (Attr & 3), D_SPR_W, Attr & 0x40, Attr & 0x80);
+					DrawTile(SprArray + y * 24 * D_SPR_W + x * 16 + 8 * D_SPR_W, MemAddr + ((Attr & 0x80) ? 0 : 16), 4 | (Attr & 3), D_SPR_W, Attr & 0x40, Attr & 0x80);
 				}
 				else
 				{
 					MemAddr = (TileNum << 4) | ((PPU::Reg2000 & 0x08) << 9);
-					DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), D_SPR_W);
+					DrawTile(SprArray + y * 24 * D_SPR_W + x * 16, MemAddr, 4 | (Attr & 3), D_SPR_W, Attr & 0x40, Attr & 0x80);
 				}
 			}
 		}
@@ -1116,7 +1126,7 @@ void	UpdatePPU (void)
 
 	if (DetChanged)
 	{
-		unsigned char tile, color;
+		unsigned char tile, color, attr;
 		TCHAR tpstr[16];
 		HBRUSH brush;
 		RECT rect;
@@ -1186,6 +1196,7 @@ void	UpdatePPU (void)
 		case DEBUG_DETAIL_SPRITE:
 			tile = PPU::Sprite[(DetailNum << 2) | 1];
 			color = PPU::Sprite[(DetailNum << 2) | 2] & 3;
+			attr = PPU::Sprite[(DetailNum << 2) | 2] & 0xC0;
 
 			SetDlgItemText(PPUWnd, IDC_DEBUG_PPU_SELTYPE, _T("Sprite"));
 
@@ -1222,13 +1233,13 @@ void	UpdatePPU (void)
 			if (PPU::Reg2000 & 0x20)
 			{
 				MemAddr = ((tile & 0xFE) << 4) | ((tile & 0x01) << 12);
-				DrawTileStretch(TileArray + 16, MemAddr, color | 4, 4, 4, D_TIL_W);
-				DrawTileStretch(TileArray + 16 + D_TIL_W * 32, MemAddr + 16, color | 4, 4, 4, D_TIL_W);
+				DrawTileStretch(TileArray + 16, MemAddr + ((attr & 0x80) ? 16 : 0), color | 4, 4, 4, D_TIL_W, attr & 0x40, attr & 0x80);
+				DrawTileStretch(TileArray + 16 + D_TIL_W * 32, MemAddr + ((attr & 0x80) ? 0 : 16), color | 4, 4, 4, D_TIL_W, attr & 0x40, attr & 0x80);
 			}
 			else
 			{
 				MemAddr = (tile << 4) | ((PPU::Reg2000 & 0x08) << 9);
-				DrawTileStretch(TileArray, MemAddr, color | 4, 8, 8, D_TIL_W);
+				DrawTileStretch(TileArray, MemAddr, color | 4, 8, 8, D_TIL_W, attr & 0x40, attr & 0x80);
 			}
 			DrawBitmap = TRUE;
 			break;
