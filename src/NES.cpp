@@ -466,9 +466,10 @@ const TCHAR *	OpenFileiNES (FILE *in)
 	PRGSizeROM = RI.INES_PRGSize * 0x4;
 	CHRSizeROM = RI.INES_CHRSize * 0x8;
 
+	unsigned __int64 PRGBytes = PRGSizeROM * 0x1000;
+	unsigned __int64 CHRBytes = CHRSizeROM * 0x400;
+
 	// NES 2.0 support for "unusual" ROM sizes
-	// In practice, none of these are likely to work, especially the really small ones.
-	// but at least it will allow us to display proper error messages
 	if (RI.INES_Version == 2)
 	{
 		if (RI.INES_PRGSize >= 0xF00)
@@ -477,17 +478,11 @@ const TCHAR *	OpenFileiNES (FILE *in)
 			if ((RI.INES_PRGSize & 0xFC) >= 0xA0)
 				return _T("NES 2.0 PRG ROM size exceeds 1 TB!");
 
-			unsigned __int64 prgsize = (((RI.INES_PRGSize << 1) | 1) & 0x7) << ((RI.INES_PRGSize >> 2) & 0x3F);
+			PRGBytes = (((RI.INES_PRGSize << 1) | 1) & 0x7) << ((RI.INES_PRGSize >> 2) & 0x3F);
 
-			if (prgsize < 0x1000)
-				PRGSizeROM = 1;
-			else	PRGSizeROM = prgsize / 0x1000;
-
-			if (PRGSizeROM * 0x1000 != prgsize)
-			{
-				EI.DbgOut(_T("Error - PRG ROM size is %i bytes, which is not a multiple of 4 KB!"), prgsize);
-				return _T("PRG ROM size must be a multiple of 4 KB!");
-			}
+			if (PRGBytes & 0xFFF)
+				PRGSizeROM = -1;	// Flag PRG ROM size for adjustment below
+			else	PRGSizeROM = PRGBytes / 0x1000;
 
 			if (PRGSizeROM < 4)
 				RI.INES_PRGSize = 1;
@@ -502,17 +497,11 @@ const TCHAR *	OpenFileiNES (FILE *in)
 			if ((RI.INES_CHRSize & 0xFC) >= 0xA0)
 				return _T("NES 2.0 CHR ROM size exceeds 1 TB!");
 
-			unsigned __int64 chrsize = (((RI.INES_CHRSize << 1) | 1) & 0x7) << ((RI.INES_CHRSize >> 2) & 0x3F);
+			CHRBytes = (((RI.INES_CHRSize << 1) | 1) & 0x7) << ((RI.INES_CHRSize >> 2) & 0x3F);
 
-			if (chrsize < 0x400)
-				CHRSizeROM = 1;
-			else	CHRSizeROM = chrsize / 0x400;
-
-			if (CHRSizeROM * 0x400 != chrsize)
-			{
-				EI.DbgOut(_T("Error - CHR ROM size is %i bytes, which is not a multiple of 1 KB!"), chrsize);
-				return _T("CHR ROM size must be a multiple of 1 KB!");
-			}
+			if (CHRBytes & 0x3FF)
+				CHRSizeROM = -1;	// Flag CHR ROM size for adjustment below
+			else	CHRSizeROM = CHRBytes / 0x400;
 
 			if (CHRSizeROM < 8)
 				RI.INES_CHRSize = 1;
@@ -533,9 +522,44 @@ const TCHAR *	OpenFileiNES (FILE *in)
 		EI.DbgOut(_T("Error - CHR ROM size is %i KB, which exceeds the current limit of %i KB"), CHRSizeROM, MAX_CHRROM_SIZE);
 		return _T("CHR ROM is too large! Increase MAX_CHRROM_SIZE and recompile!");
 	}
+	if (!PRGBytes)
+	{
+		EI.DbgOut(_T("Error - PRG ROM size is zero!"));
+		return _T("No PRG ROM is present!");
+	}
 
-	fread(PRG_ROM, 1, PRGSizeROM * 0x1000, in);
-	fread(CHR_ROM, 1, CHRSizeROM * 0x400, in);
+	fread(PRG_ROM, 1, PRGBytes, in);
+	fread(CHR_ROM, 1, CHRBytes, in);
+
+	// If PRG ROM isn't a multiple of 4KB, then mirror it until it is
+	if (PRGSizeROM < 0)
+	{
+		while (PRGBytes & 0xFFF)
+		{
+			memcpy(&PRG_ROM[0][0] + PRGBytes, &PRG_ROM, PRGBytes);
+			PRGBytes <<= 1;
+		}
+
+		PRGSizeROM = PRGBytes / 0x1000;
+		if (PRGSizeROM < 4)
+			RI.INES_PRGSize = 1;
+		else	RI.INES_PRGSize = PRGSizeROM / 4;
+	}
+
+	// If CHR ROM isn't a multiple of 1KB, then mirror it until it is
+	if (CHRSizeROM < 0)
+	{
+		while (CHRBytes & 0x3FF)
+		{
+			memcpy(&CHR_ROM[0][0] + CHRBytes, &CHR_ROM, CHRBytes);
+			CHRBytes <<= 1;
+		}
+
+		CHRSizeROM = CHRBytes / 0x400;
+		if (CHRSizeROM < 8)
+			RI.INES_CHRSize = 1;
+		else	RI.INES_CHRSize = CHRSizeROM / 8;
+	}
 
 	if (RI.INES_Version == 2)
 	{
