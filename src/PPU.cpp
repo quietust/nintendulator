@@ -47,7 +47,7 @@ unsigned char IOMode;	// Start at 6 for writes, 5 for reads - counts down and ev
 unsigned char buf2007;
 
 unsigned char *SprBuff;
-BOOL Spr0InLine;
+BOOL Spr0InLine, Spr0Hit;
 int SprCount;
 unsigned char SprData[8][10];
 unsigned short *GfxData;
@@ -549,6 +549,11 @@ void	RunNoSkip (int NumTicks)
 	register int i, y;
 	for (i = 0; i < NumTicks; i++)
 	{
+		if (Spr0Hit)
+		{
+			Reg2002 |= 0x40;	// Trigger sprite 0 hit
+			Spr0Hit = FALSE;
+		}
 		Clockticks++;
 		if (Clockticks == 256)
 		{
@@ -826,7 +831,7 @@ void	RunNoSkip (int NumTicks)
 					{
 						if ((Spr0InLine) && (y == 0) && (TC & 0x3) && (Clockticks < 255))
 						{
-							Reg2002 |= 0x40;	// Sprite 0 hit
+							Spr0Hit = TRUE;	// Trigger 1 pixel later
 							Spr0InLine = FALSE;
 						}
 						if (!((TC & 0x3) && (SprData[y][8] & 0x20)))
@@ -861,6 +866,11 @@ void	RunSkip (int NumTicks)
 	register int i;
 	for (i = 0; i < NumTicks; i++)
 	{
+		if (Spr0Hit)
+		{
+			Reg2002 |= 0x40;	// Trigger sprite 0 hit
+			Spr0Hit = FALSE;
+		}
 		Clockticks++;
 		if (Clockticks == 256)
 		{
@@ -1134,7 +1144,7 @@ void	RunSkip (int NumTicks)
 			register int SprPixel = Clockticks - SprData[0][9];
 			if (!(SprPixel & ~7) && (SprData[0][SprPixel] & 0x3) && (TileData[Clockticks + IntX] & 0x3))
 			{
-				Reg2002 |= 0x40;	// Sprite 0 hit
+				Spr0Hit = TRUE;	// Trigger 1 pixel later
 				Spr0InLine = FALSE;
 			}
 		}

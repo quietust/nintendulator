@@ -29,7 +29,7 @@ BOOL	Readable[0x10], Writable[0x10];
 unsigned char WantNMI;
 #endif	/* !NSFPLAYER */
 unsigned char WantIRQ;
-BOOL EnableDMA;
+unsigned char EnableDMA;
 unsigned char DMAPage;
 #ifdef	ENABLE_DEBUGGER
 unsigned char GotInterrupt;
@@ -82,78 +82,13 @@ inline	void	RunCycle (void)
 	APU::Run();
 #endif	/* !CPU_BENCHMARK */
 }
-#define	MemGetCode	MemGet
+#define	MemGetCode	MemGetCPU
+#define	MemGetData	MemGetCPU
+#define	MemGetMiss	MemGetCPU
+
 unsigned char	MemGet (unsigned int Addr)
 {
 	int buf;
-	if (EnableDMA)
-	{
-		if ((EnableDMA & (DMA_PCM | DMA_SPR)) == DMA_PCM)
-		{
-			BOOL isController = (Addr == 0x4016) || (Addr == 0x4017);
-
-			// Only run through this section if PCM triggered by itself
-			// if it interrupts Sprite DMA, the timing comes out differently
-			EnableDMA &= ~DMA_PCM;
-
-			// Halt - read address and discard
-			MemGet(Addr);
-
-			// Dummy read
-			isController ? RunCycle() : MemGet(Addr);
-
-			// Optional alignment read
-			if (!(APU::InternalClock & 1))
-				isController ? RunCycle() : MemGet(Addr);
-
-			// DPCM read
-			APU::DPCM::Fetch();
-		}
-		if (EnableDMA & DMA_SPR)
-		{
-			// Check if PCM and Sprite DMAs managed to coincide
-			BOOL WasPCM = (EnableDMA & DMA_PCM);	EnableDMA = 0;
-
-			// Halt
-			MemGet(Addr);
-
-			WasPCM |= (EnableDMA & DMA_PCM);	EnableDMA = 0;
-
-			if (!(APU::InternalClock & 1))
-			{
-				MemGet(Addr);
-				// PCM DMA can't trigger here, wrong alignment
-			}
-
-			for (int i = 0; i < 0x100; i++)
-			{
-				if (WasPCM)
-				{
-					// process PCM DMA
-					APU::DPCM::Fetch();
-					// Realign clock
-					MemGet(Addr);
-					WasPCM = FALSE;
-				}
-				else
-				{
-					// check for PCM DMA and schedule it for the next loop
-					WasPCM = (EnableDMA & DMA_PCM);	EnableDMA = 0;
-				}
-				buf = MemGet((DMAPage << 8) | i);
-				MemSet(0x2004, buf);
-			}
-			// if it triggered at the very end, handle it here
-			if (WasPCM)
-			{
-				// process PCM DMA
-				APU::DPCM::Fetch();
-				// Realign clock
-				MemGet(Addr);
-			}
-		}
-	}
-
 	RunCycle();
 	// avoid an indirect function call if possible - if it's ReadPRG, then call it directly (ideally inline)
 	if (ReadHandler[(Addr >> 12) & 0xF] == ReadPRG)
@@ -161,20 +96,138 @@ unsigned char	MemGet (unsigned int Addr)
 	else	buf = ReadHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF);
 	if (buf != -1)
 		LastRead = (unsigned char)buf;
+	APU::InternalClock++;
 	return LastRead;
 }
+
 void	MemSet (unsigned int Addr, unsigned char Val)
 {
 	RunCycle();
 	WriteHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF, Val);
+	APU::InternalClock++;
 }
+
+// Handle a DMA attempt when the CPU is trying to read from a specific address
+void	HandleDMA (unsigned int Addr)
+{
+	// If PCM DMA triggers by itself, go through this section
+	// PCM DMA cannot possibly be interrupted by another DMA
+	if (EnableDMA == DMA_PCM)
+	{
+		// Halt - let CPU read memory and then suspend it
+		// This will trigger controller reads, but the ones below will not
+		MemGet(Addr);
+
+		// Dummy read
+		MemGetDMA(Addr);
+
+		// Optional alignment read
+		if (APU::InternalClock & 1)
+			MemGetDMA(Addr);
+
+		// DPCM read
+		APU::DPCM::Fetch();
+
+		// DMA is now finished
+		EnableDMA = 0;
+	}
+	// If Sprite DMA is triggered, run through this section
+	// where it can be potentially interrupted by a PCM DMA
+	else if (EnableDMA & DMA_SPR)
+	{
+		// Check if PCM and Sprite DMAs managed to coincide,
+		// then acknowledge all DMAs to avoid reentrancy
+		int DoPCM = 0;
+
+		// If PCM DMA triggered at exactly the start, then it goes first
+		if (EnableDMA & DMA_PCM)
+		{
+			EnableDMA &= ~DMA_PCM;
+			DoPCM = 1;
+		}
+
+		// Halt - let CPU read memory and then suspend it
+		MemGet(Addr);
+
+		// Optional alignment read
+		if (APU::InternalClock & 1)
+		{
+			MemGetDMA(Addr);
+		}
+
+		// Otherwise if it triggered here, it waits after the first Sprite DMA
+		if (EnableDMA & DMA_PCM)
+		{
+			EnableDMA &= ~DMA_PCM;
+			DoPCM = 2;
+		}
+
+		for (int i = 0; i < 0x100; i++)
+		{
+			// Do we have a pending PCM DMA?
+			if (DoPCM && !--DoPCM)
+			{
+				// Process PCM DMA and realign clock
+				APU::DPCM::Fetch();
+				MemGetDMA(Addr);
+			}
+			// Now do the Sprite DMA
+			MemSet(0x2004, MemGetDMA((DMAPage << 8) | i));
+			// Did a PCM DMA get requested above?
+			if (EnableDMA & DMA_PCM)
+			{
+				// If so, queue it up - it'll run after the next sprite write
+				DoPCM = 2;
+				EnableDMA &= ~DMA_PCM;
+			}
+		}
+		// Did a PCM DMA got requested during the final write?
+		if (DoPCM == 2)
+		{
+			// If so, wait 2 extra cycles
+			MemGetDMA(Addr);
+			MemGetDMA(Addr);
+		}
+		// Then perform the fetch (this also covers during the 2nd-last write)
+		if (DoPCM)
+		{
+			APU::DPCM::Fetch();
+			EnableDMA &= ~DMA_PCM;
+		}
+
+		// Sprite DMA is now finished
+		EnableDMA &= ~DMA_SPR;
+	}
+}
+
+unsigned char	MemGetDMA (unsigned int Addr)
+{
+	// DMA is incapable of explicitly reading internal registers,
+	// since they are decoded by the CPU's output address.
+	// Ideally, this should still trigger the registered write handler
+	// but suppress any special APU/controller logic
+	if ((Addr >= 0x4000) && (Addr <= 0x401F))
+	{
+		RunCycle();
+		return LastRead;
+	}
+	return MemGet(Addr);
+}
+void	DoIRQ (void);
+unsigned char	MemGetCPU (unsigned int Addr)
+{
+	if (EnableDMA)
+		HandleDMA(Addr);
+	return MemGet(Addr);
+}
+
 __forceinline	void	Push (unsigned char Val)
 {
 	MemSet(0x100 | SP--, Val);
 }
 __forceinline	unsigned char	Pull (void)
 {
-	return MemGet(0x100 | ++SP);
+	return MemGetData(0x100 | ++SP);
 }
 void	JoinFlags (void)
 {
@@ -206,8 +259,8 @@ void	DoNMI (void)
 	Push(P);
 	FI = 1;
 
-	PCL = MemGet(0xFFFA);
-	PCH = MemGet(0xFFFB);
+	PCL = MemGetData(0xFFFA);
+	PCH = MemGetData(0xFFFB);
 #ifdef	ENABLE_DEBUGGER
 	GotInterrupt = INTERRUPT_NMI;
 #endif	/* ENABLE_DEBUGGER */
@@ -226,13 +279,13 @@ void	DoIRQ (void)
 	if (LastNMI)
 	{
 		WantNMI = FALSE;
-		PCL = MemGet(0xFFFA);
-		PCH = MemGet(0xFFFB);
+		PCL = MemGetData(0xFFFA);
+		PCH = MemGetData(0xFFFB);
 	}
 	else
 	{
-		PCL = MemGet(0xFFFE);
-		PCH = MemGet(0xFFFF);
+		PCL = MemGetData(0xFFFE);
+		PCH = MemGetData(0xFFFF);
 	}
 #else	/* NSFPLAYER */
 	PCL = MemGet(0xFFFE);
@@ -274,13 +327,13 @@ void	Reset (void)
 {
 	MemGetCode(PC);
 	MemGetCode(PC);
-	MemGet(0x100 | SP--);
-	MemGet(0x100 | SP--);
-	MemGet(0x100 | SP--);
+	MemGetData(0x100 | SP--);
+	MemGetData(0x100 | SP--);
+	MemGetData(0x100 | SP--);
 	FI = 1;
 
-	PCL = MemGet(0xFFFC);
-	PCH = MemGet(0xFFFD);
+	PCL = MemGetData(0xFFFC);
+	PCH = MemGetData(0xFFFD);
 #ifdef	ENABLE_DEBUGGER
 	GotInterrupt = INTERRUPT_RST;
 #endif	/* ENABLE_DEBUGGER */
@@ -378,7 +431,7 @@ __forceinline	void	AM_ABX (void)
 	CalcAddrL += X;
 	if (inc)
 	{
-		MemGet(CalcAddr);
+		MemGetData(CalcAddr);
 		CalcAddrH++;
 	}
 }
@@ -388,7 +441,7 @@ __forceinline	void	AM_ABXW (void)
 	CalcAddrH = MemGetCode(PC++);
 	bool inc = (CalcAddrL + X) >= 0x100;
 	CalcAddrL += X;
-	MemGet(CalcAddr);
+	MemGetData(CalcAddr);
 	if (inc)
 		CalcAddrH++;
 }
@@ -400,7 +453,7 @@ __forceinline	void	AM_ABY (void)
 	CalcAddrL += Y;
 	if (inc)
 	{
-		MemGet(CalcAddr);
+		MemGetData(CalcAddr);
 		CalcAddrH++;
 	}
 }
@@ -410,7 +463,7 @@ __forceinline	void	AM_ABYW (void)
 	CalcAddrH = MemGetCode(PC++);
 	bool inc = (CalcAddrL + Y) >= 0x100;
 	CalcAddrL += Y;
-	MemGet(CalcAddr);
+	MemGetData(CalcAddr);
 	if (inc)
 		CalcAddrH++;
 }
@@ -421,47 +474,47 @@ __forceinline	void	AM_ZPG (void)
 __forceinline	void	AM_ZPX (void)
 {
 	CalcAddr = MemGetCode(PC++);
-	MemGet(CalcAddr);
+	MemGetData(CalcAddr);
 	CalcAddrL = CalcAddrL + X;
 }
 __forceinline	void	AM_ZPY (void)
 {
 	CalcAddr = MemGetCode(PC++);
-	MemGet(CalcAddr);
+	MemGetData(CalcAddr);
 	CalcAddrL = CalcAddrL + Y;
 }
 __forceinline	void	AM_INX (void)
 {
 	TmpAddr = MemGetCode(PC++);
-	MemGet(TmpAddr);
+	MemGetData(TmpAddr);
 	TmpAddrL = TmpAddrL + X;
-	CalcAddrL = MemGet(TmpAddr);
+	CalcAddrL = MemGetData(TmpAddr);
 	TmpAddrL++;
-	CalcAddrH = MemGet(TmpAddr);
+	CalcAddrH = MemGetData(TmpAddr);
 }
 __forceinline	void	AM_INY (void)
 {
 	TmpAddr = MemGetCode(PC++);
-	CalcAddrL = MemGet(TmpAddr);
+	CalcAddrL = MemGetData(TmpAddr);
 	TmpAddrL++;
-	CalcAddrH = MemGet(TmpAddr);
+	CalcAddrH = MemGetData(TmpAddr);
 	bool inc = (CalcAddrL + Y) >= 0x100;
 	CalcAddrL += Y;
 	if (inc)
 	{
-		MemGet(CalcAddr);
+		MemGetMiss(CalcAddr);
 		CalcAddrH++;
 	}
 }
 __forceinline	void	AM_INYW (void)
 {
 	TmpAddr = MemGetCode(PC++);
-	CalcAddrL = MemGet(TmpAddr);
+	CalcAddrL = MemGetData(TmpAddr);
 	TmpAddrL++;
-	CalcAddrH = MemGet(TmpAddr);
+	CalcAddrH = MemGetData(TmpAddr);
 	bool inc = (CalcAddrL + Y) >= 0x100;
 	CalcAddrL += Y;
-	MemGet(CalcAddr);
+	MemGetData(CalcAddr);
 	if (inc)
 		CalcAddrH++;
 }
@@ -471,7 +524,7 @@ __forceinline	void	AM_NON (void)
 }
 __forceinline	void	IN_ADC (void)
 {
-	unsigned char Val = MemGet(CalcAddr);
+	unsigned char Val = MemGetData(CalcAddr);
 	int result = A + Val + FC;
 	FV = !!(~(A ^ Val) & (A ^ result) & 0x80);
 	FC = !!(result & 0x100);
@@ -481,13 +534,13 @@ __forceinline	void	IN_ADC (void)
 }
 __forceinline	void	IN_AND (void)
 {
-	A &= MemGet(CalcAddr);
+	A &= MemGetData(CalcAddr);
 	FZ = (A == 0);
 	FN = (A >> 7) & 1;
 }
 __forceinline	void	IN_ASL (void)
 {
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	FC = (TmpData >> 7) & 1;
 	TmpData <<= 1;
@@ -518,7 +571,7 @@ void	IN_BRANCH (bool Condition)
 #endif	/* !NSFPLAYER */
 		if (WantIRQ && !LastIRQ)
 			SkipIRQ = TRUE;
-		MemGet(PC);
+		MemGetCode(PC);
 #ifndef	NSFPLAYER
 		if (SkipNMI)
 			LastNMI = FALSE;
@@ -531,7 +584,7 @@ void	IN_BRANCH (bool Condition)
 		{
 			if (!inc)
 			{
-				MemGet(PC);
+				MemGetMiss(PC);
 				PCH--;
 			}
 		}
@@ -539,7 +592,7 @@ void	IN_BRANCH (bool Condition)
 		{
 			if (inc)
 			{
-				MemGet(PC);
+				MemGetMiss(PC);
 				PCH++;
 			}
 		}
@@ -555,14 +608,14 @@ __forceinline	void	IN_BVS (void) {	IN_BRANCH( FV);	}
 __forceinline	void	IN_BVC (void) {	IN_BRANCH(!FV);	}
 __forceinline	void	IN_BIT (void)
 {
-	unsigned char Val = MemGet(CalcAddr);
+	unsigned char Val = MemGetData(CalcAddr);
 	FV = (Val >> 6) & 1;
 	FN = (Val >> 7) & 1;
 	FZ = (Val & A) == 0;
 }
 void	IN_BRK (void)
 {
-	MemGet(CalcAddr);
+	MemGetMiss(CalcAddr);
 	Push(PCH);
 	Push(PCL);
 	JoinFlags();
@@ -572,17 +625,17 @@ void	IN_BRK (void)
 	if (LastNMI)
 	{
 		WantNMI = FALSE;
-		PCL = MemGet(0xFFFA);
-		PCH = MemGet(0xFFFB);
+		PCL = MemGetData(0xFFFA);
+		PCH = MemGetData(0xFFFB);
 	}
 	else
 	{
-		PCL = MemGet(0xFFFE);
-		PCH = MemGet(0xFFFF);
+		PCL = MemGetData(0xFFFE);
+		PCH = MemGetData(0xFFFF);
 	}
 #else	/* NSFPLAYER */
-	PCL = MemGet(0xFFFE);
-	PCH = MemGet(0xFFFF);
+	PCL = MemGetData(0xFFFE);
+	PCH = MemGetData(0xFFFF);
 #endif	/* !NSFPLAYER */
 #ifdef	ENABLE_DEBUGGER
 	GotInterrupt = INTERRUPT_BRK;
@@ -597,28 +650,28 @@ __forceinline	void	IN_CLI (void) { FI = 0; }
 __forceinline	void	IN_CLV (void) { FV = 0; }
 __forceinline	void	IN_CMP (void)
 {
-	int result = A - MemGet(CalcAddr);
+	int result = A - MemGetData(CalcAddr);
 	FC = (result >= 0);
 	FZ = (result == 0);
 	FN = (result >> 7) & 1;
 }
 __forceinline	void	IN_CPX (void)
 {
-	int result = X - MemGet(CalcAddr);
+	int result = X - MemGetData(CalcAddr);
 	FC = (result >= 0);
 	FZ = (result == 0);
 	FN = (result >> 7) & 1;
 }
 __forceinline	void	IN_CPY (void)
 {
-	int result = Y - MemGet(CalcAddr);
+	int result = Y - MemGetData(CalcAddr);
 	FC = (result >= 0);
 	FZ = (result == 0);
 	FN = (result >> 7) & 1;
 }
 __forceinline	void	IN_DEC (void)
 {
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	TmpData--;
 	FZ = (TmpData == 0);
@@ -639,13 +692,13 @@ __forceinline	void	IN_DEY (void)
 }
 __forceinline	void	IN_EOR (void)
 {
-	A ^= MemGet(CalcAddr);
+	A ^= MemGetData(CalcAddr);
 	FZ = (A == 0);
 	FN = (A >> 7) & 1;
 }
 __forceinline	void	IN_INC (void)
 {
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	TmpData++;
 	FZ = (TmpData == 0);
@@ -670,14 +723,14 @@ __forceinline	void	IN_JMP (void)
 }
 __forceinline	void	IN_JMPI (void)
 {
-	PCL = MemGet(CalcAddr);
+	PCL = MemGetData(CalcAddr);
 	CalcAddrL++;
-	PCH = MemGet(CalcAddr);
+	PCH = MemGetData(CalcAddr);
 }
 __forceinline	void	IN_JSR (void)
 {
 	TmpAddrL = MemGetCode(PC++);
-	MemGet(0x100 | SP);
+	MemGetData(0x100 | SP);
 	Push(PCH);
 	Push(PCL);
 	PCH = MemGetCode(PC);
@@ -685,25 +738,25 @@ __forceinline	void	IN_JSR (void)
 }
 __forceinline	void	IN_LDA (void)
 {
-	A = MemGet(CalcAddr);
+	A = MemGetData(CalcAddr);
 	FZ = (A == 0);
 	FN = (A >> 7) & 1;
 }
 __forceinline	void	IN_LDX (void)
 {
-	X = MemGet(CalcAddr);
+	X = MemGetData(CalcAddr);
 	FZ = (X == 0);
 	FN = (X >> 7) & 1;
 }
 __forceinline	void	IN_LDY (void)
 {
-	Y = MemGet(CalcAddr);
+	Y = MemGetData(CalcAddr);
 	FZ = (Y == 0);
 	FN = (Y >> 7) & 1;
 }
 __forceinline	void	IN_LSR (void)
 {
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	FC = (TmpData & 0x01);
 	TmpData >>= 1;
@@ -723,7 +776,7 @@ __forceinline	void	IN_NOP (void)
 }
 __forceinline	void	IN_ORA (void)
 {
-	A |= MemGet(CalcAddr);
+	A |= MemGetData(CalcAddr);
 	FZ = (A == 0);
 	FN = (A >> 7) & 1;
 }
@@ -738,20 +791,20 @@ __forceinline	void	IN_PHP (void)
 }
 __forceinline	void	IN_PLA (void)
 {
-	MemGet(0x100 | SP);
+	MemGetData(0x100 | SP);
 	A = Pull();
 	FZ = (A == 0);
 	FN = (A >> 7) & 1;
 }
 __forceinline	void	IN_PLP (void)
 {
-	MemGet(0x100 | SP);
+	MemGetData(0x100 | SP);
 	P = Pull();
 	SplitFlags();
 }
 __forceinline	void	IN_ROL (void)
 {
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	unsigned char carry = FC;
 	FC = (TmpData >> 7) & 1;
@@ -770,7 +823,7 @@ __forceinline	void	IN_ROLA (void)
 }
 __forceinline	void	IN_ROR (void)
 {
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	unsigned char carry = FC;
 	FC = (TmpData & 0x01);
@@ -789,7 +842,7 @@ __forceinline	void	IN_RORA (void)
 }
 __forceinline	void	IN_RTI (void)
 {
-	MemGet(0x100 | SP);
+	MemGetData(0x100 | SP);
 	P = Pull();
 	SplitFlags();
 	PCL = Pull();
@@ -797,14 +850,14 @@ __forceinline	void	IN_RTI (void)
 }
 __forceinline	void	IN_RTS (void)
 {
-	MemGet(0x100 | SP);
+	MemGetData(0x100 | SP);
 	PCL = Pull();
 	PCH = Pull();
-	MemGet(PC++);
+	MemGetMiss(PC++);
 }
 __forceinline	void	IN_SBC (void)
 {
-	unsigned char Val = MemGet(CalcAddr);
+	unsigned char Val = MemGetData(CalcAddr);
 	int result = A + ~Val + FC;
 	FV = !!((A ^ Val) & (A ^ result) & 0x80);
 	FC = !(result & 0x100);
@@ -867,7 +920,7 @@ __forceinline	void	IV_UNK (void)
 	// This isn't affected by the "Log Invalid Ops" toggle
 	EI.DbgOut(_T("Unsupported opcode $%02X (???) encountered at $%04X"), Opcode, OpAddr);
 	// Perform an extra memory access
-	MemGet(CalcAddr);
+	MemGetMiss(CalcAddr);
 }
 
 __forceinline	void	IV_HLT (void)
@@ -883,7 +936,7 @@ __forceinline	void	IV_NOP (void)
 {
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (NOP) encountered at $%04X"), Opcode, OpAddr);
-	MemGet(CalcAddr);
+	MemGetMiss(CalcAddr);
 }
 __forceinline	void	IV_NOP2 (void)
 {
@@ -894,7 +947,7 @@ __forceinline	void	IV_SLO (void)
 {	// ASL + ORA
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (SLO) encountered at $%04X"), Opcode, OpAddr);
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	FC = (TmpData >> 7) & 1;
 	TmpData <<= 1;
@@ -907,7 +960,7 @@ __forceinline	void	IV_RLA (void)
 {	// ROL + AND
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (RLA) encountered at $%04X"), Opcode, OpAddr);
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	unsigned char carry = FC;
 	FC = (TmpData >> 7) & 1;
@@ -921,7 +974,7 @@ __forceinline	void	IV_SRE (void)
 {	// LSR + EOR
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (SRE) encountered at $%04X"), Opcode, OpAddr);
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	FC = (TmpData & 0x01);
 	TmpData >>= 1;
@@ -934,7 +987,7 @@ __forceinline	void	IV_RRA (void)
 {	// ROR + ADC
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (RRA) encountered at $%04X"), Opcode, OpAddr);
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	unsigned char carry = FC << 7;
 	FC = (TmpData & 0x01);
@@ -957,7 +1010,7 @@ __forceinline	void	IV_LAX (void)
 {	// LDA + LDX
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (LAX) encountered at $%04X"), Opcode, OpAddr);
-	X = A = MemGet(CalcAddr);
+	X = A = MemGetData(CalcAddr);
 	FZ = (A == 0);
 	FN = (A >> 7) & 1;
 }
@@ -965,7 +1018,7 @@ __forceinline	void	IV_DCP (void)
 {	// DEC + CMP
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (DCP) encountered at $%04X"), Opcode, OpAddr);
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	TmpData--;
 	int result = A - TmpData;
@@ -978,7 +1031,7 @@ __forceinline	void	IV_ISB (void)
 {	// INC + SBC
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (ISB) encountered at $%04X"), Opcode, OpAddr);
-	unsigned char TmpData = MemGet(CalcAddr);
+	unsigned char TmpData = MemGetData(CalcAddr);
 	MemSet(CalcAddr, TmpData);
 	TmpData++;
 	int result = A + ~TmpData + FC;
@@ -993,7 +1046,7 @@ __forceinline	void	IV_SBC (void)
 {	// NOP + SBC
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (SBC) encountered at $%04X"), Opcode, OpAddr);
-	unsigned char Val = MemGet(CalcAddr);
+	unsigned char Val = MemGetData(CalcAddr);
 	int result = A + ~Val + FC;
 	FV = !!((A ^ Val) & (A ^ result) & 0x80);
 	FC = !(result & 0x100);
@@ -1006,7 +1059,7 @@ __forceinline	void	IV_AAC (void)
 {	// ASL A+ORA and ROL A+AND, behaves strangely
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (AAC) encountered at $%04X"), Opcode, OpAddr);
-	A &= MemGet(CalcAddr);
+	A &= MemGetData(CalcAddr);
 	FZ = (A == 0);
 	FC = FN = (A >> 7) & 1;
 }
@@ -1014,7 +1067,7 @@ __forceinline	void	IV_ASR (void)
 {	// LSR A+EOR, behaves strangely
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (ASR) encountered at $%04X"), Opcode, OpAddr);
-	A &= MemGet(CalcAddr);
+	A &= MemGetData(CalcAddr);
 	FC = (A & 0x01);
 	A >>= 1;
 	FZ = (A == 0);
@@ -1024,7 +1077,7 @@ __forceinline	void	IV_ARR (void)
 {	// ROR A+AND, behaves strangely
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (ARR) encountered at $%04X"), Opcode, OpAddr);
-	A = ((A & MemGet(CalcAddr)) >> 1) | (FC << 7);
+	A = ((A & MemGetData(CalcAddr)) >> 1) | (FC << 7);
 	FZ = (A == 0);
 	FN = (A >> 7) & 1;
 	FC = (A >> 6) & 1;
@@ -1035,7 +1088,7 @@ __forceinline	void	IV_ATX (void)
 	// documented as ANDing accumulator with data, but seemingly behaves exactly the same as LAX
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (ATX) encountered at $%04X"), Opcode, OpAddr);
-	X = A = MemGet(CalcAddr);
+	X = A = MemGetData(CalcAddr);
 	FZ = (A == 0);
 	FN = (A >> 7) & 1;
 }
@@ -1043,11 +1096,37 @@ __forceinline	void	IV_AXS (void)
 {	// CMP+DEX, behaves strangely
 	if (LogBadOps)
 		EI.DbgOut(_T("Invalid opcode $%02X (AXS) encountered at $%04X"), Opcode, OpAddr);
-	int result = (A & X) - MemGet(CalcAddr);
+	int result = (A & X) - MemGetData(CalcAddr);
 	FC = (result >= 0);
 	FZ = (result == 0);
 	X = result & 0xFF;
 	FN = (result >> 7) & 1;
+}
+__forceinline	void	IV_SYA (void)
+{	// STY abs,X, malfunctions due to internal bus conflicts
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (SHY) encountered at $%04X"), Opcode, OpAddr);
+	CalcAddrL = MemGetCode(PC++);
+	CalcAddrH = MemGetCode(PC++);
+	bool inc = (CalcAddrL + X) >= 0x100;
+	CalcAddrL += X;
+	MemGetData(CalcAddr);
+	if (inc)
+		CalcAddrH &= Y;
+	MemSet(CalcAddr, Y & (CalcAddrH + 1));
+}
+__forceinline	void	IV_SXA (void)
+{	// STX abs,Y, malfunctions due to internal bus conflicts
+	if (LogBadOps)
+		EI.DbgOut(_T("Invalid opcode $%02X (SHX) encountered at $%04X"), Opcode, OpAddr);
+	CalcAddrL = MemGetCode(PC++);
+	CalcAddrH = MemGetCode(PC++);
+	bool inc = (CalcAddrL + Y) >= 0x100;
+	CalcAddrL += Y;
+	MemGetData(CalcAddr);
+	if (inc)
+		CalcAddrH &= X;
+	MemSet(CalcAddr, X & (CalcAddrH + 1));
 }
 
 void	ExecOp (void)
@@ -1079,7 +1158,7 @@ OP(00, IMM, IN_BRK) OP(10, REL, IN_BPL) OP(08, IMP, IN_PHP) OP(18, IMP, IN_CLC) 
 OP(20, NON, IN_JSR) OP(30, REL, IN_BMI) OP(28, IMP, IN_PLP) OP(38, IMP, IN_SEC) OP(24, ZPG, IN_BIT) OP(34, ZPX, IV_NOP) OP(2C, ABS, IN_BIT) OP(3C, ABX, IV_NOP)
 OP(40, IMP, IN_RTI) OP(50, REL, IN_BVC) OP(48, IMP, IN_PHA) OP(58, IMP, IN_CLI) OP(44, ZPG, IV_NOP) OP(54, ZPX, IV_NOP) OP(4C, ABS, IN_JMP) OP(5C, ABX, IV_NOP)
 OP(60, IMP, IN_RTS) OP(70, REL, IN_BVS) OP(68, IMP, IN_PLA) OP(78, IMP, IN_SEI) OP(64, ZPG, IV_NOP) OP(74, ZPX, IV_NOP) OP(6C, ABS,IN_JMPI) OP(7C, ABX, IV_NOP)
-OP(80, IMM, IV_NOP) OP(90, REL, IN_BCC) OP(88, IMP, IN_DEY) OP(98, IMP, IN_TYA) OP(84, ZPG, IN_STY) OP(94, ZPX, IN_STY) OP(8C, ABS, IN_STY) OP(9C,ABXW, IV_NOP)
+OP(80, IMM, IV_NOP) OP(90, REL, IN_BCC) OP(88, IMP, IN_DEY) OP(98, IMP, IN_TYA) OP(84, ZPG, IN_STY) OP(94, ZPX, IN_STY) OP(8C, ABS, IN_STY) OP(9C, NON, IV_SYA)
 OP(A0, IMM, IN_LDY) OP(B0, REL, IN_BCS) OP(A8, IMP, IN_TAY) OP(B8, IMP, IN_CLV) OP(A4, ZPG, IN_LDY) OP(B4, ZPX, IN_LDY) OP(AC, ABS, IN_LDY) OP(BC, ABX, IN_LDY)
 OP(C0, IMM, IN_CPY) OP(D0, REL, IN_BNE) OP(C8, IMP, IN_INY) OP(D8, IMP, IN_CLD) OP(C4, ZPG, IN_CPY) OP(D4, ZPX, IV_NOP) OP(CC, ABS, IN_CPY) OP(DC, ABX, IV_NOP)
 OP(E0, IMM, IN_CPX) OP(F0, REL, IN_BEQ) OP(E8, IMP, IN_INX) OP(F8, IMP, IN_SED) OP(E4, ZPG, IN_CPX) OP(F4, ZPX, IV_NOP) OP(EC, ABS, IN_CPX) OP(FC, ABX, IV_NOP)
@@ -1088,7 +1167,7 @@ OP(02, NON, IV_HLT) OP(12, NON, IV_HLT) OP(0A, IMP,IN_ASLA) OP(1A, IMP,IV_NOP2) 
 OP(22, NON, IV_HLT) OP(32, NON, IV_HLT) OP(2A, IMP,IN_ROLA) OP(3A, IMP,IV_NOP2) OP(26, ZPG, IN_ROL) OP(36, ZPX, IN_ROL) OP(2E, ABS, IN_ROL) OP(3E,ABXW, IN_ROL)
 OP(42, NON, IV_HLT) OP(52, NON, IV_HLT) OP(4A, IMP,IN_LSRA) OP(5A, IMP,IV_NOP2) OP(46, ZPG, IN_LSR) OP(56, ZPX, IN_LSR) OP(4E, ABS, IN_LSR) OP(5E,ABXW, IN_LSR)
 OP(62, NON, IV_HLT) OP(72, NON, IV_HLT) OP(6A, IMP,IN_RORA) OP(7A, IMP,IV_NOP2) OP(66, ZPG, IN_ROR) OP(76, ZPX, IN_ROR) OP(6E, ABS, IN_ROR) OP(7E,ABXW, IN_ROR)
-OP(82, IMM, IV_NOP) OP(92, NON, IV_HLT) OP(8A, IMP, IN_TXA) OP(9A, IMP, IN_TXS) OP(86, ZPG, IN_STX) OP(96, ZPY, IN_STX) OP(8E, ABS, IN_STX) OP(9E,ABYW, IV_NOP)
+OP(82, IMM, IV_NOP) OP(92, NON, IV_HLT) OP(8A, IMP, IN_TXA) OP(9A, IMP, IN_TXS) OP(86, ZPG, IN_STX) OP(96, ZPY, IN_STX) OP(8E, ABS, IN_STX) OP(9E, NON, IV_SXA)
 OP(A2, IMM, IN_LDX) OP(B2, NON, IV_HLT) OP(AA, IMP, IN_TAX) OP(BA, IMP, IN_TSX) OP(A6, ZPG, IN_LDX) OP(B6, ZPY, IN_LDX) OP(AE, ABS, IN_LDX) OP(BE, ABY, IN_LDX)
 OP(C2, IMM, IV_NOP) OP(D2, NON, IV_HLT) OP(CA, IMP, IN_DEX) OP(DA, IMP,IV_NOP2) OP(C6, ZPG, IN_DEC) OP(D6, ZPX, IN_DEC) OP(CE, ABS, IN_DEC) OP(DE,ABXW, IN_DEC)
 OP(E2, IMM, IV_NOP) OP(F2, NON, IV_HLT) OP(EA, IMP, IN_NOP) OP(FA, IMP,IV_NOP2) OP(E6, ZPG, IN_INC) OP(F6, ZPX, IN_INC) OP(EE, ABS, IN_INC) OP(FE,ABXW, IN_INC)

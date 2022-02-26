@@ -1,5 +1,5 @@
 Nintendulator Save State Format
- Updated:  May 9, 2020
+ Updated:  February 25, 2022
 ---------------------------------------
 
 For simplicity, savestates should only be saved during VBLANK; otherwise,
@@ -37,7 +37,7 @@ For versions prior to 0.980, the version was a 4-character ASCII number:
 	"0975" - 0.975 Beta
 
 Subsequent versions will start at "1001" and count upward each time the
-actual data format changes. The current version is "1003".
+actual data format changes. The current version is "1004".
 
 Each field is listed with the first and last version which contains it.
 
@@ -111,7 +111,8 @@ Version		Type		Description
 0950-		uint8		Square0 envelope counter
 0950-		uint8		Square0 envelope value
 0950-		uint8		Square0 bend counter
-0950-		uint16		Square0 cycles
+0950-1003	uint16		Square0 CPU cycles
+1004-		uint16		Square0 APU cycles
 0950-		uint8		Last value written to $4000
 
 0950-		uint8		Last value written to $4005
@@ -122,7 +123,8 @@ Version		Type		Description
 0950-		uint8		Square1 envelope counter
 0950-		uint8		Square1 envelope value
 0950-		uint8		Square1 bend counter
-0950-		uint16		Square1 cycles
+0950-1003	uint16		Square1 CPU cycles
+1004-		uint16		Square1 APU cycles
 0950-		uint8		Last value written to $4004
 
 0950-		uint16		Triangle frequency
@@ -130,7 +132,7 @@ Version		Type		Description
 0950-		uint8		Triangle duty cycle pointer
 0950-		uint8		Boolean, linear counter reload request
 0950-		uint8		Triangle linear counter
-0950-		uint16		Triangle cycles
+0950-		uint16		Triangle CPU cycles
 0950-		uint8		Last value written to $4008
 
 0950-		uint8		Last value written to $400E
@@ -139,7 +141,8 @@ Version		Type		Description
 0950-		uint8		Boolean, Noise envelope reload request
 0950-		uint8		Noise envelope counter
 0950-		uint8		Noise envelope value
-0950-		uint16		Noise cycles
+0950-1003	uint16		Noise CPU cycles
+1004-		uint16		Noise APU cycles
 0950-		uint8		Last value written to $400C
 
 0950-		uint8		Last value written to $4010
@@ -150,18 +153,22 @@ Version		Type		Description
 0950-		uint16		DPCM current length
 0950-		uint8		DPCM shift register
 0950-0970	uint8		DPCM output mode(D1)/buffer full(D0)
-0975-		uint8		DPCM fetching(D2)/!silenced(D1)/!empty(D0)
+0975-1003	uint8		DPCM fetching(D2)/!silenced(D1)/!empty(D0)
+1004-		uint8		DPCM incrementing(D4)/resetting(D3)/fetching(D2)/!silenced(D1)/!empty(D0)
 0950-		uint8		DPCM shift count
 0950-		uint8		DPCM read buffer
-0950-		uint16		DPCM cycles
+0950-1003	uint16		DPCM CPU cycles
+1004-		uint16		DPCM APU cycles
 0950-		uint16		DPCM length counter
 
 0950-		uint8		Last value written to $4017
-0950-		uint16		Frame counter cycles
+0950-1003	uint16		Frame counter CPU cycles
+1004-		uint16		Frame counter APU cycles
 0950-0975	uint8		Frame counter phase
-0975-0975	uint8		Zero, unused
+1004-		uint8		Frame counter Zero(D3)/IRQ(D2)/Half(D1)/Quarter(D0) pending
 
 0950-		uint8		APU-related IRQs (PCM and FRAME, as-is)
+1004-		uint8		APU clock, lower 8 bits (for phase)
 
 ---- Section "CTRL" - Controller Data - OBSOLETE, dropped in version 0970
 

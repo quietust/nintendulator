@@ -16,7 +16,7 @@
 #define	INTERRUPT_BRK	4
 #endif	/* ENABLE_DEBUGGER */
 
-#define DMA_PCM		0x01
+#define	DMA_PCM		0x01
 #define	DMA_SPR		0x02
 
 namespace CPU
@@ -33,7 +33,7 @@ extern BOOL Readable[0x10], Writable[0x10];
 extern unsigned char WantNMI;
 #endif	/* !NSFPLAYER */
 extern unsigned char WantIRQ;
-extern BOOL EnableDMA;
+extern unsigned char EnableDMA;
 extern unsigned char DMAPage;
 #ifdef	ENABLE_DEBUGGER
 extern unsigned char GotInterrupt;
@@ -53,8 +53,7 @@ extern BOOL LogBadOps;
 #define PCL rPC.Segment[0]
 #define PCH rPC.Segment[1]
 
-unsigned char	MemGet (unsigned int);
-void	MemSet (unsigned int, unsigned char);
+unsigned char	MemGetDMA (unsigned int);
 
 void	JoinFlags (void);
 void	SplitFlags (void);
