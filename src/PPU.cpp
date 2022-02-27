@@ -1284,12 +1284,16 @@ void	__fastcall	Write3 (int Val)
 
 void	__fastcall	Write4 (int Val)
 {
-	if (IsRendering)
-		Val = 0xFF;
 	if ((SprAddr & 0x03) == 0x02)
 		Val &= 0xE3;
-	Sprite[SprAddr] = (unsigned char)Val;
-	SprAddr = (SprAddr + 1) & 0xFF;
+	// During rendering, writes are discarded and address increments wrong
+	if (IsRendering)
+		SprAddr = (SprAddr + 4) & 0xFF;
+	else
+	{
+		Sprite[SprAddr] = (unsigned char)Val;
+		SprAddr = (SprAddr + 1) & 0xFF;
+	}
 #ifdef	ENABLE_DEBUGGER
 	Debugger::SprChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
