@@ -1438,8 +1438,12 @@ int	Load (FILE *in, int version_id)
 	readByte(tpc);			//	uint8		APU-related IRQs (PCM and FRAME, as-is)
 	CPU::WantIRQ |= tpc;	// so we can reload them here
 
-	readByte(tpc);			//	uint8		APU clock, lower 8 bits (for phase)
-	InternalClock = tpc;
+	if (version_id >= 1004)
+	{
+		readByte(tpc);			//	uint8		APU clock, lower 8 bits (for phase)
+		InternalClock = tpc;
+	}
+	else	InternalClock = 0;
 
 	return clen;
 }

@@ -206,6 +206,12 @@ BOOL	LoadData (FILE *in, int flen, int version_id)
 			clen -= APU::Load(in, version_id);
 		else if (!memcmp(csig, "CONT", 4))
 			clen -= Controllers::Load(in, version_id);
+		else if (!memcmp(csig, "CTRL", 4))
+		{
+			// Skip old block without erroring out
+			fseek(in, clen, SEEK_CUR);
+			clen = 0;
+		}
 		else if (!memcmp(csig, "GENI", 4))
 			clen -= Genie::Load(in, version_id);
 		else if (!memcmp(csig, "NPRA", 4))
@@ -241,6 +247,7 @@ BOOL	LoadData (FILE *in, int flen, int version_id)
 		else	EI.DbgOut(_T("Unknown savestate block '%c%c%c%c' encountered!"), csig[0], csig[1], csig[2], csig[3]);
 		if (clen != 0)
 		{
+			EI.DbgOut(_T("Savestate block '%c%c%c%c' had wrong size, off by %i!"), csig[0], csig[1], csig[2], csig[3], clen);
 			SSOK = FALSE;			// too much, or too little
 			fseek(in, clen, SEEK_CUR);	// seek back to the block boundary
 		}
