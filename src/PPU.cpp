@@ -990,8 +990,8 @@ void	RunSkip (int NumTicks)
 				{
 					TC = ReverseCHR[RenderData[2]];
 					CurTileData = &TileData[Clockticks + 11];
-					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
-					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
+					((unsigned long *)CurTileData)[0] = CHRLoBit[TC & 0xF];
+					((unsigned long *)CurTileData)[1] = CHRLoBit[TC >> 4];
 				}
 				break;
 			case 325:	case 333:
@@ -999,8 +999,8 @@ void	RunSkip (int NumTicks)
 				{
 					TC = ReverseCHR[RenderData[2]];
 					CurTileData = &TileData[Clockticks - 325];
-					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
-					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
+					((unsigned long *)CurTileData)[0] = CHRLoBit[TC & 0xF];
+					((unsigned long *)CurTileData)[1] = CHRLoBit[TC >> 4];
 				}
 				break;
 			case   6:	case  14:	case  22:	case  30:	case  38:	case  46:	case  54:	case  62:
@@ -1018,8 +1018,8 @@ void	RunSkip (int NumTicks)
 				{
 					TC = ReverseCHR[RenderData[3]];
 					CurTileData = &TileData[Clockticks + 9];
-					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
-					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
+					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
+					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
 				}
 				IncrementH();
 				if (Clockticks == 255)
@@ -1030,8 +1030,8 @@ void	RunSkip (int NumTicks)
 				{
 					TC = ReverseCHR[RenderData[3]];
 					CurTileData = &TileData[Clockticks - 327];
-					((unsigned long *)CurTileData)[0] |= CHRHiBit[TC & 0xF];
-					((unsigned long *)CurTileData)[1] |= CHRHiBit[TC >> 4];
+					((unsigned long *)CurTileData)[0] |= CHRLoBit[TC & 0xF];
+					((unsigned long *)CurTileData)[1] |= CHRLoBit[TC >> 4];
 				}
 				IncrementH();
 				break;
@@ -1079,8 +1079,8 @@ void	RunSkip (int NumTicks)
 					if (SprBuff[2] & 0x40)
 						TC = RenderData[3];
 					else	TC = ReverseCHR[RenderData[3]];
-					((unsigned long *)SprData[0])[0] |= CHRHiBit[TC & 0xF];
-					((unsigned long *)SprData[0])[1] |= CHRHiBit[TC >> 4];
+					((unsigned long *)SprData[0])[0] |= CHRLoBit[TC & 0xF];
+					((unsigned long *)SprData[0])[1] |= CHRLoBit[TC >> 4];
 					SprData[0][8] = SprBuff[2];
 					SprData[0][9] = SprBuff[3];
 				}
@@ -1142,7 +1142,7 @@ void	RunSkip (int NumTicks)
 		if ((Spr0InLine) && (Clockticks < 255) && (OnScreen) && ((Reg2001 & 0x18) == 0x18) && ((Clockticks >= 8) || ((Reg2001 & 0x06) == 0x06)))
 		{
 			register int SprPixel = Clockticks - SprData[0][9];
-			if (!(SprPixel & ~7) && (SprData[0][SprPixel] & 0x3) && (TileData[Clockticks + IntX] & 0x3))
+			if (!(SprPixel & ~7) && (SprData[0][SprPixel] & TileData[Clockticks + IntX]))
 			{
 				Spr0Hit = TRUE;	// Trigger 1 pixel later
 				Spr0InLine = FALSE;

@@ -1497,9 +1497,9 @@ void	Run (void)
 			AVI::AddAudio();
 		do
 		{
-			Sleep(1);
 			if (!isEnabled)
 				break;
+			Sleep(1);
 			Try(Buffer->GetCurrentPosition(&rpos, &wpos), _T("Error getting audio position"));
 			rpos /= LockSize;
 			wpos /= LockSize;
