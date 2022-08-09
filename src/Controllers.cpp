@@ -69,6 +69,7 @@ void	StdPort_SetControllerType (StdPort *&Port, STDCONT_TYPE Type, DWORD *button
 	}
 	switch (Type)
 	{
+	default:			MessageBox(hMainWnd, _T("Error: selected invalid controller type for standard port!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
 	case STD_UNCONNECTED:		Port = new StdPort_Unconnected(buttons);	break;
 	case STD_STDCONTROLLER:		Port = new StdPort_StdController(buttons);	break;
 	case STD_ZAPPER:		Port = new StdPort_Zapper(buttons);		break;
@@ -79,7 +80,6 @@ void	StdPort_SetControllerType (StdPort *&Port, STDCONT_TYPE Type, DWORD *button
 	case STD_VSZAPPER:		Port = new StdPort_VSZapper(buttons);		break;
 	case STD_SNESMOUSE:		Port = new StdPort_SnesMouse(buttons);		break;
 	case STD_FOURSCORE2:		Port = new StdPort_FourScore2(buttons);		break;
-	default:MessageBox(hMainWnd, _T("Error: selected invalid controller type for standard port!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);	break;
 	}
 }
 const TCHAR	*StdPort_Mappings[STD_MAX];
@@ -106,6 +106,7 @@ void    ExpPort_SetControllerType (ExpPort *&Port, EXPCONT_TYPE Type, DWORD *but
 	}
         switch (Type)
         {
+        default:			MessageBox(hMainWnd, _T("Error: selected invalid controller type for expansion port!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);
         case EXP_UNCONNECTED:		Port = new ExpPort_Unconnected(buttons);		break;
         case EXP_FAMI4PLAY:		Port = new ExpPort_Fami4Play(buttons);			break;
         case EXP_ARKANOIDPADDLE:	Port = new ExpPort_ArkanoidPaddle(buttons);		break;
@@ -113,7 +114,6 @@ void    ExpPort_SetControllerType (ExpPort *&Port, EXPCONT_TYPE Type, DWORD *but
         case EXP_SUBORKEYBOARD:		Port = new ExpPort_SuborKeyboard(buttons);		break;
         case EXP_FAMTRAINER:		Port = new ExpPort_FamTrainer(buttons);			break;
         case EXP_TABLET:		Port = new ExpPort_Tablet(buttons);			break;
-        default:MessageBox(hMainWnd, _T("Error: selected invalid controller type for expansion port!"), _T("Nintendulator"), MB_OK | MB_ICONERROR);	break;
         }
 }
 const TCHAR	*ExpPort_Mappings[EXP_MAX];
