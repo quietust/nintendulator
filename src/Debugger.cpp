@@ -16,6 +16,7 @@
 #include "GFX.h"
 #include "Genie.h"
 #include "States.h"
+#include <vector>
 
 #ifdef	ENABLE_DEBUGGER
 
@@ -32,7 +33,6 @@ struct tBreakpoint
 	unsigned char type;
 	unsigned char enabled;
 	unsigned short scanline;
-	struct tBreakpoint *prev, *next;
 	void updateDescription ()
 	{
 		switch (type)
@@ -118,7 +118,7 @@ int	MemOffset;
 FILE	*LogFile;
 unsigned char	BPcache[0x10000];
 unsigned char	PalCache[0x20];
-struct tBreakpoint *Breakpoints;
+std::vector<struct tBreakpoint> Breakpoints;
 int	LastScanline;
 
 BOOL inUpdate = FALSE;
@@ -255,7 +255,7 @@ void	Init (void)
 	CPUWnd = NULL;
 	PPUWnd = NULL;
 
-	Breakpoints = NULL;
+	Breakpoints.clear();
 	TraceOffset = -1;
 	MemOffset = 0;
 
@@ -267,12 +267,7 @@ void	Destroy (void)
 {
 	StopLogging();
 	SetMode(0);
-	while (Breakpoints != NULL)
-	{
-		tBreakpoint *ptr = Breakpoints;
-		Breakpoints = Breakpoints->next;
-		delete ptr;
-	}
+	Breakpoints.clear();
 }
 
 void	SetMode (int NewMode)
@@ -1408,9 +1403,8 @@ void	DumpPPU (void)
 void	CacheBreakpoints (void)
 {
 	int i;
-	struct tBreakpoint *bp;
 	ZeroMemory(BPcache, sizeof(BPcache));
-	for (bp = Breakpoints; bp != NULL; bp = bp->next)
+	for (auto bp = Breakpoints.begin(); bp != Breakpoints.end(); bp++)
 	{
 		if (!bp->enabled)
 			continue;
@@ -1428,64 +1422,26 @@ void	CacheBreakpoints (void)
 	}
 }
 
-struct tBreakpoint *GetBreakpoint (HWND hwndDlg, int *_line)
+struct tBreakpoint *GetBreakpoint (HWND hwndDlg, int &line)
 {
-	struct tBreakpoint *bp;
-	TCHAR *str;
-	int line, len;
-
 	line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCURSEL, 0, 0);
-	if (line == -1)
-	{
-		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
-		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
-		return NULL;
-	}
-
-	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), TRUE);
-	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), TRUE);
-
-	len = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXTLEN, line, 0);
-	str = new TCHAR[len + 1];
-	SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETTEXT, line, (LPARAM)str);
-
-	// try to find it in the breakpoint list
-	bp = Breakpoints;
-	while (bp != NULL)
-	{
-		if (!_tcscmp(bp->desc, str))
-			break;
-		bp = bp->next;
-	}
-	delete[] str;
-	if (_line != NULL)
-		*_line = line;
-	return bp;
+	if (line != -1)
+		return &Breakpoints[line];
+	else	return NULL;
 }
 
-void	SetBreakpoint (HWND hwndDlg, struct tBreakpoint *bp)
+void	SetBreakpoint (HWND hwndDlg, int line)
 {
-	int line;
-	if (bp == NULL)
-	{
-		SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_SETCURSEL, (WPARAM)-1, 0);
-		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
-		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
-		return;
-	}
-
-	line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)bp->desc);
-	SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_SETCURSEL, line, 0);
-	if (line == -1)
-	{
-		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), FALSE);
-		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), FALSE);
-	}
-	else
-	{
-		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), TRUE);
-		EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), TRUE);
-	}
+	if (line == -2)
+		line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCURSEL, 0, 0);
+	int lines = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_GETCOUNT, 0, 0);
+	if (line >= lines)
+		line = lines - 1;
+	SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_SETCURSEL, (WPARAM)line, 0);
+	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_EDIT), (line != -1));
+	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DELETE), (line != -1));
+	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_UP), (line > 0));
+	EnableWindow(GetDlgItem(hwndDlg, IDC_DEBUG_BREAK_DOWN), ((line != -1) && (line < lines - 1)));
 }
 
 // Editbox subclass to allow typing negative scanline numbers
@@ -1772,18 +1728,8 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			}
 			if (bp == NULL)
 			{
-				bp = new struct tBreakpoint;
-				if (bp == NULL)
-				{
-					MessageBox(hwndDlg, _T("Failed to add breakpoint!"), _T("Breakpoint"), MB_ICONERROR);
-					EndDialog(hwndDlg, (INT_PTR)NULL);
-					break;
-				}
-				bp->next = Breakpoints;
-				bp->prev = NULL;
-				if (bp->next != NULL)
-					bp->next->prev = bp;
-				Breakpoints = bp;
+				Breakpoints.emplace_back();
+				bp = &Breakpoints[Breakpoints.size() - 1];
 			}
 			bp->type = (unsigned char)type;
 			bp->opcode = (unsigned char)opcode;
@@ -1845,8 +1791,9 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetScrollInfo(GetDlgItem(hwndDlg, IDC_DEBUG_MEM_SCROLL), SB_CTL, &sinfo, TRUE);
 		CheckRadioButton(hwndDlg, IDC_DEBUG_MEM_CPU, IDC_DEBUG_MEM_PAL, IDC_DEBUG_MEM_CPU);
 
-		for (bp = Breakpoints; bp != NULL; bp = bp->next)
-			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+		for (auto iter = Breakpoints.begin(); iter != Breakpoints.end(); iter++)
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)iter->desc);
+		SetBreakpoint(hwndDlg, 0);
 		return FALSE;
 
 	case WM_COMMAND:
@@ -1991,21 +1938,63 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (wmEvent == LBN_DBLCLK)
 			{
 				// get selected breakpoint
-				bp = GetBreakpoint(hwndDlg, &line);
+				bp = GetBreakpoint(hwndDlg, line);
 				if (bp == NULL)
 					break;
 
+				// toggle it
 				bp->enabled = !bp->enabled;
 				bp->updateDescription();
-				// update breakpoint description
+
+				// update its description and reselect it
 				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
-				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
-				// reselect it
-				SetBreakpoint(hwndDlg, bp);
-				// then recache the breakpoints
+				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_INSERTSTRING, line, (LPARAM)bp->desc);
+				SetBreakpoint(hwndDlg, line);
+
+				// finally, update cache
 				CacheBreakpoints();
 			}
-			else	GetBreakpoint(hwndDlg, NULL);	// enable the add/remove buttons
+			else	SetBreakpoint(hwndDlg, -2);	// enable buttons according to current selection
+			return TRUE;
+		case IDC_DEBUG_BREAK_UP:
+			// get selected breakpoint
+			bp = GetBreakpoint(hwndDlg, line);
+			if (bp == NULL)
+				break;
+
+			// if we're already at the top, there's nowhere to go
+			if (line == 0)
+				break;
+
+			// Move the line up in the list
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_INSERTSTRING, line - 1, (LPARAM)bp->desc);
+
+			// Then move the actual breakpoint up
+			std::iter_swap(Breakpoints.begin() + line, Breakpoints.begin() + (line - 1));
+
+			// And reselect it
+			SetBreakpoint(hwndDlg, line - 1);
+			return TRUE;
+		case IDC_DEBUG_BREAK_DOWN:
+			// get selected breakpoint
+			bp = GetBreakpoint(hwndDlg, line);
+			if (bp == NULL)
+				break;
+
+			// if we're already at the bottom, there's nowhere to go
+			if (line == Breakpoints.size() - 1)
+				break;
+
+			// Move the line down in the list
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_INSERTSTRING, line + 1, (LPARAM)bp->desc);
+
+			// Then move the actual breakpoint down
+			std::iter_swap(Breakpoints.begin() + line, Breakpoints.begin() + (line + 1));
+
+			// And reselect it
+			SetBreakpoint(hwndDlg, line + 1);
 			return TRUE;
 		case IDC_DEBUG_BREAK_ADD:
 			bp = (struct tBreakpoint *)DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BREAKPOINT), hwndDlg, BreakpointProc, (LPARAM)NULL);
@@ -2013,15 +2002,15 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (bp == NULL)
 				break;
 			// add it to the breakpoint listbox
-			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+			line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
 			// select it
-			SetBreakpoint(hwndDlg, bp);
+			SetBreakpoint(hwndDlg, line);
 			// then recache the breakpoints
 			CacheBreakpoints();
 			return TRUE;
 		case IDC_DEBUG_BREAK_EDIT:
 			// get selected breakpoint
-			bp = GetBreakpoint(hwndDlg, &line);
+			bp = GetBreakpoint(hwndDlg, line);
 			if (bp == NULL)
 				break;
 
@@ -2032,27 +2021,24 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			// update breakpoint description
 			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
-			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_INSERTSTRING, line, (LPARAM)bp->desc);
 			// reselect it
-			SetBreakpoint(hwndDlg, bp);
+			SetBreakpoint(hwndDlg, line);
 			// then recache the breakpoints
 			CacheBreakpoints();
 			return TRUE;
 		case IDC_DEBUG_BREAK_DELETE:
 			// get selected breakpoint
-			bp = GetBreakpoint(hwndDlg, &line);
+			bp = GetBreakpoint(hwndDlg, line);
 			if (bp == NULL)
 				break;
 
 			// and take it out of the list
-			if (bp->prev != NULL)
-				bp->prev->next = bp->next;
-			else	Breakpoints = bp->next;
-			if (bp->next != NULL)
-				bp->next->prev = bp->prev;
-			delete bp;
+			Breakpoints.erase(Breakpoints.begin() + line);
 			SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_DELETESTRING, line, 0);
-			SetBreakpoint(hwndDlg, NULL);
+
+			// and select the next entry in the list
+			SetBreakpoint(hwndDlg, line);
 			// then recache the breakpoints
 			CacheBreakpoints();
 			return TRUE;
@@ -2133,9 +2119,9 @@ INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (bp == NULL)
 					break;
 				// add it to the breakpoint listbox
-				SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
+				line = SendDlgItemMessage(hwndDlg, IDC_DEBUG_BREAK_LIST, LB_ADDSTRING, 0, (LPARAM)bp->desc);
 				// select it
-				SetBreakpoint(hwndDlg, bp);
+				SetBreakpoint(hwndDlg, line);
 				// then recache the breakpoints
 				CacheBreakpoints();
 				return TRUE;
