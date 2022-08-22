@@ -1224,52 +1224,7 @@ const int EmphasisOrder[NES::REGION_MAX][8] =
 	{0,2,1,3,4,6,5,7}	// Dendy
 };
 
-#define CLIP(x,min,max) (((x) > (max)) ? (max) : (((x) < (min)) ? (min) : (x)))
-
-int	getPhase (double *wave)
-{
-	double max = -999, min = 999;
-	double amp, offset;
-	double angle = 180, base;
-	int i, j, k;
-	for (i = 0; i < 12; i++)
-	{
-		if (wave[i] > max)
-			max = wave[i];
-		if (wave[i] < min)
-			min = wave[i];
-	}
-	amp = (max - min) / 2;
-	offset = (max + min) / 2;
-
-	for (k = 0; k < 4; k++)
-	{
-		double error[12], curerror = 0;
-		double segsize = 180;
-		for (i = 0; i <= k; i++)
-			segsize /= 6.0;
-
-		for (j = 0; j < 12; j++)
-		{
-			error[j] = 0;
-			for (i = 0; i < 12; i++)
-				error[j] += fabs((amp * sin((i * 30 + (j - 6) * segsize + angle) * M_PI / 180.0) + offset) - wave[i]);
-			curerror += error[j];
-		}
-		base = 0;
-		for (j = 0; j < 12; j++)
-		{
-			if (error[j] < curerror)
-			{
-				base = (j - 6) * segsize;
-				curerror = error[j];
-			}
-		}
-		angle += base;
-	}
-
-	return (int)floor(angle + 0.5);
-}
+#define CLAMP(x) (((x) > 255) ? 255 : (((x) < 0) ? 0 : (x)))
 
 void	GenerateNTSC (int hue, int sat)
 {
@@ -1314,11 +1269,6 @@ void	GenerateNTSC (int hue, int sat)
 			for (z = 0; z < 16; z++)
 			{
 				double wave[12];
-				double Y, I, Q;
-				double R, G, B;
-
-				double H = 0, S = 0;
-
 				for (i = 0; i < 12; i++)
 				{
 					if (z == 0)
@@ -1330,33 +1280,28 @@ void	GenerateNTSC (int hue, int sat)
 					else	wave[i] = black;
 					if ((emphasis[_x][i]) && (z < 14))
 						wave[i] = wave[i] * 0.75;
+					wave[i] = (wave[i] - black) / (white - black);
 				}
 
-				Y = 0.0; S = 0;
+				double Y = 0, I = 0, Q = 0;
+				double phase = (90.0 + hue) / 30.0;
+				double S = 1.865 * (sat / 50.0);
 				for (i = 0; i < 12; i++)
-					Y += wave[i] / 12.0;
-				for (i = 0; i < 12; i++)
-					S += (wave[i] - Y) * (wave[i] - Y);
-				Y = (Y - black) / (white - black);
-				S = S / (white - black);
-				S = sqrt(S / 12.0) * sat / 50.0;
+				{
+					double L = wave[i] / 12.0;
+					Y += L;
+					I += L * cos(M_PI * (phase + i) / 6.0) * S;
+					Q += L * sin(M_PI * (phase + i) / 6.0) * S;
+				}
 
-				H = M_PI * (270 + getPhase(wave) + hue) / 180.0;
-
-				I = S * sin(H);
-				Q = S * cos(H);
-
+				double R, G, B;
 				R = Y + 0.956 * I + 0.621 * Q;
 				G = Y - 0.272 * I - 0.647 * Q;
 				B = Y - 1.107 * I + 1.705 * Q;
 
-				R *= 256;
-				G *= 256;
-				B *= 256;
-
-				RawPalette[x][(y << 4) | z][0] = (unsigned char)CLIP(R, 0, 255);
-				RawPalette[x][(y << 4) | z][1] = (unsigned char)CLIP(G, 0, 255);
-				RawPalette[x][(y << 4) | z][2] = (unsigned char)CLIP(B, 0, 255);
+				RawPalette[x][(y << 4) | z][0] = (unsigned char)CLAMP(R * 256);
+				RawPalette[x][(y << 4) | z][1] = (unsigned char)CLAMP(G * 256);
+				RawPalette[x][(y << 4) | z][2] = (unsigned char)CLAMP(B * 256);
 			}
 		}
 	}
@@ -1465,9 +1410,9 @@ BOOL	ImportPalette (const TCHAR *filename, BOOL load)
 			fread(&RawPalette[0][i][2], 1, 1, pal);
 			for (j = 1; j < 8; j++)
 			{
-				RawPalette[j][i][0] = (unsigned char)CLIP(RawPalette[0][i][0] * Emphasis[j][0], 0, 255);
-				RawPalette[j][i][1] = (unsigned char)CLIP(RawPalette[0][i][1] * Emphasis[j][1], 0, 255);
-				RawPalette[j][i][2] = (unsigned char)CLIP(RawPalette[0][i][2] * Emphasis[j][2], 0, 255);
+				RawPalette[j][i][0] = (unsigned char)CLAMP(RawPalette[0][i][0] * Emphasis[j][0]);
+				RawPalette[j][i][1] = (unsigned char)CLAMP(RawPalette[0][i][1] * Emphasis[j][1]);
+				RawPalette[j][i][2] = (unsigned char)CLAMP(RawPalette[0][i][2] * Emphasis[j][2]);
 			}
 		}
 	}
