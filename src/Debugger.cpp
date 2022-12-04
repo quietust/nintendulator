@@ -1728,7 +1728,7 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			}
 			if (bp == NULL)
 			{
-				Breakpoints.emplace_back();
+				Breakpoints.push_back(tBreakpoint());
 				bp = &Breakpoints[Breakpoints.size() - 1];
 			}
 			bp->type = (unsigned char)type;
