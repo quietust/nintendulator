@@ -166,13 +166,13 @@ const char TraceArr[256][5] =
 
 const unsigned char TraceIO[256] =
 {
-	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_WR, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_WR, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
 	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW,
-	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_WR, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_RD, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
 	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW,
-	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_NA, BP_RD, BP_RW, BP_RW,
+	BP_RD, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_WR, BP_RD, BP_NA, BP_RD, BP_NA, BP_RD, BP_RW, BP_RW,
 	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW,
-	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
+	BP_RD, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_RD, BP_RD, BP_NA, BP_RD, BP_RD, BP_RD, BP_RW, BP_RW,
 	BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW, BP_NA, BP_RD, BP_NA, BP_RW, BP_RD, BP_RD, BP_RW, BP_RW,
 	BP_RD, BP_WR, BP_RD, BP_WR, BP_WR, BP_WR, BP_WR, BP_WR, BP_NA, BP_RD, BP_NA, BP_RD, BP_WR, BP_WR, BP_WR, BP_WR,
 	BP_NA, BP_WR, BP_NA, BP_RD, BP_WR, BP_WR, BP_WR, BP_WR, BP_NA, BP_WR, BP_NA, BP_RD, BP_RD, BP_WR, BP_RD, BP_RD,
@@ -500,6 +500,35 @@ BOOL	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2, BOOL check
 	case REL:
 		OpData[1] = DebugMemCPU(Addr+1);
 		Operand = Addr+2+(signed char)OpData[1];
+		break;
+	}
+	// Special cases for Stack-modifying opcodes
+	switch (OpData[0])
+	{
+	case 0x00: // BRK - push 3
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP - 2), FALSE))
+			is_break = TRUE;
+	case 0x20: // JSR - push 2
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP - 1), FALSE))
+			is_break = TRUE;
+	case 0x08: // PHP - push 1
+	case 0x48: // PHA - push 1
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | CPU::SP, FALSE))
+			is_break = TRUE;
+		break;
+
+	case 0x40: // RTI - pop 3
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP + 3), FALSE))
+			is_break = TRUE;
+
+	case 0x60: // RTS - pop 2
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP + 2), FALSE))
+			is_break = TRUE;
+
+	case 0x28: // PLP - pop 1
+	case 0x68: // PLA - pop 1
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP + 1), FALSE))
+			is_break = TRUE;
 		break;
 	}
 	// Use this for outputting to debug logfile
