@@ -44,6 +44,22 @@ unsigned char PRG_RAM[MAX_PRGRAM_SIZE][0x1000];
 unsigned char CHR_ROM[MAX_CHRROM_SIZE][0x400];
 unsigned char CHR_RAM[MAX_CHRRAM_SIZE][0x400];
 
+bool	IsWine (void)
+{
+	static int is_wine = -1;
+	if (is_wine == -1)
+	{
+		HMODULE hntdll = GetModuleHandle(_T("ntdll.dll"));
+		if (!hntdll)
+		{
+			is_wine = 0;
+			return false;
+		}
+		is_wine = (GetProcAddress(hntdll, "wine_get_version") != NULL) ? 1 : 0;
+	}
+	return (is_wine == 1);
+}
+
 void	Init (void)
 {
 	SetupDataPath();
@@ -1342,6 +1358,8 @@ void	UpdateInterface (void)
 	}
 
 	RECT client, window, desktop;
+	if (IsWine())	// Workaround for Wine bug #50410
+		ShowWindow(hWnd, SW_HIDE);
 	SetWindowPos(hWnd, hWnd, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 	GetClientRect(hWnd, &client);
 	SetWindowPos(hWnd, hWnd, 0, 0, 2 * w - client.right, 2 * h - client.bottom, SWP_NOMOVE | SWP_NOZORDER);
@@ -1384,6 +1402,8 @@ void	UpdateInterface (void)
 	// but this should take care of most of the complaints about the window getting lost
 	if (moved)
 		SetWindowPos(hWnd, hWnd, window.left, window.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	if (IsWine())	// Workaround for Wine bug #50410
+		ShowWindow(hWnd, SW_SHOW);
 }
 
 void	SaveSettings (void)
@@ -1510,7 +1530,11 @@ void	LoadSettings (void)
 
 	SetRegion(MyRegion);
 
+	if (IsWine())	// Workaround for Wine bug #50410
+		ShowWindow(hMainWnd, SW_HIDE);
 	SetWindowPos(hMainWnd, HWND_TOP, PosX, PosY, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	if (IsWine())	// Workaround for Wine bug #50410
+		ShowWindow(hMainWnd, SW_SHOW);
 
 	if (dbgVisible)
 	{
