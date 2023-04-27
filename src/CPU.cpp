@@ -104,6 +104,7 @@ void	MemSet (unsigned int Addr, unsigned char Val)
 {
 	RunCycle();
 	WriteHandler[(Addr >> 12) & 0xF]((Addr >> 12) & 0xF, Addr & 0xFFF, Val);
+	LastRead = Val;
 	APU::InternalClock++;
 }
 
