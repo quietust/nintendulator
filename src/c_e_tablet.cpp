@@ -145,8 +145,8 @@ void	ExpPort_Tablet::Write (unsigned char Val)
 }
 INT_PTR	CALLBACK	ExpPort_Tablet_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const int dlgLists[1] = {IDC_CONT_D0};
-	const int dlgButtons[1] = {IDC_CONT_K0};
+	static const int dlgLists[1] = {IDC_CONT_D0};
+	static const int dlgButtons[1] = {IDC_CONT_K0};
 	ExpPort *Cont;
 	if (uMsg == WM_INITDIALOG)
 	{

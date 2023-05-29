@@ -1201,7 +1201,7 @@ const TCHAR *	GetButtonLabel (int DevNum, int Button, BOOL AxesOnly = FALSE)
 		}
 		else if ((Button & 0xE0) == 0xC0)
 		{
-			const TCHAR *POVs[8] = {_T("(N)"), _T("(NE)"), _T("(E)"), _T("(SE)"), _T("(S)"), _T("(SW)"), _T("(W)"), _T("(NW)") };
+			static const TCHAR *POVs[8] = {_T("(N)"), _T("(NE)"), _T("(E)"), _T("(SE)"), _T("(S)"), _T("(SW)"), _T("(W)"), _T("(NW)") };
 			Button &= 0x1F;
 			if (dev.POVNames[Button >> 3])
 				_stprintf(str, _T("%s %s"), dev.POVNames[Button >> 3], POVs[Button & 0x7]);
@@ -1209,7 +1209,7 @@ const TCHAR *	GetButtonLabel (int DevNum, int Button, BOOL AxesOnly = FALSE)
 		}
 		else if ((Button & 0xE0) == 0xE0)
 		{
-			const TCHAR *POVs[4] = {_T("Y (-)"), _T("X (+)"), _T("Y (+)"), _T("X (-)") };
+			static const TCHAR *POVs[4] = {_T("Y (-)"), _T("X (+)"), _T("Y (+)"), _T("X (-)") };
 			Button &= 0xF;
 			if (dev.POVNames[Button >> 2])
 				_stprintf(str, _T("%s %s"), dev.POVNames[Button >> 2], POVs[Button & 0x3]);

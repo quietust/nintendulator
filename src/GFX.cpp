@@ -198,7 +198,7 @@ void	Start (void)
 		double ratio = (double)GetSystemMetrics(SM_CXSCREEN) / (double)GetSystemMetrics(SM_CYSCREEN);
 		// Not all of the widescreen resolutions will work
 		// The code below will try each resolution until it finds one that works
-		const int widths[] = {
+		static const int widths[] = {
 			640,		// 4:3 - last offset 0
 			720, 768,	// 16:10 - last offset 2
 			848, 856, 864	// 16:9 - last offset 5
@@ -1230,12 +1230,12 @@ void	GenerateNTSC (int hue, int sat)
 {
 	const double black = 0.518;
 	const double white = 1.960;
-	const double voltage[2][4] = {
+	static const double voltage[2][4] = {
 		{1.090,1.500,1.960,1.960},
 		{0.350,0.518,0.962,1.550}
 	};
 
-	const char phases[12][12] = {
+	static const char phases[12][12] = {
 		{0,0,0,1,1,1,1,1,1,0,0,0},
 		{0,0,1,1,1,1,1,1,0,0,0,0},	// blue
 		{0,1,1,1,1,1,1,0,0,0,0,0},
@@ -1249,7 +1249,7 @@ void	GenerateNTSC (int hue, int sat)
 		{0,0,0,0,0,1,1,1,1,1,1,0},
 		{0,0,0,0,1,1,1,1,1,1,0,0},	// cyan
 	};
-	const char emphasis[8][12] = {
+	static const char emphasis[8][12] = {
 		{0,0,0,0,0,0,0,0,0,0,0,0},	// none
 		{0,0,0,0,1,1,1,1,1,1,0,0},	// red
 		{1,1,1,1,1,1,0,0,0,0,0,0},	// green
@@ -1518,8 +1518,8 @@ BOOL inUpdate = FALSE;
 PALETTE pal;
 INT_PTR	CALLBACK	PaletteConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const int paltable[PALETTE_MAX] = {IDC_PAL_NTSC,IDC_PAL_PAL,IDC_PAL_PC10,IDC_PAL_VS1,IDC_PAL_VS2,IDC_PAL_VS3,IDC_PAL_VS4,IDC_PAL_EXT,IDC_PAL_PC10_ALT};
-	const int PalEntries[64] = {
+	static const int paltable[PALETTE_MAX] = {IDC_PAL_NTSC,IDC_PAL_PAL,IDC_PAL_PC10,IDC_PAL_VS1,IDC_PAL_VS2,IDC_PAL_VS3,IDC_PAL_VS4,IDC_PAL_EXT,IDC_PAL_PC10_ALT};
+	static const int PalEntries[64] = {
 		IDC_PAL_00,IDC_PAL_01,IDC_PAL_02,IDC_PAL_03,IDC_PAL_04,IDC_PAL_05,IDC_PAL_06,IDC_PAL_07,IDC_PAL_08,IDC_PAL_09,IDC_PAL_0A,IDC_PAL_0B,IDC_PAL_0C,IDC_PAL_0D,IDC_PAL_0E,IDC_PAL_0F,
 		IDC_PAL_10,IDC_PAL_11,IDC_PAL_12,IDC_PAL_13,IDC_PAL_14,IDC_PAL_15,IDC_PAL_16,IDC_PAL_17,IDC_PAL_18,IDC_PAL_19,IDC_PAL_1A,IDC_PAL_1B,IDC_PAL_1C,IDC_PAL_1D,IDC_PAL_1E,IDC_PAL_1F,
 		IDC_PAL_20,IDC_PAL_21,IDC_PAL_22,IDC_PAL_23,IDC_PAL_24,IDC_PAL_25,IDC_PAL_26,IDC_PAL_27,IDC_PAL_28,IDC_PAL_29,IDC_PAL_2A,IDC_PAL_2B,IDC_PAL_2C,IDC_PAL_2D,IDC_PAL_2E,IDC_PAL_2F,

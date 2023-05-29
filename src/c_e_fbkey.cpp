@@ -64,7 +64,7 @@ void	ExpPort_FamilyBasicKeyboard::Frame (unsigned char mode)
 	}
 	else
 	{
-		const int keymap[9][8] = {
+		static const int keymap[9][8] = {
 			{DIK_F8, DIK_RETURN, DIK_LBRACKET, DIK_RBRACKET, DIK_CAPITAL /* KANA */, DIK_RSHIFT, DIK_BACKSLASH, DIK_END /* STOP */},
 			{DIK_F7, DIK_GRAVE /* @ */, DIK_APOSTROPHE /* : */, DIK_SEMICOLON, DIK_HOME /* _ */, DIK_SLASH, DIK_MINUS, DIK_EQUALS /* ^ */},
 			{DIK_F6, DIK_O, DIK_L, DIK_K, DIK_PERIOD, DIK_COMMA, DIK_P, DIK_0},

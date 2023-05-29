@@ -686,7 +686,7 @@ const TCHAR *	OpenFileiNES (FILE *in)
 		// Vs System - use palette based on header byte 13
 		if (RI.INES_Version == 2)
 		{
-			const GFX::PALETTE pals[16] = {
+			static const GFX::PALETTE pals[16] = {
 				GFX::PALETTE_PC10, // RP2C03B
 				GFX::PALETTE_PC10, // RP2C03G - no dump available, assuming identical to RP2C03B
 				GFX::PALETTE_VS1, // RP2C04-0001
@@ -891,10 +891,10 @@ const TCHAR *	OpenFileUNIF (FILE *in)
 	EI.DbgOut(_T("PRG: %iKB; CHR: %iKB"), PRGsize >> 10, CHRsize >> 10);
 	EI.DbgOut(_T("Battery status: %s"), RI.UNIF_Battery ? _T("present") : _T("not present"));
 
-	const TCHAR *mir[6] = {_T("Horizontal"), _T("Vertical"), _T("Single-screen L"), _T("Single-screen H"), _T("Four-screen"), _T("Dynamic")};
+	static const TCHAR *mir[6] = {_T("Horizontal"), _T("Vertical"), _T("Single-screen L"), _T("Single-screen H"), _T("Four-screen"), _T("Dynamic")};
 	EI.DbgOut(_T("Mirroring mode: %i (%s)"), RI.UNIF_Mirroring, mir[RI.UNIF_Mirroring]);
 
-	const TCHAR *ntscpal[3] = {_T("NTSC"), _T("PAL"), _T("Dual")};
+	static const TCHAR *ntscpal[3] = {_T("NTSC"), _T("PAL"), _T("Dual")};
 	EI.DbgOut(_T("Television standard: %s"), ntscpal[RI.UNIF_NTSCPAL]);
 	return NULL;
 }

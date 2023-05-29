@@ -25,7 +25,7 @@ void	UpdateNum (HWND hDlg, int Control, int num)
 
 void	UpdateDialog (HWND hDlg)
 {
-	const int extended[] = { IDC_INES_SUBMAP, IDC_INES_PRAM, IDC_INES_PSAV, IDC_INES_CRAM, IDC_INES_CSAV, IDC_INES_NTSC, IDC_INES_PAL, IDC_INES_DUAL, IDC_INES_VSPPU, IDC_INES_VSFLAG, 0 };
+	static const int extended[] = { IDC_INES_SUBMAP, IDC_INES_PRAM, IDC_INES_PSAV, IDC_INES_CRAM, IDC_INES_CSAV, IDC_INES_NTSC, IDC_INES_PAL, IDC_INES_DUAL, IDC_INES_VSPPU, IDC_INES_VSFLAG, 0 };
 	int i;
 	Mask = TRUE;
 
@@ -250,9 +250,9 @@ bool	OpenROM (void)
 
 INT_PTR CALLBACK	dlgProc (HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	const TCHAR *RAMsizes[16] = {_T("None"), _T("128"), _T("256"), _T("512"), _T("1K"), _T("2K"), _T("4K"), _T("8K"), _T("16K"), _T("32K"), _T("64K"), _T("128K"), _T("256K"), _T("512K"), _T("1MB"), _T("N/A") };
-	const TCHAR *VSPPUs[16] = {_T("RP2C03B"), _T("RP2C03G"), _T("RP2C04-0001"), _T("RP2C04-0002"), _T("RP2C04-0003"), _T("RP2C04-0004"), _T("RC2C03B"), _T("RC2C03C"), _T("RC2C05-01"), _T("RC2C05-02"), _T("RC2C05-03"), _T("RC2C05-04"), _T("RC2C05-05"), _T("N/A"), _T("N/A"), _T("N/A") };
-	const TCHAR *VSFlags[16] = {_T("Normal"), _T("RBI Baseball"), _T("TKO Boxing"), _T("Super Xevious"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A") };
+	static const TCHAR *RAMsizes[16] = {_T("None"), _T("128"), _T("256"), _T("512"), _T("1K"), _T("2K"), _T("4K"), _T("8K"), _T("16K"), _T("32K"), _T("64K"), _T("128K"), _T("256K"), _T("512K"), _T("1MB"), _T("N/A") };
+	static const TCHAR *VSPPUs[16] = {_T("RP2C03B"), _T("RP2C03G"), _T("RP2C04-0001"), _T("RP2C04-0002"), _T("RP2C04-0003"), _T("RP2C04-0004"), _T("RC2C03B"), _T("RC2C03C"), _T("RC2C05-01"), _T("RC2C05-02"), _T("RC2C05-03"), _T("RC2C05-04"), _T("RC2C05-05"), _T("N/A"), _T("N/A"), _T("N/A") };
+	static const TCHAR *VSFlags[16] = {_T("Normal"), _T("RBI Baseball"), _T("TKO Boxing"), _T("Super Xevious"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A"), _T("N/A") };
 
 	int i, n;
 	switch (message)

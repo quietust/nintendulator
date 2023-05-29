@@ -642,7 +642,7 @@ bool	UpdateCPU (void)
 
 	for (i = 0; i < 16; i++)
 	{
-		const int CPUPages[16] = {
+		static const int CPUPages[16] = {
 			IDC_DEBUG_BANK_CPU0, IDC_DEBUG_BANK_CPU1, IDC_DEBUG_BANK_CPU2, IDC_DEBUG_BANK_CPU3, 
 			IDC_DEBUG_BANK_CPU4, IDC_DEBUG_BANK_CPU5, IDC_DEBUG_BANK_CPU6, IDC_DEBUG_BANK_CPU7, 
 			IDC_DEBUG_BANK_CPU8, IDC_DEBUG_BANK_CPU9, IDC_DEBUG_BANK_CPUA, IDC_DEBUG_BANK_CPUB, 
@@ -658,7 +658,7 @@ bool	UpdateCPU (void)
 	}
 	for (i = 0; i < 16; i++)
 	{
-		const int PPUPages[16] = {
+		static const int PPUPages[16] = {
 			IDC_DEBUG_BANK_PPU00, IDC_DEBUG_BANK_PPU04, IDC_DEBUG_BANK_PPU08, IDC_DEBUG_BANK_PPU0C, 
 			IDC_DEBUG_BANK_PPU10, IDC_DEBUG_BANK_PPU14, IDC_DEBUG_BANK_PPU18, IDC_DEBUG_BANK_PPU1C, 
 			IDC_DEBUG_BANK_PPU20, IDC_DEBUG_BANK_PPU24, IDC_DEBUG_BANK_PPU28, IDC_DEBUG_BANK_PPU2C,
@@ -1782,8 +1782,8 @@ INT_PTR CALLBACK BreakpointProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 INT_PTR CALLBACK CPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
-	/* const */ int mem_tabs[16] = {24, 34, 44, 54, 66, 76, 86, 96, 108, 118, 128, 138, 150, 160, 170, 180};
-	/* const */ int trace_tabs[3] = {25, 60, 80};	// Win9x requires these to be in writable memory
+	static /* const */ int mem_tabs[16] = {24, 34, 44, 54, 66, 76, 86, 96, 108, 118, 128, 138, 150, 160, 170, 180};
+	static /* const */ int trace_tabs[3] = {25, 60, 80};	// Win9x requires these to be in writable memory
 	TCHAR tpc[8];
 	SCROLLINFO sinfo;
 	struct tBreakpoint *bp;
@@ -2372,7 +2372,7 @@ INT_PTR CALLBACK PPUProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
 	LPDRAWITEMSTRUCT lpDrawItem;
-	const int dbgRadio[4] = { IDC_DEBUG_PPU_NT0, IDC_DEBUG_PPU_NT1, IDC_DEBUG_PPU_NT2, IDC_DEBUG_PPU_NT3 };
+	static const int dbgRadio[4] = { IDC_DEBUG_PPU_NT0, IDC_DEBUG_PPU_NT1, IDC_DEBUG_PPU_NT2, IDC_DEBUG_PPU_NT3 };
 	HWND dlgItem;
 
 	switch (uMsg)

@@ -123,8 +123,8 @@ void	ExpPort_ArkanoidPaddle::Write (unsigned char Val)
 }
 INT_PTR	CALLBACK	ExpPort_ArkanoidPaddle_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const int dlgLists[2] = {IDC_CONT_D0,IDC_CONT_D1};
-	const int dlgButtons[2] = {IDC_CONT_K0,IDC_CONT_K1};
+	static const int dlgLists[2] = {IDC_CONT_D0,IDC_CONT_D1};
+	static const int dlgButtons[2] = {IDC_CONT_K0,IDC_CONT_K1};
 	ExpPort *Cont;
 	if (uMsg == WM_INITDIALOG)
 	{

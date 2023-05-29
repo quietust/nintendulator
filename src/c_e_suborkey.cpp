@@ -64,7 +64,7 @@ void	ExpPort_SuborKeyboard::Frame (unsigned char mode)
 	}
 	else
 	{
-		const int keymap[13][8] = {
+		static const int keymap[13][8] = {
 			{DIK_4, DIK_G, DIK_F, DIK_C, DIK_F2, DIK_E, DIK_5, DIK_V},
 			{DIK_2, DIK_D, DIK_S, DIK_END, DIK_F1, DIK_W, DIK_3, DIK_X},
 			{DIK_INSERT, DIK_BACKSPACE, DIK_PGDN, DIK_RIGHT, DIK_F8, DIK_PGUP, DIK_DELETE, DIK_HOME},

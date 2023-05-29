@@ -1236,12 +1236,12 @@ int	__fastcall	Read7 (void)
 typedef int (__fastcall *PPU_IntRead)(void);
 int	MAPINT	IntRead (int Bank, int Addr)
 {
-	const PPU_IntRead funcs[8] = {Read01356,Read01356,Read2,Read01356,Read4,Read01356,Read01356,Read7};
+	static const PPU_IntRead funcs[8] = {Read01356,Read01356,Read2,Read01356,Read4,Read01356,Read01356,Read7};
 	return funcs[Addr & 7]();
 }
 int	MAPINT	IntReadVs (int Bank, int Addr)
 {
-	const PPU_IntRead funcs[8] = {Read01356,Read01356,Read2Vs,Read01356,Read4,Read01356,Read01356,Read7};
+	static const PPU_IntRead funcs[8] = {Read01356,Read01356,Read2Vs,Read01356,Read4,Read01356,Read01356,Read7};
 	return funcs[Addr & 7]();
 }
 
@@ -1356,13 +1356,13 @@ void	__fastcall	Write7 (int Val)
 typedef void (__fastcall *PPU_IntWrite)(int Val);
 void	MAPINT	IntWrite (int Bank, int Addr, int Val)
 {
-	const PPU_IntWrite funcs[8] = {Write0,Write1,Write2,Write3,Write4,Write5,Write6,Write7};
+	static const PPU_IntWrite funcs[8] = {Write0,Write1,Write2,Write3,Write4,Write5,Write6,Write7};
 	readLatch = (unsigned char)Val;
 	funcs[Addr & 7](Val);
 }
 void	MAPINT	IntWriteVs (int Bank, int Addr, int Val)
 {
-	const PPU_IntWrite funcs[8] = {Write1,Write0,Write2,Write3,Write4,Write5,Write6,Write7};
+	static const PPU_IntWrite funcs[8] = {Write1,Write0,Write2,Write3,Write4,Write5,Write6,Write7};
 	readLatch = (unsigned char)Val;
 	funcs[Addr & 7](Val);
 }

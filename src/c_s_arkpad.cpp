@@ -121,8 +121,8 @@ void	StdPort_ArkanoidPaddle::Write (unsigned char Val)
 }
 INT_PTR	CALLBACK	StdPort_ArkanoidPaddle_ConfigProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	const int dlgLists[2] = {IDC_CONT_D0,IDC_CONT_D1};
-	const int dlgButtons[2] = {IDC_CONT_K0,IDC_CONT_K1};
+	static const int dlgLists[2] = {IDC_CONT_D0,IDC_CONT_D1};
+	static const int dlgButtons[2] = {IDC_CONT_K0,IDC_CONT_K1};
 	StdPort *Cont;
 	if (uMsg == WM_INITDIALOG)
 	{
