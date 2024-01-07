@@ -1228,11 +1228,13 @@ const int EmphasisOrder[NES::REGION_MAX][8] =
 
 void	GenerateNTSC (int hue, int sat)
 {
-	const double black = 0.518;
-	const double white = 1.960;
-	static const double voltage[2][4] = {
-		{1.090,1.500,1.960,1.960},
-		{0.350,0.518,0.962,1.550}
+	const double black = 0.312;
+	const double white = 1.100;
+	static const double voltage[4][4] = {
+		{0.616,0.840,1.100,1.100}, // #0
+		{0.228,0.312,0.552,0.880}, // #D
+		{0.500,0.676,0.896,0.896}, // #0 Emph
+		{0.192,0.256,0.448,0.712}  // #D Emph
 	};
 
 	static const char phases[12][12] = {
@@ -1271,15 +1273,14 @@ void	GenerateNTSC (int hue, int sat)
 				double wave[12];
 				for (i = 0; i < 12; i++)
 				{
+					bool emph = ((emphasis[_x][i]) && (z < 14));
 					if (z == 0)
-						wave[i] = voltage[0][y];
+						wave[i] = voltage[emph ? 2 : 0][y];
 					else if (z < 13)
-						wave[i] = phases[z-1][i] ? voltage[0][y] : voltage[1][y];
+						wave[i] = phases[z-1][i] ? voltage[emph ? 2 : 0][y] : voltage[emph ? 3 : 1][y];
 					else if (z == 13)
-						wave[i] = voltage[1][y];
+						wave[i] = voltage[emph ? 3 : 1][y];
 					else	wave[i] = black;
-					if ((emphasis[_x][i]) && (z < 14))
-						wave[i] = wave[i] * 0.75;
 					wave[i] = (wave[i] - black) / (white - black);
 				}
 
@@ -1295,9 +1296,9 @@ void	GenerateNTSC (int hue, int sat)
 				}
 
 				double R, G, B;
-				R = Y + 0.956 * I + 0.621 * Q;
-				G = Y - 0.272 * I - 0.647 * Q;
-				B = Y - 1.107 * I + 1.705 * Q;
+				R = Y + 0.947 * I + 0.624 * Q;
+				G = Y - 0.275 * I - 0.636 * Q;
+				B = Y - 1.109 * I + 1.709 * Q;
 
 				RawPalette[x][(y << 4) | z][0] = (unsigned char)CLAMP(R * 256);
 				RawPalette[x][(y << 4) | z][1] = (unsigned char)CLAMP(G * 256);
