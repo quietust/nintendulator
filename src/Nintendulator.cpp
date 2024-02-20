@@ -715,6 +715,11 @@ BOOL	ProcessMessages (void)
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+		// If a Stop was requested and it's actually stopped, then break out
+		// Otherwise, it sometimes gets in an infinite loop of WM_PAINT processing,
+		// especially when holding Shift+F2 to repeatedly single-step in the debugger
+		if ((NES::DoStop & STOPMODE_NOW) && !NES::Running)
+			break;
 	}
 	return gotMessage;
 }

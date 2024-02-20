@@ -17,6 +17,7 @@
 #include "Genie.h"
 #include "States.h"
 #include <vector>
+#include <algorithm>
 
 #ifdef	ENABLE_DEBUGGER
 
