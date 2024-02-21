@@ -244,13 +244,17 @@ void	MAPINT	SetCHR_ROM1 (int Bank, int Val)
 #ifndef	NSFPLAYER
 	if (!NES::CHRSizeROM)
 		return;
-	PPU::CHRPointer[Bank] = NES::CHR_ROM[Val & NES::CHRMaskROM];
 	PPU::Writable[Bank] = FALSE;
+	if (PPU::CHRPointer[Bank] != NES::CHR_ROM[Val & NES::CHRMaskROM])
+	{
+		// Avoid refreshing the Debugger when not necessary
+		PPU::CHRPointer[Bank] = NES::CHR_ROM[Val & NES::CHRMaskROM];
 #ifdef	ENABLE_DEBUGGER
-	if (Bank & 8)
-		Debugger::NTabChanged = TRUE;
-	else	Debugger::PatChanged = TRUE;
+		if (Bank & 8)
+			Debugger::NTabChanged = TRUE;
+		else	Debugger::PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
+	}
 #endif	/* !NSFPLAYER */
 }
 void	MAPINT	SetCHR_ROM2 (int Bank, int Val)
@@ -298,13 +302,16 @@ void	MAPINT	SetCHR_RAM1 (int Bank, int Val)
 #ifndef	NSFPLAYER
 	if (!NES::CHRSizeRAM)
 		return;
-	PPU::CHRPointer[Bank] = NES::CHR_RAM[Val & NES::CHRMaskRAM];
 	PPU::Writable[Bank] = TRUE;
+	if (PPU::CHRPointer[Bank] != NES::CHR_RAM[Val & NES::CHRMaskRAM])
+	{
+		PPU::CHRPointer[Bank] = NES::CHR_RAM[Val & NES::CHRMaskRAM];
 #ifdef	ENABLE_DEBUGGER
-	if (Bank & 8)
-		Debugger::NTabChanged = TRUE;
-	else	Debugger::PatChanged = TRUE;
+		if (Bank & 8)
+			Debugger::NTabChanged = TRUE;
+		else	Debugger::PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
+	}
 #endif	/* !NSFPLAYER */
 }
 void	MAPINT	SetCHR_RAM2 (int Bank, int Val)
@@ -350,13 +357,16 @@ int	MAPINT	GetCHR_RAM1 (int Bank)	// -1 if no ROM mapped
 void	MAPINT	SetCHR_NT1 (int Bank, int Val)
 {
 #ifndef	NSFPLAYER
-	PPU::CHRPointer[Bank] = PPU::VRAM[Val & 3];
 	PPU::Writable[Bank] = TRUE;
+	if (PPU::CHRPointer[Bank] != PPU::VRAM[Val & 3])
+	{
+		PPU::CHRPointer[Bank] = PPU::VRAM[Val & 3];
 #ifdef	ENABLE_DEBUGGER
-	if (Bank & 8)
-		Debugger::NTabChanged = TRUE;
-	else	Debugger::PatChanged = TRUE;
+		if (Bank & 8)
+			Debugger::NTabChanged = TRUE;
+		else	Debugger::PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
+	}
 #endif	/* !NSFPLAYER */
 }
 int	MAPINT	GetCHR_NT1 (int Bank)	// -1 if no ROM mapped
@@ -384,26 +394,32 @@ unsigned char *	MAPINT	GetCHR_Ptr1 (int Bank)
 void	MAPINT	SetCHR_Ptr1 (int Bank, unsigned char *Data, BOOL Writable)
 {
 #ifndef	NSFPLAYER
-	PPU::CHRPointer[Bank] = Data;
 	PPU::Writable[Bank] = Writable;
+	if (PPU::CHRPointer[Bank] != Data)
+	{
+		PPU::CHRPointer[Bank] = Data;
 #ifdef	ENABLE_DEBUGGER
-	if (Bank & 8)
-		Debugger::NTabChanged = TRUE;
-	else	Debugger::PatChanged = TRUE;
+		if (Bank & 8)
+			Debugger::NTabChanged = TRUE;
+		else	Debugger::PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
+	}
 #endif	/* !NSFPLAYER */
 }
 
 void	MAPINT	SetCHR_OB1 (int Bank)
 {
 #ifndef	NSFPLAYER
-	PPU::CHRPointer[Bank] = PPU::OpenBus;
 	PPU::Writable[Bank] = FALSE;
+	if (PPU::CHRPointer[Bank] != PPU::OpenBus)
+	{
+		PPU::CHRPointer[Bank] = PPU::OpenBus;
 #ifdef	ENABLE_DEBUGGER
-	if (Bank & 8)
-		Debugger::NTabChanged = TRUE;
-	else	Debugger::PatChanged = TRUE;
+		if (Bank & 8)
+			Debugger::NTabChanged = TRUE;
+		else	Debugger::PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
+	}
 #endif	/* !NSFPLAYER */
 }
 

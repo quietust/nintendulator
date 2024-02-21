@@ -178,7 +178,8 @@ void	MAPINT	BusWriteCHR (int Bank, int Addr, int Val)
 	if (!Writable[Bank])
 		return;
 #ifdef	ENABLE_DEBUGGER
-	Debugger::PatChanged = TRUE;
+	if (CHRPointer[Bank][Addr] != (unsigned char)Val)
+		Debugger::PatChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 	CHRPointer[Bank][Addr] = (unsigned char)Val;
 }
@@ -188,7 +189,8 @@ void	MAPINT	BusWriteNT (int Bank, int Addr, int Val)
 	if (!Writable[Bank])
 		return;
 #ifdef	ENABLE_DEBUGGER
-	Debugger::NTabChanged = TRUE;
+	if (CHRPointer[Bank][Addr] != (unsigned char)Val)
+		Debugger::NTabChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 	CHRPointer[Bank][Addr] = (unsigned char)Val;
 }
@@ -1291,12 +1293,13 @@ void	__fastcall	Write4 (int Val)
 		SprAddr = (SprAddr + 4) & 0xFF;
 	else
 	{
+#ifdef	ENABLE_DEBUGGER
+		if (Sprite[SprAddr] != (unsigned char)Val)
+			Debugger::SprChanged = TRUE;
+#endif	/* ENABLE_DEBUGGER */
 		Sprite[SprAddr] = (unsigned char)Val;
 		SprAddr = (SprAddr + 1) & 0xFF;
 	}
-#ifdef	ENABLE_DEBUGGER
-	Debugger::SprChanged = TRUE;
-#endif	/* ENABLE_DEBUGGER */
 }
 
 void	__fastcall	Write5 (int Val)
@@ -1339,7 +1342,8 @@ void	__fastcall	Write7 (int Val)
 		register unsigned char Addr = (unsigned char)VRAMAddr & 0x1F;
 		Val = Val & 0x3F;
 #ifdef	ENABLE_DEBUGGER
-		Debugger::PalChanged = TRUE;
+		if (Palette[Addr] != (unsigned char)Val)
+			Debugger::PalChanged = TRUE;
 #endif	/* ENABLE_DEBUGGER */
 		Palette[Addr] = (unsigned char)Val;
 		if (!(Addr & 0x3))
