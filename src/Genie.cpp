@@ -300,7 +300,7 @@ void	Reset (void)
 		PPU::Writable[i] = FALSE;
 		PPU::CHRPointer[i] = CHR;
 	}
-	EI.Mirror_V();
+	EI.Mirror_A10();
 	MI2 = MI;
 	MI = NULL;
 	PPU::GetHandlers();

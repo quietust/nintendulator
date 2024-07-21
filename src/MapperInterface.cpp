@@ -425,7 +425,7 @@ void	MAPINT	SetCHR_OB1 (int Bank)
 
 /******************************************************************************/
 
-void	MAPINT	Mirror_H (void)
+void	MAPINT	Mirror_A11 (void)
 {
 #ifndef	NSFPLAYER
 	SetCHR_NT1(0x8, 0);	SetCHR_NT1(0xC, 0);
@@ -434,7 +434,7 @@ void	MAPINT	Mirror_H (void)
 	SetCHR_NT1(0xB, 1);	SetCHR_NT1(0xF, 1);
 #endif	/* !NSFPLAYER */
 }
-void	MAPINT	Mirror_V (void)
+void	MAPINT	Mirror_A10 (void)
 {
 #ifndef	NSFPLAYER
 	SetCHR_NT1(0x8, 0);	SetCHR_NT1(0xC, 0);
@@ -443,7 +443,7 @@ void	MAPINT	Mirror_V (void)
 	SetCHR_NT1(0xB, 1);	SetCHR_NT1(0xF, 1);
 #endif	/* !NSFPLAYER */
 }
-void	MAPINT	Mirror_4 (void)
+void	MAPINT	Mirror_4S (void)
 {
 #ifndef	NSFPLAYER
 	SetCHR_NT1(0x8, 0);	SetCHR_NT1(0xC, 0);
@@ -649,9 +649,9 @@ void	Init (void)
 	EI.GetCHR_Ptr1 = GetCHR_Ptr1;
 	EI.SetCHR_Ptr1 = SetCHR_Ptr1;
 	EI.SetCHR_OB1 = SetCHR_OB1;
-	EI.Mirror_H = Mirror_H;
-	EI.Mirror_V = Mirror_V;
-	EI.Mirror_4 = Mirror_4;
+	EI.Mirror_A11 = Mirror_A11;
+	EI.Mirror_A10 = Mirror_A10;
+	EI.Mirror_4S = Mirror_4S;
 	EI.Mirror_S0 = Mirror_S0;
 	EI.Mirror_S1 = Mirror_S1;
 	EI.Mirror_Custom = Mirror_Custom;
