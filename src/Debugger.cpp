@@ -507,10 +507,10 @@ BOOL	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2, BOOL check
 	switch (OpData[0])
 	{
 	case 0x00: // BRK - push 3
-		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP - 2), FALSE))
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | ((CPU::SP - 2) & 0xFF), FALSE))
 			is_break = TRUE;
 	case 0x20: // JSR - push 2
-		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP - 1), FALSE))
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | ((CPU::SP - 1) & 0xFF), FALSE))
 			is_break = TRUE;
 	case 0x08: // PHP - push 1
 	case 0x48: // PHA - push 1
@@ -519,16 +519,16 @@ BOOL	DecodeInstruction (unsigned short Addr, char *str1, TCHAR *str2, BOOL check
 		break;
 
 	case 0x40: // RTI - pop 3
-		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP + 3), FALSE))
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | ((CPU::SP + 3) & 0xFF), FALSE))
 			is_break = TRUE;
 
 	case 0x60: // RTS - pop 2
-		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP + 2), FALSE))
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | ((CPU::SP + 2) & 0xFF), FALSE))
 			is_break = TRUE;
 
 	case 0x28: // PLP - pop 1
 	case 0x68: // PLA - pop 1
-		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | (CPU::SP + 1), FALSE))
+		if (checkBreakpoints && IsBreakpoint(OpData[0], 0x100 | ((CPU::SP + 1) & 0xFF), FALSE))
 			is_break = TRUE;
 		break;
 	}
