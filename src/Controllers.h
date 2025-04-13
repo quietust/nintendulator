@@ -10,6 +10,10 @@
 #define	CONTROLLERS_MAXBUTTONS	32
 #define	MAX_CONTROLLERS	32	// this includes keyboard and mouse
 
+#if _MSC_VER <= 1600
+#pragma warning (disable:4481)
+#endif
+
 namespace Controllers
 {
 enum	STDCONT_TYPE
@@ -51,13 +55,13 @@ class StdPort_##NAME : public StdPort \
 public: \
 			StdPort_##NAME (DWORD *); \
 			~StdPort_##NAME(void); \
-	unsigned char	Read	(void); \
-	void		Write	(unsigned char); \
-	void		Config	(HWND); \
-	void		Frame	(unsigned char); \
-	void		SetMasks(void); \
-	int		Save	(FILE *); \
-	int		Load	(FILE *, int ver); \
+	unsigned char	Read	(void) override; \
+	void		Write	(unsigned char) override; \
+	void		Config	(HWND) override; \
+	void		Frame	(unsigned char) override; \
+	void		SetMasks(void) override; \
+	int		Save	(FILE *) override; \
+	int		Load	(FILE *, int ver) override; \
 	StdPort_##NAME##_State	*State; \
 };
 DEF_STDCONT(Unconnected)
@@ -112,14 +116,14 @@ class ExpPort_##NAME : public ExpPort \
 public: \
 			ExpPort_##NAME (DWORD *); \
 			~ExpPort_##NAME(void); \
-	unsigned char	Read1	(void); \
-	unsigned char	Read2	(void); \
-	void		Write	(unsigned char); \
-	void		Config	(HWND); \
-	void		Frame	(unsigned char); \
-	void		SetMasks(void); \
-	int		Save	(FILE *); \
-	int		Load	(FILE *, int ver); \
+	unsigned char	Read1	(void) override; \
+	unsigned char	Read2	(void) override; \
+	void		Write	(unsigned char) override; \
+	void		Config	(HWND) override; \
+	void		Frame	(unsigned char) override; \
+	void		SetMasks(void) override; \
+	int		Save	(FILE *) override; \
+	int		Load	(FILE *, int ver) override; \
 	ExpPort_##NAME##_State	*State; \
 };
 DEF_EXPCONT(Unconnected)
