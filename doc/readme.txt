@@ -687,7 +687,6 @@ Contact
 -------
 
 Homepage - https://www.qmtpro.com/~nes/nintendulator
-           https://nintendulator.sourceforge.net/ (redirect)
 
 ----------
 Disclaimer
@@ -702,6 +701,10 @@ company mentioned, and does not encourage the piracy of NES games.
 Nintendulator may be distributed according to the terms of the
 GNU General Public License, version 2.
 It may NOT be distributed with copyrighted ROM images.
+
+The mapper interface definition is released into the public domain;
+mappper modules written for Nintendulator may be released under
+whichever license the author prefers.
 
 You use this software at your own risk. The author is not responsible
 for any loss or damage resulting from the use of this software. If you
