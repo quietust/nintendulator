@@ -329,7 +329,11 @@ LRESULT CALLBACK	WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ofn.lpTemplateName = NULL;
 
 			if (GetOpenFileName(&ofn))
+			{
+				_tcscpy(Path_ROM, FileName);
+				Path_ROM[ofn.nFileOffset-1] = 0;
 				HeaderEdit::Open(FileName);
+			}
 			break;
 		case ID_FILE_AUTORUN:
 			NES::AutoRun = !NES::AutoRun;
