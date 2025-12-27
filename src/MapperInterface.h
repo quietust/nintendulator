@@ -1,5 +1,8 @@
 /* Nintendulator Mapper Interface
  * Copyright (C) QMT Productions
+ *
+ * The mapper interface itself is released into the public domain.
+ * Individual mapper modules are permitted to use any license they want.
  */
 
 #pragma once
@@ -88,7 +91,7 @@ struct	EmulatorInterface
 	void		(MAPINT *Mirror_4S)		(void);
 	void		(MAPINT *Mirror_S0)		(void);
 	void		(MAPINT *Mirror_S1)		(void);
-	void		(MAPINT *Mirror_Custom)	(int,int,int,int);
+	void		(MAPINT *Mirror_Custom)		(int,int,int,int);
 
 /* IRQ */
 	void		(MAPINT *SetIRQ)		(int);		/* Sets the state of the /IRQ line */
