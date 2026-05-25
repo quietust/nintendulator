@@ -197,6 +197,16 @@ void	MAPINT	BusWriteNT (int Bank, int Addr, int Val)
 
 void	Reset (void)
 {
+	// TODO - freeze these for 262 (or 312) scanlines
+	Reg2000 = 0;
+	Reg2001 = 0;
+	ColorEmphasis = 0;
+	GrayScale = 0x3F;
+	IntReg = 0;
+	IntX = 0;
+	HVTog = TRUE;
+	ShortSL = TRUE;
+
 	SprAddr = 0;
 	IsRendering = FALSE;
 	OnScreen = FALSE;
